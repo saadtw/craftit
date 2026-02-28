@@ -1,10 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
-export default function BidComparisonPage({ params }) {
+export default function BidComparisonPage() {
+  const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
   const [bids, setBids] = useState([]);

@@ -18,12 +18,11 @@ export const matchingService = {
       .populate("customerId", "name email location");
 
     const scoredRFQs = activeRFQs
-      .filter((rfq) => rfq.customOrderId) // Filter out RFQs without customOrderId
+      .filter((rfq) => rfq.customOrderId)
       .map((rfq) => {
         let score = 0;
         const customOrder = rfq.customOrderId;
 
-        // Match materials
         if (
           manufacturer.materialsAvailable &&
           customOrder.materialPreferences
@@ -46,13 +45,8 @@ export const matchingService = {
 
         // Match location
         if (manufacturer.location && rfq.customerId.location) {
-          if (
-            manufacturer.location.country === rfq.customerId.location.country
-          ) {
-            score += 15;
-            if (manufacturer.location.state === rfq.customerId.location.state) {
-              score += 10;
-            }
+          if (manufacturer.location.state === rfq.customerId.location.state) {
+            score += 10;
           }
         }
 
@@ -104,11 +98,8 @@ export const matchingService = {
 
     // Location matching
     if (manufacturer.location && rfq.customerId.location) {
-      if (manufacturer.location.country === rfq.customerId.location.country) {
-        reasons.push("Same country");
-        if (manufacturer.location.state === rfq.customerId.location.state) {
-          reasons.push("Same state");
-        }
+      if (manufacturer.location.state === rfq.customerId.location.state) {
+        reasons.push("Same state");
       }
     }
 

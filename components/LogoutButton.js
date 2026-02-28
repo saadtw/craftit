@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 
-export default function LogoutButton({ className = "" }) {
+export default function LogoutButton() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -16,19 +16,12 @@ export default function LogoutButton({ className = "" }) {
     <button
       onClick={handleLogout}
       disabled={loading}
-      className={className}
-      style={{
-        padding: "10px 20px",
-        backgroundColor: loading ? "#ccc" : "#dc2626",
-        color: "white",
-        border: "none",
-        borderRadius: "5px",
-        cursor: loading ? "not-allowed" : "pointer",
-        fontSize: "14px",
-        fontWeight: "500",
-      }}
+      className={
+        "flex items-center gap-3 px-4 py-2 rounded-lg text-gray-900 hover:bg-[#eb9728]/10 w-full"
+      }
     >
-      {loading ? "Logging out..." : "Logout"}
+      <span className="material-symbols-outlined">logout</span>
+      <span className="font-medium">Logout</span>
     </button>
   );
 }
