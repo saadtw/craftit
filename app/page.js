@@ -2,9 +2,27 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function LandingPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      const role = session.user.role;
+      if (role === "customer") {
+        router.push("/customer/dashboard");
+      } else if (role === "manufacturer") {
+        router.push("/manufacturer/dashboard");
+      } else if (role === "admin") {
+        router.push("/admin/dashboard");
+      }
+    }
+  }, [status, session, router]);
 
   useEffect(() => {
     const handleScroll = () => {

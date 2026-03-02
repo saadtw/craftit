@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { signIn } from "next-auth/react";
+import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -14,6 +15,20 @@ export default function LoginPage() {
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      const role = session.user.role;
+      if (role === "customer") {
+        router.push("/customer/dashboard");
+      } else if (role === "manufacturer") {
+        router.push("/manufacturer/dashboard");
+      } else if (role === "admin") {
+        router.push("/admin/dashboard");
+      }
+    }
+  }, [status, session, router]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -45,11 +60,7 @@ export default function LoginPage() {
           if (user.role === "customer") {
             router.push("/customer/dashboard");
           } else if (user.role === "manufacturer") {
-            if (user.verificationStatus === "approved") {
-              router.push("/manufacturer/dashboard");
-            } else {
-              router.push("/auth/pending-verification");
-            }
+            router.push("/manufacturer/dashboard");
           } else if (user.role === "admin") {
             router.push("/admin/dashboard");
           }

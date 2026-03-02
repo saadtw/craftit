@@ -35,7 +35,7 @@ const VerificationDocumentSchema = new mongoose.Schema(
     ],
     verificationStatus: {
       type: String,
-      enum: ["pending", "approved", "rejected", "resubmission_required"],
+      enum: ["pending", "verified", "suspended", "resubmission_required"],
       default: "pending",
     },
     reviewedBy: {

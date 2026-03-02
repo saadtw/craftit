@@ -28,7 +28,7 @@ export default function ManufacturerDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      const userResponse = await fetch("/api/users/me");
+      const userResponse = await fetch("/api/auth/me");
       const userData = await userResponse.json();
 
       if (userData.success) {
@@ -42,14 +42,14 @@ export default function ManufacturerDashboard() {
         });
       }
 
-      const ordersResponse = await fetch(
-        "/api/orders?status=pending_acceptance,accepted,in_production&limit=5"
-      );
-      const ordersData = await ordersResponse.json();
-
-      if (ordersData.success) {
-        setActiveOrders(ordersData.orders.slice(0, 5));
-      }
+      // TODO: Implement /api/orders endpoint
+      // const ordersResponse = await fetch(
+      //   "/api/orders?status=pending_acceptance,accepted,in_production&limit=5",
+      // );
+      // const ordersData = await ordersResponse.json();
+      // if (ordersData.success) {
+      //   setActiveOrders(ordersData.orders.slice(0, 5));
+      // }
 
       const rfqsResponse = await fetch("/api/rfqs?status=active");
       const rfqsData = await rfqsResponse.json();
@@ -142,8 +142,9 @@ export default function ManufacturerDashboard() {
                 Dashboard
               </Link>
               <Link
-                href="/manufacturer/orders"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
+                href="#"
+                className="text-sm font-medium text-gray-400 cursor-not-allowed"
+                title="Coming soon"
               >
                 Orders
               </Link>
@@ -161,19 +162,22 @@ export default function ManufacturerDashboard() {
               </Link>
               <Link
                 href="#"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
+                className="text-sm font-medium text-gray-400 cursor-not-allowed"
+                title="Coming soon"
               >
                 Messages
               </Link>
               <Link
                 href="#"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
+                className="text-sm font-medium text-gray-400 cursor-not-allowed"
+                title="Coming soon"
               >
                 Payments
               </Link>
               <Link
                 href="#"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
+                className="text-sm font-medium text-gray-400 cursor-not-allowed"
+                title="Coming soon"
               >
                 Settings
               </Link>
@@ -248,27 +252,54 @@ export default function ManufacturerDashboard() {
           <h2 className="text-2xl font-bold text-blue-900 mb-4">
             Quick Actions
           </h2>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href="/manufacturer/rfqs"
-              className="px-6 py-3 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 transition inline-block"
-            >
-              Create New Bid
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Link href="/manufacturer/rfqs">
+              <div className="bg-white rounded-lg border-2 border-gray-200 hover:border-orange-500 p-6 transition-all cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="bg-orange-100 text-orange-600 p-3 rounded-full">
+                    <span className="material-symbols-outlined text-2xl">
+                      gavel
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">Browse RFQs</h3>
+                    <p className="text-sm text-gray-600">
+                      Find new bidding opportunities
+                    </p>
+                  </div>
+                </div>
+              </div>
             </Link>
-            <button className="px-6 py-3 bg-gray-100 text-blue-900 font-bold rounded-lg hover:bg-gray-200 transition">
-              Add Product / Service
-            </button>
-          </div>
-          <div className="flex flex-wrap gap-3 mt-3">
-            <Link
-              href="/manufacturer/rfqs"
-              className="px-6 py-3 bg-gray-100 text-blue-900 font-bold rounded-lg hover:bg-gray-200 transition inline-block"
-            >
-              View RFQs
+            <Link href="/manufacturer/bids">
+              <div className="bg-white rounded-lg border-2 border-gray-200 hover:border-orange-500 p-6 transition-all cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="bg-blue-100 text-blue-600 p-3 rounded-full">
+                    <span className="material-symbols-outlined text-2xl">
+                      description
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">My Bids</h3>
+                    <p className="text-sm text-gray-600">
+                      Manage your active bids
+                    </p>
+                  </div>
+                </div>
+              </div>
             </Link>
-            <button className="px-6 py-3 bg-gray-100 text-blue-900 font-bold rounded-lg hover:bg-gray-200 transition">
-              Manage Inventory
-            </button>
+            <div className="bg-gray-50 rounded-lg border-2 border-gray-200 p-6 cursor-not-allowed opacity-60">
+              <div className="flex items-center gap-4">
+                <div className="bg-gray-200 text-gray-500 p-3 rounded-full">
+                  <span className="material-symbols-outlined text-2xl">
+                    inventory
+                  </span>
+                </div>
+                <div>
+                  <h3 className="font-bold text-gray-600">Manage Inventory</h3>
+                  <p className="text-sm text-gray-500">Coming soon</p>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -316,7 +347,7 @@ export default function ManufacturerDashboard() {
                       <td className="px-4 py-4">
                         <button
                           className={`px-4 py-2 rounded-lg text-sm font-medium w-full ${getStatusColor(
-                            order.status
+                            order.status,
                           )}`}
                         >
                           {order.status.replace("_", " ").toUpperCase()}
@@ -325,7 +356,7 @@ export default function ManufacturerDashboard() {
                       <td className="px-4 py-4 text-gray-600 text-sm">
                         {order.estimatedDeliveryDate
                           ? new Date(
-                              order.estimatedDeliveryDate
+                              order.estimatedDeliveryDate,
                             ).toLocaleDateString()
                           : "TBD"}
                       </td>

@@ -19,30 +19,36 @@ export default function CustomerDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
     if (status === "authenticated") {
       if (session.user.role !== "customer") {
-        router.push("/customer/dashboard");
+        router.push("/auth/login");
         return;
       }
       fetchDashboardData();
     }
-  }, [status, session]);
+  }, [status, session, router]);
 
   const fetchDashboardData = async () => {
     try {
-      const [ordersRes] = await Promise.all([fetch("/api/orders?limit=3")]);
+      // TODO: Implement /api/orders endpoint
+      // const [ordersRes] = await Promise.all([fetch("/api/orders?limit=3")]);
+      // const ordersData = await ordersRes.json();
 
-      const ordersData = await ordersRes.json();
+      // Fetch custom orders instead
+      const customOrdersRes = await fetch("/api/custom-orders?limit=3");
+      const customOrdersData = await customOrdersRes.json();
 
-      if (ordersData.success) {
-        const orders = ordersData.orders || [];
+      if (customOrdersData.success) {
+        const orders = customOrdersData.orders || [];
         setRecentOrders(orders);
         setStats({
           totalOrders: orders.length,
           activeOrders: orders.filter((o) =>
-            ["pending_acceptance", "accepted", "in_production"].includes(
-              o.status
-            )
+            ["pending", "accepted"].includes(o.status),
           ).length,
           wishlistItems: session.user.wishlist?.length || 0,
         });
@@ -100,36 +106,55 @@ export default function CustomerDashboard() {
               <span className="font-medium">Dashboard</span>
             </Link>
             <Link
-              href="/customer/dashboard"
+              href="/customer/custom-orders"
               className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-900 hover:bg-[#eb9728]/10"
+            >
+              <span className="material-symbols-outlined">inventory_2</span>
+              <span className="font-medium">My Custom Orders</span>
+            </Link>
+            <Link
+              href="/customer/rfqs"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-900 hover:bg-[#eb9728]/10"
+            >
+              <span className="material-symbols-outlined">gavel</span>
+              <span className="font-medium">My RFQs</span>
+            </Link>
+            <Link
+              href="#"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-400 cursor-not-allowed"
+              title="Coming soon"
             >
               <span className="material-symbols-outlined">receipt_long</span>
               <span className="font-medium">Orders History</span>
             </Link>
             <Link
-              href="/customer/dashboard"
-              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-900 hover:bg-[#eb9728]/10"
+              href="#"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-400 cursor-not-allowed"
+              title="Coming soon"
             >
               <span className="material-symbols-outlined">favorite</span>
               <span className="font-medium">Wishlist</span>
             </Link>
             <Link
-              href="/customer/dashboard"
-              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-900 hover:bg-[#eb9728]/10"
+              href="#"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-400 cursor-not-allowed"
+              title="Coming soon"
             >
               <span className="material-symbols-outlined">mail</span>
               <span className="font-medium">Messages</span>
             </Link>
             <Link
-              href="/customer/dashboard"
-              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-900 hover:bg-[#eb9728]/10"
+              href="#"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-400 cursor-not-allowed"
+              title="Coming soon"
             >
               <span className="material-symbols-outlined">payments</span>
               <span className="font-medium">Payments</span>
             </Link>
             <Link
-              href="/customer/dashboard"
-              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-900 hover:bg-[#eb9728]/10"
+              href="#"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-400 cursor-not-allowed"
+              title="Coming soon"
             >
               <span className="material-symbols-outlined">settings</span>
               <span className="font-medium">Settings</span>
@@ -211,7 +236,69 @@ export default function CustomerDashboard() {
               </div>
             </div>
           </div>
-
+          {/* Quick Actions */}
+          <div className="mb-8">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">
+              Quick Actions
+            </h2>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <Link href="/custom-orders/new">
+                <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer border-2 border-transparent hover:border-amber-600">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-amber-100 text-amber-600 p-3 rounded-full">
+                      <span className="material-symbols-outlined text-2xl">
+                        add_circle
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">
+                        Create Custom Order
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Start a new manufacturing request
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+              <Link href="/customer/custom-orders">
+                <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer border-2 border-transparent hover:border-amber-600">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-blue-100 text-blue-600 p-3 rounded-full">
+                      <span className="material-symbols-outlined text-2xl">
+                        inventory_2
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">
+                        View Custom Orders
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Manage your orders
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+              <Link href="/customer/rfqs">
+                <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer border-2 border-transparent hover:border-amber-600">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-green-100 text-green-600 p-3 rounded-full">
+                      <span className="material-symbols-outlined text-2xl">
+                        request_quote
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">View RFQs</h3>
+                      <p className="text-sm text-gray-600">
+                        Check manufacturer bids
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            </div>
+          </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             {/* Main Content Area */}
             <div className="lg:col-span-2 space-y-8">
@@ -319,7 +406,7 @@ export default function CustomerDashboard() {
                                     Est. Delivery:{" "}
                                     {order.estimatedDeliveryDate
                                       ? new Date(
-                                          order.estimatedDeliveryDate
+                                          order.estimatedDeliveryDate,
                                         ).toLocaleDateString()
                                       : "TBD"}
                                   </div>
@@ -336,8 +423,8 @@ export default function CustomerDashboard() {
                                     order.status === "completed"
                                       ? "bg-green-500"
                                       : order.status === "in_production"
-                                      ? "bg-blue-500"
-                                      : "bg-yellow-500"
+                                        ? "bg-blue-500"
+                                        : "bg-yellow-500"
                                   }`}
                                 ></span>
                                 <span className="font-medium capitalize">

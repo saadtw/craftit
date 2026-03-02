@@ -1,30 +1,27 @@
-// "use client";
-
-// import Link from "next/link";
-
-// export default function SignupPage() {
-//   return (
-//     <div>
-//       <h1>Sign Up</h1>
-//       <p>Select your account type:</p>
-//       <Link href="/auth/signup/customer">
-//         <button>Sign Up as Customer</button>
-//       </Link>
-//       <Link href="/auth/signup/manufacturer">
-//         <button>Sign Up as Manufacturer</button>
-//       </Link>
-//       <Link href="/">
-//         <button>Back to Home</button>
-//       </Link>
-//     </div>
-//   );
-// }
-
 "use client";
 
 import Link from "next/link";
+import { useEffect } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 
 export default function SignupPage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      const role = session.user.role;
+      if (role === "customer") {
+        router.push("/customer/dashboard");
+      } else if (role === "manufacturer") {
+        router.push("/manufacturer/dashboard");
+      } else if (role === "admin") {
+        router.push("/admin/dashboard");
+      }
+    }
+  }, [status, session, router]);
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-slate-100 dark:bg-slate-950 p-4">
       <div className="w-full max-w-md">

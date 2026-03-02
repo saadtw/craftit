@@ -7,7 +7,7 @@ export const bidComparisonService = {
       status: { $ne: "withdrawn" },
     }).populate(
       "manufacturerId",
-      "businessName stats.averageRating location verificationStatus"
+      "businessName stats.averageRating location verificationStatus",
     );
 
     if (bids.length === 0) {
@@ -30,7 +30,7 @@ export const bidComparisonService = {
         average: bids.reduce((sum, bid) => sum + bid.timeline, 0) / bids.length,
       },
       verifiedManufacturers: bids.filter(
-        (b) => b.manufacturerId.verificationStatus === "approved"
+        (b) => b.manufacturerId.verificationStatus === "verified",
       ).length,
     };
 
@@ -44,7 +44,7 @@ export const bidComparisonService = {
       const timelineScore =
         ((bids.length - timelineRank + 1) / bids.length) * 30;
       const verificationScore =
-        bid.manufacturerId.verificationStatus === "approved" ? 20 : 0;
+        bid.manufacturerId.verificationStatus === "verified" ? 20 : 0;
       const ratingScore = (bid.manufacturerId.stats?.averageRating || 0) * 2;
 
       const totalScore =
@@ -57,10 +57,10 @@ export const bidComparisonService = {
           timelineRank,
           overallScore: Math.round(totalScore),
           pricePercentile: Math.round(
-            (1 - (priceRank - 1) / bids.length) * 100
+            (1 - (priceRank - 1) / bids.length) * 100,
           ),
           timelinePercentile: Math.round(
-            (1 - (timelineRank - 1) / bids.length) * 100
+            (1 - (timelineRank - 1) / bids.length) * 100,
           ),
         },
       };
@@ -75,7 +75,7 @@ export const bidComparisonService = {
     const bid = await Bid.findById(bidId)
       .populate(
         "manufacturerId",
-        "businessName stats.averageRating location verificationStatus"
+        "businessName stats.averageRating location verificationStatus",
       )
       .populate("rfqId");
 
@@ -85,7 +85,7 @@ export const bidComparisonService = {
 
     const totalCost = Object.values(bid.costBreakdown || {}).reduce(
       (sum, val) => sum + (val || 0),
-      0
+      0,
     );
 
     const costAnalysis = {

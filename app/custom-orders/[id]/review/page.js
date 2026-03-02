@@ -13,10 +13,18 @@ export default function CustomOrderReview() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
     if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
       fetchCustomOrder();
     }
-  }, [status]);
+  }, [status, session, router]);
 
   const fetchCustomOrder = async () => {
     try {
@@ -41,6 +49,44 @@ export default function CustomOrderReview() {
 
   const handleCreateRFQ = () => {
     router.push(`/custom-orders/${params.id}/create-rfq`);
+  };
+
+  const handleViewRFQ = () => {
+    if (customOrder.rfqId) {
+      router.push(
+        `/customer/rfqs/${customOrder.rfqId._id || customOrder.rfqId}`,
+      );
+    }
+  };
+
+  const handleSaveAsDraft = async () => {
+    try {
+      const response = await fetch(`/api/custom-orders/${params.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ status: "draft" }),
+      });
+
+      const data = await response.json();
+      if (data.success) {
+        alert("Saved as draft!");
+        router.push("/customer/custom-orders");
+      } else {
+        alert("Error: " + data.error);
+      }
+    } catch (error) {
+      alert("Error: " + error.message);
+    }
+  };
+
+  const handleBackToDashboard = () => {
+    router.push("/customer/dashboard");
+  };
+
+  const handleBackToList = () => {
+    router.push("/customer/custom-orders");
   };
 
   if (status === "loading" || loading)
@@ -192,34 +238,74 @@ export default function CustomOrderReview() {
         )}
 
         {/* Action Buttons */}
-        <div className="flex gap-4">
-          <button
-            onClick={handleEdit}
-            className="px-6 py-3 bg-gray-500 text-white rounded hover:bg-gray-600"
-          >
-            Edit Order
-          </button>
+        <div className="space-y-4">
+          {/* Primary Actions */}
+          <div className="flex gap-4">
+            <button
+              onClick={handleEdit}
+              className="px-6 py-3 bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              Edit Order
+            </button>
 
-          <button
-            onClick={handleCreateRFQ}
-            className="flex-1 px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
-          >
-            Create RFQ (Auction)
-          </button>
+            {customOrder.rfqId ? (
+              <button
+                onClick={handleViewRFQ}
+                className="flex-1 px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                View RFQ Details
+              </button>
+            ) : (
+              <>
+                <button
+                  onClick={handleCreateRFQ}
+                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Create RFQ (Auction)
+                </button>
 
-          <button
-            disabled
-            className="px-6 py-3 bg-gray-300 text-gray-500 rounded cursor-not-allowed"
-            title="Coming soon"
-          >
-            Find Suitable Manufacturer
-          </button>
+                <button
+                  disabled
+                  className="px-6 py-3 bg-gray-300 text-gray-500 rounded cursor-not-allowed"
+                  title="Coming soon"
+                >
+                  Find Suitable Manufacturer
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* Secondary Actions */}
+          <div className="flex gap-4">
+            <button
+              onClick={handleBackToDashboard}
+              className="flex-1 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+            >
+              Back to Dashboard
+            </button>
+            <button
+              onClick={handleBackToList}
+              className="flex-1 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+            >
+              View All Custom Orders
+            </button>
+            {customOrder.status === "submitted" && (
+              <button
+                onClick={handleSaveAsDraft}
+                className="flex-1 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+              >
+                Revert to Draft
+              </button>
+            )}
+          </div>
         </div>
 
-        <p className="text-sm text-gray-600 mt-4">
-          Note: &quot;Find Suitable Manufacturer&quot; feature is not available
-          in this version.
-        </p>
+        {!customOrder.rfqId && (
+          <p className="text-sm text-gray-600 mt-4">
+            Note: &quot;Find Suitable Manufacturer&quot; feature is not
+            available in this version.
+          </p>
+        )}
       </div>
     </>
   );

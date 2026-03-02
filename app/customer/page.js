@@ -14,32 +14,58 @@ export default function HomePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchHomeData();
-  }, []);
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
+      fetchHomeData();
+    }
+  }, [status, session, router]);
 
   const fetchHomeData = async () => {
     try {
-      const [productsRes, groupBuysRes, manufacturersRes] = await Promise.all([
-        fetch("/api/products?featured=true&limit=3"),
-        fetch("/api/group-buys?status=active&limit=3"),
-        fetch("/api/manufacturers?verified=true&limit=4"),
-      ]);
+      // TODO: Implement these API endpoints
+      // const [productsRes, groupBuysRes, manufacturersRes] = await Promise.all([
+      //   fetch("/api/products?featured=true&limit=3"),
+      //   fetch("/api/group-buys?status=active&limit=3"),
+      //   fetch("/api/manufacturers?verified=true&limit=4"),
+      // ]);
+      // const productsData = await productsRes.json();
+      // const groupBuysData = await groupBuysRes.json();
+      // const manufacturersData = await manufacturersRes.json();
+      // if (productsData.success)
+      //   setFeaturedProducts(productsData.products || []);
+      // if (groupBuysData.success) setGroupBuys(groupBuysData.groupBuys || []);
+      // if (manufacturersData.success)
+      //   setManufacturers(manufacturersData.manufacturers || []);
 
-      const productsData = await productsRes.json();
-      const groupBuysData = await groupBuysRes.json();
-      const manufacturersData = await manufacturersRes.json();
-
-      if (productsData.success)
-        setFeaturedProducts(productsData.products || []);
-      if (groupBuysData.success) setGroupBuys(groupBuysData.groupBuys || []);
-      if (manufacturersData.success)
-        setManufacturers(manufacturersData.manufacturers || []);
+      // Placeholder data for now
+      setFeaturedProducts([]);
+      setGroupBuys([]);
+      setManufacturers([]);
     } catch (error) {
       console.error("Error fetching home data:", error);
     } finally {
       setLoading(false);
     }
   };
+
+  if (status === "loading" || loading) {
+    return <div className="p-6">Loading...</div>;
+  }
+
+  if (status === "unauthenticated") {
+    return null;
+  }
+
+  if (session?.user?.role !== "customer") {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-white">
@@ -88,7 +114,7 @@ export default function HomePage() {
                     router.push(
                       session.user.role === "customer"
                         ? "/custom-orders/new"
-                        : "/manufacturer/dashboard"
+                        : "/manufacturer/dashboard",
                     )
                   }
                   className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[#F97316] text-white rounded-lg shadow-sm hover:bg-orange-600"
@@ -166,6 +192,7 @@ export default function HomePage() {
                   <label className="flex items-center space-x-3 text-sm text-gray-700">
                     <input
                       checked
+                      readOnly
                       className="h-4 w-4 rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]"
                       type="checkbox"
                     />
@@ -194,6 +221,7 @@ export default function HomePage() {
                   <label className="flex items-center space-x-3 text-sm text-gray-700">
                     <input
                       checked
+                      readOnly
                       className="h-4 w-4 border-gray-300 text-[#F97316] focus:ring-[#F97316]"
                       name="category"
                       type="radio"
@@ -378,7 +406,7 @@ export default function HomePage() {
                   router.push(
                     status === "authenticated"
                       ? "/custom-orders/new"
-                      : "/auth/login"
+                      : "/auth/login",
                   )
                 }
                 className="mt-6 px-6 py-3 text-base font-semibold bg-[#F97316] text-white rounded-lg shadow-sm hover:bg-orange-600"

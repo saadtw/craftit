@@ -14,7 +14,7 @@ export default function PendingVerificationPage() {
       router.push("/auth/login");
     } else if (
       status === "authenticated" &&
-      session?.user?.verificationStatus === "approved"
+      session?.user?.verificationStatus === "verified"
     ) {
       router.push("/manufacturer/dashboard");
     }

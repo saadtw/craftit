@@ -113,7 +113,7 @@ export default function AdminManufacturersPage() {
       {/* Filter Tabs */}
       <div className="mb-6 border-b">
         <div className="flex gap-4">
-          {["pending", "approved", "rejected"].map((status) => (
+          {["unverified", "verified", "suspended"].map((status) => (
             <button
               key={status}
               onClick={() => setFilter(status)}
@@ -275,9 +275,9 @@ export default function AdminManufacturersPage() {
                 <div className="ml-4">
                   <span
                     className={`px-3 py-1 rounded text-sm font-semibold ${
-                      manufacturer.verificationStatus === "approved"
+                      manufacturer.verificationStatus === "verified"
                         ? "bg-green-100 text-green-800"
-                        : manufacturer.verificationStatus === "rejected"
+                        : manufacturer.verificationStatus === "suspended"
                         ? "bg-red-100 text-red-800"
                         : "bg-yellow-100 text-yellow-800"
                     }`}
@@ -288,7 +288,7 @@ export default function AdminManufacturersPage() {
               </div>
 
               {/* Action Buttons */}
-              {manufacturer.verificationStatus === "pending" && (
+              {manufacturer.verificationStatus === "unverified" && (
                 <div className="mt-4 flex gap-3 pt-4 border-t">
                   <button
                     onClick={() =>

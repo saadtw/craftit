@@ -1,12 +1,20 @@
-//npm run dev
+//node page.js
 
 // scripts/createAdmin.js
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
-// Hardcode MongoDB URI or use env
-const MONGODB_URI =
-  process.env.MONGODB_URI || "mongodb://localhost:27017/your-database";
+// Get MongoDB URI from environment variable
+const MONGODB_URI = "mongodb://localhost:27017/craftit_local";
+
+if (!MONGODB_URI) {
+  console.error("❌ ERROR: MONGODB_URI environment variable is not set!");
+  console.error("\nPlease run the script with:");
+  console.error("  set MONGODB_URI=your-connection-string && node page.js");
+  console.error("\nOr create a .env.local file with:");
+  console.error("  MONGODB_URI=your-connection-string");
+  process.exit(1);
+}
 
 // Define User Schema directly (since we can't import ES modules easily)
 const UserSchema = new mongoose.Schema(
@@ -38,11 +46,11 @@ const UserSchema = new mongoose.Schema(
     },
     verificationStatus: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
-      default: "approved",
+      enum: ["unverified", "verified", "suspended"],
+      default: "verified",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const User = mongoose.models.User || mongoose.model("User", UserSchema);
@@ -50,14 +58,14 @@ const User = mongoose.models.User || mongoose.model("User", UserSchema);
 async function createAdmin() {
   try {
     console.log("Connecting to MongoDB...");
-    console.log("URI:", MONGODB_URI);
+    console.log("Using MONGODB_URI from environment variable");
 
     await mongoose.connect(MONGODB_URI);
     console.log("✅ Connected to MongoDB");
 
     // Check if admin already exists
     const existingAdmin = await User.findOne({
-      email: "admin@yourplatform.com",
+      email: "a@gmail.com",
     });
 
     if (existingAdmin) {
@@ -75,15 +83,15 @@ async function createAdmin() {
     console.log("Creating admin user...");
 
     // Hash password
-    const hashedPassword = await bcrypt.hash("admin123", 10);
+    const hashedPassword = await bcrypt.hash("admin", 10);
     console.log("✅ Password hashed");
 
     // Create admin user
     const admin = new User({
-      email: "admin@yourplatform.com",
+      email: "a@gmail.com",
       password: hashedPassword,
       role: "admin",
-      name: "Admin User",
+      name: "admin",
       isActive: true,
       verificationStatus: "approved",
     });
@@ -92,7 +100,7 @@ async function createAdmin() {
     console.log("✅ Admin user created successfully!");
 
     // Verify the user was created
-    const verifyAdmin = await User.findOne({ email: "admin@yourplatform.com" });
+    const verifyAdmin = await User.findOne({ email: "a@gmail.com" });
 
     if (verifyAdmin) {
       console.log("\n📋 Admin User Details:");
@@ -103,8 +111,8 @@ async function createAdmin() {
       console.log("- Active:", verifyAdmin.isActive);
       console.log("- Created:", verifyAdmin.createdAt);
       console.log("\n🔑 Login Credentials:");
-      console.log("- Email: admin@yourplatform.com");
-      console.log("- Password: admin123");
+      console.log("- Email: a@gmail.com");
+      console.log("- Password: admin");
       console.log("\n⚠️  IMPORTANT: Change this password after first login!");
     } else {
       console.log("❌ Warning: Could not verify admin user creation");

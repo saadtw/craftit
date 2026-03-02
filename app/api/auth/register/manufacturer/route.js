@@ -36,7 +36,7 @@ export async function POST(request) {
           success: false,
           message: "Name, email, password and business name are required",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -45,7 +45,7 @@ export async function POST(request) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { success: false, message: "Invalid email format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -53,7 +53,7 @@ export async function POST(request) {
     if (password.length < 6) {
       return NextResponse.json(
         { success: false, message: "Password must be at least 6 characters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -61,7 +61,7 @@ export async function POST(request) {
     if (existingUser) {
       return NextResponse.json(
         { success: false, message: "Email already registered" },
-        { status: 409 }
+        { status: 409 },
       );
     }
     const user = await User.create({
@@ -83,7 +83,7 @@ export async function POST(request) {
       budgetRange,
       location,
       certifications: certifications || [],
-      verificationStatus: "pending",
+      verificationStatus: "unverified",
       isActive: true,
     });
 
@@ -104,7 +104,7 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: true,
-        message: "Manufacturer registered successfully. Verification pending.",
+        message: "Manufacturer registered successfully.",
         data: {
           id: user._id,
           name: user.name,
@@ -113,13 +113,13 @@ export async function POST(request) {
           verificationStatus: user.verificationStatus,
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Manufacturer registration error:", error);
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

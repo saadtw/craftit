@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 export default function ManufacturerSignup() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -23,6 +25,20 @@ export default function ManufacturerSignup() {
   const [materials, setMaterials] = useState([]);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Redirect if already logged in
+  useEffect(() => {
+    if (status === "authenticated" && session?.user) {
+      const role = session.user.role;
+      if (role === "customer") {
+        router.push("/customer/dashboard");
+      } else if (role === "manufacturer") {
+        router.push("/manufacturer/dashboard");
+      } else if (role === "admin") {
+        router.push("/admin/dashboard");
+      }
+    }
+  }, [status, session, router]);
 
   const capabilityOptions = [
     "CNC_Machining",
@@ -52,13 +68,13 @@ export default function ManufacturerSignup() {
 
   const toggleCapability = (cap) => {
     setCapabilities((prev) =>
-      prev.includes(cap) ? prev.filter((c) => c !== cap) : [...prev, cap]
+      prev.includes(cap) ? prev.filter((c) => c !== cap) : [...prev, cap],
     );
   };
 
   const toggleMaterial = (mat) => {
     setMaterials((prev) =>
-      prev.includes(mat) ? prev.filter((m) => m !== mat) : [...prev, mat]
+      prev.includes(mat) ? prev.filter((m) => m !== mat) : [...prev, mat],
     );
   };
 
@@ -104,8 +120,8 @@ export default function ManufacturerSignup() {
       const data = await response.json();
 
       if (data.success) {
-        alert("Registration successful! Your account is pending verification.");
-        router.push("/auth/pending-verification");
+        alert("Registration successful! Please login to continue.");
+        router.push("/auth/login");
       } else {
         setError(data.message || "Registration failed");
       }

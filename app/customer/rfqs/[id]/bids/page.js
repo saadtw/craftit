@@ -13,10 +13,18 @@ export default function BidComparisonPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
     if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
       fetchBids();
     }
-  }, [status]);
+  }, [status, session, router]);
 
   const fetchBids = async () => {
     try {
@@ -96,7 +104,7 @@ export default function BidComparisonPage() {
                 <td style={{ padding: "10px" }}>{index + 1}</td>
                 <td style={{ padding: "10px" }}>
                   {bid.manufacturerId.businessName}
-                  {bid.manufacturerId.verificationStatus === "approved" && " ✓"}
+                  {bid.manufacturerId.verificationStatus === "verified" && " ✓"}
                 </td>
                 <td style={{ padding: "10px" }}>${bid.amount}</td>
                 <td style={{ padding: "10px" }}>{bid.timeline} days</td>

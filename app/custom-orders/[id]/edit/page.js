@@ -27,10 +27,18 @@ export default function EditCustomOrder() {
   const [initialLoading, setInitialLoading] = useState(true);
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
     if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
       fetchCustomOrder();
     }
-  }, [status]);
+  }, [status, session, router]);
 
   const fetchCustomOrder = async () => {
     try {

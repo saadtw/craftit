@@ -27,10 +27,19 @@ export default function BidDetailsPage() {
   });
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
     if (status === "authenticated") {
+      const role = session.user.role;
+      if (role !== "customer" && role !== "manufacturer") {
+        router.push("/auth/login");
+        return;
+      }
       fetchBid();
     }
-  }, [status]);
+  }, [status, session, router]);
 
   const fetchBid = async () => {
     try {
@@ -97,7 +106,7 @@ export default function BidDetailsPage() {
   const handleAcceptBid = async () => {
     if (
       !confirm(
-        "Are you sure you want to accept this bid? This will close the RFQ."
+        "Are you sure you want to accept this bid? This will close the RFQ.",
       )
     ) {
       return;
@@ -194,10 +203,10 @@ export default function BidDetailsPage() {
               bid.status === "accepted"
                 ? "bg-green-100 text-green-800"
                 : bid.status === "under_consideration"
-                ? "bg-yellow-100 text-yellow-800"
-                : bid.status === "rejected"
-                ? "bg-red-100 text-red-800"
-                : "bg-gray-100 text-gray-800"
+                  ? "bg-yellow-100 text-yellow-800"
+                  : bid.status === "rejected"
+                    ? "bg-red-100 text-red-800"
+                    : "bg-gray-100 text-gray-800"
             }`}
           >
             {bid.status.toUpperCase().replace("_", " ")}
@@ -213,7 +222,7 @@ export default function BidDetailsPage() {
             <p className="text-lg font-semibold">
               {bid.manufacturerId.businessName || bid.manufacturerId.name}
             </p>
-            {bid.manufacturerId.verificationStatus === "approved" && (
+            {bid.manufacturerId.verificationStatus === "verified" && (
               <span className="text-green-600 text-xl" title="Verified">
                 ✓
               </span>

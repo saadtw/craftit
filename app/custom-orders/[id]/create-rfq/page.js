@@ -18,10 +18,18 @@ export default function CreateRFQ() {
   });
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
     if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
       fetchCustomOrder();
     }
-  }, [status]);
+  }, [status, session, router]);
 
   const fetchCustomOrder = async () => {
     try {
@@ -29,6 +37,16 @@ export default function CreateRFQ() {
       const data = await response.json();
 
       if (data.success && data.order) {
+        // Check if RFQ already exists
+        if (data.order.rfqId) {
+          alert(
+            "RFQ already created for this order. Redirecting to RFQ details...",
+          );
+          router.push(
+            `/customer/rfqs/${data.order.rfqId._id || data.order.rfqId}`,
+          );
+          return;
+        }
         setCustomOrder(data.order);
       } else {
         alert("Error loading order: " + (data.error || "Unknown error"));
@@ -86,7 +104,15 @@ export default function CreateRFQ() {
 
   return (
     <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Create RFQ (Auction)</h1>
+      <div className="flex items-center gap-4 mb-6">
+        <button
+          onClick={() => router.back()}
+          className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
+        >
+          ← Back
+        </button>
+        <h1 className="text-3xl font-bold">Create RFQ (Auction)</h1>
+      </div>
 
       <div className="bg-gray-100 p-4 rounded mb-6">
         <h2 className="font-bold mb-2">Order Details:</h2>

@@ -15,10 +15,18 @@ export default function CustomerRFQDetails() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
     if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
       fetchRFQ();
     }
-  }, [status]);
+  }, [status, session, router]);
 
   const fetchRFQ = async () => {
     try {
@@ -120,8 +128,8 @@ export default function CustomerRFQDetails() {
               rfq.status === "active"
                 ? "bg-green-100 text-green-800"
                 : rfq.status === "bid_accepted"
-                ? "bg-blue-100 text-blue-800"
-                : "bg-gray-100 text-gray-800"
+                  ? "bg-blue-100 text-blue-800"
+                  : "bg-gray-100 text-gray-800"
             }`}
           >
             {rfq.status.toUpperCase().replace("_", " ")}
@@ -293,7 +301,7 @@ export default function CustomerRFQDetails() {
                             bid.manufacturerId.name}
                         </p>
                         {bid.manufacturerId.verificationStatus ===
-                          "approved" && (
+                          "verified" && (
                           <span
                             className="text-green-600 text-xl"
                             title="Verified"
@@ -322,8 +330,8 @@ export default function CustomerRFQDetails() {
                               bid.status === "accepted"
                                 ? "bg-green-100 text-green-800"
                                 : bid.status === "under_consideration"
-                                ? "bg-yellow-100 text-yellow-800"
-                                : "bg-gray-100 text-gray-800"
+                                  ? "bg-yellow-100 text-yellow-800"
+                                  : "bg-gray-100 text-gray-800"
                             }`}
                           >
                             {bid.status.replace("_", " ").toUpperCase()}

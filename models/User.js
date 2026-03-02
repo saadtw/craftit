@@ -106,9 +106,10 @@ const UserSchema = new mongoose.Schema(
     // Verification
     verificationStatus: {
       type: String,
-      enum: ["pending", "approved", "rejected"],
+      enum: ["unverified", "verified", "suspended"],
       default: function () {
-        return this.role === "manufacturer" ? "pending" : "approved";
+        // return this.role === "manufacturer" ? "unverified" : "verified";
+        return "verified";
       },
     },
     verifiedAt: Date,
@@ -175,7 +176,7 @@ const UserSchema = new mongoose.Schema(
     lastLogin: Date,
     lastActive: Date,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Indexes

@@ -56,12 +56,12 @@ export async function PUT(request, context) {
     }
 
     if (action === "approve") {
-      manufacturer.verificationStatus = "approved";
+      manufacturer.verificationStatus = "verified";
       manufacturer.verifiedAt = new Date();
       manufacturer.verifiedBy = session.user.id;
       manufacturer.rejectionReason = undefined;
     } else {
-      manufacturer.verificationStatus = "rejected";
+      manufacturer.verificationStatus = "suspended";
       manufacturer.rejectionReason = reason || "Verification rejected by admin";
       manufacturer.verifiedAt = undefined;
     }
@@ -74,7 +74,7 @@ export async function PUT(request, context) {
 
     if (verificationDoc) {
       verificationDoc.verificationStatus =
-        action === "approve" ? "approved" : "rejected";
+        action === "approve" ? "verified" : "suspended";
       verificationDoc.reviewedBy = session.user.id;
       verificationDoc.reviewedAt = new Date();
       verificationDoc.reviewNotes = notes;
