@@ -71,46 +71,33 @@ export async function GET(request) {
 
 // POST - Create RFQ from custom order
 export async function POST(request) {
-  console.log("=== RFQ POST Request Started ===");
-
   try {
-    console.log("1. Getting session...");
     const session = await getServerSession(authOptions);
-    console.log("Session retrieved:", session ? "Yes" : "No");
-    console.log("Session details:", JSON.stringify(session, null, 2));
 
     if (!session || session.user.role !== "customer") {
-      console.log("Auth failed - session:", session);
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("2. Connecting to DB...");
     await connectDB();
-    console.log("DB connected");
 
-    console.log("3. Parsing request body...");
     const body = await request.json();
-    console.log("Body:", body);
 
     if (!body.customOrderId) {
       return NextResponse.json(
         { error: "Custom order ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    console.log("4. Finding custom order...");
     const customOrder = await CustomOrder.findById(body.customOrderId);
-    console.log("Custom order found:", customOrder ? "Yes" : "No");
 
     if (!customOrder) {
       return NextResponse.json(
         { error: "Custom order not found" },
-        { status: 404 }
+        { status: 404 },
       );
     }
 
-    console.log("5. Checking ownership...");
     if (customOrder.customerId.toString() !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
@@ -118,11 +105,10 @@ export async function POST(request) {
     if (customOrder.rfqId) {
       return NextResponse.json(
         { error: "RFQ already created for this order" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    console.log("6. Creating RFQ...");
     const startDate = new Date();
     const duration = body.duration || 168;
     const endDate = new Date(startDate.getTime() + duration * 60 * 60 * 1000);
@@ -138,15 +124,11 @@ export async function POST(request) {
       targetManufacturers: body.targetManufacturers || [],
       broadcastToAll: body.broadcastToAll !== false,
     });
-    console.log("RFQ created:", rfq._id);
 
-    console.log("7. Updating custom order...");
     customOrder.rfqId = rfq._id;
     customOrder.status = "rfq_created";
     await customOrder.save();
-    console.log("Custom order updated");
 
-    console.log("8. Populating RFQ...");
     const populatedRFQ = await RFQ.findById(rfq._id)
       .populate({
         path: "customOrderId",
@@ -154,30 +136,22 @@ export async function POST(request) {
           "title description quantity materialPreferences deadline budget model3D images",
       })
       .lean();
-    console.log("RFQ populated");
 
-    console.log("9. Returning response...");
     return NextResponse.json(
       {
         success: true,
         rfq: populatedRFQ,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
-    console.error("=== RFQ POST ERROR ===");
-    console.error("Error message:", error.message);
-    console.error("Error name:", error.name);
-    console.error("Error stack:", error.stack);
-    console.error("Full error:", error);
+    console.error("RFQ POST Error:", error);
 
     return NextResponse.json(
       {
         error: error.message,
-        name: error.name,
-        stack: process.env.NODE_ENV === "development" ? error.stack : undefined,
       },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

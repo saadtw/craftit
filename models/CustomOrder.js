@@ -75,12 +75,15 @@ const CustomOrderSchema = new mongoose.Schema(
       ref: "RFQ",
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Indexes
 CustomOrderSchema.index({ customerId: 1, status: 1 });
 CustomOrderSchema.index({ createdAt: -1 });
+CustomOrderSchema.index({ budget: 1 }); // For budget range filtering
+CustomOrderSchema.index({ materialPreferences: 1 }); // For material matching
+CustomOrderSchema.index({ deadline: 1 }); // For deadline sorting and filtering
 
 export default mongoose.models.CustomOrder ||
   mongoose.model("CustomOrder", CustomOrderSchema);

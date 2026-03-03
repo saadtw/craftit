@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import dbConnect from "@/lib/mongodb";
+import connectDB from "@/lib/mongodb";
 import { bidComparisonService } from "@/services/bidComparisonService";
 
 export async function GET(request, context) {
@@ -14,7 +14,7 @@ export async function GET(request, context) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await dbConnect();
+    await connectDB();
 
     const result = await bidComparisonService.compareRFQBids(id);
 
@@ -27,7 +27,7 @@ export async function GET(request, context) {
       {
         error: error.message,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

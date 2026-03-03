@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import dbConnect from "@/lib/mongodb";
+import connectDB from "@/lib/mongodb";
 import { matchingService } from "@/services/matchingService";
 
 export async function GET(request) {
@@ -11,10 +11,10 @@ export async function GET(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await dbConnect();
+    await connectDB();
 
     const recommended = await matchingService.getRecommendedRFQs(
-      session.user.id
+      session.user.id,
     );
 
     return NextResponse.json({
@@ -26,7 +26,7 @@ export async function GET(request) {
       {
         error: error.message,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

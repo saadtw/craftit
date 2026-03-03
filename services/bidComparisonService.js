@@ -83,7 +83,10 @@ export const bidComparisonService = {
       throw new Error("Bid not found");
     }
 
-    const totalCost = Object.values(bid.costBreakdown || {}).reduce(
+    const costBreakdownObj = bid.costBreakdown
+      ? bid.toObject().costBreakdown
+      : {};
+    const totalCost = Object.values(costBreakdownObj).reduce(
       (sum, val) => sum + (val || 0),
       0,
     );
@@ -92,13 +95,13 @@ export const bidComparisonService = {
       totalBreakdown: totalCost,
       discrepancy: Math.abs(totalCost - bid.amount),
       materialsPercentage: totalCost
-        ? (((bid.costBreakdown?.materials || 0) / totalCost) * 100).toFixed(1)
+        ? (((costBreakdownObj.materials || 0) / totalCost) * 100).toFixed(1)
         : 0,
       laborPercentage: totalCost
-        ? (((bid.costBreakdown?.labor || 0) / totalCost) * 100).toFixed(1)
+        ? (((costBreakdownObj.labor || 0) / totalCost) * 100).toFixed(1)
         : 0,
       profitMargin: totalCost
-        ? (((bid.costBreakdown?.profit || 0) / bid.amount) * 100).toFixed(1)
+        ? (((costBreakdownObj.profit || 0) / bid.amount) * 100).toFixed(1)
         : 0,
     };
 

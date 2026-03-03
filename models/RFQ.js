@@ -70,7 +70,7 @@ const RFQSchema = new mongoose.Schema(
     cancelledAt: Date,
     cancellationReason: String,
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Indexes
@@ -78,6 +78,8 @@ RFQSchema.index({ customerId: 1, status: 1 });
 RFQSchema.index({ status: 1, endDate: 1 });
 RFQSchema.index({ rfqNumber: 1 });
 RFQSchema.index({ broadcastToAll: 1, status: 1 });
+RFQSchema.index({ customOrderId: 1 }); // For efficient joins in aggregation
+RFQSchema.index({ createdAt: -1 }); // For sorting by newest
 
 // Generate RFQ number before saving
 RFQSchema.pre("save", async function () {

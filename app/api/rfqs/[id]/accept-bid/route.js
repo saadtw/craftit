@@ -1,10 +1,11 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import dbConnect from "@/lib/mongodb";
+import connectDB from "@/lib/mongodb";
 import RFQ from "@/models/RFQ";
 import Bid from "@/models/Bid";
 import CustomOrder from "@/models/CustomOrder";
+import Order from "@/models/Order";
 
 export async function POST(request, context) {
   const params = await context.params;
@@ -17,7 +18,7 @@ export async function POST(request, context) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await dbConnect();
+    await connectDB();
 
     const body = await request.json();
     const { bidId } = body;
@@ -25,7 +26,7 @@ export async function POST(request, context) {
     if (!bidId) {
       return NextResponse.json(
         { error: "Bid ID is required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -57,7 +58,7 @@ export async function POST(request, context) {
     if (bid.rfqId.toString() !== id) {
       return NextResponse.json(
         { error: "Bid does not belong to this RFQ" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -82,7 +83,7 @@ export async function POST(request, context) {
       {
         status: "rejected",
         rejectedAt: new Date(),
-      }
+      },
     );
 
     // Update custom order status
@@ -90,11 +91,38 @@ export async function POST(request, context) {
       status: "order_placed",
     });
 
+    // Create Order
+    const customOrder = await CustomOrder.findById(rfq.customOrderId);
+    const order = await Order.create({
+      customerId: session.user.id,
+      manufacturerId: bid.manufacturerId,
+      orderType: "rfq",
+      rfqId: rfq._id,
+      bidId: bid._id,
+      productDetails: {
+        name: customOrder.title,
+        description: customOrder.description,
+        specifications: {
+          materialPreferences: customOrder.materialPreferences,
+          model3D: customOrder.model3D,
+          images: customOrder.images,
+        },
+      },
+      quantity: customOrder.quantity,
+      agreedPrice: bid.amount,
+      totalPrice: bid.amount,
+      timeline: bid.timeline,
+      specialRequirements: customOrder.specialRequirements,
+      designFiles: customOrder.model3D?.url ? [customOrder.model3D.url] : [],
+      status: "pending_acceptance",
+    });
+
     return NextResponse.json({
       success: true,
       message: "Bid accepted successfully",
       rfq,
       bid,
+      order,
     });
   } catch (error) {
     console.error("Accept bid error:", error);

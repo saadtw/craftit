@@ -39,7 +39,6 @@ const OrderSchema = new mongoose.Schema(
     orderNumber: {
       type: String,
       unique: true,
-      required: true,
     },
 
     // Product Details (snapshot at order time)
@@ -157,7 +156,7 @@ const OrderSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 // Indexes

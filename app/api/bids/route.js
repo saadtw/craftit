@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import dbConnect from "@/lib/mongodb";
+import connectDB from "@/lib/mongodb";
 import { bidService } from "@/services/bidService";
 
 export async function POST(request) {
@@ -11,7 +11,7 @@ export async function POST(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await dbConnect();
+    await connectDB();
     const data = await request.json();
 
     const bid = await bidService.placeBid(session.user.id, data);
@@ -21,14 +21,14 @@ export async function POST(request) {
         success: true,
         bid,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     return NextResponse.json(
       {
         error: error.message,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
@@ -40,7 +40,7 @@ export async function GET(request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    await dbConnect();
+    await connectDB();
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
@@ -58,7 +58,7 @@ export async function GET(request) {
       {
         error: error.message,
       },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }

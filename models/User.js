@@ -184,6 +184,8 @@ UserSchema.index({ email: 1 });
 UserSchema.index({ role: 1 });
 UserSchema.index({ verificationStatus: 1, role: 1 });
 UserSchema.index({ businessName: "text", name: "text" });
+UserSchema.index({ "location.country": 1 }); // For location-based filtering
+UserSchema.index({ "location.state": 1 }); // For state-based manufacturer matching
 
 UserSchema.pre("save", async function () {
   // Only hash if password is modified

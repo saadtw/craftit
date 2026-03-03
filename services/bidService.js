@@ -67,7 +67,7 @@ export const bidService = {
     const bid = await Bid.findById(bidId)
       .populate(
         "manufacturerId",
-        "businessName email stats.averageRating location"
+        "businessName email stats.averageRating location",
       )
       .populate("rfqId");
 
@@ -147,7 +147,7 @@ export const bidService = {
     })
       .populate(
         "manufacturerId",
-        "businessName email stats.averageRating location verificationStatus"
+        "businessName email stats.averageRating location verificationStatus",
       )
       .sort({ amount: 1 });
 
@@ -188,7 +188,7 @@ export const bidService = {
         ...bid.toObject(),
         priceRank: index + 1,
         timelineRank:
-          bids
+          [...bids]
             .sort((a, b) => a.timeline - b.timeline)
             .findIndex((b) => b._id.equals(bid._id)) + 1,
       }))
