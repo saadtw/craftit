@@ -142,6 +142,12 @@ export default function ManufacturerDashboard() {
                 Dashboard
               </Link>
               <Link
+                href="/manufacturer/products"
+                className="text-sm font-medium text-gray-700 hover:text-orange-500"
+              >
+                Products Management
+              </Link>
+              <Link
                 href="#"
                 className="text-sm font-medium text-gray-400 cursor-not-allowed"
                 title="Coming soon"
