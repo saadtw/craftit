@@ -19,6 +19,12 @@ export default function ManufacturerBidsPage() {
     dateTo: "",
   });
   const [sortBy, setSortBy] = useState("newest");
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  const fetchBids = () => {
+    setLoading(true);
+    setRefreshKey((k) => k + 1);
+  };
   const [stats, setStats] = useState({
     totalBids: 0,
     acceptanceRate: 0,
@@ -26,50 +32,52 @@ export default function ManufacturerBidsPage() {
   });
 
   useEffect(() => {
-    if (status === "authenticated" && session?.user?.role === "manufacturer") {
-      fetchBids();
-      calculateStats();
-    }
-  }, [status, session]);
+    if (status !== "authenticated" || session?.user?.role !== "manufacturer")
+      return;
+    let cancelled = false;
+    fetch("/api/bids?manufacturerId=" + session.user.id)
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled || !data.success || !data.bids) return;
 
-  const fetchBids = async () => {
-    setLoading(true);
-    try {
-      const response = await fetch(
-        "/api/bids?manufacturerId=" + session.user.id
-      );
-      const data = await response.json();
-
-      if (data.success && data.bids) {
-        let filteredBids = data.bids;
+        // Compute stats from raw data before filtering
+        const total = data.bids.length;
+        const accepted = data.bids.filter(
+          (b) => b.status === "accepted",
+        ).length;
+        setStats({
+          totalBids: total,
+          acceptanceRate: total > 0 ? Math.round((accepted / total) * 100) : 0,
+          avgResponseTime: 2.5,
+        });
 
         // Apply status filters
+        let filteredBids = data.bids;
         const activeStatuses = [];
         if (filters.pending)
           activeStatuses.push("pending", "under_consideration");
         if (filters.accepted) activeStatuses.push("accepted");
         if (filters.rejected) activeStatuses.push("rejected");
         if (filters.withdrawn) activeStatuses.push("withdrawn");
-
         if (activeStatuses.length > 0) {
           filteredBids = filteredBids.filter((bid) =>
-            activeStatuses.includes(bid.status)
+            activeStatuses.includes(bid.status),
           );
         }
 
         // Apply date filters
         if (filters.dateFrom) {
           filteredBids = filteredBids.filter(
-            (bid) => new Date(bid.createdAt) >= new Date(filters.dateFrom)
+            (bid) => new Date(bid.createdAt) >= new Date(filters.dateFrom),
           );
         }
         if (filters.dateTo) {
           filteredBids = filteredBids.filter(
-            (bid) => new Date(bid.createdAt) <= new Date(filters.dateTo)
+            (bid) => new Date(bid.createdAt) <= new Date(filters.dateTo),
           );
         }
 
-        // Sort bids
+        // Sort
         filteredBids.sort((a, b) => {
           switch (sortBy) {
             case "newest":
@@ -86,38 +94,15 @@ export default function ManufacturerBidsPage() {
         });
 
         setBids(filteredBids);
-      }
-    } catch (error) {
-      console.error("Error:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const calculateStats = async () => {
-    try {
-      const response = await fetch(
-        "/api/bids?manufacturerId=" + session.user.id
-      );
-      const data = await response.json();
-
-      if (data.success && data.bids) {
-        const total = data.bids.length;
-        const accepted = data.bids.filter(
-          (b) => b.status === "accepted"
-        ).length;
-        const rate = total > 0 ? Math.round((accepted / total) * 100) : 0;
-
-        setStats({
-          totalBids: total,
-          acceptanceRate: rate,
-          avgResponseTime: 2.5, // Mock data - would calculate from actual timestamps
-        });
-      }
-    } catch (error) {
-      console.error("Error calculating stats:", error);
-    }
-  };
+      })
+      .catch((error) => console.error("Error:", error))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [status, session, filters, sortBy, refreshKey]);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -137,7 +122,7 @@ export default function ManufacturerBidsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
@@ -150,7 +135,7 @@ export default function ManufacturerBidsPage() {
 
   if (session?.user?.role !== "manufacturer") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
         <div className="text-xl text-red-600">
           Access Denied. Manufacturers only.
         </div>
@@ -159,7 +144,7 @@ export default function ManufacturerBidsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex justify-between items-center">
@@ -189,6 +174,12 @@ export default function ManufacturerBidsPage() {
                 className="text-sm font-medium text-gray-700 hover:text-orange-500"
               >
                 RFQs
+              </Link>
+              <Link
+                href="/manufacturer/group-buys"
+                className="text-sm font-medium text-gray-700 hover:text-orange-500"
+              >
+                Group Buys
               </Link>
               <Link
                 href="/manufacturer/orders"
@@ -235,7 +226,7 @@ export default function ManufacturerBidsPage() {
 
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Filters Sidebar */}
-          <aside className="lg:w-64 flex-shrink-0">
+          <aside className="lg:w-64 shrink-0">
             <div className="sticky top-24 space-y-6">
               {/* Filter Bids */}
               <div className="bg-white rounded-xl border border-gray-200 p-4">
@@ -253,12 +244,13 @@ export default function ManufacturerBidsPage() {
                         <input
                           type="checkbox"
                           checked={filters.pending}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            setLoading(true);
                             setFilters({
                               ...filters,
                               pending: e.target.checked,
-                            })
-                          }
+                            });
+                          }}
                           className="rounded text-orange-500 focus:ring-orange-500"
                         />
                         <span className="text-sm text-gray-600">Pending</span>
@@ -267,12 +259,13 @@ export default function ManufacturerBidsPage() {
                         <input
                           type="checkbox"
                           checked={filters.accepted}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            setLoading(true);
                             setFilters({
                               ...filters,
                               accepted: e.target.checked,
-                            })
-                          }
+                            });
+                          }}
                           className="rounded text-orange-500 focus:ring-orange-500"
                         />
                         <span className="text-sm text-gray-600">Accepted</span>
@@ -281,12 +274,13 @@ export default function ManufacturerBidsPage() {
                         <input
                           type="checkbox"
                           checked={filters.rejected}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            setLoading(true);
                             setFilters({
                               ...filters,
                               rejected: e.target.checked,
-                            })
-                          }
+                            });
+                          }}
                           className="rounded text-orange-500 focus:ring-orange-500"
                         />
                         <span className="text-sm text-gray-600">Rejected</span>
@@ -295,12 +289,13 @@ export default function ManufacturerBidsPage() {
                         <input
                           type="checkbox"
                           checked={filters.withdrawn}
-                          onChange={(e) =>
+                          onChange={(e) => {
+                            setLoading(true);
                             setFilters({
                               ...filters,
                               withdrawn: e.target.checked,
-                            })
-                          }
+                            });
+                          }}
                           className="rounded text-orange-500 focus:ring-orange-500"
                         />
                         <span className="text-sm text-gray-600">Withdrawn</span>
@@ -315,17 +310,19 @@ export default function ManufacturerBidsPage() {
                     <input
                       type="date"
                       value={filters.dateFrom}
-                      onChange={(e) =>
-                        setFilters({ ...filters, dateFrom: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setLoading(true);
+                        setFilters({ ...filters, dateFrom: e.target.value });
+                      }}
                       className="w-full rounded-lg border-gray-300 text-sm mb-2"
                     />
                     <input
                       type="date"
                       value={filters.dateTo}
-                      onChange={(e) =>
-                        setFilters({ ...filters, dateTo: e.target.value })
-                      }
+                      onChange={(e) => {
+                        setLoading(true);
+                        setFilters({ ...filters, dateTo: e.target.value });
+                      }}
                       className="w-full rounded-lg border-gray-300 text-sm"
                     />
                   </div>
@@ -397,8 +394,8 @@ export default function ManufacturerBidsPage() {
               <select
                 value={sortBy}
                 onChange={(e) => {
+                  setLoading(true);
                   setSortBy(e.target.value);
-                  fetchBids();
                 }}
                 className="rounded-lg border-gray-300 text-sm focus:border-orange-500 focus:ring-orange-500"
               >
@@ -443,7 +440,7 @@ export default function ManufacturerBidsPage() {
                           </div>
                           <span
                             className={`px-2.5 py-0.5 rounded-full text-sm font-semibold ${getStatusColor(
-                              bid.status
+                              bid.status,
                             )}`}
                           >
                             {bid.status.replace("_", " ").toUpperCase()}
@@ -483,7 +480,7 @@ export default function ManufacturerBidsPage() {
                               </span>
                               <strong className="text-gray-800">
                                 {new Date(
-                                  bid.rfqId.customOrderId.deadline
+                                  bid.rfqId.customOrderId.deadline,
                                 ).toLocaleDateString()}
                               </strong>
                             </div>
@@ -504,7 +501,7 @@ export default function ManufacturerBidsPage() {
                       <div className="text-sm text-gray-500">
                         Bid Placed:{" "}
                         {new Date(
-                          bid.submittedAt || bid.createdAt
+                          bid.submittedAt || bid.createdAt,
                         ).toLocaleDateString()}
                         {bid.status === "under_consideration" && (
                           <>

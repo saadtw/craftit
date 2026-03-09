@@ -42,15 +42,6 @@ export default function ManufacturerDashboard() {
         });
       }
 
-      // TODO: Implement /api/orders endpoint
-      // const ordersResponse = await fetch(
-      //   "/api/orders?status=pending_acceptance,accepted,in_production&limit=5",
-      // );
-      // const ordersData = await ordersResponse.json();
-      // if (ordersData.success) {
-      //   setActiveOrders(ordersData.orders.slice(0, 5));
-      // }
-
       const rfqsResponse = await fetch("/api/rfqs?status=active");
       const rfqsData = await rfqsResponse.json();
 
@@ -66,7 +57,7 @@ export default function ManufacturerDashboard() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
@@ -103,7 +94,7 @@ export default function ManufacturerDashboard() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
         <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex justify-between items-center">
@@ -165,6 +156,12 @@ export default function ManufacturerDashboard() {
                 className="text-sm font-medium text-gray-700 hover:text-orange-500"
               >
                 My Bids
+              </Link>
+              <Link
+                href="/manufacturer/group-buys"
+                className="text-sm font-medium text-gray-700 hover:text-orange-500"
+              >
+                Group Buys
               </Link>
               <Link
                 href="#"
@@ -293,19 +290,23 @@ export default function ManufacturerDashboard() {
                 </div>
               </div>
             </Link>
-            <div className="bg-gray-50 rounded-lg border-2 border-gray-200 p-6 cursor-not-allowed opacity-60">
-              <div className="flex items-center gap-4">
-                <div className="bg-gray-200 text-gray-500 p-3 rounded-full">
-                  <span className="material-symbols-outlined text-2xl">
-                    inventory
-                  </span>
-                </div>
-                <div>
-                  <h3 className="font-bold text-gray-600">Manage Inventory</h3>
-                  <p className="text-sm text-gray-500">Coming soon</p>
+            <Link href="/manufacturer/group-buys">
+              <div className="bg-white rounded-lg border-2 border-gray-200 hover:border-orange-500 p-6 transition-all cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="bg-emerald-100 text-emerald-600 p-3 rounded-full">
+                    <span className="material-symbols-outlined text-2xl">
+                      group
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">Group Buys</h3>
+                    <p className="text-sm text-gray-600">
+                      Manage group buy campaigns
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            </Link>
           </div>
         </div>
 
