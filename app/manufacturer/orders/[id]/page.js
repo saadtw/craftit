@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import ChatBox from "@/components/chat/ChatBox";
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-yellow-100 text-yellow-800",
@@ -568,6 +569,27 @@ export default function ManufacturerOrderDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Chat with Customer */}
+        {order.status !== "cancelled" && (
+          <div className="mt-6">
+            <h2 className="text-base font-bold text-blue-900 mb-3">
+              Chat with Customer
+            </h2>
+            <div className="h-[520px]">
+              <ChatBox
+                orderId={id}
+                currentUser={{
+                  id: session.user.id,
+                  name: session.user.businessName || session.user.name,
+                  role: "manufacturer",
+                }}
+                orderNumber={order.orderNumber}
+                otherParty={{ name: order.customerId?.name || "Customer" }}
+              />
+            </div>
+          </div>
+        )}
       </main>
 
       {/* Accept Modal */}

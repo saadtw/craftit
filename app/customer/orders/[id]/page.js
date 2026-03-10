@@ -5,6 +5,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import LogoutButton from "@/components/LogoutButton";
+import ChatBox from "@/components/chat/ChatBox";
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-yellow-100 text-yellow-800",
@@ -429,6 +430,7 @@ export default function CustomerOrderDetailPage() {
                       ✓ Review submitted. Thank you!
                     </div>
                   )}
+
                   {["accepted", "in_production", "completed"].includes(
                     order.status,
                   ) && (
@@ -511,6 +513,32 @@ export default function CustomerOrderDetailPage() {
               </div>
             </div>
           </div>
+
+          {/* Chat with Manufacturer */}
+          {!order.status.includes("cancelled") && (
+            <div className="mt-6">
+              <h2 className="text-base font-bold text-gray-900 mb-3">
+                Chat with Manufacturer
+              </h2>
+              <div className="h-[520px]">
+                <ChatBox
+                  orderId={id}
+                  currentUser={{
+                    id: session.user.id,
+                    name: session.user.name,
+                    role: "customer",
+                  }}
+                  orderNumber={order.orderNumber}
+                  otherParty={{
+                    name:
+                      order.manufacturerId?.businessName ||
+                      order.manufacturerId?.name ||
+                      "Manufacturer",
+                  }}
+                />
+              </div>
+            </div>
+          )}
         </div>
       </main>
 
