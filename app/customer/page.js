@@ -98,6 +98,12 @@ export default function HomePage() {
               >
                 My RFQs
               </Link>
+              <Link
+                href="/customer/explore"
+                className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
+              >
+                Explore Products
+              </Link>
             </div>
           </div>
           <div className="flex items-center gap-4">

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 const STATUS_STYLES = {
   active: "bg-emerald-100 text-emerald-700",
@@ -256,12 +257,14 @@ export default function ProductDetailPage() {
           <div className="lg:col-span-2 space-y-6">
             {/* Image Gallery */}
             <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-              <div className="aspect-video bg-slate-100 flex items-center justify-center">
+              <div className="aspect-video bg-slate-100 flex items-center justify-center relative">
                 {product.images?.length > 0 ? (
-                  <img
+                  <Image
                     src={product.images[activeImage]?.url}
                     alt={product.name}
-                    className="w-full h-full object-contain"
+                    fill
+                    className="object-contain"
+                    sizes="(max-width: 768px) 100vw, 66vw"
                   />
                 ) : (
                   <div className="text-center">
@@ -295,9 +298,11 @@ export default function ProductDetailPage() {
                           : "border-transparent hover:border-slate-300"
                       }`}
                     >
-                      <img
+                      <Image
                         src={img.url}
                         alt=""
+                        width={64}
+                        height={64}
                         className="w-full h-full object-cover"
                       />
                     </button>

@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 const STEPS = [
   { id: 1, label: "Basic Info" },
@@ -916,10 +917,12 @@ export default function EditProductPage() {
                     <div className="grid grid-cols-4 sm:grid-cols-6 gap-2 mt-3">
                       {form.images.map((img, idx) => (
                         <div key={idx} className="relative group aspect-square">
-                          <img
+                          <Image
                             src={img.url}
                             alt=""
-                            className={`w-full h-full object-cover rounded-lg border-2 ${img.isPrimary ? "border-slate-900" : "border-transparent"}`}
+                            fill
+                            className={`object-cover rounded-lg border-2 ${img.isPrimary ? "border-slate-900" : "border-transparent"}`}
+                            sizes="(max-width: 640px) 25vw, 16vw"
                           />
                           {img.isPrimary && (
                             <span className="absolute bottom-1 left-1 right-1 text-center bg-slate-900 text-white text-xs rounded py-0.5">

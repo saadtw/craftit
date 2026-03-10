@@ -29,7 +29,7 @@ export async function GET(request, context) {
         "bidId",
         "amount timeline proposedMilestones costBreakdown materialsDescription processDescription",
       )
-      .populate("groupBuyId", "title currentTier")
+      .populate("groupBuyId", "title currentTierIndex currentDiscountedPrice")
       .lean();
 
     if (!order) {

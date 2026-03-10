@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
@@ -644,10 +645,12 @@ function ProductCard({
           className="absolute top-3 left-3 z-10 rounded border-slate-300 w-4 h-4"
         />
         {primaryImage ? (
-          <img
+          <Image
             src={primaryImage}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            fill
+            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            sizes="(max-width: 768px) 100vw, 25vw"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center">

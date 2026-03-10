@@ -163,6 +163,12 @@ export default function ManufacturerDashboard() {
                 Group Buys
               </Link>
               <Link
+                href={`/manufacturers/${session?.user?.id}`}
+                className="text-sm font-medium text-gray-700 hover:text-orange-500"
+              >
+                My Profile
+              </Link>
+              <Link
                 href="#"
                 className="text-sm font-medium text-gray-400 cursor-not-allowed"
                 title="Coming soon"

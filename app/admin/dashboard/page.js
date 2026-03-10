@@ -58,7 +58,7 @@ export default function AdminDashboard() {
     try {
       // Fetch pending manufacturers count
       const manufacturersRes = await fetch(
-        "/api/admin/manufacturers?status=pending"
+        "/api/admin/manufacturers?status=unverified",
       );
       const manufacturersData = await manufacturersRes.json();
 

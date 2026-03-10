@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Script from "next/script";
+import Image from "next/image";
 
 export default function CustomOrderReview() {
   const router = useRouter();
@@ -226,12 +227,18 @@ export default function CustomOrderReview() {
             <h2 className="text-xl font-bold mb-4">Images</h2>
             <div className="grid grid-cols-3 gap-4">
               {customOrder.images.map((img, idx) => (
-                <img
+                <div
                   key={idx}
-                  src={img.url}
-                  alt={`Image ${idx + 1}`}
-                  className="w-full h-48 object-cover rounded"
-                />
+                  className="relative h-48 rounded overflow-hidden"
+                >
+                  <Image
+                    src={img.url}
+                    alt={`Image ${idx + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="33vw"
+                  />
+                </div>
               ))}
             </div>
           </div>

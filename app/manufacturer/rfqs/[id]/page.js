@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Script from "next/script";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function ManufacturerRFQDetails() {
   const params = useParams();
@@ -151,10 +152,12 @@ export default function ManufacturerRFQDetails() {
               </p>
             </div>
             {rfq.customOrderId?.images?.[0]?.url && (
-              <img
+              <Image
                 src={rfq.customOrderId.images[0].url}
                 alt="Project"
-                className="w-48 h-32 object-cover rounded-lg shadow-md flex-shrink-0"
+                width={192}
+                height={128}
+                className="object-cover rounded-lg shadow-md flex-shrink-0"
               />
             )}
           </div>
@@ -198,8 +201,8 @@ export default function ManufacturerRFQDetails() {
                       myBid.status === "accepted"
                         ? "bg-green-100 text-green-800"
                         : myBid.status === "under_consideration"
-                        ? "bg-blue-100 text-blue-800"
-                        : "bg-gray-100 text-gray-800"
+                          ? "bg-blue-100 text-blue-800"
+                          : "bg-gray-100 text-gray-800"
                     }`}
                   >
                     {myBid.status.toUpperCase().replace("_", " ")}
@@ -317,12 +320,18 @@ export default function ManufacturerRFQDetails() {
                   <h3 className="font-bold text-gray-900 mb-2">Images</h3>
                   <div className="grid grid-cols-3 gap-4">
                     {rfq.customOrderId.images.map((img, idx) => (
-                      <img
+                      <div
                         key={idx}
-                        src={img.url}
-                        alt={`Image ${idx + 1}`}
-                        className="w-full h-48 object-cover rounded-lg"
-                      />
+                        className="relative h-48 rounded-lg overflow-hidden"
+                      >
+                        <Image
+                          src={img.url}
+                          alt={`Image ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="33vw"
+                        />
+                      </div>
                     ))}
                   </div>
                 </div>

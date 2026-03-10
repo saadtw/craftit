@@ -112,6 +112,13 @@ export default function CustomerDashboard() {
               <span className="font-medium">Dashboard</span>
             </Link>
             <Link
+              href="/customer/explore"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-900 hover:bg-[#eb9728]/10"
+            >
+              <span className="material-symbols-outlined">storefront</span>
+              <span className="font-medium">Explore Products</span>
+            </Link>
+            <Link
               href="/customer/custom-orders"
               className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-900 hover:bg-[#eb9728]/10"
             >
@@ -297,6 +304,25 @@ export default function CustomerDashboard() {
                       <h3 className="font-semibold text-gray-900">My Orders</h3>
                       <p className="text-sm text-gray-600">
                         Track your order history
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+              <Link href="/customer/explore">
+                <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer border-2 border-transparent hover:border-amber-600">
+                  <div className="flex items-center gap-4">
+                    <div className="bg-green-100 text-green-600 p-3 rounded-full">
+                      <span className="material-symbols-outlined text-2xl">
+                        storefront
+                      </span>
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-gray-900">
+                        Explore Products
+                      </h3>
+                      <p className="text-sm text-gray-600">
+                        Browse manufacturer products
                       </p>
                     </div>
                   </div>

@@ -346,7 +346,7 @@ export default function ChatBox({
           <button
             onClick={handleSend}
             disabled={!input.trim() || sending}
-            className="flex-shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            className="shrink-0 w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center hover:bg-blue-700 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             title="Send message"
           >
             {sending ? (
@@ -377,7 +377,7 @@ function MessageBubble({ msg, isMe, showAvatar, isOptimistic, highlight }) {
       className={`flex items-end gap-2 mb-1 ${isMe ? "flex-row-reverse" : "flex-row"}`}
     >
       {/* Avatar placeholder to maintain alignment */}
-      <div className="w-7 flex-shrink-0">
+      <div className="w-7 shrink-0">
         {showAvatar && !isMe && (
           <div className="w-7 h-7 rounded-full bg-blue-100 flex items-center justify-center text-xs font-bold text-blue-700">
             {(msg.senderName || "?").charAt(0).toUpperCase()}

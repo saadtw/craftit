@@ -334,6 +334,7 @@ import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function PlaceBidPage({ params }) {
   const unwrappedParams = use(params);
@@ -488,10 +489,12 @@ export default function PlaceBidPage({ params }) {
                 <p className="text-sm text-green-600 mt-1">Auction Active</p>
               </div>
               {rfq.customOrderId?.images?.[0]?.url && (
-                <img
+                <Image
                   src={rfq.customOrderId.images[0].url}
                   alt="Project"
-                  className="w-48 h-32 object-cover rounded-lg shadow-md"
+                  width={192}
+                  height={128}
+                  className="object-cover rounded-lg shadow-md"
                 />
               )}
             </div>

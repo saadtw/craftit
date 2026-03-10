@@ -28,11 +28,7 @@ export default function BidComparisonPage() {
 
   const fetchBids = async () => {
     try {
-      const res = await fetch(`/api/rfqs/${params.id}/bids`, {
-        headers: {
-          Authorization: `Bearer ${session.accessToken}`,
-        },
-      });
+      const res = await fetch(`/api/rfqs/${params.id}/bids`);
       const data = await res.json();
 
       if (res.ok) {

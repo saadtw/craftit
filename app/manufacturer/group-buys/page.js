@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
@@ -393,12 +394,14 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
     <div className="bg-white rounded-xl border border-slate-200 p-5 hover:border-slate-300 hover:shadow-sm transition-all">
       <div className="flex gap-4">
         {/* Product Image */}
-        <div className="w-20 h-20 bg-slate-100 rounded-lg overflow-hidden shrink-0">
+        <div className="w-20 h-20 bg-slate-100 rounded-lg overflow-hidden shrink-0 relative">
           {primaryImage ? (
-            <img
+            <Image
               src={primaryImage}
               alt={product?.name}
-              className="w-full h-full object-cover"
+              fill
+              className="object-cover"
+              sizes="80px"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">

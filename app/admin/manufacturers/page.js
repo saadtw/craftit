@@ -10,7 +10,7 @@ export default function AdminManufacturersPage() {
   const router = useRouter();
   const [manufacturers, setManufacturers] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState("pending");
+  const [filter, setFilter] = useState("unverified");
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -64,7 +64,7 @@ export default function AdminManufacturersPage() {
                 ? reason || "Does not meet requirements"
                 : undefined,
           }),
-        }
+        },
       );
 
       const data = await res.json();
@@ -242,7 +242,7 @@ export default function AdminManufacturersPage() {
                                 {doc.filename}
                               </a>
                             </li>
-                          )
+                          ),
                         )}
                       </ul>
                     </div>
@@ -278,8 +278,8 @@ export default function AdminManufacturersPage() {
                       manufacturer.verificationStatus === "verified"
                         ? "bg-green-100 text-green-800"
                         : manufacturer.verificationStatus === "suspended"
-                        ? "bg-red-100 text-red-800"
-                        : "bg-yellow-100 text-yellow-800"
+                          ? "bg-red-100 text-red-800"
+                          : "bg-yellow-100 text-yellow-800"
                     }`}
                   >
                     {manufacturer.verificationStatus.toUpperCase()}
@@ -301,7 +301,7 @@ export default function AdminManufacturersPage() {
                   <button
                     onClick={() => {
                       const reason = prompt(
-                        "Enter rejection reason (optional):"
+                        "Enter rejection reason (optional):",
                       );
                       handleVerify(String(manufacturer._id), "reject", reason);
                     }}
