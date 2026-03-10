@@ -292,7 +292,7 @@ export default function ProductDetailPage() {
                     <button
                       key={idx}
                       onClick={() => setActiveImage(idx)}
-                      className={`flex-shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
+                      className={`shrink-0 w-16 h-16 rounded-lg overflow-hidden border-2 transition-all ${
                         activeImage === idx
                           ? "border-slate-900"
                           : "border-transparent hover:border-slate-300"
@@ -605,7 +605,7 @@ export default function ProductDetailPage() {
       {/* Click outside to close status menu */}
       {showStatusMenu && (
         <div
-          className="fixed inset-0 z-[1]"
+          className="fixed inset-0 z-1"
           onClick={() => setShowStatusMenu(false)}
         />
       )}

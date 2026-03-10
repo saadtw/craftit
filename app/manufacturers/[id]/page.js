@@ -119,7 +119,7 @@ export default function ManufacturerPublicProfilePage() {
         </header>
 
         {/* Banner */}
-        <div className="relative h-40 bg-gradient-to-r from-blue-600 to-blue-900 overflow-hidden">
+        <div className="relative h-40 bg-linear-to-r from-blue-600 to-blue-900 overflow-hidden">
           {manufacturer.businessBanner && (
             <Image
               src={manufacturer.businessBanner}
@@ -136,7 +136,7 @@ export default function ManufacturerPublicProfilePage() {
           <div className="max-w-5xl mx-auto">
             <div className="flex items-end gap-5 -mt-8 pb-5">
               {/* Logo */}
-              <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-md overflow-hidden bg-white flex-shrink-0 relative">
+              <div className="w-20 h-20 rounded-2xl border-4 border-white shadow-md overflow-hidden bg-white shrink-0 relative">
                 {manufacturer.businessLogo ? (
                   <Image
                     src={manufacturer.businessLogo}

@@ -159,7 +159,7 @@ export default function HomePage() {
         </nav>
       </header>
 
-      <main className="flex-grow container mx-auto px-6 py-8">
+      <main className="grow container mx-auto px-6 py-8">
         {/* Hero Section */}
         <div className="bg-[#FFF7ED] p-8 rounded-lg mb-8">
           <h1 className="text-4xl font-bold text-gray-900">
@@ -322,7 +322,7 @@ export default function HomePage() {
                     className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col sm:flex-row items-center gap-4"
                   >
                     <div className="w-full sm:w-32 h-32 bg-gray-200 rounded-md"></div>
-                    <div className="flex-grow">
+                    <div className="grow">
                       <h4 className="font-semibold text-gray-900">
                         {groupBuy.productId?.name || "Group Buy"}
                       </h4>

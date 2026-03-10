@@ -123,7 +123,7 @@ function ChatPanel({ bidId, session, bidStatus }) {
                       {msg.senderRole}
                     </p>
                   )}
-                  <p className="whitespace-pre-wrap break-words">
+                  <p className="whitespace-pre-wrap wrap-break-word">
                     {msg.message}
                   </p>
                   <p
@@ -306,7 +306,7 @@ export default function BidDetailsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-blue-50">
         <div className="flex flex-col items-center gap-3">
           <div className="w-8 h-8 border-[3px] border-blue-600 border-t-transparent rounded-full animate-spin" />
           <p className="text-gray-500 text-sm">Loading…</p>
@@ -375,7 +375,7 @@ export default function BidDetailsPage() {
   const canAccept = isCustomer && bidOpen && rfqActive;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+    <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-blue-50/30">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
         <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -702,7 +702,7 @@ export default function BidDetailsPage() {
                           key={i}
                           className="flex items-start gap-3 text-sm bg-blue-50 border border-blue-100 rounded-lg px-3 py-2"
                         >
-                          <span className="font-bold text-blue-600 min-w-[20px]">
+                          <span className="font-bold text-blue-600 min-w-5">
                             {i + 1}.
                           </span>
                           <div>

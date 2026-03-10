@@ -58,7 +58,7 @@ export default function ManufacturerRFQDetails() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
@@ -97,7 +97,7 @@ export default function ManufacturerRFQDetails() {
         src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
       />
 
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
         {/* Header */}
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
           <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex justify-between items-center">
@@ -157,7 +157,7 @@ export default function ManufacturerRFQDetails() {
                 alt="Project"
                 width={192}
                 height={128}
-                className="object-cover rounded-lg shadow-md flex-shrink-0"
+                className="object-cover rounded-lg shadow-md shrink-0"
               />
             )}
           </div>

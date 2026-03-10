@@ -484,7 +484,7 @@ export default function EditProductPage() {
           <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-3 flex items-center justify-between gap-3">
             <div className="flex items-center gap-2.5">
               <svg
-                className="w-4 h-4 text-emerald-600 flex-shrink-0"
+                className="w-4 h-4 text-emerald-600 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -501,7 +501,7 @@ export default function EditProductPage() {
                 Stock. Mark it as Active to make it visible to customers.
               </p>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={handleMarkActive}
                 className="px-3 py-1.5 text-xs font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"

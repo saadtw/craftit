@@ -107,3 +107,64 @@ export async function POST(request, context) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+// DELETE - Customer cancels their participation
+export async function DELETE(request, context) {
+  const { id } = await context.params;
+
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "customer") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await connectDB();
+
+    const groupBuy = await GroupBuy.findById(id);
+    if (!groupBuy) {
+      return NextResponse.json(
+        { error: "Group buy not found" },
+        { status: 404 },
+      );
+    }
+
+    // Can only cancel from an active campaign
+    if (groupBuy.status !== "active") {
+      return NextResponse.json(
+        { error: "Cannot cancel participation — campaign is no longer active" },
+        { status: 400 },
+      );
+    }
+
+    const participantIndex = groupBuy.participants.findIndex(
+      (p) => p.customerId.toString() === session.user.id,
+    );
+
+    if (participantIndex === -1) {
+      return NextResponse.json(
+        { error: "You are not a participant in this group buy" },
+        { status: 404 },
+      );
+    }
+
+    // TODO (Phase 8/Payments): trigger refund for participant's paymentIntentId here
+    // const { paymentIntentId } = groupBuy.participants[participantIndex];
+
+    // Remove participant
+    groupBuy.participants.splice(participantIndex, 1);
+
+    // Recalculate cached fields
+    groupBuy.recalculate();
+    await groupBuy.save();
+
+    return NextResponse.json({
+      success: true,
+      message: "Participation cancelled successfully",
+      currentQuantity: groupBuy.currentQuantity,
+      currentParticipantCount: groupBuy.currentParticipantCount,
+      currentTierIndex: groupBuy.currentTierIndex,
+    });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

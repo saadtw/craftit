@@ -423,7 +423,7 @@ export default function PlaceBidPage({ params }) {
 
   if (status === "loading" || !rfq) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
