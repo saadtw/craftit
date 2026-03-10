@@ -34,25 +34,31 @@ export default function CustomerDashboard() {
 
   const fetchDashboardData = async () => {
     try {
-      // TODO: Implement /api/orders endpoint
-      // const [ordersRes] = await Promise.all([fetch("/api/orders?limit=3")]);
-      // const ordersData = await ordersRes.json();
-
-      // Fetch custom orders instead
-      const customOrdersRes = await fetch("/api/custom-orders?limit=3");
+      const [ordersRes, customOrdersRes] = await Promise.all([
+        fetch("/api/orders?limit=3"),
+        fetch("/api/custom-orders?limit=3"),
+      ]);
+      const ordersData = await ordersRes.json();
       const customOrdersData = await customOrdersRes.json();
 
-      if (customOrdersData.success) {
-        const orders = customOrdersData.orders || [];
-        setRecentOrders(orders);
-        setStats({
-          totalOrders: orders.length,
-          activeOrders: orders.filter((o) =>
-            ["pending", "accepted"].includes(o.status),
-          ).length,
-          wishlistItems: session.user.wishlist?.length || 0,
-        });
-      }
+      const orders = ordersData.success ? ordersData.orders || [] : [];
+      const customOrders = customOrdersData.success
+        ? customOrdersData.orders || []
+        : [];
+
+      setRecentOrders(orders);
+      setStats({
+        totalOrders: ordersData.success
+          ? ordersData.stats?.total || 0
+          : customOrders.length,
+        activeOrders: ordersData.success
+          ? (ordersData.stats?.accepted || 0) +
+            (ordersData.stats?.in_production || 0)
+          : customOrders.filter((o) =>
+              ["pending", "accepted"].includes(o.status),
+            ).length,
+        wishlistItems: session.user.wishlist?.length || 0,
+      });
     } catch (error) {
       console.error("Error fetching dashboard data:", error);
     } finally {
@@ -72,7 +78,7 @@ export default function CustomerDashboard() {
   return (
     <div className="flex h-screen bg-[#f8f7f6]">
       {/* Sidebar */}
-      <aside className="w-64 flex-shrink-0 bg-[#f8f7f6] p-6 flex flex-col justify-between border-r border-gray-200">
+      <aside className="w-64 shrink-0 bg-[#f8f7f6] p-6 flex flex-col justify-between border-r border-gray-200">
         <div>
           <div className="mb-10">
             <svg
@@ -120,9 +126,8 @@ export default function CustomerDashboard() {
               <span className="font-medium">My RFQs</span>
             </Link>
             <Link
-              href="#"
-              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-400 cursor-not-allowed"
-              title="Coming soon"
+              href="/customer/orders"
+              className="flex items-center gap-3 px-4 py-2 rounded-lg text-gray-900 hover:bg-[#eb9728]/10"
             >
               <span className="material-symbols-outlined">receipt_long</span>
               <span className="font-medium">Orders History</span>
@@ -280,18 +285,18 @@ export default function CustomerDashboard() {
                   </div>
                 </div>
               </Link>
-              <Link href="/customer/rfqs">
+              <Link href="/customer/orders">
                 <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition-all cursor-pointer border-2 border-transparent hover:border-amber-600">
                   <div className="flex items-center gap-4">
-                    <div className="bg-green-100 text-green-600 p-3 rounded-full">
+                    <div className="bg-purple-100 text-purple-600 p-3 rounded-full">
                       <span className="material-symbols-outlined text-2xl">
-                        request_quote
+                        receipt_long
                       </span>
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">View RFQs</h3>
+                      <h3 className="font-semibold text-gray-900">My Orders</h3>
                       <p className="text-sm text-gray-600">
-                        Check manufacturer bids
+                        Track your order history
                       </p>
                     </div>
                   </div>
@@ -362,7 +367,7 @@ export default function CustomerDashboard() {
                     Active Orders
                   </h2>
                   <Link
-                    href="/customer"
+                    href="/customer/orders"
                     className="text-sm font-medium text-[#eb9728] hover:underline"
                   >
                     View All Orders

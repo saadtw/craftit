@@ -29,24 +29,12 @@ export default function HomePage() {
 
   const fetchHomeData = async () => {
     try {
-      // TODO: Implement these API endpoints
-      // const [productsRes, groupBuysRes, manufacturersRes] = await Promise.all([
-      //   fetch("/api/products?featured=true&limit=3"),
-      //   fetch("/api/group-buys?status=active&limit=3"),
-      //   fetch("/api/manufacturers?verified=true&limit=4"),
-      // ]);
-      // const productsData = await productsRes.json();
-      // const groupBuysData = await groupBuysRes.json();
-      // const manufacturersData = await manufacturersRes.json();
-      // if (productsData.success)
-      //   setFeaturedProducts(productsData.products || []);
-      // if (groupBuysData.success) setGroupBuys(groupBuysData.groupBuys || []);
-      // if (manufacturersData.success)
-      //   setManufacturers(manufacturersData.manufacturers || []);
+      const groupBuysRes = await fetch("/api/group-buys?limit=3");
+      const groupBuysData = await groupBuysRes.json();
+      if (groupBuysData.success) setGroupBuys(groupBuysData.groupBuys || []);
 
-      // Placeholder data for now
+      // Products and manufacturers catalogs are not yet available for customers
       setFeaturedProducts([]);
-      setGroupBuys([]);
       setManufacturers([]);
     } catch (error) {
       console.error("Error fetching home data:", error);
@@ -93,16 +81,22 @@ export default function HomePage() {
                 Dashboard
               </Link>
               <Link
-                href="/manufacturers"
+                href="/customer/custom-orders"
                 className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
               >
-                Manufacturers
+                Custom Orders
               </Link>
               <Link
-                href="/group-buys"
+                href="/customer/orders"
                 className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
               >
-                Group Buys
+                My Orders
+              </Link>
+              <Link
+                href="/customer/rfqs"
+                className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
+              >
+                My RFQs
               </Link>
             </div>
           </div>

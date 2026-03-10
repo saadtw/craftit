@@ -180,7 +180,6 @@ const UserSchema = new mongoose.Schema(
 );
 
 // Indexes
-UserSchema.index({ email: 1 });
 UserSchema.index({ role: 1 });
 UserSchema.index({ verificationStatus: 1, role: 1 });
 UserSchema.index({ businessName: "text", name: "text" });

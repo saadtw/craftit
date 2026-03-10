@@ -139,9 +139,8 @@ export default function ManufacturerDashboard() {
                 Products Management
               </Link>
               <Link
-                href="#"
-                className="text-sm font-medium text-gray-400 cursor-not-allowed"
-                title="Coming soon"
+                href="/manufacturer/orders"
+                className="text-sm font-medium text-gray-700 hover:text-orange-500"
               >
                 Orders
               </Link>
@@ -307,13 +306,36 @@ export default function ManufacturerDashboard() {
                 </div>
               </div>
             </Link>
+            <Link href="/manufacturer/orders">
+              <div className="bg-white rounded-lg border-2 border-gray-200 hover:border-orange-500 p-6 transition-all cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="bg-purple-100 text-purple-600 p-3 rounded-full">
+                    <span className="material-symbols-outlined text-2xl">
+                      receipt_long
+                    </span>
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-gray-900">Manage Orders</h3>
+                    <p className="text-sm text-gray-600">
+                      View and fulfil customer orders
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Link>
           </div>
         </div>
 
         {/* Active Orders Table */}
         <div className="bg-white rounded-lg border border-gray-200 overflow-hidden mb-8">
-          <div className="p-6 border-b border-gray-200">
+          <div className="p-6 border-b border-gray-200 flex justify-between items-center">
             <h2 className="text-2xl font-bold text-blue-900">Active Orders</h2>
+            <Link
+              href="/manufacturer/orders"
+              className="text-sm font-medium text-orange-500 hover:text-orange-600 hover:underline"
+            >
+              View All Orders →
+            </Link>
           </div>
 
           {activeOrders.length === 0 ? (
