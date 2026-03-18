@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import LogoutButton from "@/components/LogoutButton";
@@ -12,21 +12,7 @@ export default function AdminManufacturersPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("unverified");
 
-  useEffect(() => {
-    if (status !== "authenticated") return;
-
-    if (!session?.user?.role) return;
-
-    if (session.user.role !== "admin") {
-      alert("Access denied. Admin access required.");
-      router.replace("/");
-      return;
-    }
-
-    fetchManufacturers();
-  }, [status, session?.user?.role, filter]);
-
-  const fetchManufacturers = async () => {
+  const fetchManufacturers = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/manufacturers?status=${filter}`);
@@ -42,7 +28,21 @@ export default function AdminManufacturersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filter]);
+
+  useEffect(() => {
+    if (status !== "authenticated") return;
+
+    if (!session?.user?.role) return;
+
+    if (session.user.role !== "admin") {
+      alert("Access denied. Admin access required.");
+      router.replace("/");
+      return;
+    }
+
+    fetchManufacturers();
+  }, [status, session?.user?.role, router, fetchManufacturers]);
 
   const handleVerify = async (manufacturerId, action, reason = "") => {
     if (!confirm(`Are you sure you want to ${action} this manufacturer?`)) {

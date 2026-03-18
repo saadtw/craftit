@@ -58,11 +58,10 @@ export default function CustomerSidebar({ active, session }) {
       disabled: true,
     },
     {
-      href: "#",
+      href: "/customer/settings",
       icon: "settings",
       label: "Settings",
       key: "settings",
-      disabled: true,
     },
   ];
 

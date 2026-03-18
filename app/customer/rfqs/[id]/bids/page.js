@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -12,21 +12,7 @@ export default function BidComparisonPage() {
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-      return;
-    }
-    if (status === "authenticated") {
-      if (session.user.role !== "customer") {
-        router.push("/auth/login");
-        return;
-      }
-      fetchBids();
-    }
-  }, [status, session, router]);
-
-  const fetchBids = async () => {
+  const fetchBids = useCallback(async () => {
     try {
       const res = await fetch(`/api/rfqs/${params.id}/bids`);
       const data = await res.json();
@@ -42,7 +28,21 @@ export default function BidComparisonPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
+      fetchBids();
+    }
+  }, [status, session, router, fetchBids]);
 
   if (status === "loading" || loading) return <div>Loading bids...</div>;
 

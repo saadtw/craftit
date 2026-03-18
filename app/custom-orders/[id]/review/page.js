@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Script from "next/script";
@@ -13,21 +13,7 @@ export default function CustomOrderReview() {
   const [customOrder, setCustomOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-      return;
-    }
-    if (status === "authenticated") {
-      if (session.user.role !== "customer") {
-        router.push("/auth/login");
-        return;
-      }
-      fetchCustomOrder();
-    }
-  }, [status, session, router]);
-
-  const fetchCustomOrder = async () => {
+  const fetchCustomOrder = useCallback(async () => {
     try {
       const response = await fetch(`/api/custom-orders/${params.id}`);
       const data = await response.json();
@@ -42,7 +28,21 @@ export default function CustomOrderReview() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
+      fetchCustomOrder();
+    }
+  }, [status, session, router, fetchCustomOrder]);
 
   const handleEdit = () => {
     router.push(`/custom-orders/${params.id}/edit`);

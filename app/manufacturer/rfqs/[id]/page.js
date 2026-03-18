@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Script from "next/script";
@@ -16,13 +16,7 @@ export default function ManufacturerRFQDetails() {
   const [myBid, setMyBid] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (status === "authenticated" && session?.user?.role === "manufacturer") {
-      fetchRFQ();
-    }
-  }, [status, session]);
-
-  const fetchRFQ = async () => {
+  const fetchRFQ = useCallback(async () => {
     try {
       const response = await fetch(`/api/rfqs/${params.id}`);
       const data = await response.json();
@@ -41,7 +35,13 @@ export default function ManufacturerRFQDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role === "manufacturer") {
+      fetchRFQ();
+    }
+  }, [status, session, fetchRFQ]);
 
   const getTimeRemaining = (endDate) => {
     const now = new Date();

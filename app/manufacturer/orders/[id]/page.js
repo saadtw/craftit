@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -43,6 +43,20 @@ export default function ManufacturerOrderDetailPage() {
     shippingMethod: "",
   });
 
+  const fetchOrder = useCallback(async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${id}`);
+      const data = await res.json();
+      if (data.success) setOrder(data.order);
+      else alert(data.error || "Failed to load order");
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
@@ -55,21 +69,7 @@ export default function ManufacturerOrderDetailPage() {
       }
       fetchOrder();
     }
-  }, [status, session]);
-
-  const fetchOrder = async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/orders/${id}`);
-      const data = await res.json();
-      if (data.success) setOrder(data.order);
-      else alert(data.error || "Failed to load order");
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [status, session, router, fetchOrder]);
 
   const updateStatus = async (newStatus, extra = {}) => {
     setActionLoading(true);

@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import CustomerSidebar from "@/components/CustomerSidebar";
 import LogoutButton from "@/components/LogoutButton";
 
 const SORT_OPTIONS = [
@@ -59,7 +60,7 @@ export default function CustomerExplorePage() {
     if (status === "authenticated" && session.user.role !== "customer") {
       router.push("/auth/login");
     }
-  }, [status, session]);
+  }, [status, session, router]);
 
   // Debounce search
   useEffect(() => {
@@ -465,7 +466,7 @@ function ProductCard({ product }) {
 
 // ── Sidebar ───────────────────────────────────────────────────────────────────
 
-function CustomerSidebar({ active, session }) {
+function LegacyCustomerSidebar({ active, session }) {
   const navItems = [
     {
       href: "/customer/dashboard",

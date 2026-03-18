@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -42,6 +42,30 @@ export default function ManufacturerOrdersPage() {
   const [sortBy, setSortBy] = useState("newest");
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
 
+  const fetchOrders = useCallback(
+    async (page = 1) => {
+      setLoading(true);
+      try {
+        const params = new URLSearchParams({ page, limit: 10 });
+        if (activeFilter !== "all") params.set("status", activeFilter);
+
+        const res = await fetch(`/api/orders?${params}`);
+        const data = await res.json();
+
+        if (data.success) {
+          setOrders(data.orders);
+          setStats(data.stats || {});
+          setPagination(data.pagination);
+        }
+      } catch (err) {
+        console.error("Error fetching orders:", err);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [activeFilter],
+  );
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
@@ -54,28 +78,7 @@ export default function ManufacturerOrdersPage() {
       }
       fetchOrders(1);
     }
-  }, [status, session, activeFilter]);
-
-  const fetchOrders = async (page = 1) => {
-    setLoading(true);
-    try {
-      const params = new URLSearchParams({ page, limit: 10 });
-      if (activeFilter !== "all") params.set("status", activeFilter);
-
-      const res = await fetch(`/api/orders?${params}`);
-      const data = await res.json();
-
-      if (data.success) {
-        setOrders(data.orders);
-        setStats(data.stats || {});
-        setPagination(data.pagination);
-      }
-    } catch (err) {
-      console.error("Error fetching orders:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [status, session, router, fetchOrders]);
 
   const filteredOrders = orders.filter((o) => {
     if (!search) return true;

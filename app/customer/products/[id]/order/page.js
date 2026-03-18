@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
+import CustomerSidebar from "@/components/CustomerSidebar";
 import LogoutButton from "@/components/LogoutButton";
 
 export default function PlaceProductOrderPage() {
@@ -33,21 +34,7 @@ export default function PlaceProductOrderPage() {
     selectedSavedAddress: "",
   });
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-      return;
-    }
-    if (status === "authenticated") {
-      if (session.user.role !== "customer") {
-        router.push("/auth/login");
-        return;
-      }
-      fetchProduct();
-    }
-  }, [status, session]);
-
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/products/${id}/public`);
@@ -63,7 +50,21 @@ export default function PlaceProductOrderPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, router]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
+      fetchProduct();
+    }
+  }, [status, session, router, fetchProduct]);
 
   const handleSavedAddressSelect = (e) => {
     const addressId = e.target.value;
@@ -519,7 +520,7 @@ function FormField({ label, value, onChange, placeholder, required }) {
   );
 }
 
-function CustomerSidebar({ active, session }) {
+function LegacyCustomerSidebar({ active, session }) {
   const navItems = [
     {
       href: "/customer/dashboard",

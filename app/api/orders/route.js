@@ -65,6 +65,9 @@ export async function GET(request) {
       completed: allOrders.filter((o) => o.status === "completed").length,
       cancelled: allOrders.filter((o) => o.status === "cancelled").length,
       disputed: allOrders.filter((o) => o.status === "disputed").length,
+      totalSpend: allOrders
+        .filter((o) => o.status === "completed")
+        .reduce((sum, o) => sum + (o.totalPrice || 0), 0),
     };
 
     return NextResponse.json({

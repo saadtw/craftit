@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Script from "next/script";
@@ -15,21 +15,7 @@ export default function CustomerRFQDetails() {
   const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-      return;
-    }
-    if (status === "authenticated") {
-      if (session.user.role !== "customer") {
-        router.push("/auth/login");
-        return;
-      }
-      fetchRFQ();
-    }
-  }, [status, session, router]);
-
-  const fetchRFQ = async () => {
+  const fetchRFQ = useCallback(async () => {
     try {
       const response = await fetch(`/api/rfqs/${params.id}`);
       const data = await response.json();
@@ -48,7 +34,21 @@ export default function CustomerRFQDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [params.id]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
+      fetchRFQ();
+    }
+  }, [status, session, router, fetchRFQ]);
 
   const getTimeRemaining = (endDate) => {
     const now = new Date();

@@ -9,7 +9,7 @@ import CustomerSidebar from "@/components/CustomerSidebar";
 
 // ─── Countdown helper ───────────────────────────────────────────────────────
 function useCountdown(endDate) {
-  const calc = () => {
+  const calc = useCallback(() => {
     if (!endDate)
       return { days: 0, hours: 0, minutes: 0, seconds: 0, done: true };
     const diff = new Date(endDate) - Date.now();
@@ -22,12 +22,12 @@ function useCountdown(endDate) {
       seconds: Math.floor((diff % 60000) / 1000),
       done: false,
     };
-  };
+  }, [endDate]);
   const [time, setTime] = useState(calc);
   useEffect(() => {
     const t = setInterval(() => setTime(calc()), 1000);
     return () => clearInterval(t);
-  }, [endDate]);
+  }, [calc]);
   return time;
 }
 

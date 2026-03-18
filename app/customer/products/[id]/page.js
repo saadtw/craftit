@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
+import CustomerSidebar from "@/components/CustomerSidebar";
 import LogoutButton from "@/components/LogoutButton";
 
 export default function CustomerProductDetailPage() {
@@ -17,21 +18,15 @@ export default function CustomerProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-      return;
-    }
-    if (status === "authenticated") {
-      if (session.user.role !== "customer") {
-        router.push("/auth/login");
-        return;
-      }
-      fetchProduct();
-    }
-  }, [status, session]);
+  const fetchManufacturer = useCallback(async (mId) => {
+    try {
+      const res = await fetch(`/api/manufacturers/${mId}`);
+      const data = await res.json();
+      if (data.success) setManufacturer(data.manufacturer);
+    } catch (_) {}
+  }, []);
 
-  const fetchProduct = async () => {
+  const fetchProduct = useCallback(async () => {
     setLoading(true);
     try {
       // Use the public products API with a product ID filter
@@ -56,15 +51,21 @@ export default function CustomerProductDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id, fetchManufacturer, router]);
 
-  const fetchManufacturer = async (mId) => {
-    try {
-      const res = await fetch(`/api/manufacturers/${mId}`);
-      const data = await res.json();
-      if (data.success) setManufacturer(data.manufacturer);
-    } catch (_) {}
-  };
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
+      fetchProduct();
+    }
+  }, [status, session, router, fetchProduct]);
 
   if (status === "loading" || loading) {
     return (
@@ -488,7 +489,7 @@ function StatPill({ label, value }) {
   );
 }
 
-function CustomerSidebar({ active, session }) {
+function LegacyCustomerSidebar({ active, session }) {
   const navItems = [
     {
       href: "/customer/dashboard",

@@ -330,7 +330,7 @@
 // app/manufacturer/rfqs/[id]/bid/page.js
 "use client";
 
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
@@ -358,13 +358,7 @@ export default function PlaceBidPage({ params }) {
     warrantyInfo: "",
   });
 
-  useEffect(() => {
-    if (status === "authenticated" && session?.user?.role === "manufacturer") {
-      fetchRFQ();
-    }
-  }, [status, session]);
-
-  const fetchRFQ = async () => {
+  const fetchRFQ = useCallback(async () => {
     try {
       const res = await fetch(`/api/rfqs/${unwrappedParams.id}`);
       const data = await res.json();
@@ -377,7 +371,13 @@ export default function PlaceBidPage({ params }) {
     } catch (error) {
       alert("Error: " + error.message);
     }
-  };
+  }, [unwrappedParams.id]);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role === "manufacturer") {
+      fetchRFQ();
+    }
+  }, [status, session, fetchRFQ]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();

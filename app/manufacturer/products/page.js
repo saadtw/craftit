@@ -75,10 +75,11 @@ export default function ManufacturerProductsPage() {
 
   // Reset page on filter change
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setPage(1);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setSelected([]);
+    const t = setTimeout(() => {
+      setPage(1);
+      setSelected([]);
+    }, 0);
+    return () => clearTimeout(t);
   }, [activeTab, debouncedSearch, sort, category]);
 
   // Fetch stats
@@ -120,10 +121,11 @@ export default function ManufacturerProductsPage() {
 
   useEffect(() => {
     if (status === "authenticated") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchStats();
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchProducts();
+      const t = setTimeout(() => {
+        fetchStats();
+        fetchProducts();
+      }, 0);
+      return () => clearTimeout(t);
     }
   }, [status, fetchStats, fetchProducts]);
 
