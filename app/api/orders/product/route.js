@@ -5,10 +5,11 @@ import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import Order from "@/models/Order";
 import User from "@/models/User";
+import { notify } from "@/services/notificationService";
 
 // POST /api/orders/product
 // Customer places a direct product order.
-// Body: { productId, quantity, deliveryAddress, paymentMethod, specialRequirements? }
+// Body: { productId, quantity, deliveryAddress, paymentMethod, paymentIntentId?, specialRequirements? }
 
 export async function POST(request) {
   try {
@@ -25,6 +26,7 @@ export async function POST(request) {
       quantity,
       deliveryAddress,
       paymentMethod,
+      paymentIntentId, // Optional — provided when Stripe is configured
       specialRequirements,
     } = body;
 
@@ -106,7 +108,9 @@ export async function POST(request) {
       totalPrice,
       timeline: product.leadTime || null,
       status: "pending_acceptance",
-      paymentStatus: "authorized",
+      // Payment fields — paymentIntentId is optional for demo/no-Stripe flow
+      paymentIntentId: paymentIntentId || undefined,
+      paymentStatus: paymentIntentId ? "authorized" : "pending",
       paymentMethod: paymentMethod || "card",
       deliveryAddress,
       specialRequirements: specialRequirements || "",
@@ -124,6 +128,13 @@ export async function POST(request) {
     await User.findByIdAndUpdate(product.manufacturerId._id, {
       $inc: { "stats.totalOrders": 1 },
     });
+
+    // --- Notify manufacturer ---
+    await notify.orderPlaced(
+      product.manufacturerId._id,
+      order._id,
+      order.orderNumber,
+    );
 
     const populatedOrder = await Order.findById(order._id)
       .populate("customerId", "name email")
