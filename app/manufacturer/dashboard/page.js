@@ -4,33 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import LogoutButton from "@/components/LogoutButton";
-
-// ─── Logo ─────────────────────────────────────────────────────────────────────
-function CraftitLogo() {
-  return (
-    <svg
-      className="h-7 w-7 text-amber-600"
-      fill="none"
-      viewBox="0 0 48 48"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M4.177,14.686,21.5,4.2a3,3,0,0,1,3,0l17.323,10.485a3,3,0,0,1,1.5,2.6V30.714a3,3,0,0,1-1.5,2.6L24.5,43.8a3,3,0,0,1-3,0L4.177,33.314a3,3,0,0,1-1.5-2.6V17.286a3,3,0,0,1,1.5-2.6Z"
-        stroke="currentColor"
-        strokeLinejoin="round"
-        strokeWidth="3"
-      />
-      <path
-        d="m22.5,24,14.5-8.5M22.5,24V43.5M22.5,24,9,16"
-        stroke="currentColor"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth="3"
-      />
-    </svg>
-  );
-}
+import ManufacturerNav from "@/components/Manufacturernav";
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 const STATUS_COLORS = {
@@ -97,28 +71,6 @@ function ActionCard({ href, icon, iconBg, label, desc }) {
           </div>
         </div>
       </div>
-    </Link>
-  );
-}
-
-// ─── Nav link ─────────────────────────────────────────────────────────────────
-function NavLink({ href, label, active = false, disabled = false }) {
-  if (disabled) {
-    return (
-      <span
-        className="text-sm font-medium text-gray-300 cursor-not-allowed"
-        title="Coming soon"
-      >
-        {label}
-      </span>
-    );
-  }
-  return (
-    <Link
-      href={href}
-      className={`text-sm font-medium transition-colors ${active ? "text-orange-500 font-bold" : "text-gray-600 hover:text-orange-500"}`}
-    >
-      {label}
     </Link>
   );
 }
@@ -249,58 +201,9 @@ export default function ManufacturerDashboard() {
   const greeting =
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
-  const navLinks = [
-    { href: "/manufacturer/dashboard", label: "Dashboard", active: true },
-    { href: "/manufacturer/products", label: "Products" },
-    { href: "/manufacturer/orders", label: "Orders" },
-    { href: "/manufacturer/rfqs", label: "RFQs & Bidding" },
-    { href: "/manufacturer/bids", label: "My Bids" },
-    { href: "/manufacturer/group-buys", label: "Group Buys" },
-    { href: `/manufacturers/${session?.user?.id}`, label: "My Profile" },
-    { href: "/manufacturer/settings", label: "Settings" },
-    { href: "#", label: "Messages", disabled: true },
-    { href: "#", label: "Payments", disabled: true },
-  ];
-
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      {/* ─── Header ──────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-200 shadow-sm">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-8">
-            <Link
-              href="/manufacturer/dashboard"
-              className="flex items-center gap-2"
-            >
-              <CraftitLogo />
-              <span className="text-lg font-extrabold text-blue-900">
-                Craftit
-              </span>
-            </Link>
-            <nav className="hidden lg:flex items-center gap-5 flex-wrap">
-              {navLinks.map((l) => (
-                <NavLink
-                  key={l.href + l.label}
-                  href={l.href}
-                  label={l.label}
-                  active={l.active}
-                  disabled={l.disabled}
-                />
-              ))}
-            </nav>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/manufacturer/settings"
-              className="w-9 h-9 bg-blue-900 rounded-full flex items-center justify-center text-white font-bold text-sm hover:bg-blue-800 transition-colors"
-              title="Settings"
-            >
-              {initials}
-            </Link>
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
+      <ManufacturerNav session={session} />
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-7xl">
         {/* ─── Welcome banner ──────────────────────────────────────────── */}

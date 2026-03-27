@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -184,7 +184,7 @@ function ManufacturerCard({ mfr }) {
   );
 }
 
-export default function ManufacturersPage() {
+function ManufacturersPageContent() {
   const { data: session } = useSession();
   const searchParams = useSearchParams();
 
@@ -449,5 +449,19 @@ export default function ManufacturersPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function ManufacturersPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-gray-300 border-t-amber-500 rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <ManufacturersPageContent />
+    </Suspense>
   );
 }

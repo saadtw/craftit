@@ -5,11 +5,14 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ChatBox from "@/components/chat/ChatBox";
+import ManufacturerNav from "@/components/Manufacturernav";
+import { CARRIER_NAMES } from "@/lib/carriers";
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-yellow-100 text-yellow-800",
   accepted: "bg-blue-100 text-blue-800",
   in_production: "bg-purple-100 text-purple-800",
+  shipped: "bg-indigo-100 text-indigo-800",
   completed: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
   disputed: "bg-orange-100 text-orange-800",
@@ -30,14 +33,19 @@ export default function ManufacturerOrderDetailPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Modals
   const [showAcceptModal, setShowAcceptModal] = useState(false);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [showCompleteModal, setShowCompleteModal] = useState(false);
+  const [showShipModal, setShowShipModal] = useState(false);
   const [showTrackingModal, setShowTrackingModal] = useState(false);
 
   const [acceptForm, setAcceptForm] = useState({ estimatedDeliveryDate: "" });
   const [rejectForm, setRejectForm] = useState({ reason: "" });
+  const [shipForm, setShipForm] = useState({
+    trackingNumber: "",
+    shippingMethod: "",
+    estimatedDeliveryDate: "",
+  });
   const [trackingForm, setTrackingForm] = useState({
     trackingNumber: "",
     shippingMethod: "",
@@ -85,6 +93,7 @@ export default function ManufacturerOrderDetailPage() {
         setShowAcceptModal(false);
         setShowRejectModal(false);
         setShowCompleteModal(false);
+        setShowShipModal(false);
         setShowTrackingModal(false);
       } else {
         alert(data.error || "Action failed");
@@ -108,14 +117,24 @@ export default function ManufacturerOrderDetailPage() {
       if (data.success) {
         setOrder(data.order);
         setShowTrackingModal(false);
-      } else {
-        alert(data.error || "Failed to save tracking info");
-      }
+      } else alert(data.error || "Failed to save tracking info");
     } catch (err) {
       alert("Error saving tracking info");
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const markAsShipped = async () => {
+    if (!shipForm.trackingNumber || !shipForm.shippingMethod) {
+      alert("Please enter both tracking number and carrier.");
+      return;
+    }
+    await updateStatus("shipped", {
+      trackingNumber: shipForm.trackingNumber,
+      shippingMethod: shipForm.shippingMethod,
+      estimatedDeliveryDate: shipForm.estimatedDeliveryDate || undefined,
+    });
   };
 
   const updateMilestone = async (milestoneId, newStatus, notes = "") => {
@@ -132,9 +151,7 @@ export default function ManufacturerOrderDetailPage() {
           milestones: data.milestones,
           status: data.orderStatus || prev.status,
         }));
-      } else {
-        alert(data.error || "Failed to update milestone");
-      }
+      } else alert(data.error || "Failed to update milestone");
     } catch (err) {
       alert("Error updating milestone");
     }
@@ -142,19 +159,18 @@ export default function ManufacturerOrderDetailPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
-        <p className="text-gray-600 text-lg">Loading order...</p>
+      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin" />
       </div>
     );
   }
 
-  if (!order) {
+  if (!order)
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-red-600">Order not found.</p>
       </div>
     );
-  }
 
   const completedMilestones =
     order.milestones?.filter((m) => m.status === "completed").length || 0;
@@ -166,38 +182,36 @@ export default function ManufacturerOrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Link
-              href="/manufacturer/orders"
-              className="text-sm text-gray-600 hover:text-orange-500 flex items-center gap-1"
-            >
-              ← Orders
-            </Link>
-            <span className="text-gray-300">|</span>
-            <span className="text-sm font-mono font-bold text-blue-900">
-              {order.orderNumber}
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span
-              className={`px-3 py-1 rounded-full text-sm font-semibold ${STATUS_COLORS[order.status]}`}
-            >
-              {order.status
-                .replace(/_/g, " ")
-                .replace(/\b\w/g, (c) => c.toUpperCase())}
-            </span>
-          </div>
+      <ManufacturerNav session={session} />
+
+      {/* Sub-header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex items-center gap-4">
+          <Link
+            href="/manufacturer/orders"
+            className="text-sm text-gray-600 hover:text-orange-500 flex items-center gap-1"
+          >
+            ← Orders
+          </Link>
+          <span className="text-gray-300">|</span>
+          <span className="text-sm font-mono font-bold text-blue-900">
+            {order.orderNumber}
+          </span>
+          <span
+            className={`px-3 py-1 rounded-full text-sm font-semibold ${STATUS_COLORS[order.status]}`}
+          >
+            {order.status
+              .replace(/_/g, " ")
+              .replace(/\b\w/g, (c) => c.toUpperCase())}
+          </span>
         </div>
-      </header>
+      </div>
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-5xl">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* LEFT: Main content */}
+          {/* LEFT */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Order Summary Card */}
+            {/* Order Summary */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
               <h2 className="text-lg font-bold text-blue-900 mb-4">
                 Order Summary
@@ -224,9 +238,7 @@ export default function ManufacturerOrderDetailPage() {
                 <div>
                   <p className="text-gray-500">Agreed Price</p>
                   <p className="font-bold text-orange-500 text-lg">
-                    $
-                    {order.agreedPrice?.toLocaleString() ||
-                      order.totalPrice?.toLocaleString()}
+                    ${(order.agreedPrice || order.totalPrice)?.toLocaleString()}
                   </p>
                 </div>
                 <div>
@@ -252,10 +264,10 @@ export default function ManufacturerOrderDetailPage() {
                   </div>
                 )}
                 {order.trackingNumber && (
-                  <div>
-                    <p className="text-gray-500">Tracking #</p>
+                  <div className="col-span-2">
+                    <p className="text-gray-500">Tracking</p>
                     <p className="font-semibold text-gray-900">
-                      {order.trackingNumber}
+                      {order.shippingMethod} — {order.trackingNumber}
                     </p>
                   </div>
                 )}
@@ -287,15 +299,23 @@ export default function ManufacturerOrderDetailPage() {
                   Delivery Address
                 </h2>
                 <div className="text-sm text-gray-700 space-y-1">
-                  <p className="font-semibold">{order.deliveryAddress.name}</p>
+                  <p className="font-semibold">
+                    {order.deliveryAddress.recipientName ||
+                      order.deliveryAddress.name}
+                  </p>
                   <p>{order.deliveryAddress.street}</p>
                   <p>
                     {order.deliveryAddress.city}, {order.deliveryAddress.state}{" "}
                     {order.deliveryAddress.postalCode}
                   </p>
                   <p>{order.deliveryAddress.country}</p>
-                  {order.deliveryAddress.phone && (
-                    <p>📞 {order.deliveryAddress.phone}</p>
+                  {(order.deliveryAddress.recipientPhone ||
+                    order.deliveryAddress.phone) && (
+                    <p>
+                      📞{" "}
+                      {order.deliveryAddress.recipientPhone ||
+                        order.deliveryAddress.phone}
+                    </p>
                   )}
                 </div>
               </div>
@@ -355,13 +375,7 @@ export default function ManufacturerOrderDetailPage() {
                       className="flex items-center gap-3 p-3 rounded-lg bg-gray-50"
                     >
                       <div
-                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${
-                          m.status === "completed"
-                            ? "bg-green-500 text-white"
-                            : m.status === "in_progress"
-                              ? "bg-blue-500 text-white"
-                              : "bg-gray-200 text-gray-600"
-                        }`}
+                        className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold shrink-0 ${m.status === "completed" ? "bg-green-500 text-white" : m.status === "in_progress" ? "bg-blue-500 text-white" : "bg-gray-200 text-gray-600"}`}
                       >
                         {m.status === "completed" ? "✓" : i + 1}
                       </div>
@@ -416,7 +430,7 @@ export default function ManufacturerOrderDetailPage() {
               )}
             </div>
 
-            {/* Bid Details (for RFQ orders) */}
+            {/* Bid Details */}
             {order.bidId && (
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
                 <h2 className="text-lg font-bold text-blue-900 mb-4">
@@ -448,9 +462,9 @@ export default function ManufacturerOrderDetailPage() {
             )}
           </div>
 
-          {/* RIGHT: Actions + Customer info */}
+          {/* RIGHT */}
           <div className="space-y-6">
-            {/* Primary Actions */}
+            {/* Actions */}
             <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
               <h2 className="text-lg font-bold text-blue-900 mb-4">Actions</h2>
               <div className="space-y-3">
@@ -470,7 +484,6 @@ export default function ManufacturerOrderDetailPage() {
                     </button>
                   </>
                 )}
-
                 {order.status === "accepted" && (
                   <>
                     <Link
@@ -487,7 +500,6 @@ export default function ManufacturerOrderDetailPage() {
                     </button>
                   </>
                 )}
-
                 {order.status === "in_production" && (
                   <>
                     <Link
@@ -496,6 +508,22 @@ export default function ManufacturerOrderDetailPage() {
                     >
                       📋 Update Milestones
                     </Link>
+                    <button
+                      onClick={() => setShowShipModal(true)}
+                      className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700"
+                    >
+                      📦 Mark as Shipped
+                    </button>
+                    <button
+                      onClick={() => setShowTrackingModal(true)}
+                      className="w-full py-3 bg-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-200"
+                    >
+                      🚚 Update Tracking
+                    </button>
+                  </>
+                )}
+                {order.status === "shipped" && (
+                  <>
                     <button
                       onClick={() => setShowCompleteModal(true)}
                       className="w-full py-3 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700"
@@ -510,8 +538,9 @@ export default function ManufacturerOrderDetailPage() {
                     </button>
                   </>
                 )}
-
-                {["completed", "cancelled"].includes(order.status) && (
+                {["completed", "cancelled", "disputed"].includes(
+                  order.status,
+                ) && (
                   <div className="text-center py-4 text-gray-400 text-sm">
                     No further actions available.
                   </div>
@@ -535,11 +564,6 @@ export default function ManufacturerOrderDetailPage() {
                   </p>
                 </div>
               </div>
-              {order.customerId?.phone && (
-                <p className="text-sm text-gray-600">
-                  📞 {order.customerId.phone}
-                </p>
-              )}
             </div>
 
             {/* Order Timeline */}
@@ -554,6 +578,9 @@ export default function ManufacturerOrderDetailPage() {
                     label="Accepted by You"
                     date={order.manufacturerAcceptedAt}
                   />
+                )}
+                {order.trackingNumber && order.status === "shipped" && (
+                  <TimelineItem label="Shipped" date={order.updatedAt} />
                 )}
                 {order.completedAt && (
                   <TimelineItem label="Completed" date={order.completedAt} />
@@ -570,7 +597,7 @@ export default function ManufacturerOrderDetailPage() {
           </div>
         </div>
 
-        {/* Chat with Customer */}
+        {/* Chat */}
         {order.status !== "cancelled" && (
           <div className="mt-6">
             <h2 className="text-base font-bold text-blue-900 mb-3">
@@ -596,8 +623,8 @@ export default function ManufacturerOrderDetailPage() {
       {showAcceptModal && (
         <Modal title="Accept Order" onClose={() => setShowAcceptModal(false)}>
           <p className="text-sm text-gray-600 mb-4">
-            You are about to accept order <strong>{order.orderNumber}</strong>.
-            Please set an estimated delivery date.
+            Set an estimated delivery date for{" "}
+            <strong>{order.orderNumber}</strong>.
           </p>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Estimated Delivery Date
@@ -636,8 +663,8 @@ export default function ManufacturerOrderDetailPage() {
       {showRejectModal && (
         <Modal title="Reject Order" onClose={() => setShowRejectModal(false)}>
           <p className="text-sm text-gray-600 mb-4">
-            Please provide a reason for rejecting this order. The customer will
-            be notified.
+            The customer will be notified. A full refund will be issued
+            automatically.
           </p>
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Reason (optional)
@@ -671,6 +698,82 @@ export default function ManufacturerOrderDetailPage() {
         </Modal>
       )}
 
+      {/* Ship Modal */}
+      {showShipModal && (
+        <Modal title="Mark as Shipped" onClose={() => setShowShipModal(false)}>
+          <p className="text-sm text-gray-600 mb-4">
+            Enter the shipping details. The customer will be notified and given
+            a tracking link.
+          </p>
+          <div className="space-y-3 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Carrier *
+              </label>
+              <select
+                value={shipForm.shippingMethod}
+                onChange={(e) =>
+                  setShipForm((p) => ({ ...p, shippingMethod: e.target.value }))
+                }
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
+              >
+                <option value="">Select carrier...</option>
+                {CARRIER_NAMES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tracking Number *
+              </label>
+              <input
+                type="text"
+                value={shipForm.trackingNumber}
+                onChange={(e) =>
+                  setShipForm((p) => ({ ...p, trackingNumber: e.target.value }))
+                }
+                placeholder="e.g. 1Z999AA10123456784"
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Estimated Delivery Date (optional)
+              </label>
+              <input
+                type="date"
+                value={shipForm.estimatedDeliveryDate}
+                onChange={(e) =>
+                  setShipForm((p) => ({
+                    ...p,
+                    estimatedDeliveryDate: e.target.value,
+                  }))
+                }
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={markAsShipped}
+              disabled={actionLoading}
+              className="flex-1 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50"
+            >
+              {actionLoading ? "Marking..." : "Confirm Shipped"}
+            </button>
+            <button
+              onClick={() => setShowShipModal(false)}
+              className="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+          </div>
+        </Modal>
+      )}
+
       {/* Complete Modal */}
       {showCompleteModal && (
         <Modal
@@ -679,7 +782,7 @@ export default function ManufacturerOrderDetailPage() {
         >
           <p className="text-sm text-gray-600 mb-4">
             Confirm that order <strong>{order.orderNumber}</strong> has been
-            fully completed and delivered to the customer.
+            fully delivered. Payment will be released.
           </p>
           <div className="flex gap-3">
             <button
@@ -699,13 +802,35 @@ export default function ManufacturerOrderDetailPage() {
         </Modal>
       )}
 
-      {/* Tracking Modal */}
+      {/* Tracking update modal */}
       {showTrackingModal && (
         <Modal
           title="Update Shipping Info"
           onClose={() => setShowTrackingModal(false)}
         >
           <div className="space-y-3 mb-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Carrier
+              </label>
+              <select
+                value={trackingForm.shippingMethod}
+                onChange={(e) =>
+                  setTrackingForm((p) => ({
+                    ...p,
+                    shippingMethod: e.target.value,
+                  }))
+                }
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
+              >
+                <option value="">Select carrier...</option>
+                {CARRIER_NAMES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
                 Tracking Number
@@ -723,23 +848,6 @@ export default function ManufacturerOrderDetailPage() {
                 className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Shipping Method
-              </label>
-              <input
-                type="text"
-                value={trackingForm.shippingMethod}
-                onChange={(e) =>
-                  setTrackingForm((p) => ({
-                    ...p,
-                    shippingMethod: e.target.value,
-                  }))
-                }
-                placeholder="e.g. DHL Express, FedEx..."
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
-              />
-            </div>
           </div>
           <div className="flex gap-3">
             <button
@@ -747,7 +855,7 @@ export default function ManufacturerOrderDetailPage() {
               disabled={actionLoading}
               className="flex-1 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50"
             >
-              {actionLoading ? "Saving..." : "Save Tracking Info"}
+              {actionLoading ? "Saving..." : "Save"}
             </button>
             <button
               onClick={() => setShowTrackingModal(false)}
@@ -765,7 +873,7 @@ export default function ManufacturerOrderDetailPage() {
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+      <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4 max-h-[90vh] overflow-y-auto">
         <div className="flex justify-between items-center mb-4">
           <h3 className="text-lg font-bold text-gray-900">{title}</h3>
           <button

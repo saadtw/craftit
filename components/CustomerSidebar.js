@@ -1,9 +1,27 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import LogoutButton from "@/components/LogoutButton";
 
 export default function CustomerSidebar({ active, session }) {
+  const pathname = usePathname();
+  const { data: clientSession } = useSession();
+  const activeSession = session || clientSession;
+  const [unreadNotifs, setUnreadNotifs] = useState(0);
+
+  useEffect(() => {
+    if (!activeSession?.user?.id) return;
+    fetch("/api/notifications?unread=true&limit=1")
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.unreadCount !== undefined) setUnreadNotifs(d.unreadCount);
+      })
+      .catch(() => {});
+  }, [activeSession?.user?.id]);
+
   const navItems = [
     {
       href: "/customer/dashboard",
@@ -37,25 +55,29 @@ export default function CustomerSidebar({ active, session }) {
       key: "group-buys",
     },
     {
-      href: "#",
+      href: "/customer/wishlist",
       icon: "favorite",
       label: "Wishlist",
       key: "wishlist",
-      disabled: true,
     },
     {
-      href: "#",
+      href: "/customer/messages",
       icon: "mail",
       label: "Messages",
       key: "messages",
-      disabled: true,
     },
     {
-      href: "#",
+      href: "/customer/payments",
       icon: "payments",
       label: "Payments",
       key: "payments",
-      disabled: true,
+    },
+    {
+      href: "/customer/notifications",
+      icon: "notifications",
+      label: "Notifications",
+      key: "notifications",
+      badge: unreadNotifs > 0 ? unreadNotifs : null,
     },
     {
       href: "/customer/settings",
@@ -64,6 +86,12 @@ export default function CustomerSidebar({ active, session }) {
       key: "settings",
     },
   ];
+
+  const isActive = (item) => {
+    if (active) return active === item.key;
+    if (item.href === "/customer/dashboard") return pathname === item.href;
+    return pathname.startsWith(item.href);
+  };
 
   return (
     <aside className="w-64 shrink-0 bg-[#f8f7f6] p-6 flex flex-col justify-between border-r border-gray-200">
@@ -97,18 +125,20 @@ export default function CustomerSidebar({ active, session }) {
               key={item.key}
               href={item.href}
               className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                item.disabled
-                  ? "text-gray-400 cursor-not-allowed"
-                  : active === item.key
-                    ? "bg-[#eb9728]/20 text-[#eb9728]"
-                    : "text-gray-700 hover:bg-[#eb9728]/10"
+                isActive(item)
+                  ? "bg-[#eb9728]/20 text-[#eb9728]"
+                  : "text-gray-700 hover:bg-[#eb9728]/10"
               }`}
-              title={item.disabled ? "Coming soon" : undefined}
             >
               <span className="material-symbols-outlined text-lg">
                 {item.icon}
               </span>
-              <span className="font-medium text-sm">{item.label}</span>
+              <span className="font-medium text-sm flex-1">{item.label}</span>
+              {item.badge && (
+                <span className="w-5 h-5 bg-[#eb9728] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {item.badge > 9 ? "9+" : item.badge}
+                </span>
+              )}
             </Link>
           ))}
         </nav>

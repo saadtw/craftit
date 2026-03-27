@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import LogoutButton from "@/components/LogoutButton";
+import ManufacturerNav from "@/components/Manufacturernav";
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-yellow-100 text-yellow-800",
@@ -133,80 +133,7 @@ export default function ManufacturerOrdersPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-8">
-            <Link
-              href="/manufacturer/dashboard"
-              className="flex items-center gap-2"
-            >
-              <svg
-                className="h-8 w-8 text-amber-600"
-                fill="none"
-                viewBox="0 0 48 48"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M4.177,14.686,21.5,4.2a3,3,0,0,1,3,0l17.323,10.485a3,3,0,0,1,1.5,2.6V30.714a3,3,0,0,1-1.5,2.6L24.5,43.8a3,3,0,0,1-3,0L4.177,33.314a3,3,0,0,1-1.5-2.6V17.286a3,3,0,0,1,1.5-2.6Z"
-                  stroke="currentColor"
-                  strokeLinejoin="round"
-                  strokeWidth="3"
-                />
-                <path
-                  d="m22.5,24,14.5-8.5M22.5,24V43.5M22.5,24,9,16"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="3"
-                />
-              </svg>
-              <h2 className="text-xl font-bold text-blue-900">Craftit</h2>
-            </Link>
-            <nav className="hidden md:flex items-center gap-6">
-              <Link
-                href="/manufacturer/dashboard"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/manufacturer/products"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
-              >
-                Products
-              </Link>
-              <Link
-                href="/manufacturer/orders"
-                className="text-sm font-bold text-orange-500"
-              >
-                Orders
-              </Link>
-              <Link
-                href="/manufacturer/rfqs"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
-              >
-                RFQs
-              </Link>
-              <Link
-                href="/manufacturer/bids"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
-              >
-                My Bids
-              </Link>
-              <Link
-                href="/manufacturer/group-buys"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
-              >
-                Group Buys
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <LogoutButton />
-          </div>
-        </div>
-      </header>
+      <ManufacturerNav session={session} />
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8">
         {/* Page Title */}

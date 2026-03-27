@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import ManufacturerNav from "@/components/Manufacturernav";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
@@ -164,28 +165,12 @@ export default function ManufacturerGroupBuysPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <ManufacturerNav session={session} />
+
       {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
+      <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Link
-              href="/manufacturer/dashboard"
-              className="text-slate-400 hover:text-slate-600 transition-colors"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
-            </Link>
             <h1 className="text-xl font-semibold text-slate-900">Group Buys</h1>
           </div>
           <Link

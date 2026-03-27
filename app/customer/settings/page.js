@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import CustomerSidebar from "@/components/CustomerSidebar";
@@ -539,7 +539,7 @@ function NotificationsTab() {
 }
 
 // ─── Main Page ────────────────────────────────────────────────────────────────
-export default function CustomerSettingsPage() {
+function CustomerSettingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -674,5 +674,19 @@ export default function CustomerSettingsPage() {
         </div>
       </main>
     </div>
+  );
+}
+
+export default function CustomerSettingsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen bg-[#f8f7f6] items-center justify-center">
+          <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <CustomerSettingsPageContent />
+    </Suspense>
   );
 }

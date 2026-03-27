@@ -1,22 +1,24 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { Suspense, useState, useEffect, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import LogoutButton from "@/components/LogoutButton";
+import CustomerSidebar from "@/components/CustomerSidebar";
 import ChatBox from "@/components/chat/ChatBox";
+import { getTrackingUrl } from "@/lib/carriers";
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-yellow-100 text-yellow-800",
   accepted: "bg-blue-100 text-blue-800",
   in_production: "bg-purple-100 text-purple-800",
+  shipped: "bg-indigo-100 text-indigo-800",
   completed: "bg-green-100 text-green-800",
   cancelled: "bg-red-100 text-red-800",
   disputed: "bg-orange-100 text-orange-800",
 };
 
-export default function CustomerOrderDetailPage() {
+function CustomerOrderDetailPageContent() {
   const { id } = useParams();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -156,6 +158,12 @@ export default function CustomerOrderDetailPage() {
       ? Math.round((completedMilestones / totalMilestones) * 100)
       : 0;
 
+  // Tracking link from carrier map
+  const trackingUrl =
+    order.trackingNumber && order.shippingMethod
+      ? getTrackingUrl(order.shippingMethod, order.trackingNumber)
+      : null;
+
   return (
     <div className="flex h-screen bg-[#f8f7f6]">
       <CustomerSidebar active="orders" session={session} />
@@ -247,12 +255,38 @@ export default function CustomerOrderDetailPage() {
                       </p>
                     </div>
                   )}
+
+                  {/* Tracking — shown when order is shipped */}
                   {order.trackingNumber && (
-                    <div>
-                      <p className="text-gray-500">Tracking #</p>
-                      <p className="font-semibold text-blue-600">
-                        {order.trackingNumber}
-                      </p>
+                    <div className="col-span-2">
+                      <p className="text-gray-500 mb-1">Shipment Tracking</p>
+                      <div className="flex items-center gap-3 p-3 bg-indigo-50 rounded-lg border border-indigo-100">
+                        <span className="material-symbols-outlined text-indigo-500 text-base">
+                          local_shipping
+                        </span>
+                        <div className="flex-1">
+                          <p className="text-xs text-gray-500">
+                            {order.shippingMethod || "Carrier"}
+                          </p>
+                          <p className="font-mono font-semibold text-gray-900 text-sm">
+                            {order.trackingNumber}
+                          </p>
+                        </div>
+                        {trackingUrl ? (
+                          <a
+                            href={trackingUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-3 py-1.5 bg-indigo-600 text-white text-xs font-semibold rounded-lg hover:bg-indigo-700 transition-colors"
+                          >
+                            Track Shipment
+                          </a>
+                        ) : (
+                          <span className="text-xs text-gray-400">
+                            Use tracking # on carrier website
+                          </span>
+                        )}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -285,7 +319,7 @@ export default function CustomerOrderDetailPage() {
                   </div>
                 )}
 
-                {["accepted", "in_production", "completed"].includes(
+                {["accepted", "in_production", "shipped", "completed"].includes(
                   order.status,
                 ) &&
                   totalMilestones === 0 && (
@@ -318,7 +352,6 @@ export default function CustomerOrderDetailPage() {
                     </div>
 
                     <div className="relative">
-                      {/* vertical line */}
                       <div className="absolute left-4 top-0 bottom-0 w-0.5 bg-gray-100" />
                       <div className="space-y-4">
                         {order.milestones.map((m, i) => (
@@ -384,7 +417,8 @@ export default function CustomerOrderDetailPage() {
                   </h2>
                   <div className="text-sm text-gray-700 space-y-1">
                     <p className="font-semibold">
-                      {order.deliveryAddress.name}
+                      {order.deliveryAddress.recipientName ||
+                        order.deliveryAddress.name}
                     </p>
                     <p>{order.deliveryAddress.street}</p>
                     <p>
@@ -393,8 +427,13 @@ export default function CustomerOrderDetailPage() {
                       {order.deliveryAddress.postalCode}
                     </p>
                     <p>{order.deliveryAddress.country}</p>
-                    {order.deliveryAddress.phone && (
-                      <p>📞 {order.deliveryAddress.phone}</p>
+                    {(order.deliveryAddress.recipientPhone ||
+                      order.deliveryAddress.phone) && (
+                      <p>
+                        📞{" "}
+                        {order.deliveryAddress.recipientPhone ||
+                          order.deliveryAddress.phone}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -417,6 +456,7 @@ export default function CustomerOrderDetailPage() {
                       Cancel Order
                     </button>
                   )}
+
                   {order.status === "completed" && !reviewSubmitted && (
                     <button
                       onClick={() => setShowReviewModal(true)}
@@ -425,15 +465,19 @@ export default function CustomerOrderDetailPage() {
                       ⭐ Leave a Review
                     </button>
                   )}
+
                   {reviewSubmitted && (
                     <div className="text-center text-sm text-green-600 font-medium py-2">
                       ✓ Review submitted. Thank you!
                     </div>
                   )}
 
-                  {["accepted", "in_production", "completed"].includes(
-                    order.status,
-                  ) && (
+                  {[
+                    "accepted",
+                    "in_production",
+                    "shipped",
+                    "completed",
+                  ].includes(order.status) && (
                     <Link
                       href={`/customer/orders/${id}/dispute`}
                       className="block w-full py-2.5 bg-orange-50 text-orange-700 font-semibold rounded-lg hover:bg-orange-100 text-sm text-center"
@@ -441,10 +485,7 @@ export default function CustomerOrderDetailPage() {
                       File a Complaint
                     </Link>
                   )}
-                  {["completed", "cancelled"].includes(order.status) &&
-                    !reviewSubmitted &&
-                    order.status !== "cancelled" &&
-                    null}
+
                   {order.status === "cancelled" && (
                     <div className="text-center text-sm text-red-500 font-medium py-2">
                       This order has been cancelled.
@@ -453,6 +494,12 @@ export default function CustomerOrderDetailPage() {
                           {order.cancellationReason}
                         </p>
                       )}
+                    </div>
+                  )}
+
+                  {order.status === "disputed" && (
+                    <div className="text-center text-sm text-orange-600 font-medium py-2 bg-orange-50 rounded-lg px-3">
+                      A dispute is currently open for this order.
                     </div>
                   )}
                 </div>
@@ -496,6 +543,20 @@ export default function CustomerOrderDetailPage() {
                       date={order.manufacturerAcceptedAt}
                     />
                   )}
+                  {order.status === "shipped" ||
+                  order.status === "completed" ||
+                  order.actualDeliveryDate ? (
+                    order.actualDeliveryDate ? (
+                      <TimelineItem
+                        label="Delivered"
+                        date={order.actualDeliveryDate}
+                      />
+                    ) : (
+                      order.trackingNumber && (
+                        <TimelineItem label="Shipped" date={order.updatedAt} />
+                      )
+                    )
+                  ) : null}
                   {order.completedAt && (
                     <TimelineItem
                       label="Order Completed"
@@ -515,7 +576,7 @@ export default function CustomerOrderDetailPage() {
           </div>
 
           {/* Chat with Manufacturer */}
-          {!order.status.includes("cancelled") && (
+          {!["cancelled"].includes(order.status) && (
             <div className="mt-6">
               <h2 className="text-base font-bold text-gray-900 mb-3">
                 Chat with Manufacturer
@@ -689,11 +750,15 @@ function TimelineItem({ label, date, error = false }) {
   return (
     <div className="flex items-center gap-3">
       <div
-        className={`w-2.5 h-2.5 rounded-full shrink-0 ${error ? "bg-red-400" : "bg-green-400"}`}
+        className={`w-2.5 h-2.5 rounded-full shrink-0 ${
+          error ? "bg-red-400" : "bg-green-400"
+        }`}
       />
       <div>
         <p
-          className={`text-sm font-medium ${error ? "text-red-700" : "text-gray-800"}`}
+          className={`text-sm font-medium ${
+            error ? "text-red-700" : "text-gray-800"
+          }`}
         >
           {label}
         </p>
@@ -705,106 +770,16 @@ function TimelineItem({ label, date, error = false }) {
   );
 }
 
-function CustomerSidebar({ active, session }) {
-  const navItems = [
-    {
-      href: "/customer/dashboard",
-      icon: "home",
-      label: "Dashboard",
-      key: "dashboard",
-    },
-    {
-      href: "/customer/custom-orders",
-      icon: "inventory_2",
-      label: "My Custom Orders",
-      key: "custom-orders",
-    },
-    { href: "/customer/rfqs", icon: "gavel", label: "My RFQs", key: "rfqs" },
-    {
-      href: "/customer/orders",
-      icon: "receipt_long",
-      label: "Orders History",
-      key: "orders",
-    },
-    {
-      href: "#",
-      icon: "favorite",
-      label: "Wishlist",
-      key: "wishlist",
-      disabled: true,
-    },
-    {
-      href: "#",
-      icon: "mail",
-      label: "Messages",
-      key: "messages",
-      disabled: true,
-    },
-    {
-      href: "#",
-      icon: "payments",
-      label: "Payments",
-      key: "payments",
-      disabled: true,
-    },
-    {
-      href: "#",
-      icon: "settings",
-      label: "Settings",
-      key: "settings",
-      disabled: true,
-    },
-  ];
-
+export default function CustomerOrderDetailPage() {
   return (
-    <aside className="w-64 shrink-0 bg-[#f8f7f6] p-6 flex flex-col justify-between border-r border-gray-200">
-      <div>
-        <div className="mb-10">
-          <svg
-            className="h-8 w-8 text-amber-600"
-            fill="none"
-            viewBox="0 0 48 48"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M4.177,14.686,21.5,4.2a3,3,0,0,1,3,0l17.323,10.485a3,3,0,0,1,1.5,2.6V30.714a3,3,0,0,1-1.5,2.6L24.5,43.8a3,3,0,0,1-3,0L4.177,33.314a3,3,0,0,1-1.5-2.6V17.286a3,3,0,0,1,1.5-2.6Z"
-              stroke="currentColor"
-              strokeLinejoin="round"
-              strokeWidth="3"
-            />
-            <path
-              d="m22.5,24,14.5-8.5M22.5,24V43.5M22.5,24,9,16"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="3"
-            />
-          </svg>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">Craftit</h1>
+    <Suspense
+      fallback={
+        <div className="flex h-screen bg-[#f8f7f6] items-center justify-center">
+          <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
         </div>
-        <nav className="flex flex-col space-y-1">
-          {navItems.map((item) => (
-            <Link
-              key={item.key}
-              href={item.href}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                item.disabled
-                  ? "text-gray-400 cursor-not-allowed"
-                  : active === item.key
-                    ? "bg-[#eb9728]/20 text-[#eb9728]"
-                    : "text-gray-700 hover:bg-[#eb9728]/10"
-              }`}
-              title={item.disabled ? "Coming soon" : undefined}
-            >
-              <span className="material-symbols-outlined text-lg">
-                {item.icon}
-              </span>
-              <span className="font-medium text-sm">{item.label}</span>
-            </Link>
-          ))}
-        </nav>
-      </div>
-      <LogoutButton />
-    </aside>
+      }
+    >
+      <CustomerOrderDetailPageContent />
+    </Suspense>
   );
 }

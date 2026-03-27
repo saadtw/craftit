@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import ManufacturerNav from "@/components/Manufacturernav";
 
 export default function ManufacturerRFQsPage() {
   const { data: session, status } = useSession();
@@ -98,71 +99,7 @@ export default function ManufacturerRFQsPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex justify-between items-center">
-          <div className="flex items-center gap-8">
-            <Link
-              href="/manufacturer/dashboard"
-              className="flex items-center gap-2"
-            >
-              <span className="text-3xl">🔧</span>
-              <h2 className="text-xl font-bold text-blue-900">Craftit</h2>
-            </Link>
-            <nav className="hidden md:flex items-center gap-6">
-              <Link
-                href="/manufacturer/dashboard"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/manufacturer/bids"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
-              >
-                My Bids
-              </Link>
-              <Link
-                href="/manufacturer/rfqs"
-                className="text-sm font-bold text-orange-500"
-              >
-                RFQs
-              </Link>
-              <Link
-                href="/manufacturer/group-buys"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
-              >
-                Group Buys
-              </Link>
-              <Link
-                href="/manufacturer/orders"
-                className="text-sm font-medium text-gray-700 hover:text-orange-500"
-              >
-                Orders
-              </Link>
-            </nav>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="hidden lg:flex items-center bg-gray-100 rounded-lg">
-              <span className="px-3 text-gray-500">🔍</span>
-              <input
-                type="text"
-                placeholder="Search RFQs..."
-                className="px-3 py-2 bg-transparent border-none focus:outline-none focus:ring-0"
-              />
-            </div>
-            <button className="p-2 rounded-full hover:bg-gray-100 text-gray-700">
-              🔔
-            </button>
-            <button className="p-2 rounded-full hover:bg-gray-100 text-gray-700">
-              ❓
-            </button>
-            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
-              {session.user.name?.charAt(0) || "M"}
-            </div>
-          </div>
-        </div>
-      </header>
+      <ManufacturerNav session={session} />
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8">
         {/* Breadcrumbs */}

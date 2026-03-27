@@ -74,6 +74,5 @@ const ReviewSchema = new mongoose.Schema(
 
 ReviewSchema.index({ manufacturerId: 1, createdAt: -1 });
 ReviewSchema.index({ customerId: 1 });
-ReviewSchema.index({ orderId: 1 }, { unique: true });
 
 export default mongoose.models.Review || mongoose.model("Review", ReviewSchema);
