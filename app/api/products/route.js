@@ -118,6 +118,33 @@ export async function POST(request) {
       );
     }
 
+    // ── Unverified manufacturer restrictions ────────────────────────────────
+    const User = (await import("@/models/User")).default;
+    const manufacturer = await User.findById(session.user.id).select("verificationStatus");
+    const isUnverified = manufacturer?.verificationStatus === "unverified";
+
+    if (isUnverified) {
+      // Max 5 products
+      const existingCount = await Product.countDocuments({
+        manufacturerId: session.user.id,
+        status: { $ne: "archived" },
+      });
+      if (existingCount >= 5) {
+        return NextResponse.json(
+          { error: "Unverified manufacturers can list up to 5 products. Submit a verification application to unlock unlimited listings." },
+          { status: 403 },
+        );
+      }
+      // No 3D models
+      if (productData.model3D?.url) {
+        return NextResponse.json(
+          { error: "3D model uploads are only available to verified manufacturers." },
+          { status: 403 },
+        );
+      }
+    }
+    // ───────────────────────────────────────────────────────────────────────
+
     const product = await Product.create({
       ...productData,
       manufacturerId: session.user.id,

@@ -15,6 +15,9 @@ export default function ManufacturerSignup() {
     confirmPassword: "",
     phone: "",
     businessName: "",
+    businessEmail: "",
+    businessPhone: "",
+    businessType: "",
     businessRegistrationNumber: "",
     businessDescription: "",
     city: "",
@@ -104,6 +107,9 @@ export default function ManufacturerSignup() {
           password: formData.password,
           phone: formData.phone || undefined,
           businessName: formData.businessName,
+          businessEmail: formData.businessEmail || formData.email,
+          businessPhone: formData.businessPhone || formData.phone || undefined,
+          businessType: formData.businessType || undefined,
           businessRegistrationNumber:
             formData.businessRegistrationNumber || undefined,
           businessDescription: formData.businessDescription || undefined,
@@ -156,7 +162,7 @@ export default function ManufacturerSignup() {
       </header>
 
       {/* Main Content */}
-      <main className="flex-grow flex items-center justify-center p-4">
+      <main className="grow flex items-center justify-center p-4">
         <div className="w-full max-w-4xl bg-orange-50/50 dark:bg-slate-800 rounded-2xl p-8 md:p-12 shadow-lg my-8">
           <h1 className="text-center text-3xl font-bold mb-8 text-slate-900 dark:text-white">
             Create Manufacturer Account
@@ -167,7 +173,7 @@ export default function ManufacturerSignup() {
               {/* Personal Information */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Contact Person Name *
+                  CEO / Contact Person Name *
                 </label>
                 <input
                   type="text"
@@ -176,7 +182,7 @@ export default function ManufacturerSignup() {
                     setFormData({ ...formData, name: e.target.value })
                   }
                   className="mt-1 block w-full rounded-md border-slate-300 shadow-sm bg-white dark:bg-slate-700 dark:border-slate-600 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-amber-600 focus:border-amber-600"
-                  placeholder="Enter contact person name"
+                  placeholder="Enter CEO / contact person name"
                   required
                 />
               </div>
@@ -199,7 +205,7 @@ export default function ManufacturerSignup() {
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Phone Number
+                  Personal Mobile Number *
                 </label>
                 <input
                   type="tel"
@@ -208,7 +214,42 @@ export default function ManufacturerSignup() {
                     setFormData({ ...formData, phone: e.target.value })
                   }
                   className="mt-1 block w-full rounded-md border-slate-300 shadow-sm bg-white dark:bg-slate-700 dark:border-slate-600 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-amber-600 focus:border-amber-600"
-                  placeholder="(optional)"
+                  placeholder="e.g. +92 300 1234567"
+                  required
+                />
+              </div>
+
+              {/* Business Email */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Business Email *
+                </label>
+                <input
+                  type="email"
+                  value={formData.businessEmail}
+                  onChange={(e) =>
+                    setFormData({ ...formData, businessEmail: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-slate-300 shadow-sm bg-white dark:bg-slate-700 dark:border-slate-600 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-amber-600 focus:border-amber-600"
+                  placeholder="office@yourcompany.com"
+                  required
+                />
+              </div>
+
+              {/* Business Phone */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Business / Office Phone *
+                </label>
+                <input
+                  type="tel"
+                  value={formData.businessPhone}
+                  onChange={(e) =>
+                    setFormData({ ...formData, businessPhone: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-slate-300 shadow-sm bg-white dark:bg-slate-700 dark:border-slate-600 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-amber-600 focus:border-amber-600"
+                  placeholder="e.g. +92 21 1234567"
+                  required
                 />
               </div>
 
@@ -229,6 +270,34 @@ export default function ManufacturerSignup() {
                 />
               </div>
 
+              {/* Business Type */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
+                  Business Type *
+                </label>
+                <select
+                  value={formData.businessType}
+                  onChange={(e) =>
+                    setFormData({ ...formData, businessType: e.target.value })
+                  }
+                  className="mt-1 block w-full rounded-md border-slate-300 shadow-sm bg-white dark:bg-slate-700 dark:border-slate-600 focus:ring-amber-600 focus:border-amber-600"
+                  required
+                >
+                  <option value="">Select business type</option>
+                  <option value="sole_proprietorship">
+                    Sole Proprietorship
+                  </option>
+                  <option value="partnership">Partnership</option>
+                  <option value="private_limited">
+                    Private Limited (Pvt. Ltd.)
+                  </option>
+                  <option value="public_limited">Public Limited</option>
+                  <option value="ngo">NGO / Non-Profit</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+
+              {/* Business Registration Number */}
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Business Registration Number

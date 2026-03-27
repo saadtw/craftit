@@ -17,19 +17,26 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "50");
+    const action = searchParams.get("action");
     const skip = (page - 1) * limit;
+    const query = {};
+
+    if (action) {
+      query.action = action;
+    }
 
     const [logs, total] = await Promise.all([
-      AdminLog.find()
+      AdminLog.find(query)
         .populate("adminId", "name email")
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
         .lean(),
-      AdminLog.countDocuments(),
+      AdminLog.countDocuments(query),
     ]);
 
     return NextResponse.json({
+      success: true,
       logs,
       pagination: { total, page, limit, pages: Math.ceil(total / limit) },
     });
@@ -54,7 +61,7 @@ export async function POST(request) {
       ...body,
     });
 
-    return NextResponse.json({ log }, { status: 201 });
+    return NextResponse.json({ success: true, log }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

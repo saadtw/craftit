@@ -118,6 +118,12 @@ export async function POST(request) {
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    if (session.user.verificationStatus === "unverified") {
+      return NextResponse.json(
+        { error: "Only verified manufacturers can create Group Buys. Submit a verification application in Settings." },
+        { status: 403 },
+      );
+    }
 
     await connectDB();
 

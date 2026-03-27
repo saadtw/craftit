@@ -223,18 +223,24 @@ export const notify = {
     disputeId,
     resolution,
   ) => {
-    const msg =
+    const customerMsg =
       resolution === "refund_customer"
         ? "The dispute was resolved in your favour. A refund has been issued."
         : resolution === "side_with_manufacturer"
-          ? "The dispute has been resolved."
+          ? "The dispute has been resolved. No refund was issued."
+          : "The dispute was resolved with a partial refund.";
+    const manufacturerMsg =
+      resolution === "refund_customer"
+        ? "The dispute was resolved in the customer's favour. A refund has been issued."
+        : resolution === "side_with_manufacturer"
+          ? "The dispute was resolved in your favour."
           : "The dispute was resolved with a partial refund.";
     return Promise.all([
       createNotification({
         userId: customerId,
         type: "dispute_resolved",
         title: "Dispute resolved",
-        message: msg,
+        message: customerMsg,
         link: `/customer/orders`,
         relatedType: "dispute",
         relatedId: disputeId,
@@ -243,7 +249,7 @@ export const notify = {
         userId: manufacturerId,
         type: "dispute_resolved",
         title: "Dispute resolved",
-        message: "A dispute on your order has been resolved by admin.",
+        message: manufacturerMsg,
         link: `/manufacturer/disputes/${disputeId}`,
         relatedType: "dispute",
         relatedId: disputeId,

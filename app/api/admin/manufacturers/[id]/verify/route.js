@@ -5,7 +5,8 @@ import { Types } from "mongoose";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import VerificationDocument from "@/models/VerificationDocument";
-import { notify } from "@/services/notificationService";
+import AdminLog from "@/models/AdminLog";
+import { notify, createNotification } from "@/services/notificationService";
 
 /**
  * PUT /api/admin/manufacturers/[id]/verify
@@ -84,6 +85,15 @@ export async function PUT(request, context) {
       }
 
       await notify.verificationApproved(manufacturer._id);
+
+      await AdminLog.create({
+        adminId: session.user.id,
+        action: "manufacturer_approved",
+        targetType: "manufacturer",
+        targetId: manufacturer._id,
+        description: `Approved manufacturer: ${manufacturer.businessName || manufacturer.name}`,
+        details: notes,
+      });
     }
 
     if (action === "reject") {
@@ -101,6 +111,15 @@ export async function PUT(request, context) {
       }
 
       await notify.verificationRejected(manufacturer._id, reason);
+
+      await AdminLog.create({
+        adminId: session.user.id,
+        action: "manufacturer_rejected",
+        targetType: "manufacturer",
+        targetId: manufacturer._id,
+        description: `Rejected manufacturer: ${manufacturer.businessName || manufacturer.name}`,
+        details: reason,
+      });
     }
 
     if (action === "request_info") {
@@ -116,10 +135,23 @@ export async function PUT(request, context) {
         await verificationDoc.save();
       }
 
-      await notify.verificationRejected(
-        manufacturer._id,
-        `Additional information required: ${reason}`,
-      );
+      // Use a targeted notification instead of the rejection template
+      await createNotification({
+        userId: manufacturer._id,
+        type: "verification_info_requested",
+        title: "Additional information required",
+        message: `Your verification requires additional information: ${reason}. Please resubmit within 7 days.`,
+        link: `/manufacturer/settings`,
+      });
+
+      await AdminLog.create({
+        adminId: session.user.id,
+        action: "manufacturer_info_requested",
+        targetType: "manufacturer",
+        targetId: manufacturer._id,
+        description: `Requested info from manufacturer: ${manufacturer.businessName || manufacturer.name}`,
+        details: reason,
+      });
     }
 
     await manufacturer.save();

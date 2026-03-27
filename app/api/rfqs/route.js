@@ -26,6 +26,13 @@ export async function GET(request) {
     let query = {};
 
     if (session.user.role === "manufacturer") {
+      // Unverified manufacturers cannot see RFQs
+      if (session.user.verificationStatus === "unverified") {
+        return NextResponse.json(
+          { error: "Verified manufacturers only. Submit a verification application in Settings to access RFQs." },
+          { status: 403 },
+        );
+      }
       query.status = "active";
       query.endDate = { $gte: new Date() };
     }

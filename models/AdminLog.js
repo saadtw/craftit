@@ -30,6 +30,9 @@ const AdminLogSchema = new mongoose.Schema(
     details: {
       type: String,
     },
+    description: {
+      type: String, // human-readable summary shown in activity log UI
+    },
     ipAddress: String,
   },
   { timestamps: true },

@@ -39,7 +39,7 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json({ dispute });
+    return NextResponse.json({ success: true, dispute });
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
@@ -80,7 +80,7 @@ export async function PATCH(request, { params }) {
       dispute.status = "manufacturer_responded";
       await dispute.save();
 
-      return NextResponse.json({ dispute });
+      return NextResponse.json({ success: true, dispute });
     }
 
     // ── Admin resolves dispute ─────────────────────────────────────────────
@@ -129,7 +129,7 @@ export async function PATCH(request, { params }) {
         resolution,
       );
 
-      return NextResponse.json({ dispute });
+      return NextResponse.json({ success: true, dispute });
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 });

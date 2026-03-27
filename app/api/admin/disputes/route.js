@@ -36,6 +36,7 @@ export async function GET(request) {
     ]);
 
     return NextResponse.json({
+      success: true,
       disputes,
       pagination: { total, page, limit, pages: Math.ceil(total / limit) },
     });

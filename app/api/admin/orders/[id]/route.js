@@ -30,7 +30,15 @@ export async function GET(request, { params }) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ order, dispute });
+    return NextResponse.json({
+      success: true,
+      order: {
+        ...order,
+        hasDispute: !!dispute,
+        disputeId: dispute?._id,
+      },
+      dispute,
+    });
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

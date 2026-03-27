@@ -77,6 +77,12 @@ export async function POST(request) {
         { status: 400 },
       );
     }
+    if (product.manufacturerId?.verificationStatus === "unverified") {
+      return NextResponse.json(
+        { error: "This manufacturer is not yet verified and cannot accept orders." },
+        { status: 400 },
+      );
+    }
 
     // --- MOQ check ---
     if (quantity < product.moq) {

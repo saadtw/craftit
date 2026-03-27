@@ -193,8 +193,7 @@ export async function PUT(request, context) {
       );
     }
 
-    if (trackingNumber && status !== "shipped")
-      order.trackingNumber = trackingNumber;
+
 
     await order.save();
 

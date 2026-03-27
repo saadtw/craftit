@@ -5,7 +5,6 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Order from "@/models/Order";
 import Dispute from "@/models/Dispute";
-import VerificationDocument from "@/models/VerificationDocument";
 
 // GET /api/admin/stats
 export async function GET() {
@@ -26,7 +25,7 @@ export async function GET() {
     ] = await Promise.all([
       User.countDocuments({ role: "customer", isActive: true }),
       User.countDocuments({ role: "manufacturer" }),
-      VerificationDocument.countDocuments({ verificationStatus: "pending" }),
+      User.countDocuments({ role: "manufacturer", verificationStatus: "unverified" }),
       Order.countDocuments({
         status: {
           $in: ["pending_acceptance", "accepted", "in_production", "shipped"],
@@ -38,6 +37,7 @@ export async function GET() {
     ]);
 
     return NextResponse.json({
+      success: true,
       totalCustomers,
       totalManufacturers,
       totalUsers: totalCustomers + totalManufacturers,

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Order from "@/models/Order";
+import AdminLog from "@/models/AdminLog";
 
 // GET /api/admin/users/[id]
 export async function GET(request, { params }) {
@@ -36,7 +37,13 @@ export async function GET(request, { params }) {
       Order.countDocuments(orderQuery),
     ]);
 
-    return NextResponse.json({ user, recentOrders: orders, orderCount });
+    return NextResponse.json({
+      success: true,
+      user,
+      orders,
+      recentOrders: orders,
+      orderCount,
+    });
   } catch (error) {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
@@ -52,7 +59,7 @@ export async function PATCH(request, { params }) {
 
     await connectDB();
 
-    const { action, reason, duration } = await request.json();
+    const { action, reason, detail, duration } = await request.json();
     // duration: "7" | "30" | "permanent"
 
     const user = await User.findById(params.id);
@@ -70,7 +77,7 @@ export async function PATCH(request, { params }) {
       user.isActive = false;
       user.suspendedAt = new Date();
       user.suspendedBy = session.user.id;
-      user.suspensionReason = reason;
+      user.suspensionReason = detail || reason;
 
       if (duration === "7") {
         user.suspendedUntil = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
@@ -90,7 +97,19 @@ export async function PATCH(request, { params }) {
     }
 
     await user.save();
-    return NextResponse.json({ user, action });
+
+    await AdminLog.create({
+      adminId: session.user.id,
+      action: action === "suspend" ? "user_suspended" : "user_unsuspended",
+      targetType: "user",
+      targetId: user._id,
+      description: action === "suspend"
+        ? `Suspended ${user.role} ${user.name || user.businessName} (${duration || "permanent"})${reason ? `: ${reason}` : ""}`
+        : `Unsuspended ${user.role} ${user.name || user.businessName}`,
+      details: detail || reason,
+    });
+
+    return NextResponse.json({ success: true, user, action });
   } catch (error) {
     console.error("PATCH /api/admin/users/[id] error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

@@ -6,6 +6,9 @@ import User from "@/models/User";
 import VerificationDocument from "@/models/VerificationDocument";
 
 const ALLOWED_DOC_TYPES = [
+  "ntn_certificate",
+  "secp_form_c",
+  "chamber_certificate",
   "business_license",
   "tax_registration",
   "certification",
@@ -15,6 +18,27 @@ const ALLOWED_DOC_TYPES = [
   "other",
 ];
 
+// GET - Manufacturer fetches their own verification status
+export async function GET(request) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== "manufacturer") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    await connectDB();
+    const doc = await VerificationDocument.findOne({
+      manufacturerId: session.user.id,
+    }).lean();
+    const user = await User.findById(session.user.id)
+      .select("verificationStatus rejectionReason verifiedAt")
+      .lean();
+    return NextResponse.json({ success: true, verificationDoc: doc, user });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
+// POST - Submit/resubmit verification application
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -36,14 +60,7 @@ export async function POST(request) {
     await connectDB();
 
     const body = await request.json();
-    const { documents, docType } = body;
-
-    if (!ALLOWED_DOC_TYPES.includes(docType)) {
-      return NextResponse.json(
-        { success: false, error: "Invalid document type" },
-        { status: 400 },
-      );
-    }
+    const { documents, ntnNumber, strnNumber, secpRegistrationNumber } = body;
 
     if (!Array.isArray(documents) || documents.length === 0) {
       return NextResponse.json(
@@ -53,20 +70,17 @@ export async function POST(request) {
     }
 
     const sanitizedDocuments = documents
-      .filter((doc) => doc && doc.url)
+      .filter((doc) => doc && doc.url && ALLOWED_DOC_TYPES.includes(doc.type))
       .map((doc) => ({
-        type: docType,
+        type: doc.type,
         url: String(doc.url),
         filename: doc.filename ? String(doc.filename) : undefined,
-        fileSize:
-          doc.fileSize !== undefined && doc.fileSize !== null
-            ? Number(doc.fileSize)
-            : undefined,
+        fileSize: doc.fileSize != null ? Number(doc.fileSize) : undefined,
       }));
 
     if (sanitizedDocuments.length === 0) {
       return NextResponse.json(
-        { success: false, error: "No valid documents provided" },
+        { success: false, error: "No valid documents provided. Check document types." },
         { status: 400 },
       );
     }
@@ -83,22 +97,34 @@ export async function POST(request) {
       manufacturerId: session.user.id,
     });
 
+    const applicationFields = {
+      ntnNumber: ntnNumber || undefined,
+      strnNumber: strnNumber || undefined,
+      secpRegistrationNumber: secpRegistrationNumber || undefined,
+    };
+
     if (existing) {
-      existing.documents.push(...sanitizedDocuments);
+      // Replace documents on resubmission (don't just append)
+      existing.documents = sanitizedDocuments;
       existing.verificationStatus = "pending";
       existing.reviewedBy = undefined;
       existing.reviewedAt = undefined;
       existing.reviewNotes = undefined;
       existing.rejectionReason = undefined;
+      if (ntnNumber) existing.ntnNumber = ntnNumber;
+      if (strnNumber) existing.strnNumber = strnNumber;
+      if (secpRegistrationNumber) existing.secpRegistrationNumber = secpRegistrationNumber;
       await existing.save();
     } else {
       await VerificationDocument.create({
         manufacturerId: session.user.id,
         documents: sanitizedDocuments,
         verificationStatus: "pending",
+        ...applicationFields,
       });
     }
 
+    // Keep manufacturer status as unverified until admin approves
     if (manufacturer.verificationStatus !== "verified") {
       manufacturer.verificationStatus = "unverified";
       await manufacturer.save();
@@ -106,7 +132,7 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: "Documents submitted for verification",
+      message: "Verification application submitted. An admin will review your documents shortly.",
     });
   } catch (error) {
     console.error("Verification document submission error:", error);
@@ -116,3 +142,5 @@ export async function POST(request) {
     );
   }
 }
+
+
