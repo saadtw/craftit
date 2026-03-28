@@ -29,12 +29,24 @@ export default function HomePage() {
 
   const fetchHomeData = async () => {
     try {
-      const groupBuysRes = await fetch("/api/group-buys?limit=3");
-      const groupBuysData = await groupBuysRes.json();
-      if (groupBuysData.success) setGroupBuys(groupBuysData.groupBuys || []);
+      // TODO: Implement these API endpoints
+      // const [productsRes, groupBuysRes, manufacturersRes] = await Promise.all([
+      //   fetch("/api/products?featured=true&limit=3"),
+      //   fetch("/api/group-buys?status=active&limit=3"),
+      //   fetch("/api/manufacturers?verified=true&limit=4"),
+      // ]);
+      // const productsData = await productsRes.json();
+      // const groupBuysData = await groupBuysRes.json();
+      // const manufacturersData = await manufacturersRes.json();
+      // if (productsData.success)
+      //   setFeaturedProducts(productsData.products || []);
+      // if (groupBuysData.success) setGroupBuys(groupBuysData.groupBuys || []);
+      // if (manufacturersData.success)
+      //   setManufacturers(manufacturersData.manufacturers || []);
 
-      // Products and manufacturers catalogs are not yet available for customers
+      // Placeholder data for now
       setFeaturedProducts([]);
+      setGroupBuys([]);
       setManufacturers([]);
     } catch (error) {
       console.error("Error fetching home data:", error);
@@ -81,28 +93,16 @@ export default function HomePage() {
                 Dashboard
               </Link>
               <Link
-                href="/customer/custom-orders"
+                href="/manufacturers"
                 className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
               >
-                Custom Orders
+                Manufacturers
               </Link>
               <Link
-                href="/customer/orders"
+                href="/group-buys"
                 className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
               >
-                My Orders
-              </Link>
-              <Link
-                href="/customer/rfqs"
-                className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
-              >
-                My RFQs
-              </Link>
-              <Link
-                href="/customer/explore"
-                className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
-              >
-                Explore Products
+                Group Buys
               </Link>
             </div>
           </div>
@@ -159,7 +159,7 @@ export default function HomePage() {
         </nav>
       </header>
 
-      <main className="grow container mx-auto px-6 py-8">
+      <main className="flex-grow container mx-auto px-6 py-8">
         {/* Hero Section */}
         <div className="bg-[#FFF7ED] p-8 rounded-lg mb-8">
           <h1 className="text-4xl font-bold text-gray-900">
@@ -322,7 +322,7 @@ export default function HomePage() {
                     className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col sm:flex-row items-center gap-4"
                   >
                     <div className="w-full sm:w-32 h-32 bg-gray-200 rounded-md"></div>
-                    <div className="grow">
+                    <div className="flex-grow">
                       <h4 className="font-semibold text-gray-900">
                         {groupBuy.productId?.name || "Group Buy"}
                       </h4>

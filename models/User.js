@@ -38,17 +38,6 @@ const UserSchema = new mongoose.Schema(
     businessRegistrationNumber: String,
     businessEmail: String,
     businessPhone: String,
-    businessType: {
-      type: String,
-      enum: [
-        "sole_proprietorship",
-        "partnership",
-        "private_limited",
-        "public_limited",
-        "ngo",
-        "other",
-      ],
-    },
     businessDescription: String,
     businessLogo: String,
     businessBanner: String,
@@ -119,7 +108,8 @@ const UserSchema = new mongoose.Schema(
       type: String,
       enum: ["unverified", "verified", "suspended"],
       default: function () {
-        return this.role === "manufacturer" ? "unverified" : "verified";
+        // return this.role === "manufacturer" ? "unverified" : "verified";
+        return "verified";
       },
     },
     verifiedAt: Date,
@@ -195,6 +185,7 @@ const UserSchema = new mongoose.Schema(
 );
 
 // Indexes
+UserSchema.index({ email: 1 });
 UserSchema.index({ role: 1 });
 UserSchema.index({ verificationStatus: 1, role: 1 });
 UserSchema.index({ businessName: "text", name: "text" });

@@ -7,20 +7,11 @@ const VerificationDocumentSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-
-    // Structured application fields (Pakistan-context)
-    ntnNumber: String,           // National Tax Number
-    strnNumber: String,          // Sales Tax Registration Number
-    secpRegistrationNumber: String, // SECP / Form-C company registration
-
     documents: [
       {
         type: {
           type: String,
           enum: [
-            "ntn_certificate",          // NTN/STRN certificate
-            "secp_form_c",              // SECP / Form-C incorporation certificate
-            "chamber_certificate",       // Chamber of Commerce certificate
             "business_license",
             "tax_registration",
             "certification",
@@ -42,7 +33,6 @@ const VerificationDocumentSchema = new mongoose.Schema(
         },
       },
     ],
-
     verificationStatus: {
       type: String,
       enum: ["pending", "verified", "suspended", "resubmission_required"],

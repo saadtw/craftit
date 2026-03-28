@@ -1,10 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Script from "next/script";
-import Image from "next/image";
 
 export default function CustomerRFQDetails() {
   const params = useParams();
@@ -15,7 +14,21 @@ export default function CustomerRFQDetails() {
   const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchRFQ = useCallback(async () => {
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
+      fetchRFQ();
+    }
+  }, [status, session, router]);
+
+  const fetchRFQ = async () => {
     try {
       const response = await fetch(`/api/rfqs/${params.id}`);
       const data = await response.json();
@@ -34,21 +47,7 @@ export default function CustomerRFQDetails() {
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-      return;
-    }
-    if (status === "authenticated") {
-      if (session.user.role !== "customer") {
-        router.push("/auth/login");
-        return;
-      }
-      fetchRFQ();
-    }
-  }, [status, session, router, fetchRFQ]);
+  };
 
   const getTimeRemaining = (endDate) => {
     const now = new Date();
@@ -256,18 +255,12 @@ export default function CustomerRFQDetails() {
                   <h3 className="font-bold mb-2">Images</h3>
                   <div className="grid grid-cols-3 gap-4">
                     {rfq.customOrderId.images.map((img, idx) => (
-                      <div
+                      <img
                         key={idx}
-                        className="relative h-48 rounded overflow-hidden"
-                      >
-                        <Image
-                          src={img.url}
-                          alt={`Image ${idx + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="33vw"
-                        />
-                      </div>
+                        src={img.url}
+                        alt={`Image ${idx + 1}`}
+                        className="w-full h-48 object-cover rounded"
+                      />
                     ))}
                   </div>
                 </div>

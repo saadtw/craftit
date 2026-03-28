@@ -5,17 +5,13 @@ import { Types } from "mongoose";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import VerificationDocument from "@/models/VerificationDocument";
-import AdminLog from "@/models/AdminLog";
-import { notify, createNotification } from "@/services/notificationService";
 
-/**
- * PUT /api/admin/manufacturers/[id]/verify
- * Approve or reject manufacturer verification.
- * Now also supports "request_info" action.
- */
+// PUT - Approve or reject manufacturer verification
 export async function PUT(request, context) {
   const params = await context.params;
   const rawId = params.id;
+
+  console.log("RAW ID:", rawId);
 
   try {
     const session = await getServerSession(authOptions);
@@ -23,7 +19,7 @@ export async function PUT(request, context) {
     if (!session || session.user.role !== "admin") {
       return NextResponse.json(
         { error: "Unauthorized. Admin access required." },
-        { status: 401 },
+        { status: 401 }
       );
     }
 
@@ -32,21 +28,14 @@ export async function PUT(request, context) {
     const body = await request.json();
     const { action, reason, notes } = body;
 
-    if (!["approve", "reject", "request_info"].includes(action)) {
+    if (!["approve", "reject"].includes(action)) {
       return NextResponse.json({ error: "Invalid action" }, { status: 400 });
     }
 
     if (!rawId || !Types.ObjectId.isValid(rawId)) {
       return NextResponse.json(
         { error: "Invalid manufacturer ID" },
-        { status: 400 },
-      );
-    }
-
-    if ((action === "reject" || action === "request_info") && !reason) {
-      return NextResponse.json(
-        { error: "reason is required for reject and request_info" },
-        { status: 400 },
+        { status: 400 }
       );
     }
 
@@ -55,110 +44,49 @@ export async function PUT(request, context) {
     if (!manufacturer) {
       return NextResponse.json(
         { error: "Manufacturer not found" },
-        { status: 404 },
+        { status: 404 }
       );
     }
 
     if (manufacturer.role !== "manufacturer") {
       return NextResponse.json(
         { error: "User is not a manufacturer" },
-        { status: 400 },
+        { status: 400 }
       );
     }
-
-    const verificationDoc = await VerificationDocument.findOne({
-      manufacturerId: rawId,
-    });
 
     if (action === "approve") {
       manufacturer.verificationStatus = "verified";
       manufacturer.verifiedAt = new Date();
       manufacturer.verifiedBy = session.user.id;
       manufacturer.rejectionReason = undefined;
-
-      if (verificationDoc) {
-        verificationDoc.verificationStatus = "verified";
-        verificationDoc.reviewedBy = session.user.id;
-        verificationDoc.reviewedAt = new Date();
-        verificationDoc.reviewNotes = notes;
-        await verificationDoc.save();
-      }
-
-      await notify.verificationApproved(manufacturer._id);
-
-      await AdminLog.create({
-        adminId: session.user.id,
-        action: "manufacturer_approved",
-        targetType: "manufacturer",
-        targetId: manufacturer._id,
-        description: `Approved manufacturer: ${manufacturer.businessName || manufacturer.name}`,
-        details: notes,
-      });
-    }
-
-    if (action === "reject") {
-      manufacturer.verificationStatus = "unverified";
+    } else {
+      manufacturer.verificationStatus = "suspended";
       manufacturer.rejectionReason = reason || "Verification rejected by admin";
       manufacturer.verifiedAt = undefined;
-
-      if (verificationDoc) {
-        verificationDoc.verificationStatus = "suspended";
-        verificationDoc.reviewedBy = session.user.id;
-        verificationDoc.reviewedAt = new Date();
-        verificationDoc.reviewNotes = notes;
-        verificationDoc.rejectionReason = reason;
-        await verificationDoc.save();
-      }
-
-      await notify.verificationRejected(manufacturer._id, reason);
-
-      await AdminLog.create({
-        adminId: session.user.id,
-        action: "manufacturer_rejected",
-        targetType: "manufacturer",
-        targetId: manufacturer._id,
-        description: `Rejected manufacturer: ${manufacturer.businessName || manufacturer.name}`,
-        details: reason,
-      });
-    }
-
-    if (action === "request_info") {
-      // Status stays unverified but a deadline is set for resubmission
-      if (verificationDoc) {
-        verificationDoc.verificationStatus = "resubmission_required";
-        verificationDoc.reviewNotes = reason;
-        verificationDoc.resubmissionCount =
-          (verificationDoc.resubmissionCount || 0) + 1;
-        verificationDoc.resubmissionDeadline = new Date(
-          Date.now() + 7 * 24 * 60 * 60 * 1000,
-        );
-        await verificationDoc.save();
-      }
-
-      // Use a targeted notification instead of the rejection template
-      await createNotification({
-        userId: manufacturer._id,
-        type: "verification_info_requested",
-        title: "Additional information required",
-        message: `Your verification requires additional information: ${reason}. Please resubmit within 7 days.`,
-        link: `/manufacturer/settings`,
-      });
-
-      await AdminLog.create({
-        adminId: session.user.id,
-        action: "manufacturer_info_requested",
-        targetType: "manufacturer",
-        targetId: manufacturer._id,
-        description: `Requested info from manufacturer: ${manufacturer.businessName || manufacturer.name}`,
-        details: reason,
-      });
     }
 
     await manufacturer.save();
 
+    const verificationDoc = await VerificationDocument.findOne({
+      manufacturerId: rawId,
+    });
+
+    if (verificationDoc) {
+      verificationDoc.verificationStatus =
+        action === "approve" ? "verified" : "suspended";
+      verificationDoc.reviewedBy = session.user.id;
+      verificationDoc.reviewedAt = new Date();
+      verificationDoc.reviewNotes = notes;
+      if (action === "reject") {
+        verificationDoc.rejectionReason = reason;
+      }
+      await verificationDoc.save();
+    }
+
     return NextResponse.json({
       success: true,
-      message: `Manufacturer ${action === "request_info" ? "information requested" : action + "d"} successfully`,
+      message: `Manufacturer ${action}ed successfully`,
     });
   } catch (error) {
     console.error("Admin verification error:", error);
@@ -166,7 +94,7 @@ export async function PUT(request, context) {
   }
 }
 
-// GET /api/admin/manufacturers/[id]/verify — get manufacturer details for admin review
+// GET - Get single manufacturer details for verification
 export async function GET(request, context) {
   const params = await context.params;
   const rawId = params.id;
