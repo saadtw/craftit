@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import ManufacturerNav from "@/components/Manufacturernav";
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 const STATUS_COLORS = {
@@ -203,8 +202,6 @@ export default function ManufacturerDashboard() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      <ManufacturerNav session={session} />
-
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-7xl">
         {/* ─── Welcome banner ──────────────────────────────────────────── */}
         <div className="bg-linear-to-br from-blue-900 to-blue-800 rounded-2xl p-6 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">

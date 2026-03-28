@@ -3,7 +3,6 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import CustomerSidebar from "@/components/CustomerSidebar";
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
 function Label({ children }) {
@@ -581,7 +580,6 @@ function CustomerSettingsPageContent() {
   if (status === "loading" || loading) {
     return (
       <div className="flex h-screen bg-[#f8f7f6]">
-        <CustomerSidebar active="settings" session={session} />
         <main className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
         </main>
@@ -605,8 +603,6 @@ function CustomerSettingsPageContent() {
 
   return (
     <div className="flex h-screen bg-[#f8f7f6]">
-      <CustomerSidebar active="settings" session={session} />
-
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
         <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-8 bg-white/80 backdrop-blur-sm border-b border-gray-200">

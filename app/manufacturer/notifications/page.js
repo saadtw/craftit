@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import ManufacturerNav from "@/components/Manufacturernav";
 
 const TYPE_ICONS = {
   order_placed: "shopping_bag",
@@ -119,7 +118,6 @@ export default function ManufacturerNotificationsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <ManufacturerNav session={session} />
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-2xl">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

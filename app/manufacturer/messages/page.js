@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import ManufacturerNav from "@/components/Manufacturernav";
 
 export default function ManufacturerMessagesPage() {
   const router = useRouter();
@@ -70,7 +69,6 @@ export default function ManufacturerMessagesPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <ManufacturerNav session={session} />
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-3xl">
         <div className="flex items-center justify-between mb-6">
           <div>

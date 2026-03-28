@@ -5,6 +5,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Order from "@/models/Order";
 import AdminLog from "@/models/AdminLog";
+import { publishSessionEvent } from "@/lib/sessionEmitter";
 
 // GET /api/admin/users/[id]
 export async function GET(request, { params }) {
@@ -87,6 +88,9 @@ export async function PATCH(request, { params }) {
         // permanent
         user.suspendedUntil = null;
       }
+
+      // Revoke all active sessions for immediate logout.
+      user.sessionVersion = (user.sessionVersion || 0) + 1;
     } else if (action === "unsuspend") {
       user.isActive = true;
       user.suspendedAt = undefined;
@@ -98,14 +102,22 @@ export async function PATCH(request, { params }) {
 
     await user.save();
 
+    if (action === "suspend") {
+      publishSessionEvent(user._id.toString(), {
+        type: "SESSION_INVALIDATED",
+        reason: "suspended",
+      });
+    }
+
     await AdminLog.create({
       adminId: session.user.id,
       action: action === "suspend" ? "user_suspended" : "user_unsuspended",
       targetType: "user",
       targetId: user._id,
-      description: action === "suspend"
-        ? `Suspended ${user.role} ${user.name || user.businessName} (${duration || "permanent"})${reason ? `: ${reason}` : ""}`
-        : `Unsuspended ${user.role} ${user.name || user.businessName}`,
+      description:
+        action === "suspend"
+          ? `Suspended ${user.role} ${user.name || user.businessName} (${duration || "permanent"})${reason ? `: ${reason}` : ""}`
+          : `Unsuspended ${user.role} ${user.name || user.businessName}`,
       details: detail || reason,
     });
 

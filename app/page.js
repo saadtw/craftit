@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { fetchWithCache } from "@/lib/clientCache";
 
 // ─── Logo SVG ─────────────────────────────────────────────────────────────────
 function CraftItLogo({ className = "h-8 w-8" }) {
@@ -38,6 +39,9 @@ function AnimatedNumber({ target, suffix = "", duration = 1600 }) {
   const ref = useRef(null);
   const started = useRef(false);
   useEffect(() => {
+    // Use threshold:0 so the element triggers as soon as ANY pixel is visible.
+    // threshold:0.4 was causing the counter to stay at 0 when the browser
+    // restored scroll position mid-page (40% wasn't visible).
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (entry.isIntersecting && !started.current) {
@@ -53,7 +57,7 @@ function AnimatedNumber({ target, suffix = "", duration = 1600 }) {
           requestAnimationFrame(tick);
         }
       },
-      { threshold: 0.4 },
+      { threshold: 0 },
     );
     if (ref.current) observer.observe(ref.current);
     return () => observer.disconnect();
@@ -353,7 +357,6 @@ export default function LandingPage() {
   const [loadingGBs, setLoadingGBs] = useState(true);
   const [loadingMfrs, setLoadingMfrs] = useState(true);
 
-  // Redirect authenticated users away from landing page
   useEffect(() => {
     if (status === "authenticated" && session?.user) {
       const role = session.user.role;
@@ -370,32 +373,38 @@ export default function LandingPage() {
   }, []);
 
   useEffect(() => {
-    fetch("/api/products/public?sort=popular&limit=8")
-      .then((r) => r.json())
+    // Safety timeout: if any fetch silently hangs, clear loading flags after 10s.
+    const safetyTimer = setTimeout(() => {
+      setLoadingProducts(false);
+      setLoadingGBs(false);
+      setLoadingMfrs(false);
+    }, 10000);
+
+    // fetchWithCache returns cached data (5-min TTL) on repeat mounts
+    // (React StrictMode double-invocations, navigations back to this page).
+    fetchWithCache("/api/products/public?sort=popular&limit=8")
       .then((d) => {
         if (d.success) setFeaturedProducts(d.products || []);
       })
       .catch(() => {})
       .finally(() => setLoadingProducts(false));
 
-    fetch("/api/group-buys/public?sort=ending_soon&limit=4")
-      .then((r) => r.json())
+    fetchWithCache("/api/group-buys/public?sort=ending_soon&limit=4")
       .then((d) => {
         if (d.success) setGroupBuys(d.groupBuys || []);
       })
       .catch(() => {})
       .finally(() => setLoadingGBs(false));
 
-    fetch("/api/manufacturers/public?sort=rating&limit=6")
-      .then((r) => r.json())
+    fetchWithCache("/api/manufacturers/public?sort=rating&limit=6")
       .then((d) => {
         if (d.success) setManufacturers(d.manufacturers || []);
       })
       .catch(() => {})
       .finally(() => setLoadingMfrs(false));
-  }, []);
 
-  if (status === "loading") return null;
+    return () => clearTimeout(safetyTimer);
+  }, []);
 
   return (
     <div className="relative flex min-h-screen flex-col bg-slate-100 dark:bg-slate-950">
@@ -411,19 +420,33 @@ export default function LandingPage() {
         </div>
         <nav className="hidden items-center gap-7 md:flex">
           {[
-            { href: "#how-it-works", label: "How It Works" },
-            { href: "/manufacturers", label: "Manufacturers" },
-            { href: "/customer/group-buys", label: "Group Buys" },
-            { href: "#capabilities", label: "Capabilities" },
-          ].map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
-            >
-              {item.label}
-            </a>
-          ))}
+            { href: "#how-it-works", label: "How It Works", isAnchor: true },
+            { href: "/manufacturers", label: "Manufacturers", isAnchor: false },
+            {
+              href: "/customer/group-buys",
+              label: "Group Buys",
+              isAnchor: false,
+            },
+            { href: "#capabilities", label: "Capabilities", isAnchor: true },
+          ].map((item) =>
+            item.isAnchor ? (
+              <a
+                key={item.href}
+                href={item.href}
+                className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
+              >
+                {item.label}
+              </a>
+            ) : (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="text-sm font-medium text-slate-500 dark:text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 transition-colors"
+              >
+                {item.label}
+              </Link>
+            ),
+          )}
         </nav>
         <div className="flex items-center gap-2">
           <Link href="/auth/login">

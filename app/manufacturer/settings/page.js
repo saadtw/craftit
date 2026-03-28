@@ -4,8 +4,6 @@ import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import Link from "next/link";
-import ManufacturerNav from "@/components/Manufacturernav";
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
 function Label({ children, optional = false }) {
@@ -1016,8 +1014,6 @@ function ManufacturerSettingsPageContent() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      <ManufacturerNav session={session} />
-
       <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-5xl">
         {!isVerified && (
           <div className="mb-4 flex justify-end">

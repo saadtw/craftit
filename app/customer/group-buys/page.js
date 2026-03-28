@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import CustomerSidebar from "@/components/CustomerSidebar";
+import { fetchWithCache } from "@/lib/clientCache";
 
 // ─── Countdown helper ───────────────────────────────────────────────────────
 function useCountdown(endDate) {
@@ -264,8 +264,11 @@ export default function CustomerGroupBuysPage() {
           ...(search && { search }),
           ...(category && category !== "All" && { category }),
         });
-        const res = await fetch(`/api/group-buys/public?${params}`);
-        const data = await res.json();
+        // 2-min TTL — shorter since participant counts update frequently.
+        const data = await fetchWithCache(
+          `/api/group-buys/public?${params}`,
+          2 * 60 * 1000,
+        );
         if (data.success) {
           setGroupBuys(data.groupBuys);
           setPagination(data.pagination);
@@ -298,8 +301,6 @@ export default function CustomerGroupBuysPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f7f6] flex">
-      <CustomerSidebar active="group-buys" />
-
       <div className="flex-1 p-6 lg:p-8 overflow-auto">
         {/* Header */}
         <div className="mb-8">

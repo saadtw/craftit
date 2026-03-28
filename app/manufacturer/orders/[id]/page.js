@@ -5,7 +5,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ChatBox from "@/components/chat/ChatBox";
-import ManufacturerNav from "@/components/Manufacturernav";
 import { CARRIER_NAMES } from "@/lib/carriers";
 
 const STATUS_COLORS = {
@@ -182,8 +181,6 @@ export default function ManufacturerOrderDetailPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      <ManufacturerNav session={session} />
-
       {/* Sub-header */}
       <div className="bg-white border-b border-gray-200">
         <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex items-center gap-4">

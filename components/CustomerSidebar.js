@@ -2,11 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useContext } from "react";
 import { useSession } from "next-auth/react";
 import LogoutButton from "@/components/LogoutButton";
+import CustomerLayoutContext from "@/app/customer/CustomerLayoutContext";
 
 export default function CustomerSidebar({ active, session }) {
+  const renderedByCustomerLayout = useContext(CustomerLayoutContext);
+  if (renderedByCustomerLayout) return null;
+
   const pathname = usePathname();
   const { data: clientSession } = useSession();
   const activeSession = session || clientSession;

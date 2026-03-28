@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import LogoutButton from "@/components/LogoutButton";
 import CustomerSidebar from "@/components/CustomerSidebar";
+import { fetchWithCache } from "@/lib/clientCache";
 
 // ─── Sidebars defined at top — used in loading state too ─────────────────────
 
@@ -200,8 +201,11 @@ export default function ManufacturerPublicProfilePage() {
   const fetchProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/manufacturers/${id}`);
-      const data = await res.json();
+      // 3-min TTL — profile data (description, capabilities, stats) changes slowly.
+      const data = await fetchWithCache(
+        `/api/manufacturers/${id}`,
+        3 * 60 * 1000,
+      );
       if (data.success) {
         setManufacturer(data.manufacturer);
         setProducts(data.products || []);

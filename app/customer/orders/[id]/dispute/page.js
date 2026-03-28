@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import CustomerSidebar from "@/components/CustomerSidebar";
 
 const ISSUE_TYPES = [
   { value: "item_not_received", label: "Item not received" },
@@ -133,7 +132,6 @@ export default function FileDisputePage() {
   if (status === "loading" || loading) {
     return (
       <div className="flex h-screen bg-[#f8f7f6]">
-        <CustomerSidebar active="orders" />
         <main className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
         </main>
@@ -145,7 +143,6 @@ export default function FileDisputePage() {
   if (existingDispute) {
     return (
       <div className="flex h-screen bg-[#f8f7f6]">
-        <CustomerSidebar active="orders" session={session} />
         <main className="flex-1 overflow-y-auto">
           <header className="sticky top-0 z-10 flex items-center h-16 px-10 bg-white/80 backdrop-blur-sm border-b border-gray-200 gap-3">
             <Link
@@ -187,8 +184,6 @@ export default function FileDisputePage() {
 
   return (
     <div className="flex h-screen bg-[#f8f7f6]">
-      <CustomerSidebar active="orders" session={session} />
-
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
         <header className="sticky top-0 z-10 flex items-center h-16 px-10 bg-white/80 backdrop-blur-sm border-b border-gray-200 gap-3">

@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import ManufacturerNav from "@/components/Manufacturernav";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
@@ -250,8 +249,6 @@ export default function ManufacturerProductsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <ManufacturerNav session={session} />
-
       {/* Header */}
       <div className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">

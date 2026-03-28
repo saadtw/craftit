@@ -4,7 +4,6 @@ import { Suspense, useState, useEffect, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import CustomerSidebar from "@/components/CustomerSidebar";
 import ChatBox from "@/components/chat/ChatBox";
 import { getTrackingUrl } from "@/lib/carriers";
 
@@ -131,7 +130,6 @@ function CustomerOrderDetailPageContent() {
   if (status === "loading" || loading) {
     return (
       <div className="flex h-screen bg-[#f8f7f6]">
-        <CustomerSidebar active="orders" />
         <main className="flex-1 flex items-center justify-center">
           <p className="text-gray-500">Loading order...</p>
         </main>
@@ -142,7 +140,6 @@ function CustomerOrderDetailPageContent() {
   if (!order) {
     return (
       <div className="flex h-screen bg-[#f8f7f6]">
-        <CustomerSidebar active="orders" />
         <main className="flex-1 flex items-center justify-center">
           <p className="text-red-600">Order not found.</p>
         </main>
@@ -166,8 +163,6 @@ function CustomerOrderDetailPageContent() {
 
   return (
     <div className="flex h-screen bg-[#f8f7f6]">
-      <CustomerSidebar active="orders" session={session} />
-
       <main className="flex-1 overflow-y-auto">
         {/* Header */}
         <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-10 bg-white/80 backdrop-blur-sm border-b border-gray-200">

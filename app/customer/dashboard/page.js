@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import CustomerSidebar from "@/components/CustomerSidebar";
+import { fetchWithCache } from "@/lib/clientCache";
 
 // ─── Status helpers (mirrors orders page) ────────────────────────────────────
 const STATUS_COLORS = {
@@ -94,15 +94,16 @@ export default function CustomerDashboard() {
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      const [ordersRes, rfqsRes, gbRes] = await Promise.all([
+      // fetchWithCache returns parsed JSON directly; raw fetch returns Response.
+      // Only group-buys/public is cacheable — orders/rfqs are user-specific.
+      const [ordersRes, rfqsRes, gbData] = await Promise.all([
         fetch("/api/orders?limit=5"),
         fetch("/api/rfqs?limit=3"),
-        fetch("/api/group-buys/public?limit=3"),
+        fetchWithCache("/api/group-buys/public?limit=3"),
       ]);
-      const [ordersData, rfqsData, gbData] = await Promise.all([
+      const [ordersData, rfqsData] = await Promise.all([
         ordersRes.json(),
         rfqsRes.json(),
-        gbRes.json(),
       ]);
 
       if (ordersData.success) {
@@ -152,7 +153,6 @@ export default function CustomerDashboard() {
   if (status === "loading" || loading) {
     return (
       <div className="flex h-screen bg-[#f8f7f6]">
-        <CustomerSidebar active="dashboard" session={session} />
         <main className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
         </main>
@@ -174,8 +174,6 @@ export default function CustomerDashboard() {
 
   return (
     <div className="flex h-screen bg-[#f8f7f6]">
-      <CustomerSidebar active="dashboard" session={session} />
-
       <main className="flex-1 overflow-y-auto">
         {/* ── Header ── */}
         <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-8 bg-white/80 backdrop-blur-sm border-b border-gray-200">

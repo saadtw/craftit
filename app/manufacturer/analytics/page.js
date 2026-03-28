@@ -3,7 +3,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import ManufacturerNav from "@/components/Manufacturernav";
 
 export default function ManufacturerAnalyticsPage() {
   const router = useRouter();
@@ -129,7 +128,6 @@ export default function ManufacturerAnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      <ManufacturerNav session={session} />
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-5xl">
         <div className="mb-6">
           <h1 className="text-2xl font-extrabold text-blue-900">Analytics</h1>

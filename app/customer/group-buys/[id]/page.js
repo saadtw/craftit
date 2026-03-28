@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
-import CustomerSidebar from "@/components/CustomerSidebar";
 
 // ─── Countdown hook ──────────────────────────────────────────────────────────
 function useCountdown(endDate) {
@@ -289,7 +288,6 @@ export default function GroupBuyDetailPage() {
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-[#f8f7f6] flex">
-        <CustomerSidebar active="group-buys" />
         <div className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
         </div>
@@ -305,7 +303,6 @@ export default function GroupBuyDetailPage() {
   if (!groupBuy) {
     return (
       <div className="min-h-screen bg-[#f8f7f6] flex">
-        <CustomerSidebar active="group-buys" />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-gray-500 mb-4">Group buy not found.</p>
@@ -343,8 +340,6 @@ export default function GroupBuyDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#f8f7f6] flex">
-      <CustomerSidebar active="group-buys" />
-
       <div className="flex-1 p-6 lg:p-8 overflow-auto max-w-6xl">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">

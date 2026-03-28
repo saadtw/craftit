@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { fetchWithCache } from "@/lib/clientCache";
 
 const CAPABILITIES = [
   "CNC_Machining",
@@ -208,8 +209,12 @@ function ManufacturersPageContent() {
           ...(search && { search }),
           ...(capability && { capability }),
         });
-        const res = await fetch(`/api/manufacturers/public?${params}`);
-        const data = await res.json();
+        // 2-minute TTL: shorter than the landing page because filters make
+        // results more dynamic. A new filter/sort/page combo = new cache key.
+        const data = await fetchWithCache(
+          `/api/manufacturers/public?${params}`,
+          2 * 60 * 1000,
+        );
         if (data.success) {
           setManufacturers(data.manufacturers);
           setPagination(data.pagination);

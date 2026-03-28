@@ -5,7 +5,6 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import ManufacturerNav from "@/components/Manufacturernav";
 
 export default function ManufacturerRFQsPage() {
   const { data: session, status } = useSession();
@@ -99,8 +98,6 @@ export default function ManufacturerRFQsPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      <ManufacturerNav session={session} />
-
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8">
         {/* Breadcrumbs */}
         <div className="flex items-center gap-2 mb-4 text-sm">

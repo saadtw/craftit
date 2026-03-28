@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
-import CustomerSidebar from "@/components/CustomerSidebar";
 
 export default function CustomerWishlistPage() {
   const router = useRouter();
@@ -63,7 +62,6 @@ export default function CustomerWishlistPage() {
   if (status === "loading" || loading) {
     return (
       <div className="flex h-screen bg-[#f8f7f6]">
-        <CustomerSidebar active="wishlist" />
         <main className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
         </main>
@@ -73,7 +71,6 @@ export default function CustomerWishlistPage() {
 
   return (
     <div className="flex h-screen bg-[#f8f7f6]">
-      <CustomerSidebar active="wishlist" session={session} />
       <main className="flex-1 overflow-y-auto">
         <header className="sticky top-0 z-10 flex items-center h-16 px-10 bg-white/80 backdrop-blur-sm border-b border-gray-200 gap-4">
           <span className="text-lg font-bold text-gray-900">Wishlist</span>

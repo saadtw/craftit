@@ -9,6 +9,13 @@ export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
 
+    if (session?.error === "SESSION_INVALID") {
+      return NextResponse.json(
+        { success: false, message: "Session invalid" },
+        { status: 401 },
+      );
+    }
+
     if (!session || !session.user) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },

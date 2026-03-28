@@ -134,6 +134,11 @@ const UserSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    // Increment to revoke active JWT sessions across devices.
+    sessionVersion: {
+      type: Number,
+      default: 0,
+    },
     suspendedAt: Date,
     suspendedUntil: Date,
     suspendedBy: {
