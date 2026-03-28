@@ -6,7 +6,6 @@ import RFQ from "@/models/RFQ";
 import Bid from "@/models/Bid";
 import CustomOrder from "@/models/CustomOrder";
 import Order from "@/models/Order";
-import { notify } from "@/services/notificationService";
 
 export async function POST(request, context) {
   const params = await context.params;
@@ -22,9 +21,7 @@ export async function POST(request, context) {
     await connectDB();
 
     const body = await request.json();
-    // paymentIntentId comes from Stripe after the customer authorises their card
-    // on the frontend before hitting this endpoint.
-    const { bidId, paymentIntentId, deliveryAddress } = body;
+    const { bidId } = body;
 
     if (!bidId) {
       return NextResponse.json(
@@ -77,29 +74,17 @@ export async function POST(request, context) {
     await rfq.save();
 
     // Reject all other bids
-    const rejectedBids = await Bid.find({
-      rfqId: id,
-      _id: { $ne: bidId },
-      status: { $in: ["pending", "under_consideration"] },
-    }).select("manufacturerId");
-
     await Bid.updateMany(
       {
         rfqId: id,
         _id: { $ne: bidId },
         status: { $in: ["pending", "under_consideration"] },
       },
-      { status: "rejected", rejectedAt: new Date() },
+      {
+        status: "rejected",
+        rejectedAt: new Date(),
+      },
     );
-
-    // Notify rejected manufacturers
-    for (const rejectedBid of rejectedBids) {
-      await notify.bidRejected(
-        rejectedBid.manufacturerId,
-        rejectedBid._id,
-        rfq.customOrderId?.title || "Custom Order",
-      );
-    }
 
     // Update custom order status
     await CustomOrder.findByIdAndUpdate(rfq.customOrderId, {
@@ -130,20 +115,7 @@ export async function POST(request, context) {
       specialRequirements: customOrder.specialRequirements,
       designFiles: customOrder.model3D?.url ? [customOrder.model3D.url] : [],
       status: "pending_acceptance",
-      // Payment — undefined if no Stripe paymentIntentId provided (cash/demo flow)
-      paymentIntentId: paymentIntentId || undefined,
-      paymentStatus: paymentIntentId ? "authorized" : "pending",
-      deliveryAddress: deliveryAddress || {},
     });
-
-    // Notify winning manufacturer
-    await notify.orderPlaced(bid.manufacturerId, order._id, order.orderNumber);
-
-    await notify.bidAccepted(
-      bid.manufacturerId,
-      bid._id,
-      customOrder?.title || "Custom Order",
-    );
 
     return NextResponse.json({
       success: true,

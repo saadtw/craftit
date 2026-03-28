@@ -74,7 +74,6 @@ const OrderSchema = new mongoose.Schema(
         "pending_acceptance",
         "accepted",
         "in_production",
-        "shipped",
         "completed",
         "cancelled",
         "disputed",
@@ -163,7 +162,7 @@ const OrderSchema = new mongoose.Schema(
 // Indexes
 OrderSchema.index({ customerId: 1, status: 1 });
 OrderSchema.index({ manufacturerId: 1, status: 1 });
-
+OrderSchema.index({ orderNumber: 1 });
 OrderSchema.index({ orderType: 1 });
 OrderSchema.index({ status: 1 });
 OrderSchema.index({ createdAt: -1 });

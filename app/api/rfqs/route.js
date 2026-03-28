@@ -19,6 +19,7 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+    const category = searchParams.get("category");
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 10;
     const skip = (page - 1) * limit;
@@ -26,13 +27,6 @@ export async function GET(request) {
     let query = {};
 
     if (session.user.role === "manufacturer") {
-      // Unverified manufacturers cannot see RFQs
-      if (session.user.verificationStatus === "unverified") {
-        return NextResponse.json(
-          { error: "Verified manufacturers only. Submit a verification application in Settings to access RFQs." },
-          { status: 403 },
-        );
-      }
       query.status = "active";
       query.endDate = { $gte: new Date() };
     }
@@ -42,6 +36,7 @@ export async function GET(request) {
     }
 
     if (status) query.status = status;
+    if (category) query.category = category;
 
     const rfqs = await RFQ.find(query)
       .populate({

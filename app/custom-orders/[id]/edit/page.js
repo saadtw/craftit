@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -26,7 +26,21 @@ export default function EditCustomOrder() {
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
 
-  const fetchCustomOrder = useCallback(async () => {
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
+      fetchCustomOrder();
+    }
+  }, [status, session, router]);
+
+  const fetchCustomOrder = async () => {
     try {
       const response = await fetch(`/api/custom-orders/${params.id}`);
       const data = await response.json();
@@ -53,21 +67,7 @@ export default function EditCustomOrder() {
     } finally {
       setInitialLoading(false);
     }
-  }, [params.id]);
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-      return;
-    }
-    if (status === "authenticated") {
-      if (session.user.role !== "customer") {
-        router.push("/auth/login");
-        return;
-      }
-      fetchCustomOrder();
-    }
-  }, [status, session, router, fetchCustomOrder]);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;

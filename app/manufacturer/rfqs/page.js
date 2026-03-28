@@ -4,8 +4,6 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import ManufacturerNav from "@/components/Manufacturernav";
 
 export default function ManufacturerRFQsPage() {
   const { data: session, status } = useSession();
@@ -19,34 +17,44 @@ export default function ManufacturerRFQsPage() {
     deadline: "",
   });
   const [sortBy, setSortBy] = useState("newest");
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    if (status !== "authenticated" || session?.user?.role !== "manufacturer")
-      return;
-    let cancelled = false;
-    const params = new URLSearchParams();
-    params.append("status", filters.status || "active");
-    fetch(`/api/rfqs?${params}`)
-      .then((r) => r.json())
-      .then((data) => {
-        if (cancelled) return;
-        if (data.success && data.rfqs) setRfqs(data.rfqs);
-        else
-          console.error(
-            "Error loading RFQs: " + (data.error || "Unknown error"),
-          );
-      })
-      .catch((err) => {
-        if (!cancelled) console.error("Error:", err);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [status, session, filters, sortBy, refreshKey]);
+    if (status === "authenticated" && session?.user?.role === "manufacturer") {
+      fetchRFQs();
+    }
+  }, [status, session]);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role === "manufacturer") {
+      applyFiltersAndSort();
+    }
+  }, [filters, sortBy]);
+
+  const fetchRFQs = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (filters.status) params.append("status", filters.status);
+      params.append("status", "active");
+
+      const response = await fetch(`/api/rfqs?${params}`);
+      const data = await response.json();
+
+      if (data.success && data.rfqs) {
+        setRfqs(data.rfqs);
+      } else {
+        console.error("Error loading RFQs: " + (data.error || "Unknown error"));
+      }
+    } catch (error) {
+      console.error("Error:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const applyFiltersAndSort = () => {
+    fetchRFQs();
+  };
 
   const getTimeRemaining = (endDate) => {
     const now = new Date();
@@ -65,7 +73,6 @@ export default function ManufacturerRFQsPage() {
   };
 
   const resetFilters = () => {
-    setLoading(true);
     setFilters({
       status: "active",
       budgetMin: "",
@@ -76,7 +83,7 @@ export default function ManufacturerRFQsPage() {
 
   if (status === "loading") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
@@ -89,7 +96,7 @@ export default function ManufacturerRFQsPage() {
 
   if (session?.user?.role !== "manufacturer") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
         <div className="text-xl text-red-600">
           Access Denied. Manufacturers only.
         </div>
@@ -98,8 +105,66 @@ export default function ManufacturerRFQsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      <ManufacturerNav session={session} />
+    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+      {/* Header */}
+      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-8">
+            <Link
+              href="/manufacturer/dashboard"
+              className="flex items-center gap-2"
+            >
+              <span className="text-3xl">🔧</span>
+              <h2 className="text-xl font-bold text-blue-900">Craftit</h2>
+            </Link>
+            <nav className="hidden md:flex items-center gap-6">
+              <Link
+                href="/manufacturer/dashboard"
+                className="text-sm font-medium text-gray-700 hover:text-orange-500"
+              >
+                Dashboard
+              </Link>
+              <Link
+                href="/manufacturer/bids"
+                className="text-sm font-medium text-gray-700 hover:text-orange-500"
+              >
+                My Bids
+              </Link>
+              <Link
+                href="/manufacturer/rfqs"
+                className="text-sm font-bold text-orange-500"
+              >
+                RFQs
+              </Link>
+              <Link
+                href="/manufacturer/orders"
+                className="text-sm font-medium text-gray-700 hover:text-orange-500"
+              >
+                Orders
+              </Link>
+            </nav>
+          </div>
+          <div className="flex items-center gap-4">
+            <div className="hidden lg:flex items-center bg-gray-100 rounded-lg">
+              <span className="px-3 text-gray-500">🔍</span>
+              <input
+                type="text"
+                placeholder="Search RFQs..."
+                className="px-3 py-2 bg-transparent border-none focus:outline-none focus:ring-0"
+              />
+            </div>
+            <button className="p-2 rounded-full hover:bg-gray-100 text-gray-700">
+              🔔
+            </button>
+            <button className="p-2 rounded-full hover:bg-gray-100 text-gray-700">
+              ❓
+            </button>
+            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
+              {session.user.name?.charAt(0) || "M"}
+            </div>
+          </div>
+        </div>
+      </header>
 
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8">
         {/* Breadcrumbs */}
@@ -134,10 +199,9 @@ export default function ManufacturerRFQsPage() {
                   </label>
                   <select
                     value={filters.status}
-                    onChange={(e) => {
-                      setLoading(true);
-                      setFilters({ ...filters, status: e.target.value });
-                    }}
+                    onChange={(e) =>
+                      setFilters({ ...filters, status: e.target.value })
+                    }
                     className="w-full rounded-lg border-gray-300 bg-white focus:border-orange-500 focus:ring-orange-500"
                   >
                     <option value="">All Statuses</option>
@@ -171,20 +235,16 @@ export default function ManufacturerRFQsPage() {
                   <input
                     type="date"
                     value={filters.deadline}
-                    onChange={(e) => {
-                      setLoading(true);
-                      setFilters({ ...filters, deadline: e.target.value });
-                    }}
+                    onChange={(e) =>
+                      setFilters({ ...filters, deadline: e.target.value })
+                    }
                     className="w-full rounded-lg border-gray-300 bg-white focus:border-orange-500 focus:ring-orange-500"
                   />
                 </div>
 
                 <div className="flex gap-2 pt-2">
                   <button
-                    onClick={() => {
-                      setLoading(true);
-                      setRefreshKey((k) => k + 1);
-                    }}
+                    onClick={applyFiltersAndSort}
                     className="flex-1 px-4 py-2 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 transition"
                   >
                     Apply
@@ -205,10 +265,7 @@ export default function ManufacturerRFQsPage() {
             {/* Sort Chips */}
             <div className="flex gap-2 overflow-x-auto pb-2">
               <button
-                onClick={() => {
-                  setLoading(true);
-                  setSortBy("newest");
-                }}
+                onClick={() => setSortBy("newest")}
                 className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition ${
                   sortBy === "newest"
                     ? "bg-orange-100 text-orange-600"
@@ -218,10 +275,7 @@ export default function ManufacturerRFQsPage() {
                 Newest ▼
               </button>
               <button
-                onClick={() => {
-                  setLoading(true);
-                  setSortBy("ending_soon");
-                }}
+                onClick={() => setSortBy("ending_soon")}
                 className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition ${
                   sortBy === "ending_soon"
                     ? "bg-orange-100 text-orange-600"
@@ -231,10 +285,7 @@ export default function ManufacturerRFQsPage() {
                 Ending Soon
               </button>
               <button
-                onClick={() => {
-                  setLoading(true);
-                  setSortBy("highest_budget");
-                }}
+                onClick={() => setSortBy("highest_budget")}
                 className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition ${
                   sortBy === "highest_budget"
                     ? "bg-orange-100 text-orange-600"
@@ -244,15 +295,12 @@ export default function ManufacturerRFQsPage() {
                 Highest Budget
               </button>
               <button
-                onClick={() => {
-                  setLoading(true);
-                  setSortBy("best_match");
-                }}
+                onClick={() => setSortBy("best_match")}
                 className={`px-4 py-2 rounded-lg font-medium text-sm whitespace-nowrap transition ${
                   sortBy === "best_match"
                     ? "bg-orange-100 text-orange-600"
                     : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                }}`}
+                }`}
               >
                 Best Match
               </button>
@@ -320,7 +368,7 @@ export default function ManufacturerRFQsPage() {
                           </span>{" "}
                           <span className="text-gray-700">
                             {new Date(
-                              rfq.customOrderId.deadline,
+                              rfq.customOrderId.deadline
                             ).toLocaleDateString()}
                           </span>
                         </div>
@@ -378,14 +426,11 @@ export default function ManufacturerRFQsPage() {
                   >
                     <div className="flex flex-col md:flex-row gap-5">
                       {rfq.customOrderId?.images?.[0]?.url && (
-                        <div className="relative w-full md:w-40 h-40 shrink-0 rounded-lg overflow-hidden">
-                          <Image
-                            src={rfq.customOrderId.images[0].url}
-                            alt={rfq.customOrderId.title}
-                            fill
-                            className="object-cover"
-                          />
-                        </div>
+                        <img
+                          src={rfq.customOrderId.images[0].url}
+                          alt={rfq.customOrderId.title}
+                          className="w-full md:w-40 h-40 object-cover rounded-lg"
+                        />
                       )}
 
                       <div className="flex-1">

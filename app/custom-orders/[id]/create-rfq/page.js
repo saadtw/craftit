@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -17,7 +17,21 @@ export default function CreateRFQ() {
     broadcastToAll: true,
   });
 
-  const fetchCustomOrder = useCallback(async () => {
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    if (status === "authenticated") {
+      if (session.user.role !== "customer") {
+        router.push("/auth/login");
+        return;
+      }
+      fetchCustomOrder();
+    }
+  }, [status, session, router]);
+
+  const fetchCustomOrder = async () => {
     try {
       const response = await fetch(`/api/custom-orders/${params.id}`, {});
       const data = await response.json();
@@ -42,21 +56,7 @@ export default function CreateRFQ() {
     } finally {
       setLoading(false);
     }
-  }, [params.id, router]);
-
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-      return;
-    }
-    if (status === "authenticated") {
-      if (session.user.role !== "customer") {
-        router.push("/auth/login");
-        return;
-      }
-      fetchCustomOrder();
-    }
-  }, [status, session, router, fetchCustomOrder]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();

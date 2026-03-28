@@ -330,11 +330,10 @@
 // app/manufacturer/rfqs/[id]/bid/page.js
 "use client";
 
-import { useState, useEffect, use, useCallback } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function PlaceBidPage({ params }) {
   const unwrappedParams = use(params);
@@ -358,7 +357,13 @@ export default function PlaceBidPage({ params }) {
     warrantyInfo: "",
   });
 
-  const fetchRFQ = useCallback(async () => {
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role === "manufacturer") {
+      fetchRFQ();
+    }
+  }, [status, session]);
+
+  const fetchRFQ = async () => {
     try {
       const res = await fetch(`/api/rfqs/${unwrappedParams.id}`);
       const data = await res.json();
@@ -371,13 +376,7 @@ export default function PlaceBidPage({ params }) {
     } catch (error) {
       alert("Error: " + error.message);
     }
-  }, [unwrappedParams.id]);
-
-  useEffect(() => {
-    if (status === "authenticated" && session?.user?.role === "manufacturer") {
-      fetchRFQ();
-    }
-  }, [status, session, fetchRFQ]);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -423,7 +422,7 @@ export default function PlaceBidPage({ params }) {
 
   if (status === "loading" || !rfq) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
@@ -489,12 +488,10 @@ export default function PlaceBidPage({ params }) {
                 <p className="text-sm text-green-600 mt-1">Auction Active</p>
               </div>
               {rfq.customOrderId?.images?.[0]?.url && (
-                <Image
+                <img
                   src={rfq.customOrderId.images[0].url}
                   alt="Project"
-                  width={192}
-                  height={128}
-                  className="object-cover rounded-lg shadow-md"
+                  className="w-48 h-32 object-cover rounded-lg shadow-md"
                 />
               )}
             </div>

@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
-import VerificationDocument from "@/models/VerificationDocument";
 
 export async function GET(request) {
   try {
@@ -51,19 +50,9 @@ export async function GET(request) {
       .updateLastActive()
       .catch((err) => console.error("Failed to update last active:", err));
 
-    let verificationDocuments = null;
-    if (user.role === "manufacturer") {
-      verificationDocuments = await VerificationDocument.findOne({
-        manufacturerId: user._id,
-      }).lean();
-    }
-
-    const userData = user.toObject();
-    userData.verificationDocuments = verificationDocuments;
-
     return NextResponse.json({
       success: true,
-      user: userData,
+      user: user,
     });
   } catch (error) {
     console.error("Get user error:", error);

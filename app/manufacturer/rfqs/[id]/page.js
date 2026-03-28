@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Script from "next/script";
 import Link from "next/link";
-import Image from "next/image";
 
 export default function ManufacturerRFQDetails() {
   const params = useParams();
@@ -16,7 +15,13 @@ export default function ManufacturerRFQDetails() {
   const [myBid, setMyBid] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchRFQ = useCallback(async () => {
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role === "manufacturer") {
+      fetchRFQ();
+    }
+  }, [status, session]);
+
+  const fetchRFQ = async () => {
     try {
       const response = await fetch(`/api/rfqs/${params.id}`);
       const data = await response.json();
@@ -35,13 +40,7 @@ export default function ManufacturerRFQDetails() {
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
-
-  useEffect(() => {
-    if (status === "authenticated" && session?.user?.role === "manufacturer") {
-      fetchRFQ();
-    }
-  }, [status, session, fetchRFQ]);
+  };
 
   const getTimeRemaining = (endDate) => {
     const now = new Date();
@@ -58,7 +57,7 @@ export default function ManufacturerRFQDetails() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-blue-50 to-white">
         <div className="text-xl text-gray-600">Loading...</div>
       </div>
     );
@@ -97,7 +96,7 @@ export default function ManufacturerRFQDetails() {
         src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
       />
 
-      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
+      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
         {/* Header */}
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
           <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex justify-between items-center">
@@ -152,12 +151,10 @@ export default function ManufacturerRFQDetails() {
               </p>
             </div>
             {rfq.customOrderId?.images?.[0]?.url && (
-              <Image
+              <img
                 src={rfq.customOrderId.images[0].url}
                 alt="Project"
-                width={192}
-                height={128}
-                className="object-cover rounded-lg shadow-md shrink-0"
+                className="w-48 h-32 object-cover rounded-lg shadow-md flex-shrink-0"
               />
             )}
           </div>
@@ -201,8 +198,8 @@ export default function ManufacturerRFQDetails() {
                       myBid.status === "accepted"
                         ? "bg-green-100 text-green-800"
                         : myBid.status === "under_consideration"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
+                        ? "bg-blue-100 text-blue-800"
+                        : "bg-gray-100 text-gray-800"
                     }`}
                   >
                     {myBid.status.toUpperCase().replace("_", " ")}
@@ -320,18 +317,12 @@ export default function ManufacturerRFQDetails() {
                   <h3 className="font-bold text-gray-900 mb-2">Images</h3>
                   <div className="grid grid-cols-3 gap-4">
                     {rfq.customOrderId.images.map((img, idx) => (
-                      <div
+                      <img
                         key={idx}
-                        className="relative h-48 rounded-lg overflow-hidden"
-                      >
-                        <Image
-                          src={img.url}
-                          alt={`Image ${idx + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="33vw"
-                        />
-                      </div>
+                        src={img.url}
+                        alt={`Image ${idx + 1}`}
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
                     ))}
                   </div>
                 </div>

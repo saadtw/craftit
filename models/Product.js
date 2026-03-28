@@ -72,17 +72,6 @@ const ProductSchema = new mongoose.Schema(
       color: [String],
     },
 
-    shippingWeight: Number, // in kg
-    shippingDimensions: {
-      length: Number,
-      width: Number,
-      height: Number,
-      unit: {
-        type: String,
-        default: "cm",
-      },
-    },
-
     customizationOptions: {
       type: Boolean,
       default: false,
@@ -92,9 +81,7 @@ const ProductSchema = new mongoose.Schema(
 
     tags: [String],
 
-    seoTitle: String,
-    seoDescription: String,
-
+    // Stats
     views: {
       type: Number,
       default: 0,
@@ -120,7 +107,7 @@ const ProductSchema = new mongoose.Schema(
       default: "draft",
     },
   },
-  { timestamps: true },
+  { timestamps: true }
 );
 
 // Indexes

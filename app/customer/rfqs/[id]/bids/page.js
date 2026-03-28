@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 
@@ -11,24 +11,6 @@ export default function BidComparisonPage() {
   const [bids, setBids] = useState([]);
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const fetchBids = useCallback(async () => {
-    try {
-      const res = await fetch(`/api/rfqs/${params.id}/bids`);
-      const data = await res.json();
-
-      if (res.ok) {
-        setBids(data.bids || []);
-        setAnalysis(data.analysis);
-      } else {
-        alert(data.error || "Failed to fetch bids");
-      }
-    } catch (error) {
-      alert(error.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [params.id]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -42,7 +24,29 @@ export default function BidComparisonPage() {
       }
       fetchBids();
     }
-  }, [status, session, router, fetchBids]);
+  }, [status, session, router]);
+
+  const fetchBids = async () => {
+    try {
+      const res = await fetch(`/api/rfqs/${params.id}/bids`, {
+        headers: {
+          Authorization: `Bearer ${session.accessToken}`,
+        },
+      });
+      const data = await res.json();
+
+      if (res.ok) {
+        setBids(data.bids || []);
+        setAnalysis(data.analysis);
+      } else {
+        alert(data.error || "Failed to fetch bids");
+      }
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (status === "loading" || loading) return <div>Loading bids...</div>;
 
