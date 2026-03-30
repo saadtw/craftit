@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 
 export default function EditCustomOrder() {
   const router = useRouter();
@@ -193,162 +194,165 @@ export default function EditCustomOrder() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Edit Custom Order</h1>
+    <div className="min-h-screen bg-[#f8f7f6]">
+      <CustomerMainNavbar />
+      <div className="max-w-4xl mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-6">Edit Custom Order</h1>
 
-      <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block mb-2 font-semibold">Title *</label>
-          <input
-            type="text"
-            name="title"
-            value={formData.title}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-            required
-          />
-        </div>
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block mb-2 font-semibold">Title *</label>
+            <input
+              type="text"
+              name="title"
+              value={formData.title}
+              onChange={handleChange}
+              className="w-full border p-2 rounded"
+              required
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 font-semibold">Description *</label>
-          <textarea
-            name="description"
-            value={formData.description}
-            onChange={handleChange}
-            className="w-full border p-2 rounded h-24"
-            required
-          />
-        </div>
+          <div className="mb-4">
+            <label className="block mb-2 font-semibold">Description *</label>
+            <textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              className="w-full border p-2 rounded h-24"
+              required
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 font-semibold">Quantity *</label>
-          <input
-            type="number"
-            name="quantity"
-            value={formData.quantity}
-            onChange={handleChange}
-            min="1"
-            className="w-full border p-2 rounded"
-            required
-          />
-        </div>
+          <div className="mb-4">
+            <label className="block mb-2 font-semibold">Quantity *</label>
+            <input
+              type="number"
+              name="quantity"
+              value={formData.quantity}
+              onChange={handleChange}
+              min="1"
+              className="w-full border p-2 rounded"
+              required
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 font-semibold">
-            Material Preferences (comma-separated)
-          </label>
-          <input
-            type="text"
-            placeholder="Aluminum, Steel, Plastic"
-            value={formData.materialPreferences.join(", ")}
-            onChange={(e) => handleArrayInput(e, "materialPreferences")}
-            className="w-full border p-2 rounded"
-          />
-        </div>
+          <div className="mb-4">
+            <label className="block mb-2 font-semibold">
+              Material Preferences (comma-separated)
+            </label>
+            <input
+              type="text"
+              placeholder="Aluminum, Steel, Plastic"
+              value={formData.materialPreferences.join(", ")}
+              onChange={(e) => handleArrayInput(e, "materialPreferences")}
+              className="w-full border p-2 rounded"
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 font-semibold">
-            Color Specifications (comma-separated)
-          </label>
-          <input
-            type="text"
-            placeholder="Black, White, Silver"
-            value={formData.colorSpecifications.join(", ")}
-            onChange={(e) => handleArrayInput(e, "colorSpecifications")}
-            className="w-full border p-2 rounded"
-          />
-        </div>
+          <div className="mb-4">
+            <label className="block mb-2 font-semibold">
+              Color Specifications (comma-separated)
+            </label>
+            <input
+              type="text"
+              placeholder="Black, White, Silver"
+              value={formData.colorSpecifications.join(", ")}
+              onChange={(e) => handleArrayInput(e, "colorSpecifications")}
+              className="w-full border p-2 rounded"
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 font-semibold">Deadline</label>
-          <input
-            type="date"
-            name="deadline"
-            value={formData.deadline}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-          />
-        </div>
+          <div className="mb-4">
+            <label className="block mb-2 font-semibold">Deadline</label>
+            <input
+              type="date"
+              name="deadline"
+              value={formData.deadline}
+              onChange={handleChange}
+              className="w-full border p-2 rounded"
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 font-semibold">Budget ($)</label>
-          <input
-            type="number"
-            name="budget"
-            value={formData.budget}
-            onChange={handleChange}
-            className="w-full border p-2 rounded"
-            min="0"
-          />
-        </div>
+          <div className="mb-4">
+            <label className="block mb-2 font-semibold">Budget ($)</label>
+            <input
+              type="number"
+              name="budget"
+              value={formData.budget}
+              onChange={handleChange}
+              className="w-full border p-2 rounded"
+              min="0"
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 font-semibold">
-            Special Requirements
-          </label>
-          <textarea
-            name="specialRequirements"
-            value={formData.specialRequirements}
-            onChange={handleChange}
-            className="w-full border p-2 rounded h-24"
-          />
-        </div>
+          <div className="mb-4">
+            <label className="block mb-2 font-semibold">
+              Special Requirements
+            </label>
+            <textarea
+              name="specialRequirements"
+              value={formData.specialRequirements}
+              onChange={handleChange}
+              className="w-full border p-2 rounded h-24"
+            />
+          </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 font-semibold">Upload 3D Model</label>
-          <input
-            type="file"
-            accept=".stl,.obj,.gltf,.glb"
-            onChange={handle3DUpload}
-            className="w-full border p-2 rounded"
-          />
-          {model3D && (
-            <div className="mt-2 p-2 bg-green-100 rounded">
-              ✓ {model3D.filename} uploaded
-            </div>
-          )}
-        </div>
+          <div className="mb-4">
+            <label className="block mb-2 font-semibold">Upload 3D Model</label>
+            <input
+              type="file"
+              accept=".stl,.obj,.gltf,.glb"
+              onChange={handle3DUpload}
+              className="w-full border p-2 rounded"
+            />
+            {model3D && (
+              <div className="mt-2 p-2 bg-green-100 rounded">
+                ✓ {model3D.filename} uploaded
+              </div>
+            )}
+          </div>
 
-        <div className="mb-4">
-          <label className="block mb-2 font-semibold">Upload Images</label>
-          <input
-            type="file"
-            accept=".jpg,.jpeg,.png,.webp"
-            multiple
-            onChange={handleImageUpload}
-            className="w-full border p-2 rounded"
-          />
-          {images.length > 0 && (
-            <div className="mt-2">
-              {images.map((img, idx) => (
-                <div key={idx} className="p-2 bg-green-100 rounded mb-1">
-                  ✓ {img.filename}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+          <div className="mb-4">
+            <label className="block mb-2 font-semibold">Upload Images</label>
+            <input
+              type="file"
+              accept=".jpg,.jpeg,.png,.webp"
+              multiple
+              onChange={handleImageUpload}
+              className="w-full border p-2 rounded"
+            />
+            {images.length > 0 && (
+              <div className="mt-2">
+                {images.map((img, idx) => (
+                  <div key={idx} className="p-2 bg-green-100 rounded mb-1">
+                    ✓ {img.filename}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
 
-        {uploading && <p className="text-blue-600">Uploading files...</p>}
+          {uploading && <p className="text-blue-600">Uploading files...</p>}
 
-        <div className="flex gap-4">
-          <button
-            type="button"
-            onClick={() => router.push(`/custom_orders/${params.id}/review`)}
-            className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-          >
-            Cancel
-          </button>
+          <div className="flex gap-4">
+            <button
+              type="button"
+              onClick={() => router.push(`/custom-orders/${params.id}/review`)}
+              className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              Cancel
+            </button>
 
-          <button
-            type="submit"
-            disabled={loading || uploading}
-            className="flex-1 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
-          >
-            {loading ? "Saving..." : "Save Changes"}
-          </button>
-        </div>
-      </form>
+            <button
+              type="submit"
+              disabled={loading || uploading}
+              className="flex-1 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
+            >
+              {loading ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

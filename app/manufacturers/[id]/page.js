@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import LogoutButton from "@/components/LogoutButton";
-import CustomerSidebar from "@/components/CustomerSidebar";
+import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { fetchWithCache } from "@/lib/clientCache";
 
 function ManufacturerSidebar({ active, session }) {
@@ -231,8 +231,6 @@ export default function ManufacturerPublicProfilePage() {
       <div className="flex h-screen bg-[#f8f7f6]">
         {role === "manufacturer" ? (
           <ManufacturerSidebar session={session} />
-        ) : role === "customer" ? (
-          <CustomerSidebar session={session} />
         ) : null}
         <main className="flex-1 flex items-center justify-center">
           <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
@@ -246,8 +244,6 @@ export default function ManufacturerPublicProfilePage() {
       <div className="flex h-screen bg-[#f8f7f6]">
         {role === "manufacturer" ? (
           <ManufacturerSidebar session={session} />
-        ) : role === "customer" ? (
-          <CustomerSidebar session={session} />
         ) : null}
         <main className="flex-1 flex flex-col items-center justify-center gap-3">
           <p className="text-gray-500">Manufacturer not found.</p>
@@ -263,21 +259,23 @@ export default function ManufacturerPublicProfilePage() {
   }
 
   const isPublic = !role; // unauthenticated visitor
+  const usesSidebar = role === "manufacturer";
 
   return (
-    <div className={`flex ${isPublic ? "flex-col" : "h-screen"} bg-[#f8f7f6]`}>
+    <div
+      className={`${usesSidebar ? "flex h-screen" : "min-h-screen"} ${isPublic ? "flex-col" : ""} bg-[#f8f7f6]`}
+    >
       {/* Sidebar or nothing */}
       {role === "manufacturer" && (
         <ManufacturerSidebar active="profile" session={session} />
       )}
-      {role === "customer" && (
-        <CustomerSidebar active="explore" session={session} />
-      )}
 
-      <main className={`flex-1 ${isPublic ? "" : "overflow-y-auto"}`}>
+      <main className={`flex-1 ${usesSidebar ? "overflow-y-auto" : ""}`}>
         {/* Header — authenticated gets the inner header; public gets top nav */}
         {isPublic ? (
           <PublicTopNav manufacturer={manufacturer} />
+        ) : role === "customer" ? (
+          <CustomerMainNavbar />
         ) : (
           <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-8 bg-white/80 backdrop-blur-sm border-b border-gray-200">
             <div className="flex items-center gap-3">

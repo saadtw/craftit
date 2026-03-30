@@ -56,7 +56,7 @@ function BfcacheBuster() {
   return null;
 }
 
-function SessionInvalidGuard() {
+function SessionGuards() {
   const { data: session, status } = useSession();
 
   useEffect(() => {
@@ -64,12 +64,6 @@ function SessionInvalidGuard() {
     if (session?.error !== "SESSION_INVALID") return;
     signOut({ callbackUrl: "/auth/login" });
   }, [status, session]);
-
-  return null;
-}
-
-function SessionRealtimeGuard() {
-  const { data: session, status } = useSession();
 
   useEffect(() => {
     if (status !== "authenticated" || !session?.user?.id) return;
@@ -101,12 +95,11 @@ export default function SessionProvider({ children, session }) {
   return (
     <NextAuthSessionProvider
       session={session}
-      refetchOnWindowFocus={true}
+      refetchOnWindowFocus={false}
       refetchInterval={0}
     >
       <BfcacheBuster />
-      <SessionInvalidGuard />
-      <SessionRealtimeGuard />
+      <SessionGuards />
       {children}
     </NextAuthSessionProvider>
   );

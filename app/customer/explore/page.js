@@ -116,236 +116,219 @@ export default function CustomerExplorePage() {
   if (status === "unauthenticated") return null;
 
   return (
-    <div className="flex h-screen bg-[#f8f7f6]">
-      <main className="flex-1 overflow-y-auto">
-        {/* Header */}
-        <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-8 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-          <h1 className="text-xl font-bold text-gray-900">Explore Products</h1>
-          <div className="flex items-center gap-4">
-            <button className="relative text-gray-900 hover:text-[#eb9728]">
-              <span className="material-symbols-outlined">notifications</span>
-            </button>
-            <div className="w-9 h-9 bg-[#eb9728] rounded-full flex items-center justify-center text-white font-semibold text-sm">
-              {session?.user?.name?.charAt(0) || "U"}
-            </div>
-          </div>
-        </header>
-
-        <div className="p-8">
-          {/* Search + filter bar */}
-          <div className="flex flex-col sm:flex-row gap-3 mb-6">
-            <div className="flex-1 flex items-center bg-white border border-gray-200 rounded-xl px-4 gap-2 shadow-sm">
-              <span className="material-symbols-outlined text-gray-400">
-                search
-              </span>
-              <input
-                type="text"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search products by name, description, or tag..."
-                className="flex-1 py-3 text-sm focus:outline-none bg-transparent"
-              />
-              {search && (
-                <button
-                  onClick={() => setSearch("")}
-                  className="text-gray-400 hover:text-gray-600"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm shadow-sm focus:outline-none focus:border-[#eb9728]"
-            >
-              {SORT_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-            <button
-              onClick={() => setShowFilters((s) => !s)}
-              className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border shadow-sm transition-colors ${
-                showFilters
-                  ? "bg-[#eb9728] text-white border-[#eb9728]"
-                  : "bg-white text-gray-700 border-gray-200 hover:border-[#eb9728]"
-              }`}
-            >
-              <span className="material-symbols-outlined text-base">tune</span>
-              Filters
-              {(category || priceMin || priceMax) && (
-                <span className="w-2 h-2 rounded-full bg-white inline-block" />
-              )}
-            </button>
-          </div>
-
-          {/* Expanded filters */}
-          {showFilters && (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
-                    Category
-                  </label>
-                  <select
-                    value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#eb9728]"
-                  >
-                    <option value="">All Categories</option>
-                    {CATEGORIES.map((c) => (
-                      <option key={c} value={c}>
-                        {c}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
-                    Min Price ($)
-                  </label>
-                  <input
-                    type="number"
-                    value={priceMin}
-                    onChange={(e) => setPriceMin(e.target.value)}
-                    placeholder={`e.g. ${meta.priceRange.min}`}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#eb9728]"
-                    min={0}
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
-                    Max Price ($)
-                  </label>
-                  <input
-                    type="number"
-                    value={priceMax}
-                    onChange={(e) => setPriceMax(e.target.value)}
-                    placeholder={`e.g. ${meta.priceRange.max}`}
-                    className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#eb9728]"
-                    min={0}
-                  />
-                </div>
-              </div>
-              {(category || priceMin || priceMax) && (
-                <button
-                  onClick={() => {
-                    setCategory("");
-                    setPriceMin("");
-                    setPriceMax("");
-                  }}
-                  className="mt-3 text-xs text-red-500 hover:text-red-600 font-medium"
-                >
-                  Clear all filters
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Result count */}
-          <div className="flex items-center justify-between mb-4">
-            <p className="text-sm text-gray-500">
-              {loading
-                ? "Loading..."
-                : `${pagination.total} product${pagination.total !== 1 ? "s" : ""} found`}
-            </p>
-            {debouncedSearch && (
-              <p className="text-sm text-gray-500">
-                Results for <strong>&quot;{debouncedSearch}&quot;</strong>
-              </p>
+    <div className="min-h-screen bg-[#f8f7f6]">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        {/* Search + filter bar */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-6">
+          <div className="flex-1 flex items-center bg-white border border-gray-200 rounded-xl px-4 gap-2 shadow-sm">
+            <span className="material-symbols-outlined text-gray-400">
+              search
+            </span>
+            <input
+              type="text"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search products by name, description, or tag..."
+              className="flex-1 py-3 text-sm focus:outline-none bg-transparent"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                ✕
+              </button>
             )}
           </div>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value)}
+            className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm shadow-sm focus:outline-none focus:border-[#eb9728]"
+          >
+            {SORT_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>
+                {o.label}
+              </option>
+            ))}
+          </select>
+          <button
+            onClick={() => setShowFilters((s) => !s)}
+            className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border shadow-sm transition-colors ${
+              showFilters
+                ? "bg-[#eb9728] text-white border-[#eb9728]"
+                : "bg-white text-gray-700 border-gray-200 hover:border-[#eb9728]"
+            }`}
+          >
+            <span className="material-symbols-outlined text-base">tune</span>
+            Filters
+            {(category || priceMin || priceMax) && (
+              <span className="w-2 h-2 rounded-full bg-white inline-block" />
+            )}
+          </button>
+        </div>
 
-          {/* Product grid */}
-          {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="bg-white rounded-xl border border-gray-200 overflow-hidden animate-pulse"
+        {/* Expanded filters */}
+        {showFilters && (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
+                  Category
+                </label>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value)}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#eb9728]"
                 >
-                  <div className="h-48 bg-gray-100" />
-                  <div className="p-4 space-y-2">
-                    <div className="h-4 bg-gray-100 rounded w-3/4" />
-                    <div className="h-3 bg-gray-100 rounded w-1/2" />
-                    <div className="h-4 bg-gray-100 rounded w-1/3" />
-                  </div>
-                </div>
-              ))}
+                  <option value="">All Categories</option>
+                  {CATEGORIES.map((c) => (
+                    <option key={c} value={c}>
+                      {c}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
+                  Min Price ($)
+                </label>
+                <input
+                  type="number"
+                  value={priceMin}
+                  onChange={(e) => setPriceMin(e.target.value)}
+                  placeholder={`e.g. ${meta.priceRange.min}`}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#eb9728]"
+                  min={0}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
+                  Max Price ($)
+                </label>
+                <input
+                  type="number"
+                  value={priceMax}
+                  onChange={(e) => setPriceMax(e.target.value)}
+                  placeholder={`e.g. ${meta.priceRange.max}`}
+                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#eb9728]"
+                  min={0}
+                />
+              </div>
             </div>
-          ) : products.length === 0 ? (
-            <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-              <span className="material-symbols-outlined text-5xl text-gray-300 mb-3 block">
-                category
-              </span>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                No products found
-              </h3>
-              <p className="text-gray-500 text-sm mb-4">
-                {search
-                  ? `No results for "${search}"`
-                  : "No products available with the selected filters."}
-              </p>
+            {(category || priceMin || priceMax) && (
               <button
                 onClick={() => {
-                  setSearch("");
                   setCategory("");
                   setPriceMin("");
                   setPriceMax("");
                 }}
-                className="px-4 py-2 bg-[#eb9728] text-white rounded-lg text-sm font-medium hover:bg-[#eb9728]/90"
+                className="mt-3 text-xs text-red-500 hover:text-red-600 font-medium"
               >
-                Clear Filters
+                Clear all filters
               </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {products.map((product) => (
-                <ProductCard key={product._id} product={product} />
-              ))}
-            </div>
-          )}
+            )}
+          </div>
+        )}
 
-          {/* Pagination */}
-          {pagination.pages > 1 && !loading && (
-            <div className="flex justify-center gap-2 mt-10">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-4 py-2 rounded-lg text-sm border border-gray-200 bg-white disabled:opacity-40 hover:border-[#eb9728]"
-              >
-                ← Prev
-              </button>
-              {Array.from(
-                { length: Math.min(pagination.pages, 7) },
-                (_, i) => i + 1,
-              ).map((p) => (
-                <button
-                  key={p}
-                  onClick={() => setPage(p)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    p === page
-                      ? "bg-[#eb9728] text-white border border-[#eb9728]"
-                      : "bg-white border border-gray-200 text-gray-700 hover:border-[#eb9728]"
-                  }`}
-                >
-                  {p}
-                </button>
-              ))}
-              <button
-                onClick={() =>
-                  setPage((p) => Math.min(pagination.pages, p + 1))
-                }
-                disabled={page === pagination.pages}
-                className="px-4 py-2 rounded-lg text-sm border border-gray-200 bg-white disabled:opacity-40 hover:border-[#eb9728]"
-              >
-                Next →
-              </button>
-            </div>
+        {/* Result count */}
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-sm text-gray-500">
+            {loading
+              ? "Loading..."
+              : `${pagination.total} product${pagination.total !== 1 ? "s" : ""} found`}
+          </p>
+          {debouncedSearch && (
+            <p className="text-sm text-gray-500">
+              Results for <strong>&quot;{debouncedSearch}&quot;</strong>
+            </p>
           )}
         </div>
+
+        {/* Product grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div
+                key={i}
+                className="bg-white rounded-xl border border-gray-200 overflow-hidden animate-pulse"
+              >
+                <div className="h-48 bg-gray-100" />
+                <div className="p-4 space-y-2">
+                  <div className="h-4 bg-gray-100 rounded w-3/4" />
+                  <div className="h-3 bg-gray-100 rounded w-1/2" />
+                  <div className="h-4 bg-gray-100 rounded w-1/3" />
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
+            <span className="material-symbols-outlined text-5xl text-gray-300 mb-3 block">
+              category
+            </span>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No products found
+            </h3>
+            <p className="text-gray-500 text-sm mb-4">
+              {search
+                ? `No results for "${search}"`
+                : "No products available with the selected filters."}
+            </p>
+            <button
+              onClick={() => {
+                setSearch("");
+                setCategory("");
+                setPriceMin("");
+                setPriceMax("");
+              }}
+              className="px-4 py-2 bg-[#eb9728] text-white rounded-lg text-sm font-medium hover:bg-[#eb9728]/90"
+            >
+              Clear Filters
+            </button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            {products.map((product) => (
+              <ProductCard key={product._id} product={product} />
+            ))}
+          </div>
+        )}
+
+        {/* Pagination */}
+        {pagination.pages > 1 && !loading && (
+          <div className="flex justify-center gap-2 mt-10">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="px-4 py-2 rounded-lg text-sm border border-gray-200 bg-white disabled:opacity-40 hover:border-[#eb9728]"
+            >
+              ← Prev
+            </button>
+            {Array.from(
+              { length: Math.min(pagination.pages, 7) },
+              (_, i) => i + 1,
+            ).map((p) => (
+              <button
+                key={p}
+                onClick={() => setPage(p)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  p === page
+                    ? "bg-[#eb9728] text-white border border-[#eb9728]"
+                    : "bg-white border border-gray-200 text-gray-700 hover:border-[#eb9728]"
+                }`}
+              >
+                {p}
+              </button>
+            ))}
+            <button
+              onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
+              disabled={page === pagination.pages}
+              className="px-4 py-2 rounded-lg text-sm border border-gray-200 bg-white disabled:opacity-40 hover:border-[#eb9728]"
+            >
+              Next →
+            </button>
+          </div>
+        )}
       </main>
     </div>
   );

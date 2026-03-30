@@ -5,7 +5,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
-import { fetchWithCache } from "@/lib/clientCache";
 
 // Status helpers (mirrors orders page)
 const STATUS_COLORS = {
@@ -83,22 +82,18 @@ export default function CustomerDashboard() {
     activeOrders: 0,
     completedOrders: 0,
     pendingRFQs: 0,
-    activeGroupBuys: 0,
+    disputedOrders: 0,
     totalSpend: 0,
   });
   const [recentOrders, setRecentOrders] = useState([]);
   const [recentRFQs, setRecentRFQs] = useState([]);
-  const [activeGroupBuys, setActiveGroupBuys] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchDashboardData = useCallback(async () => {
     try {
-      // fetchWithCache returns parsed JSON directly; raw fetch returns Response.
-      // Only group-buys/public is cacheable — orders/rfqs are user-specific.
-      const [ordersRes, rfqsRes, gbData] = await Promise.all([
+      const [ordersRes, rfqsRes] = await Promise.all([
         fetch("/api/orders?limit=5"),
         fetch("/api/rfqs?limit=3"),
-        fetchWithCache("/api/group-buys/public?limit=3"),
       ]);
       const [ordersData, rfqsData] = await Promise.all([
         ordersRes.json(),
@@ -118,7 +113,7 @@ export default function CustomerDashboard() {
                 (r) => r.status === "open" || r.status === "bidding",
               ).length
             : 0,
-          activeGroupBuys: gbData.success ? gbData.pagination?.total || 0 : 0,
+          disputedOrders: s.disputed || 0,
           totalSpend: orders
             .filter((o) => o.status === "completed")
             .reduce((sum, o) => sum + (o.totalPrice || 0), 0),
@@ -126,8 +121,6 @@ export default function CustomerDashboard() {
       }
 
       if (rfqsData.success) setRecentRFQs(rfqsData.rfqs?.slice(0, 3) || []);
-      if (gbData.success)
-        setActiveGroupBuys(gbData.groupBuys?.slice(0, 3) || []);
     } catch (error) {
       console.error("Dashboard fetch error:", error);
     } finally {
@@ -209,7 +202,7 @@ export default function CustomerDashboard() {
               </p>
             </div>
             <Link
-              href="/customer/custom-orders/new"
+              href="/custom-orders/new"
               className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-[#eb9728] hover:bg-amber-600 text-white rounded-xl text-sm font-bold transition-colors shadow-sm"
             >
               <span className="material-symbols-outlined text-base">add</span>
@@ -241,9 +234,9 @@ export default function CustomerDashboard() {
               value={stats.pendingRFQs}
             />
             <StatCard
-              icon="group"
-              label="Group Buys"
-              value={stats.activeGroupBuys}
+              icon="report"
+              label="Disputes"
+              value={stats.disputedOrders}
             />
             <StatCard
               icon="payments"
@@ -255,36 +248,36 @@ export default function CustomerDashboard() {
           {/* ── Quick actions ── */}
           <div>
             <h2 className="text-base font-bold text-gray-900 mb-4">
-              Quick Actions
+              Workspace Shortcuts
             </h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <ActionCard
-                href="/customer/custom-orders/new"
+                href="/custom-orders/new"
                 icon="add_circle"
                 iconBg="bg-amber-100 text-amber-600"
                 label="Custom Order"
                 desc="Start a manufacturing request"
               />
               <ActionCard
-                href="/customer/explore"
-                icon="storefront"
-                iconBg="bg-green-100 text-green-600"
-                label="Explore Products"
-                desc="Browse manufacturer listings"
-              />
-              <ActionCard
-                href="/customer/rfqs"
-                icon="gavel"
+                href="/customer/orders"
+                icon="receipt_long"
                 iconBg="bg-blue-100 text-blue-600"
-                label="My RFQs"
-                desc="View bids & proposals"
+                label="My Orders"
+                desc="Track statuses and delivery"
               />
               <ActionCard
-                href="/customer/group-buys"
-                icon="group"
-                iconBg="bg-purple-100 text-purple-600"
-                label="Group Buys"
-                desc="Unlock tier discounts"
+                href="/customer/wishlist"
+                icon="favorite"
+                iconBg="bg-rose-100 text-rose-600"
+                label="Wishlist"
+                desc="Saved products and suppliers"
+              />
+              <ActionCard
+                href="/customer/settings"
+                icon="settings"
+                iconBg="bg-gray-100 text-gray-700"
+                label="Settings"
+                desc="Profile, security, preferences"
               />
             </div>
           </div>
@@ -312,10 +305,10 @@ export default function CustomerDashboard() {
                     </span>
                     <p className="text-sm text-gray-400">No orders yet.</p>
                     <Link
-                      href="/customer/explore"
+                      href="/custom-orders/new"
                       className="inline-block mt-3 text-xs font-semibold text-[#eb9728] hover:underline"
                     >
-                      Browse products →
+                      Create your first request →
                     </Link>
                   </div>
                 ) : (
@@ -414,69 +407,48 @@ export default function CustomerDashboard() {
                 )}
               </div>
 
-              {/* Active Group Buys */}
+              {/* Workspace links */}
               <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
                 <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
                   <h2 className="text-sm font-bold text-gray-900">
-                    Active Group Buys
+                    Workspace Links
                   </h2>
-                  <Link
-                    href="/customer/group-buys"
-                    className="text-xs font-semibold text-[#eb9728] hover:underline"
-                  >
-                    View all →
-                  </Link>
                 </div>
-                {activeGroupBuys.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <span className="material-symbols-outlined text-3xl text-gray-200 block mb-1">
-                      group
-                    </span>
-                    <p className="text-xs text-gray-400">
-                      No active group buys.
-                    </p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-50">
-                    {activeGroupBuys.map((gb) => {
-                      const maxQty =
-                        gb.tiers?.[gb.tiers.length - 1]?.minQuantity || 1;
-                      const pct = Math.min(
-                        ((gb.currentQuantity || 0) / maxQty) * 100,
-                        100,
-                      );
-                      return (
-                        <Link
-                          key={gb._id}
-                          href={`/customer/group-buys/${gb._id}`}
-                        >
-                          <div className="px-5 py-3.5 hover:bg-gray-50 transition-colors group">
-                            <div className="flex items-center justify-between mb-1.5">
-                              <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-[#eb9728] transition-colors pr-2">
-                                {gb.title}
-                              </p>
-                              <span className="text-xs font-bold text-[#eb9728] shrink-0">
-                                $
-                                {(
-                                  gb.currentDiscountedPrice ?? gb.basePrice
-                                )?.toFixed(2)}
-                              </span>
-                            </div>
-                            <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
-                              <div
-                                className="h-full rounded-full bg-linear-to-r from-amber-400 to-amber-600 transition-all"
-                                style={{ width: `${pct}%` }}
-                              />
-                            </div>
-                            <p className="text-[10px] text-gray-400 mt-1">
-                              {gb.currentParticipantCount || 0} joined
-                            </p>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                )}
+                <div className="divide-y divide-gray-50">
+                  {[
+                    {
+                      href: "/customer/custom-orders",
+                      icon: "inventory_2",
+                      label: "My Custom Orders",
+                    },
+                    {
+                      href: "/customer/payments",
+                      icon: "payments",
+                      label: "Billing & Payments",
+                    },
+                    {
+                      href: "/customer/messages",
+                      icon: "mail",
+                      label: "Messages",
+                    },
+                    {
+                      href: "/customer/notifications",
+                      icon: "notifications",
+                      label: "Notifications",
+                    },
+                  ].map((item) => (
+                    <Link key={item.href} href={item.href}>
+                      <div className="px-5 py-3.5 hover:bg-gray-50 transition-colors flex items-center gap-3">
+                        <span className="material-symbols-outlined text-gray-400 text-lg">
+                          {item.icon}
+                        </span>
+                        <p className="text-sm font-semibold text-gray-800">
+                          {item.label}
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
               </div>
 
               {/* Account summary */}

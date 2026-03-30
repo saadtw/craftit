@@ -35,7 +35,7 @@ export default function ManufacturerSignup() {
     if (status === "authenticated" && session?.user) {
       const role = session.user.role;
       if (role === "customer") {
-        router.push("/customer/dashboard");
+        router.push("/customer");
       } else if (role === "manufacturer") {
         router.push("/manufacturer/dashboard");
       } else if (role === "admin") {

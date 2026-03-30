@@ -1,422 +1,339 @@
 // app/customer/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
+import { fetchWithCache } from "@/lib/clientCache";
 
-export default function HomePage() {
+const WORKSPACE_LINKS = [
+  { href: "/customer/dashboard", icon: "monitoring", label: "Dashboard" },
+  { href: "/customer/orders", icon: "receipt_long", label: "Orders" },
+  { href: "/customer/rfqs", icon: "gavel", label: "RFQs" },
+  { href: "/customer/wishlist", icon: "favorite", label: "Wishlist" },
+  { href: "/customer/settings", icon: "settings", label: "Settings" },
+  { href: "/customer/payments", icon: "payments", label: "Payments" },
+];
+
+function currency(value) {
+  if (typeof value !== "number") return "-";
+  return `$${value.toLocaleString()}`;
+}
+
+function daysLeft(dateString) {
+  if (!dateString) return 0;
+  const ms = new Date(dateString).getTime() - Date.now();
+  return Math.max(0, Math.ceil(ms / (1000 * 60 * 60 * 24)));
+}
+
+export default function CustomerHomePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+
   const [featuredProducts, setFeaturedProducts] = useState([]);
-  const [groupBuys, setGroupBuys] = useState([]);
-  const [manufacturers, setManufacturers] = useState([]);
+  const [activeGroupBuys, setActiveGroupBuys] = useState([]);
+  const [featuredManufacturers, setFeaturedManufacturers] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  const fetchHomeData = useCallback(async () => {
+    setLoading(true);
+    setError("");
+    try {
+      const [productsData, groupBuysData, manufacturersData] =
+        await Promise.all([
+          fetchWithCache("/api/products/public?sort=popular&limit=6", 180000),
+          fetchWithCache(
+            "/api/group-buys/public?sort=participants&limit=4",
+            120000,
+          ),
+          fetchWithCache(
+            "/api/manufacturers/public?sort=rating&limit=4",
+            300000,
+          ),
+        ]);
+
+      setFeaturedProducts(
+        productsData?.success ? productsData.products || [] : [],
+      );
+      setActiveGroupBuys(
+        groupBuysData?.success ? groupBuysData.groupBuys || [] : [],
+      );
+      setFeaturedManufacturers(
+        manufacturersData?.success ? manufacturersData.manufacturers || [] : [],
+      );
+    } catch (err) {
+      console.error("Customer home fetch error:", err);
+      setError("Could not load marketplace data. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
       return;
     }
+
     if (status === "authenticated") {
-      if (session.user.role !== "customer") {
+      if (session?.user?.role !== "customer") {
         router.push("/auth/login");
         return;
       }
       fetchHomeData();
     }
-  }, [status, session, router]);
+  }, [status, session, router, fetchHomeData]);
 
-  const fetchHomeData = async () => {
-    try {
-      const groupBuysRes = await fetch("/api/group-buys?limit=3");
-      const groupBuysData = await groupBuysRes.json();
-      if (groupBuysData.success) setGroupBuys(groupBuysData.groupBuys || []);
-
-      // Products and manufacturers catalogs are not yet available for customers
-      setFeaturedProducts([]);
-      setManufacturers([]);
-    } catch (error) {
-      console.error("Error fetching home data:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const firstName = useMemo(
+    () => session?.user?.name?.split(" ")[0] || "there",
+    [session?.user?.name],
+  );
 
   if (status === "loading" || loading) {
-    return <div className="p-6">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-[#f6f7fb] flex items-center justify-center">
+        <div className="w-8 h-8 rounded-full border-2 border-gray-300 border-t-[#eb9728] animate-spin" />
+      </div>
+    );
   }
 
-  if (status === "unauthenticated") {
-    return null;
-  }
-
-  if (session?.user?.role !== "customer") {
+  if (status === "unauthenticated" || session?.user?.role !== "customer") {
     return null;
   }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-[#FFF7ED]/80 backdrop-blur-sm border-b border-gray-200">
-        <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-8">
-            <Link href="/customer" className="flex items-center gap-2">
-              <div className="w-8 h-8 bg-[#F97316] rounded-lg flex items-center justify-center">
-                <div className="w-4 h-4 bg-white rounded"></div>
-              </div>
-              <span className="text-xl font-bold text-gray-900">Craftit</span>
-            </Link>
-            <div className="hidden md:flex items-center gap-6">
-              <Link
-                href="/customer"
-                className="text-sm font-semibold text-[#F97316]"
-              >
-                Home
-              </Link>
-              <Link
-                href="/customer/dashboard"
-                className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
-              >
-                Dashboard
-              </Link>
-              <Link
-                href="/customer/custom-orders"
-                className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
-              >
-                Custom Orders
-              </Link>
-              <Link
-                href="/customer/orders"
-                className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
-              >
-                My Orders
-              </Link>
-              <Link
-                href="/customer/rfqs"
-                className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
-              >
-                My RFQs
-              </Link>
-              <Link
-                href="/customer/explore"
-                className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
-              >
-                Explore Products
-              </Link>
-            </div>
-          </div>
-          <div className="flex items-center gap-4">
-            {status === "authenticated" ? (
-              <>
-                <button
-                  onClick={() =>
-                    router.push(
-                      session.user.role === "customer"
-                        ? "/custom-orders/new"
-                        : "/manufacturer/dashboard",
-                    )
-                  }
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold bg-[#F97316] text-white rounded-lg shadow-sm hover:bg-orange-600"
-                >
-                  <span className="material-symbols-outlined text-lg">add</span>
-                  Custom Order
-                </button>
-                <button className="p-2 text-gray-600 hover:text-[#F97316] rounded-full">
-                  <span className="material-symbols-outlined">
-                    notifications
-                  </span>
-                </button>
-                <Link
-                  href={
-                    session.user.role === "customer"
-                      ? "/customer/dashboard"
-                      : "/manufacturer/dashboard"
-                  }
-                >
-                  <div className="w-8 h-8 rounded-full bg-[#F97316] text-white flex items-center justify-center font-semibold text-sm">
-                    {session.user.name?.charAt(0) || "U"}
-                  </div>
-                </Link>
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/auth/login"
-                  className="text-sm font-medium text-gray-600 hover:text-[#F97316]"
-                >
-                  Login
-                </Link>
-                <Link
-                  href="/auth/signup"
-                  className="px-4 py-2 text-sm font-semibold bg-[#F97316] text-white rounded-lg hover:bg-orange-600"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
-          </div>
-        </nav>
-      </header>
-
-      <main className="grow container mx-auto px-6 py-8">
-        {/* Hero Section */}
-        <div className="bg-[#FFF7ED] p-8 rounded-lg mb-8">
-          <h1 className="text-4xl font-bold text-gray-900">
-            Welcome{session?.user?.name ? `, ${session.user.name}` : ""}!
-          </h1>
-          <p className="text-gray-600 mt-2 max-w-3xl">
-            Ready to bring your ideas to life? Explore unique creations, join
-            group buys, or start your own custom project. Let&apos;s make
-            something amazing together.
+    <div className="min-h-screen bg-linear-to-b from-[#f9fbff] via-[#f6f7fb] to-[#f3f4f7]">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-7 space-y-8">
+        <section className="rounded-3xl p-6 sm:p-8 bg-linear-to-r from-[#121826] via-[#1b2436] to-[#2a3248] text-white shadow-lg">
+          <p className="text-xs uppercase tracking-[0.2em] text-slate-300">
+            Marketplace Home
           </p>
-          <div className="mt-6 relative max-w-lg">
-            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gray-400">
-              search
-            </span>
-            <input
-              className="w-full pl-12 pr-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-[#F97316] focus:border-[#F97316]"
-              placeholder="Search for products, manufacturers, or group buys"
-              type="text"
-            />
+          <h1 className="mt-2 text-2xl sm:text-3xl font-extrabold tracking-tight">
+            Welcome back, {firstName}
+          </h1>
+          <p className="mt-2 text-sm text-slate-300 max-w-2xl">
+            Discover top products, join active group buys, and shortlist trusted
+            manufacturers. Use your dashboard for account-specific tracking and
+            settings.
+          </p>
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <Link
+              href="/customer/explore"
+              className="px-4 py-2 rounded-lg bg-white text-gray-900 text-sm font-semibold hover:bg-gray-100"
+            >
+              Browse Products
+            </Link>
+            <Link
+              href="/customer/group-buys"
+              className="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-sm font-semibold hover:bg-white/20"
+            >
+              View Group Buys
+            </Link>
+            <Link
+              href="/manufacturers"
+              className="px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-sm font-semibold hover:bg-white/20"
+            >
+              Find Manufacturers
+            </Link>
           </div>
-        </div>
+        </section>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Filters Sidebar */}
-          <aside className="col-span-1 lg:pr-8">
-            <div className="space-y-8">
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-4">Filters</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-3 text-sm text-gray-700">
-                    <input
-                      checked
-                      readOnly
-                      className="h-4 w-4 rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]"
-                      type="checkbox"
-                    />
-                    <span>On demand</span>
-                  </label>
-                  <label className="flex items-center space-x-3 text-sm text-gray-700">
-                    <input
-                      className="h-4 w-4 rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]"
-                      type="checkbox"
-                    />
-                    <span>Group Buys</span>
-                  </label>
-                  <label className="flex items-center space-x-3 text-sm text-gray-700">
-                    <input
-                      className="h-4 w-4 rounded border-gray-300 text-[#F97316] focus:ring-[#F97316]"
-                      type="checkbox"
-                    />
-                    <span>Ready to Ship</span>
-                  </label>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold text-gray-900 mb-4">Category</h3>
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-3 text-sm text-gray-700">
-                    <input
-                      checked
-                      readOnly
-                      className="h-4 w-4 border-gray-300 text-[#F97316] focus:ring-[#F97316]"
-                      name="category"
-                      type="radio"
-                    />
-                    <span>CNC Machining</span>
-                  </label>
-                  <label className="flex items-center space-x-3 text-sm text-gray-700">
-                    <input
-                      className="h-4 w-4 border-gray-300 text-[#F97316] focus:ring-[#F97316]"
-                      name="category"
-                      type="radio"
-                    />
-                    <span>3D Printing</span>
-                  </label>
-                  <label className="flex items-center space-x-3 text-sm text-gray-700">
-                    <input
-                      className="h-4 w-4 border-gray-300 text-[#F97316] focus:ring-[#F97316]"
-                      name="category"
-                      type="radio"
-                    />
-                    <span>Injection Molding</span>
-                  </label>
-                  <label className="flex items-center space-x-3 text-sm text-gray-700">
-                    <input
-                      className="h-4 w-4 border-gray-300 text-[#F97316] focus:ring-[#F97316]"
-                      name="category"
-                      type="radio"
-                    />
-                    <span>Sheet Metal</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-          </aside>
-
-          {/* Main Content */}
-          <div className="col-span-1 lg:col-span-3 space-y-10">
-            {/* Featured Products */}
-            <section>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Featured Custom Creation
-                </h2>
-                <Link
-                  href="/products"
-                  className="text-sm font-semibold text-[#F97316] hover:underline"
-                >
-                  View All
-                </Link>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-                {featuredProducts.map((product) => (
-                  <div
-                    key={product._id}
-                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200"
-                  >
-                    <div className="w-full h-40 bg-gray-200 rounded-md mb-4"></div>
-                    <h4 className="font-semibold text-gray-900">
-                      {product.name}
-                    </h4>
-                    <p className="text-sm text-gray-500">
-                      By{" "}
-                      {product.manufacturerId?.businessName || "Manufacturer"}
-                    </p>
-                    <div className="flex justify-between items-center mt-4">
-                      <p className="text-sm text-gray-600">
-                        From{" "}
-                        <span className="font-bold text-gray-900">
-                          ${product.price}
-                        </span>
-                      </p>
-                      <button className="px-4 py-2 text-sm font-semibold bg-[#F97316] text-white rounded-lg hover:bg-orange-600">
-                        Customize
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Group Buys */}
-            <section>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Ongoing Group Buys
-                </h2>
-                <Link
-                  href="/group-buys"
-                  className="text-sm font-semibold text-[#F97316] hover:underline"
-                >
-                  View All
-                </Link>
-              </div>
-              <div className="space-y-4">
-                {groupBuys.map((groupBuy) => (
-                  <div
-                    key={groupBuy._id}
-                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 flex flex-col sm:flex-row items-center gap-4"
-                  >
-                    <div className="w-full sm:w-32 h-32 bg-gray-200 rounded-md"></div>
-                    <div className="grow">
-                      <h4 className="font-semibold text-gray-900">
-                        {groupBuy.productId?.name || "Group Buy"}
-                      </h4>
-                      <p className="text-sm font-medium text-green-600">
-                        Save 20% with Group Buy!
-                      </p>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mt-2">
-                        <span className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-sm">
-                            group
-                          </span>
-                          {groupBuy.currentParticipants || 0} participants
-                        </span>
-                        <span className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-sm">
-                            schedule
-                          </span>
-                          7 days left
-                        </span>
-                      </div>
-                    </div>
-                    <button className="w-full sm:w-auto px-6 py-2 text-sm font-semibold bg-[#F97316]/10 text-[#F97316] rounded-lg hover:bg-[#F97316]/20">
-                      Join Buy
-                    </button>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* Featured Manufacturers */}
-            <section>
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-gray-900">
-                  Featured Manufacturers
-                </h2>
-                <Link
-                  href="/manufacturers"
-                  className="text-sm font-semibold text-[#F97316] hover:underline"
-                >
-                  View All
-                </Link>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                {manufacturers.map((mfr) => (
-                  <div
-                    key={mfr._id}
-                    className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 text-center"
-                  >
-                    <div className="w-16 h-16 bg-teal-100 text-teal-600 rounded-full mx-auto flex items-center justify-center mb-3">
-                      <span className="material-symbols-outlined text-3xl">
-                        view_in_ar
-                      </span>
-                    </div>
-                    <h4 className="font-semibold text-gray-900">
-                      {mfr.businessName || mfr.name}
-                    </h4>
-                    <p className="text-sm text-gray-500">
-                      {mfr.manufacturingCapabilities?.[0] || "Manufacturing"}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </section>
-
-            {/* CTA Section */}
-            <section className="bg-orange-100 p-8 rounded-lg text-center">
-              <div className="w-16 h-16 bg-[#F97316]/20 text-[#F97316] rounded-full mx-auto flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-3xl">
-                  upload_file
-                </span>
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900">
-                Have a model to manufacture?
-              </h2>
-              <p className="text-gray-600 mt-2 max-w-lg mx-auto">
-                Upload your 3D model to get instant quotes from our network of
-                expert manufacturers.
-              </p>
-              <button
-                onClick={() =>
-                  router.push(
-                    status === "authenticated"
-                      ? "/custom-orders/new"
-                      : "/auth/login",
-                  )
-                }
-                className="mt-6 px-6 py-3 text-base font-semibold bg-[#F97316] text-white rounded-lg shadow-sm hover:bg-orange-600"
+        <section>
+          <h2 className="text-base font-bold text-gray-900 mb-3">
+            My Workspace
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {WORKSPACE_LINKS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className="bg-white rounded-xl border border-gray-100 p-3 shadow-sm hover:border-[#eb9728]/40 hover:shadow transition-all"
               >
-                Upload a Model
-              </button>
-            </section>
+                <span className="material-symbols-outlined text-[#eb9728] text-xl">
+                  {item.icon}
+                </span>
+                <p className="mt-2 text-sm font-semibold text-gray-900">
+                  {item.label}
+                </p>
+              </Link>
+            ))}
           </div>
-        </div>
+        </section>
+
+        {error && (
+          <section className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-700">
+            {error}
+          </section>
+        )}
+
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-gray-900">
+              Trending Products
+            </h2>
+            <Link
+              href="/customer/explore"
+              className="text-xs font-semibold text-[#eb9728] hover:underline"
+            >
+              See all
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {featuredProducts.slice(0, 6).map((product) => (
+              <div
+                key={product._id}
+                className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm"
+              >
+                <p className="text-xs uppercase tracking-wide text-gray-400">
+                  {product.category || "General"}
+                </p>
+                <h3 className="text-sm font-bold text-gray-900 mt-1 line-clamp-1">
+                  {product.name}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1 line-clamp-2 min-h-8">
+                  {product.description ||
+                    "High-quality manufacturing-ready item."}
+                </p>
+                <div className="mt-3 flex items-center justify-between">
+                  <div>
+                    <p className="text-[11px] text-gray-400">Starting at</p>
+                    <p className="text-sm font-bold text-gray-900">
+                      {currency(product.price)}
+                    </p>
+                  </div>
+                  <Link
+                    href={`/customer/products/${product._id}`}
+                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#eb9728]/10 text-[#eb9728] hover:bg-[#eb9728]/20"
+                  >
+                    View
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-gray-900">
+              Live Group Buys
+            </h2>
+            <Link
+              href="/customer/group-buys"
+              className="text-xs font-semibold text-[#eb9728] hover:underline"
+            >
+              See all
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {activeGroupBuys.slice(0, 4).map((groupBuy) => {
+              const quantity = groupBuy.currentQuantity || 0;
+              const nextTier = groupBuy.tiers?.find(
+                (tier) => tier.minQuantity > quantity,
+              );
+              const unitsToNextTier = nextTier
+                ? Math.max(nextTier.minQuantity - quantity, 0)
+                : 0;
+
+              return (
+                <div
+                  key={groupBuy._id}
+                  className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-bold text-gray-900 line-clamp-1">
+                        {groupBuy.title ||
+                          groupBuy.productId?.name ||
+                          "Group Buy"}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1 line-clamp-1">
+                        {groupBuy.manufacturerId?.businessName ||
+                          groupBuy.manufacturerId?.name ||
+                          "Manufacturer"}
+                      </p>
+                    </div>
+                    <span className="text-xs font-bold px-2 py-1 rounded-full bg-green-100 text-green-700">
+                      {daysLeft(groupBuy.endDate)}d left
+                    </span>
+                  </div>
+
+                  <div className="mt-3 text-xs text-gray-500 flex items-center justify-between">
+                    <span>
+                      {groupBuy.currentParticipantCount || 0} participants
+                    </span>
+                    <span className="font-semibold text-[#eb9728]">
+                      {currency(
+                        groupBuy.currentDiscountedPrice ?? groupBuy.basePrice,
+                      )}
+                    </span>
+                  </div>
+
+                  <p className="mt-2 text-xs text-gray-500">
+                    {unitsToNextTier > 0
+                      ? `${unitsToNextTier} more units to unlock next tier`
+                      : "Top tier unlocked"}
+                  </p>
+
+                  <Link
+                    href={`/customer/group-buys/${groupBuy._id}`}
+                    className="mt-3 inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#eb9728]/10 text-[#eb9728] hover:bg-[#eb9728]/20"
+                  >
+                    Open Group Buy
+                  </Link>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-gray-900">
+              Featured Manufacturers
+            </h2>
+            <Link
+              href="/manufacturers"
+              className="text-xs font-semibold text-[#eb9728] hover:underline"
+            >
+              See all
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            {featuredManufacturers.slice(0, 4).map((mfr) => (
+              <div
+                key={mfr._id}
+                className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm"
+              >
+                <div className="w-11 h-11 rounded-full bg-[#eb9728]/15 text-[#eb9728] flex items-center justify-center font-bold">
+                  {(mfr.businessName || mfr.name || "M")
+                    .charAt(0)
+                    .toUpperCase()}
+                </div>
+                <h3 className="mt-3 text-sm font-bold text-gray-900 line-clamp-1">
+                  {mfr.businessName || mfr.name}
+                </h3>
+                <p className="mt-1 text-xs text-gray-500 line-clamp-1">
+                  {mfr.manufacturingCapabilities?.[0]?.replace(/_/g, " ") ||
+                    "General Manufacturing"}
+                </p>
+                <p className="mt-1 text-xs text-gray-400 line-clamp-1">
+                  {mfr.businessAddress?.country ||
+                    mfr.location?.country ||
+                    "Global"}
+                </p>
+                <Link
+                  href={`/manufacturers/${mfr._id}`}
+                  className="mt-3 inline-flex px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-100 text-gray-700 hover:bg-gray-200"
+                >
+                  View Profile
+                </Link>
+              </div>
+            ))}
+          </div>
+        </section>
       </main>
     </div>
   );

@@ -5,6 +5,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 
 function StatusBadge({ status }) {
   const styles = {
@@ -352,7 +353,7 @@ export default function BidDetailsPage() {
             onClick={() =>
               router.push(
                 session.user.role === "customer"
-                  ? "/customer/dashboard"
+                  ? "/customer"
                   : "/manufacturer/dashboard",
               )
             }
@@ -377,34 +378,33 @@ export default function BidDetailsPage() {
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-blue-50/30">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
-        <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <button
-              onClick={() => router.back()}
-              className="flex items-center gap-1 text-gray-500 hover:text-gray-800 text-sm font-medium transition-colors"
-            >
-              ← Back
-            </button>
-            <div className="w-px h-5 bg-gray-200" />
-            <Link
-              href={
-                isManufacturer
-                  ? "/manufacturer/dashboard"
-                  : "/customer/dashboard"
-              }
-              className="flex items-center gap-2"
-            >
-              <span className="text-2xl">🔧</span>
-              <span className="text-lg font-bold text-blue-900">Craftit</span>
-            </Link>
+      {isCustomer ? (
+        <CustomerMainNavbar />
+      ) : (
+        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-200 shadow-sm">
+          <div className="max-w-4xl mx-auto px-6 py-4 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => router.back()}
+                className="flex items-center gap-1 text-gray-500 hover:text-gray-800 text-sm font-medium transition-colors"
+              >
+                ← Back
+              </button>
+              <div className="w-px h-5 bg-gray-200" />
+              <Link
+                href="/manufacturer/dashboard"
+                className="flex items-center gap-2"
+              >
+                <span className="text-2xl">🔧</span>
+                <span className="text-lg font-bold text-blue-900">Craftit</span>
+              </Link>
+            </div>
+            <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
+              Manufacturer
+            </span>
           </div>
-          <span className="text-xs text-gray-400 font-medium uppercase tracking-wide">
-            {isManufacturer ? "Manufacturer" : "Customer"}
-          </span>
-        </div>
-      </header>
+        </header>
+      )}
 
       <main className="max-w-4xl mx-auto px-6 py-8 space-y-6">
         {/* Title row */}

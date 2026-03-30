@@ -6,7 +6,6 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
-import LogoutButton from "@/components/LogoutButton";
 import { fetchWithCache } from "@/lib/clientCache";
 
 export default function CustomerProductDetailPage() {
@@ -90,33 +89,21 @@ export default function CustomerProductDetailPage() {
   const dims = specs.dimensions || {};
 
   return (
-    <div className="flex h-screen bg-[#f8f7f6]">
-      <main className="flex-1 overflow-y-auto">
-        {/* Header */}
-        <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-8 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <Link
-              href="/customer/explore"
-              className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-[#eb9728]"
-            >
-              <span className="material-symbols-outlined text-base">
-                arrow_back
-              </span>
-              Back to Explore
-            </Link>
-            <span className="text-gray-300">|</span>
-            <span className="text-sm text-gray-500 truncate max-w-xs">
-              {product.name}
+    <div className="min-h-screen bg-[#f8f7f6]">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+        <div className="mb-4">
+          <Link
+            href="/customer/explore"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-[#eb9728]"
+          >
+            <span className="material-symbols-outlined text-base">
+              arrow_back
             </span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="w-9 h-9 bg-[#eb9728] rounded-full flex items-center justify-center text-white font-semibold text-sm">
-              {session?.user?.name?.charAt(0) || "U"}
-            </div>
-          </div>
-        </header>
+            Back to Explore
+          </Link>
+        </div>
 
-        <div className="p-8 max-w-6xl mx-auto">
+        <div>
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
             {/* ── Left: Images ── */}
             <div>

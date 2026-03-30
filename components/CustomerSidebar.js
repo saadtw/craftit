@@ -29,15 +29,15 @@ export default function CustomerSidebar({ active, session }) {
   const navItems = [
     {
       href: "/customer/dashboard",
-      icon: "home",
+      icon: "monitoring",
       label: "Dashboard",
       key: "dashboard",
     },
     {
-      href: "/customer/explore",
-      icon: "storefront",
-      label: "Explore Products",
-      key: "explore",
+      href: "/customer/orders",
+      icon: "receipt_long",
+      label: "Orders",
+      key: "orders",
     },
     {
       href: "/customer/custom-orders",
@@ -46,18 +46,6 @@ export default function CustomerSidebar({ active, session }) {
       key: "custom-orders",
     },
     { href: "/customer/rfqs", icon: "gavel", label: "My RFQs", key: "rfqs" },
-    {
-      href: "/customer/orders",
-      icon: "receipt_long",
-      label: "Orders History",
-      key: "orders",
-    },
-    {
-      href: "/customer/group-buys",
-      icon: "groups",
-      label: "Group Buys",
-      key: "group-buys",
-    },
     {
       href: "/customer/wishlist",
       icon: "favorite",

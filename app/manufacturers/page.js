@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { fetchWithCache } from "@/lib/clientCache";
+import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 
 const CAPABILITIES = [
   "CNC_Machining",
@@ -235,69 +236,72 @@ function ManufacturersPageContent() {
 
   return (
     <div className="min-h-screen bg-[#f8f7f6]">
-      {/* Top nav — role-agnostic */}
-      <nav className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100">
-        <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <svg
-              className="h-6 w-6 text-amber-600"
-              fill="none"
-              viewBox="0 0 48 48"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M4.177,14.686,21.5,4.2a3,3,0,0,1,3,0l17.323,10.485a3,3,0,0,1,1.5,2.6V30.714a3,3,0,0,1-1.5,2.6L24.5,43.8a3,3,0,0,1-3,0L4.177,33.314a3,3,0,0,1-1.5-2.6V17.286a3,3,0,0,1,1.5-2.6Z"
-                stroke="currentColor"
-                strokeLinejoin="round"
-                strokeWidth="3"
-              />
-              <path
-                d="m22.5,24,14.5-8.5M22.5,24V43.5M22.5,24,9,16"
-                stroke="currentColor"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="3"
-              />
-            </svg>
-            <span className="font-extrabold text-lg text-gray-900 tracking-tight">
-              Craftit
-            </span>
-          </Link>
-          <div className="flex items-center gap-5">
-            <Link
-              href="/customer/explore"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              Products
-            </Link>
-            <Link
-              href="/customer/group-buys"
-              className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
-            >
-              Group Buys
-            </Link>
-            {session ? (
-              <Link
-                href={
-                  session.user.role === "manufacturer"
-                    ? "/manufacturer/dashboard"
-                    : "/customer/dashboard"
-                }
-                className="text-sm font-semibold bg-[#eb9728] text-white px-4 py-1.5 rounded-full hover:bg-amber-600 transition-colors"
+      {session?.user?.role === "customer" ? (
+        <CustomerMainNavbar />
+      ) : (
+        <nav className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100">
+          <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
+            <Link href="/" className="flex items-center gap-2">
+              <svg
+                className="h-6 w-6 text-amber-600"
+                fill="none"
+                viewBox="0 0 48 48"
+                xmlns="http://www.w3.org/2000/svg"
               >
-                Dashboard
-              </Link>
-            ) : (
+                <path
+                  d="M4.177,14.686,21.5,4.2a3,3,0,0,1,3,0l17.323,10.485a3,3,0,0,1,1.5,2.6V30.714a3,3,0,0,1-1.5,2.6L24.5,43.8a3,3,0,0,1-3,0L4.177,33.314a3,3,0,0,1-1.5-2.6V17.286a3,3,0,0,1,1.5-2.6Z"
+                  stroke="currentColor"
+                  strokeLinejoin="round"
+                  strokeWidth="3"
+                />
+                <path
+                  d="m22.5,24,14.5-8.5M22.5,24V43.5M22.5,24,9,16"
+                  stroke="currentColor"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="3"
+                />
+              </svg>
+              <span className="font-extrabold text-lg text-gray-900 tracking-tight">
+                Craftit
+              </span>
+            </Link>
+            <div className="flex items-center gap-5">
               <Link
-                href="/auth/login"
-                className="text-sm font-semibold bg-gray-900 text-white px-4 py-1.5 rounded-full hover:bg-gray-700 transition-colors"
+                href="/customer/explore"
+                className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
               >
-                Login
+                Products
               </Link>
-            )}
+              <Link
+                href="/customer/group-buys"
+                className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
+              >
+                Group Buys
+              </Link>
+              {session ? (
+                <Link
+                  href={
+                    session.user.role === "manufacturer"
+                      ? "/manufacturer/dashboard"
+                      : "/customer/dashboard"
+                  }
+                  className="text-sm font-semibold bg-[#eb9728] text-white px-4 py-1.5 rounded-full hover:bg-amber-600 transition-colors"
+                >
+                  Dashboard
+                </Link>
+              ) : (
+                <Link
+                  href="/auth/login"
+                  className="text-sm font-semibold bg-gray-900 text-white px-4 py-1.5 rounded-full hover:bg-gray-700 transition-colors"
+                >
+                  Login
+                </Link>
+              )}
+            </div>
           </div>
-        </div>
-      </nav>
+        </nav>
+      )}
 
       <div className="max-w-7xl mx-auto px-5 py-10">
         {/* Header */}

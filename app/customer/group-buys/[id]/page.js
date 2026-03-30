@@ -287,8 +287,8 @@ export default function GroupBuyDetailPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-[#f8f7f6] flex">
-        <div className="flex-1 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f8f7f6]">
+        <div className="flex items-center justify-center py-20">
           <div className="w-8 h-8 border-4 border-amber-500 border-t-transparent rounded-full animate-spin" />
         </div>
       </div>
@@ -302,8 +302,8 @@ export default function GroupBuyDetailPage() {
 
   if (!groupBuy) {
     return (
-      <div className="min-h-screen bg-[#f8f7f6] flex">
-        <div className="flex-1 flex items-center justify-center">
+      <div className="min-h-screen bg-[#f8f7f6]">
+        <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <p className="text-gray-500 mb-4">Group buy not found.</p>
             <Link
@@ -339,8 +339,8 @@ export default function GroupBuyDetailPage() {
   })();
 
   return (
-    <div className="min-h-screen bg-[#f8f7f6] flex">
-      <div className="flex-1 p-6 lg:p-8 overflow-auto max-w-6xl">
+    <div className="min-h-screen bg-[#f8f7f6]">
+      <div className="max-w-6xl mx-auto p-6 lg:p-8 overflow-auto">
         {/* Breadcrumb */}
         <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
           <Link

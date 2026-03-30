@@ -300,8 +300,8 @@ export default function CustomerGroupBuysPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8f7f6] flex">
-      <div className="flex-1 p-6 lg:p-8 overflow-auto">
+    <div className="min-h-screen bg-[#f8f7f6]">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 lg:py-8 overflow-auto">
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Group Buys</h1>

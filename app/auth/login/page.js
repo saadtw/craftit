@@ -29,7 +29,7 @@ export default function LoginPage() {
     if (status === "authenticated" && session?.user) {
       const role = session.user.role;
       if (role === "customer") {
-        router.push("/customer/dashboard");
+        router.push("/customer");
       } else if (role === "manufacturer") {
         router.push("/manufacturer/dashboard");
       } else if (role === "admin") {
@@ -58,21 +58,6 @@ export default function LoginPage() {
 
       if (result.error) {
         setError(result.error);
-      } else {
-        const response = await fetch("/api/auth/session");
-        const session = await response.json();
-
-        if (session?.user) {
-          const user = session.user;
-
-          if (user.role === "customer") {
-            router.push("/customer/dashboard");
-          } else if (user.role === "manufacturer") {
-            router.push("/manufacturer/dashboard");
-          } else if (user.role === "admin") {
-            router.push("/admin/dashboard");
-          }
-        }
       }
     } catch (err) {
       setError("Network error. Please try again.");
