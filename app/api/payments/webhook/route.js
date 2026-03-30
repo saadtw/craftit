@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import stripe from "@/lib/stripe";
+import getStripe from "@/lib/stripe";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import GroupBuy from "@/models/GroupBuy";
@@ -23,6 +23,7 @@ export async function POST(request) {
   let event;
 
   try {
+    const stripe = getStripe();
     event = stripe.webhooks.constructEvent(
       body,
       sig,

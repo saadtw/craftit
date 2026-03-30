@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import stripe from "@/lib/stripe";
+import getStripe from "@/lib/stripe";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import { notify } from "@/services/notificationService";
@@ -49,6 +49,7 @@ export async function POST(request) {
     }
 
     // Capture the funds — this is when the customer's card is actually charged
+    const stripe = getStripe();
     const paymentIntent = await stripe.paymentIntents.capture(
       order.paymentIntentId,
     );

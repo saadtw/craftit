@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import stripe from "@/lib/stripe";
+import getStripe from "@/lib/stripe";
 
 /**
  * POST /api/payments/create-intent
@@ -28,6 +28,7 @@ export async function POST(request) {
     // Stripe amounts are in smallest currency unit (cents for USD)
     const amountInCents = Math.round(amount * 100);
 
+    const stripe = getStripe();
     const paymentIntent = await stripe.paymentIntents.create({
       amount: amountInCents,
       currency,
