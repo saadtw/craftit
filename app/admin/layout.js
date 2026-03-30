@@ -1,3 +1,4 @@
+// app/admin/layout.js
 import AdminSidebar from "@/components/AdminSidebar";
 
 export const metadata = {
@@ -6,9 +7,9 @@ export const metadata = {
 
 export default function AdminLayout({ children }) {
   return (
-    <div className="flex min-h-screen bg-slate-950">
+    <div className="flex h-screen bg-slate-950 overflow-hidden">
       <AdminSidebar />
-      <main className="flex-1 overflow-auto">{children}</main>
+      <main className="flex-1 overflow-y-auto">{children}</main>
     </div>
   );
 }

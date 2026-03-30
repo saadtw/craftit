@@ -24,7 +24,7 @@ export default function AdminSidebar() {
   };
 
   return (
-    <aside className="w-64 min-h-screen bg-slate-900 flex flex-col">
+    <aside className="w-64 h-screen shrink-0 bg-slate-900 flex flex-col overflow-y-auto">
       {/* Brand */}
       <div className="px-6 py-5 border-b border-slate-800">
         <Link href="/admin/dashboard" className="flex items-center gap-2">

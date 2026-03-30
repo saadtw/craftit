@@ -1,0 +1,7 @@
+Date: 30/March
+1. components/CraftitLogo.js
+2. assets folder created
+3. app/auth/signup/page.js
+4. app/auth/signup/customer/page.js
+5. app/page.js
+6. app/auth/login/page.js

@@ -1,10 +1,10 @@
+// app/customer/settings/page.js
 "use client";
 
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 
-// ─── Small helpers ────────────────────────────────────────────────────────────
 function Label({ children }) {
   return (
     <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
@@ -75,7 +75,6 @@ function Alert({ type = "error", message }) {
   );
 }
 
-// ─── Section wrapper ──────────────────────────────────────────────────────────
 function Section({ title, desc, children }) {
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
@@ -537,7 +536,6 @@ function NotificationsTab() {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 function CustomerSettingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();

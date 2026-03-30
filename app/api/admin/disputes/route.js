@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Dispute from "@/models/Dispute";
 
-// GET /api/admin/disputes
+// GET /api/admin/disputes  — list disputes with filters
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);

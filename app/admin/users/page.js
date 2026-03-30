@@ -1,3 +1,4 @@
+// app/admin/users/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -160,7 +161,7 @@ export default function AdminUsersPage() {
                     User
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
-                    {statusBadge(user.isActive)}
+                    Role
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">
                     Status

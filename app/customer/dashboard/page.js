@@ -1,3 +1,4 @@
+// app/customer/dashboard/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -6,7 +7,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { fetchWithCache } from "@/lib/clientCache";
 
-// ─── Status helpers (mirrors orders page) ────────────────────────────────────
+// Status helpers (mirrors orders page)
 const STATUS_COLORS = {
   pending_acceptance: "bg-yellow-100 text-yellow-700",
   accepted: "bg-blue-100 text-blue-700",
@@ -25,7 +26,6 @@ const STATUS_LABELS = {
   disputed: "Disputed",
 };
 
-// ─── Mini stat card ───────────────────────────────────────────────────────────
 function StatCard({ icon, label, value, sub, accent = false }) {
   return (
     <div
@@ -51,7 +51,6 @@ function StatCard({ icon, label, value, sub, accent = false }) {
   );
 }
 
-// ─── Quick action card ────────────────────────────────────────────────────────
 function ActionCard({ href, icon, iconBg, label, desc }) {
   return (
     <Link href={href}>
@@ -74,7 +73,7 @@ function ActionCard({ href, icon, iconBg, label, desc }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// app/customer/dashboard/page.js
 export default function CustomerDashboard() {
   const router = useRouter();
   const { data: session, status } = useSession();

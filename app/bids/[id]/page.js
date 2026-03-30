@@ -1,3 +1,4 @@
+// app/bids/[id]/page.js
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";

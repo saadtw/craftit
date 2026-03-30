@@ -1,11 +1,10 @@
+// app/manufacturer/orders/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-
-// ── Constants ─────────────────────────────────────────────────────────────────
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-yellow-100 text-yellow-700",
@@ -39,8 +38,6 @@ const FILTER_TABS = [
   { key: "completed", label: "Completed" },
   { key: "cancelled", label: "Cancelled" },
 ];
-
-// ── Main Page ─────────────────────────────────────────────────────────────────
 
 export default function ManufacturerOrdersPage() {
   const { data: session, status } = useSession();

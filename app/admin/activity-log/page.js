@@ -1,3 +1,4 @@
+// app/admin/activity-log/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";

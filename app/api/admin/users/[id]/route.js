@@ -7,17 +7,18 @@ import Order from "@/models/Order";
 import AdminLog from "@/models/AdminLog";
 import { publishSessionEvent } from "@/lib/sessionEmitter";
 
-// GET /api/admin/users/[id]
+// GET /api/admin/users/[id] — get user details and recent orders
 export async function GET(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "admin") {
+    if (session?.user?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
+    const { id } = await params;
 
-    const user = await User.findById(params.id).select("-password").lean();
+    const user = await User.findById(id).select("-password").lean();
 
     if (!user) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
@@ -25,9 +26,7 @@ export async function GET(request, { params }) {
 
     // Get order stats
     const orderQuery =
-      user.role === "customer"
-        ? { customerId: params.id }
-        : { manufacturerId: params.id };
+      user.role === "customer" ? { customerId: id } : { manufacturerId: id };
 
     const [orders, orderCount] = await Promise.all([
       Order.find(orderQuery)
@@ -54,16 +53,17 @@ export async function GET(request, { params }) {
 export async function PATCH(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "admin") {
+    if (session?.user?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
+    const { id } = await params;
 
     const { action, reason, detail, duration } = await request.json();
     // duration: "7" | "30" | "permanent"
 
-    const user = await User.findById(params.id);
+    const user = await User.findById(id);
     if (!user || user.role === "admin") {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }

@@ -4,7 +4,7 @@ import CustomOrder from "@/models/CustomOrder";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// GET - Get single custom order
+// GET /api/custom-orders/[id] - Get single custom order
 export async function GET(request, context) {
   const params = await context.params;
   const id = params.id;
@@ -41,7 +41,7 @@ export async function GET(request, context) {
   }
 }
 
-// PUT - Update custom order
+// PUT /api/custom-orders/[id] - Update custom order
 export async function PUT(request, context) {
   const params = await context.params;
   const id = params.id;
@@ -72,7 +72,7 @@ export async function PUT(request, context) {
         {
           error: "Can only update draft orders",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -115,7 +115,7 @@ export async function PUT(request, context) {
   }
 }
 
-// DELETE - Delete custom order
+// DELETE /api/custom-orders/[id] - Delete custom order
 export async function DELETE(request, context) {
   const params = await context.params;
   const id = params.id;
@@ -146,7 +146,7 @@ export async function DELETE(request, context) {
         {
           error: "Can only delete draft orders",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 

@@ -11,6 +11,7 @@ const s3Client = new S3Client({
   },
 });
 
+// POST /api/upload/multiple - Handle multiple file uploads to S3
 export async function POST(request) {
   try {
     // Check authentication
@@ -18,7 +19,7 @@ export async function POST(request) {
     if (!session) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -29,7 +30,7 @@ export async function POST(request) {
     if (!files || files.length === 0) {
       return NextResponse.json(
         { success: false, error: "No files provided" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -80,7 +81,7 @@ export async function POST(request) {
     console.error("Upload error:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

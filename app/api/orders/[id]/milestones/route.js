@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 
-// GET - Get order milestones
+// GET  /api/orders/[id]/milestones - Get order milestones
 export async function GET(request, context) {
   const { id } = await context.params;
 
@@ -42,7 +42,7 @@ export async function GET(request, context) {
   }
 }
 
-// POST - Add a new milestone (manufacturer only)
+// POST /api/orders/[id]/milestones - Add a new milestone (manufacturer only)
 export async function POST(request, context) {
   const { id } = await context.params;
 
@@ -92,7 +92,7 @@ export async function POST(request, context) {
   }
 }
 
-// PUT - Update a specific milestone (manufacturer only)
+// PUT /api/orders/[id]/milestones - Update a specific milestone (manufacturer only)
 export async function PUT(request, context) {
   const { id } = await context.params;
 

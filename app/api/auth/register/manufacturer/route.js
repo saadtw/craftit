@@ -3,6 +3,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import VerificationDocument from "@/models/VerificationDocument";
 
+// POST /api/auth/register/manufacturer — register a new manufacturer
 export async function POST(request) {
   try {
     await connectDB();

@@ -5,7 +5,7 @@ import Bid from "@/models/Bid";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// GET - Get RFQ details
+// GET  /api/rfqs/[id] - Get RFQ details
 export async function GET(request, context) {
   const params = await context.params;
   const id = params.id;
@@ -42,7 +42,7 @@ export async function GET(request, context) {
       bids = await Bid.find({ rfqId: id })
         .populate(
           "manufacturerId",
-          "name businessName email verificationStatus stats"
+          "name businessName email verificationStatus stats",
         )
         .sort({ amount: 1 })
         .lean();
@@ -66,7 +66,7 @@ export async function GET(request, context) {
   }
 }
 
-// PUT - Update RFQ (cancel)
+// PUT  /api/rfqs/[id] - Update RFQ (cancel)
 export async function PUT(request, context) {
   const params = await context.params;
   const id = params.id;
@@ -98,7 +98,7 @@ export async function PUT(request, context) {
       if (rfq.status === "bid_accepted") {
         return NextResponse.json(
           { error: "Cannot cancel RFQ with accepted bid" },
-          { status: 400 }
+          { status: 400 },
         );
       }
 

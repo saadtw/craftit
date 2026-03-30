@@ -4,7 +4,7 @@ import CustomOrder from "@/models/CustomOrder";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
-// GET - List customer's custom orders
+// GET /api/custom-orders - List customer's custom orders
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -49,7 +49,7 @@ export async function GET(request) {
   }
 }
 
-// POST - Create new custom order
+// POST /api/custom-orders - Create new custom order
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -66,7 +66,7 @@ export async function POST(request) {
     if (!body.title || !body.description || !body.quantity) {
       return NextResponse.json(
         { error: "Title, description and quantity are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -91,7 +91,7 @@ export async function POST(request) {
         success: true,
         order: customOrder,
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 
-// GET - List manufacturer's own products with filters + pagination
+// GET  /api/products - List manufacturer's own products with filters + pagination
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -87,7 +87,7 @@ export async function GET(request) {
   }
 }
 
-// POST - Create a new product
+// POST  /api/products - Create a new product
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -120,7 +120,9 @@ export async function POST(request) {
 
     // ── Unverified manufacturer restrictions ────────────────────────────────
     const User = (await import("@/models/User")).default;
-    const manufacturer = await User.findById(session.user.id).select("verificationStatus");
+    const manufacturer = await User.findById(session.user.id).select(
+      "verificationStatus",
+    );
     const isUnverified = manufacturer?.verificationStatus === "unverified";
 
     if (isUnverified) {
@@ -131,19 +133,24 @@ export async function POST(request) {
       });
       if (existingCount >= 5) {
         return NextResponse.json(
-          { error: "Unverified manufacturers can list up to 5 products. Submit a verification application to unlock unlimited listings." },
+          {
+            error:
+              "Unverified manufacturers can list up to 5 products. Submit a verification application to unlock unlimited listings.",
+          },
           { status: 403 },
         );
       }
       // No 3D models
       if (productData.model3D?.url) {
         return NextResponse.json(
-          { error: "3D model uploads are only available to verified manufacturers." },
+          {
+            error:
+              "3D model uploads are only available to verified manufacturers.",
+          },
           { status: 403 },
         );
       }
     }
-    // ───────────────────────────────────────────────────────────────────────
 
     const product = await Product.create({
       ...productData,

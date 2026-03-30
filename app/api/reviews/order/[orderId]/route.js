@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Review from "@/models/Review";
 
-// GET /api/reviews/order/[orderId]
+// GET /api/reviews/order/[orderId] - Get review for a specific order (if exists)
 export async function GET(request, { params }) {
   try {
     const session = await getServerSession(authOptions);

@@ -29,6 +29,7 @@ const FILE_TYPES = {
   },
 };
 
+// POST /api/upload/multiple - Handle multiple file uploads to S3
 export async function POST(request) {
   try {
     // Check authentication
@@ -36,7 +37,7 @@ export async function POST(request) {
     if (!session) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -47,7 +48,7 @@ export async function POST(request) {
     if (!file) {
       return NextResponse.json(
         { success: false, error: "No file provided" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -56,14 +57,14 @@ export async function POST(request) {
     if (!fileConfig) {
       return NextResponse.json(
         { success: false, error: "Invalid file type" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     // Check file extension
     const fileName = file.name.toLowerCase();
     const isValidExt = fileConfig.extensions.some((ext) =>
-      fileName.endsWith(ext)
+      fileName.endsWith(ext),
     );
 
     if (!isValidExt) {
@@ -71,10 +72,10 @@ export async function POST(request) {
         {
           success: false,
           error: `Invalid file extension. Allowed: ${fileConfig.extensions.join(
-            ", "
+            ", ",
           )}`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -87,7 +88,7 @@ export async function POST(request) {
             fileConfig.maxSize / 1024 / 1024
           }MB`,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -126,7 +127,7 @@ export async function POST(request) {
     console.error("Upload error:", error);
     return NextResponse.json(
       { success: false, error: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

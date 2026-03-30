@@ -1,3 +1,4 @@
+// app/manufacturers/[id]/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -8,8 +9,6 @@ import Image from "next/image";
 import LogoutButton from "@/components/LogoutButton";
 import CustomerSidebar from "@/components/CustomerSidebar";
 import { fetchWithCache } from "@/lib/clientCache";
-
-// ─── Sidebars defined at top — used in loading state too ─────────────────────
 
 function ManufacturerSidebar({ active, session }) {
   const navItems = [
@@ -188,7 +187,6 @@ function StatItem({ value, label }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function ManufacturerPublicProfilePage() {
   const { id } = useParams();
   const { data: session, status } = useSession();

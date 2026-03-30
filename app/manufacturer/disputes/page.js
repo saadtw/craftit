@@ -1,3 +1,4 @@
+// app/manufacturer/disputes/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";

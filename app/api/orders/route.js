@@ -6,7 +6,7 @@ import Order from "@/models/Order";
 import "@/models/RFQ";
 import "@/models/Bid";
 
-// GET - List orders (role-aware)
+// GET  /api/orders - List orders (role-aware)
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);

@@ -5,6 +5,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import VerificationDocument from "@/models/VerificationDocument";
 
+// GET /api/auth/me  — get current logged in user info
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);

@@ -1,3 +1,4 @@
+// app/customer/payments/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";

@@ -1,3 +1,4 @@
+// app/admin/disputes/[id]/page.js
 "use client";
 
 import { useState, useEffect } from "react";

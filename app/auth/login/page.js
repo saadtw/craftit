@@ -1,18 +1,26 @@
+// app/auth/login/page.js
 "use client";
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
+import googleLogo from "@/assets/google.png";
+import facebookLogo from "@/assets/facebook.png";
+import smartMatch from "@/assets/smartmatch.png";
+import orderIcon from "@/assets/order.png";
+import bidIcon from "@/assets/bid.png";
+import groupBuyIcon from "@/assets/groupbuy.png";
+import manufactureIcon from "@/assets/manufacture.png";
+import uploadIcon from "@/assets/upload.png";
+import matchIcon from "@/assets/match.png";
+import previewIcon from "@/assets/preview.png";
 
 export default function LoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
-  const [formData, setFormData] = useState({
-    email: "",
-    password: "",
-    rememberMe: false,
-  });
+  const [formData, setFormData] = useState({ email: "", password: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -75,212 +83,222 @@ export default function LoginPage() {
   };
 
   return (
-    <>
-      {/* Header */}
-      <header className="absolute top-0 left-0 right-0 z-10 bg-transparent">
-        <nav className="container mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex h-16 items-center justify-between">
-            <Link
-              href="/"
-              className="flex items-center gap-2 text-slate-900 dark:text-slate-50"
-            >
-              <svg
-                className="h-8 w-8 text-amber-600"
-                fill="none"
-                viewBox="0 0 48 48"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M4.177,14.686,21.5,4.2a3,3,0,0,1,3,0l17.323,10.485a3,3,0,0,1,1.5,2.6V30.714a3,3,0,0,1-1.5,2.6L24.5,43.8a3,3,0,0,1-3,0L4.177,33.314a3,3,0,0,1-1.5-2.6V17.286a3,3,0,0,1,1.5-2.6Z"
-                  stroke="currentColor"
-                  strokeLinejoin="round"
-                  strokeWidth="3"
-                />
-                <path
-                  d="m22.5,24,14.5-8.5M22.5,24V43.5M22.5,24,9,16"
-                  stroke="currentColor"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="3"
-                />
-              </svg>
-              <span className="text-xl font-bold">Craftit</span>
-            </Link>
-          </div>
-        </nav>
-      </header>
+    <div className="flex h-screen w-full items-center justify-center bg-[#0B011D] p-4 overflow-hidden font-sans relative">
+      <div className="absolute top-[-10%] left-[-10%] h-[300px] w-[300px] rounded-full bg-purple-600/10 blur-[100px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] h-[300px] w-[300px] rounded-full bg-amber-600/10 blur-[100px]" />
 
-      {/* Main Content */}
-      <div className="flex min-h-screen items-center justify-center bg-slate-100 dark:bg-slate-950 p-4">
-        <div className="w-full max-w-md">
-          <div className="mb-8 text-center">
-            <h2 className="text-3xl font-bold text-slate-900 dark:text-slate-50">
-              Welcome Back
-            </h2>
-            <p className="mt-2 text-slate-500 dark:text-slate-400">
-              Please login to your account.
-            </p>
+      <div className="relative flex h-[540px] w-full max-w-3xl overflow-hidden rounded-[30px] border border-purple-500/30 bg-white/2 backdrop-blur-3xl z-10 text-white shadow-[0_0_50px_rgba(168,85,247,0.15)]">
+        <div className="flex w-full flex-col justify-center px-10 md:w-[60%] lg:px-14 order-1 border-r border-white/5 bg-[#0B011D]/30">
+          <div className="mb-6">
+            <span className="text-[9px] font-bold text-amber-500 uppercase tracking-[0.3em]">
+              Craftit
+            </span>
+            <h1 className="text-2xl font-black tracking-tight mt-1 leading-none">
+              Hello!
+            </h1>
+            <h2 className="text-xl font-bold opacity-80 mt-1">Welcome Back</h2>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-8 shadow-2xl dark:border-slate-700 dark:bg-slate-800">
-            <form className="space-y-6" onSubmit={handleSubmit}>
-              <div>
-                <label
-                  className="text-sm font-medium text-slate-500 dark:text-slate-400"
-                  htmlFor="email"
-                >
-                  Email or Username
-                </label>
-                <div className="relative mt-2">
-                  <input
-                    className="w-full rounded-md border-slate-200 bg-slate-100 py-3 px-4 text-slate-900 placeholder-slate-400 focus:border-amber-600 focus:ring-amber-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 dark:placeholder-slate-500"
-                    id="email"
-                    name="email"
-                    placeholder="you@example.com"
-                    required
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label
-                  className="text-sm font-medium text-slate-500 dark:text-slate-400"
-                  htmlFor="password"
-                >
-                  Password
-                </label>
-                <div className="relative mt-2">
-                  <input
-                    className="w-full rounded-md border-slate-200 bg-slate-100 py-3 px-4 text-slate-900 placeholder-slate-400 focus:border-amber-600 focus:ring-amber-600 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-50 dark:placeholder-slate-500"
-                    id="password"
-                    name="password"
-                    placeholder="••••••••"
-                    required
-                    type="password"
-                    value={formData.password}
-                    onChange={(e) =>
-                      setFormData({ ...formData, password: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div className="flex items-center">
-                  <input
-                    className="h-4 w-4 rounded border-slate-200 text-amber-600 focus:ring-amber-600 dark:border-slate-700"
-                    id="remember-me"
-                    name="remember-me"
-                    type="checkbox"
-                    checked={formData.rememberMe}
-                    onChange={(e) =>
-                      setFormData({ ...formData, rememberMe: e.target.checked })
-                    }
-                  />
-                  <label
-                    className="ml-2 block text-sm text-slate-500 dark:text-slate-400"
-                    htmlFor="remember-me"
-                  >
-                    Remember me
-                  </label>
-                </div>
-                <div className="text-sm">
-                  <a
-                    className="font-medium text-amber-600 hover:text-amber-700"
-                    href="#"
-                  >
-                    Forgot password?
-                  </a>
-                </div>
-              </div>
-
-              {error && (
-                <div className="rounded-md bg-red-50 border border-red-200 p-3 dark:bg-red-900/20 dark:border-red-800">
-                  <p className="text-sm text-red-800 dark:text-red-400">
-                    {error}
-                  </p>
-                </div>
-              )}
-
-              <div>
-                <button
-                  className="flex w-full justify-center rounded-md bg-amber-600 px-4 py-3 text-sm font-bold text-white shadow-sm transition-colors hover:bg-amber-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-amber-600 disabled:opacity-50 disabled:cursor-not-allowed"
-                  type="submit"
-                  disabled={loading}
-                >
-                  {loading ? "Logging in..." : "Log in"}
-                </button>
-              </div>
-            </form>
-
-            <div className="relative my-6">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-slate-200 dark:border-slate-700" />
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="bg-white px-2 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
-                  Or continue with
-                </span>
-              </div>
+          <form onSubmit={handleSubmit} className="space-y-3.5 max-w-[280px]">
+            <div>
+              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1 block ml-1">
+                Email Address
+              </label>
+              <input
+                type="email"
+                placeholder="Enter email"
+                className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs outline-none focus:border-purple-500 transition-all placeholder:text-slate-600"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData({ ...formData, email: e.target.value })
+                }
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <button className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 dark:hover:bg-slate-950">
-                <svg
-                  className="h-5 w-5"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                    fill="#4285F4"
-                  />
-                  <path
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                    fill="#34A853"
-                  />
-                  <path
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"
-                    fill="#FBBC05"
-                  />
-                  <path
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                    fill="#EA4335"
-                  />
-                </svg>
-                <span className="truncate">Google</span>
-              </button>
-              <button className="inline-flex w-full items-center justify-center gap-3 rounded-md border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-900 shadow-sm transition-colors hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-amber-600 focus:ring-offset-2 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-50 dark:hover:bg-slate-950">
-                <svg
-                  className="h-5 w-5 text-[#1877F2]"
-                  fill="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878V14.89H8.038v-2.89h2.399v-2.19c0-2.384 1.435-3.69 3.593-3.69 1.03 0 1.913.077 2.17.11V8.5h-1.408c-1.16 0-1.387.55-1.387 1.363v1.766h2.827l-.368 2.89h-2.459v7.039C18.343 21.128 22 16.991 22 12z" />
-                </svg>
-                <span className="truncate">Facebook</span>
-              </button>
-            </div>
-          </div>
-
-          <div className="mt-6 text-center">
-            <p className="text-sm text-slate-500 dark:text-slate-400">
-              Don&apos;t have an account?{" "}
+            <div className="relative">
+              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1 block ml-1">
+                Password
+              </label>
+              <input
+                type="password"
+                placeholder="Password"
+                className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs outline-none focus:border-purple-500 transition-all placeholder:text-slate-600"
+                value={formData.password}
+                onChange={(e) =>
+                  setFormData({ ...formData, password: e.target.value })
+                }
+              />
               <Link
-                className="font-medium text-amber-600 hover:text-amber-700"
-                href="/auth/signup"
+                href="#"
+                className="mt-1 block text-right text-[9px] font-semibold text-purple-400 hover:text-purple-300"
               >
-                Sign up
+                Forgot?
               </Link>
-            </p>
+            </div>
+
+            {error && (
+              <p className="text-[9px] text-red-400 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-xl bg-purple-600 py-2.5 text-xs font-black text-white shadow-lg transition-all hover:bg-purple-500 active:scale-[0.98] tracking-widest uppercase"
+            >
+              {loading ? "..." : "LOGIN"}
+            </button>
+          </form>
+
+          <div className="my-5 flex items-center gap-3 max-w-[280px] opacity-20">
+            <div className="h-px flex-1 bg-white" />
+            <span className="text-[9px] font-bold">OR</span>
+            <div className="h-px flex-1 bg-white" />
           </div>
+
+          <div className="flex gap-2.5 max-w-[280px]">
+            <button
+              type="button"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2 hover:bg-white/10 transition-all group"
+            >
+              <Image src={googleLogo} alt="G" width={16} height={16} />
+              <span className="text-[10px] font-bold">Google</span>
+            </button>
+            <button
+              type="button"
+              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2 hover:bg-white/10 transition-all group"
+            >
+              <Image src={facebookLogo} alt="F" width={16} height={16} />
+              <span className="text-[10px] font-bold">Facebook</span>
+            </button>
+          </div>
+
+          <p className="mt-6 text-[10px] text-slate-500 max-w-[280px] text-center">
+            Dont have account?{" "}
+            <Link href="/auth/signup" className="font-bold text-amber-500">
+              Register
+            </Link>
+          </p>
+        </div>
+
+        <div className="hidden w-[40%] md:block relative overflow-hidden order-2 border-l border-white/5 bg-white/1">
+          <div className="absolute inset-0 opacity-200 scale-[0.8]">
+            <div className="absolute top-[-10%] left-[-5%] ">
+              <Image src={uploadIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[10%] left-[-10%] ">
+              <Image src={smartMatch} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[1%] left-[20%] ">
+              <Image src={previewIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[-16%] left-[25%] ">
+              <Image src={orderIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[20%] left-[18%] ">
+              <Image src={matchIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[30%] left-[-8%] ">
+              <Image src={manufactureIcon} width={55} height={55} alt="i" />
+            </div>
+            <div className="absolute top-[50%] left-[-10%] ">
+              <Image src={groupBuyIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute bottom-[50%] left-[25%] ">
+              <Image src={bidIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[10%] right-[-15%] ">
+              <Image src={groupBuyIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[30%] right-[30%] ">
+              <Image src={uploadIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[13%] right-[40%] ">
+              <Image src={previewIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[2%] right-[10%] ">
+              <Image src={smartMatch} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[-8%] right-[35%] ">
+              <Image src={orderIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[-17%] right-[10%] ">
+              <Image src={previewIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[-11%] right-[-15%] ">
+              <Image src={matchIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[20%] right-[5%] ">
+              <Image src={manufactureIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[70%] left-[-10%] ">
+              <Image src={groupBuyIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[60%] left-[20%] ">
+              <Image src={uploadIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[50%] right-[30%] ">
+              <Image src={smartMatch} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[40%] right-[5%] ">
+              <Image src={manufactureIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[30%] right-[-18%] ">
+              <Image src={matchIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[88%] left-[-10%] ">
+              <Image src={orderIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[78%] left-[20%] ">
+              <Image src={bidIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[68%] right-[30%] ">
+              <Image src={matchIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[58%] right-[5%] ">
+              <Image src={manufactureIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[48%] right-[-18%] ">
+              <Image src={uploadIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[105%] left-[-10%] ">
+              <Image src={orderIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[95%] left-[20%] ">
+              <Image src={smartMatch} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[85%] right-[30%] ">
+              <Image src={uploadIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[75%] right-[5%] ">
+              <Image src={groupBuyIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[65%] right-[-18%] ">
+              <Image src={bidIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[109%] left-[20%] ">
+              <Image src={manufactureIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[99%] right-[30%] ">
+              <Image src={matchIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[90%] right-[5%] ">
+              <Image src={orderIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[80%] right-[-18%] ">
+              <Image src={previewIcon} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[108%] right-[10%] ">
+              <Image src={smartMatch} width={50} height={50} alt="i" />
+            </div>
+            <div className="absolute top-[98%] right-[-15%] ">
+              <Image src={uploadIcon} width={50} height={50} alt="i" />
+            </div>
+          </div>
+          <div className="absolute inset-0 bg-linear-to-l from-transparent via-transparent to-[#0B011D]/80" />
         </div>
       </div>
-    </>
+    </div>
   );
 }

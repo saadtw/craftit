@@ -7,7 +7,7 @@ import RFQ from "@/models/RFQ";
 import User from "@/models/User";
 import { notify } from "@/services/notificationService";
 
-// GET /api/bids/[id]
+// GET /api/bids/[id] — get bid details with manufacturer info and RFQ context
 export async function GET(request, context) {
   const params = await context.params;
   const id = params.id;

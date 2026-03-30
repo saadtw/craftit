@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 
+// POST /api/auth/register/customer  — register a new customer
 export async function POST(request) {
   try {
     await connectDB();
@@ -13,7 +14,7 @@ export async function POST(request) {
     if (!name || !email || !password) {
       return NextResponse.json(
         { success: false, message: "Name, email and password are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -22,7 +23,7 @@ export async function POST(request) {
     if (!emailRegex.test(email)) {
       return NextResponse.json(
         { success: false, message: "Invalid email format" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -30,7 +31,7 @@ export async function POST(request) {
     if (password.length < 6) {
       return NextResponse.json(
         { success: false, message: "Password must be at least 6 characters" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -38,7 +39,7 @@ export async function POST(request) {
     if (existingUser) {
       return NextResponse.json(
         { success: false, message: "Email already registered" },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -63,13 +64,13 @@ export async function POST(request) {
           role: user.role,
         },
       },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (error) {
     console.error("Customer registration error:", error);
     return NextResponse.json(
       { success: false, message: error.message },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

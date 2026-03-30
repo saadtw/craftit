@@ -1,3 +1,4 @@
+// app/manufacturer/notifications/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -99,7 +100,7 @@ export default function ManufacturerNotificationsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
+      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex items-center justify-center">
         <div className="w-8 h-8 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin" />
       </div>
     );
@@ -117,7 +118,7 @@ export default function ManufacturerNotificationsPage() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
+    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-2xl">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">

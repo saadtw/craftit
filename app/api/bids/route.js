@@ -1,9 +1,11 @@
+// app/api/bids/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import { bidService } from "@/services/bidService";
 
+// POST /api/bids — place a new bid on a request
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -12,7 +14,10 @@ export async function POST(request) {
     }
     if (session.user.verificationStatus === "unverified") {
       return NextResponse.json(
-        { error: "Only verified manufacturers can place bids. Submit a verification application in Settings." },
+        {
+          error:
+            "Only verified manufacturers can place bids. Submit a verification application in Settings.",
+        },
         { status: 403 },
       );
     }
@@ -39,6 +44,7 @@ export async function POST(request) {
   }
 }
 
+// GET /api/bids — get all bids for the logged-in manufacturer with optional status filter
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);

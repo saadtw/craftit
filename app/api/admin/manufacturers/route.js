@@ -1,3 +1,4 @@
+// app/api/admin/manufacturers/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -13,7 +14,7 @@ export async function GET(request) {
     if (!session || session.user.role !== "admin") {
       return NextResponse.json(
         { error: "Unauthorized. Admin access required." },
-        { status: 401 }
+        { status: 401 },
       );
     }
 
@@ -47,7 +48,7 @@ export async function GET(request) {
           ...manufacturer,
           verificationDocuments: docs,
         };
-      })
+      }),
     );
 
     const total = await User.countDocuments(query);

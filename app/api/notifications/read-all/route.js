@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Notification from "@/models/Notification";
 
-// PATCH /api/notifications/read-all
+// PATCH /api/notifications/read-all - Mark all notifications as read
 export async function PATCH() {
   try {
     const session = await getServerSession(authOptions);

@@ -1,15 +1,17 @@
+// app/api/admin/orders/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import Dispute from "@/models/Dispute";
+import "@/models/Product";
 
-// GET /api/admin/orders
+// GET /api/admin/orders — list orders with filters
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || session.user.role !== "admin") {
+    if (session?.user?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -19,8 +21,11 @@ export async function GET(request) {
     const status = searchParams.get("status");
     const search = searchParams.get("search");
     const hasDispute = searchParams.get("hasDispute") === "true";
-    const page = parseInt(searchParams.get("page") || "1");
-    const limit = parseInt(searchParams.get("limit") || "20");
+    const rawPage = Number.parseInt(searchParams.get("page") || "1", 10);
+    const rawLimit = Number.parseInt(searchParams.get("limit") || "20", 10);
+    const page = Number.isFinite(rawPage) && rawPage > 0 ? rawPage : 1;
+    const limit =
+      Number.isFinite(rawLimit) && rawLimit > 0 ? Math.min(rawLimit, 100) : 20;
     const skip = (page - 1) * limit;
 
     const query = {};
@@ -37,9 +42,21 @@ export async function GET(request) {
 
     const [orders, total] = await Promise.all([
       Order.find(query)
-        .populate("customerId", "name email")
-        .populate("manufacturerId", "businessName email")
-        .populate("productId", "name")
+        .populate({
+          path: "customerId",
+          select: "name email",
+          skipInvalidIds: true,
+        })
+        .populate({
+          path: "manufacturerId",
+          select: "businessName email name",
+          skipInvalidIds: true,
+        })
+        .populate({
+          path: "productId",
+          select: "name",
+          skipInvalidIds: true,
+        })
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -53,6 +70,7 @@ export async function GET(request) {
       pagination: { total, page, limit, pages: Math.ceil(total / limit) },
     });
   } catch (error) {
+    console.error("GET /api/admin/orders error:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

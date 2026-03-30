@@ -1,3 +1,4 @@
+// app/manufacturer/dashboard/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -74,7 +75,7 @@ function ActionCard({ href, icon, iconBg, label, desc }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
+// app/manufacturer/dashboard/page.js
 export default function ManufacturerDashboard() {
   const router = useRouter();
   const { data: session, status } = useSession();

@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import { bidComparisonService } from "@/services/bidComparisonService";
 
+// GET  /api/rfqs/[id]/bids - List bids for an RFQ with optional status filter
 export async function GET(request, context) {
   const params = await context.params;
   const id = params.id;

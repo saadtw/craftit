@@ -41,7 +41,7 @@ async function getOrCreateConversation(bid) {
   return convo;
 }
 
-// GET — fetch messages, supports ?since= for efficient polling
+// GET /api/bids/[id]/chat — fetch messages, supports ?since= for efficient polling
 export async function GET(request, context) {
   const { id } = await context.params;
   try {
@@ -79,7 +79,7 @@ export async function GET(request, context) {
   }
 }
 
-// POST — send a message
+// POST /api/bids/[id]/chat — send a message
 export async function POST(request, context) {
   const { id } = await context.params;
   try {

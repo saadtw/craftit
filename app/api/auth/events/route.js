@@ -2,6 +2,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { subscribeUser, unsubscribeUser } from "@/lib/sessionEmitter";
 
+// GET /api/auth/events — SSE stream for auth-related events (login/logout)
 export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
@@ -10,6 +11,7 @@ export async function GET() {
 
   const userId = session.user.id;
   const encoder = new TextEncoder();
+  let heartbeat;
 
   const stream = new ReadableStream({
     start(controller) {
@@ -23,7 +25,7 @@ export async function GET() {
       );
 
       // Keepalive to prevent proxies from closing idle SSE.
-      const heartbeat = setInterval(() => {
+      heartbeat = setInterval(() => {
         try {
           controller.enqueue(encoder.encode(": heartbeat\n\n"));
         } catch {
@@ -31,11 +33,9 @@ export async function GET() {
           unsubscribeUser(userId, controller);
         }
       }, 25000);
-
-      stream._heartbeat = heartbeat;
     },
     cancel() {
-      if (stream._heartbeat) clearInterval(stream._heartbeat);
+      if (heartbeat) clearInterval(heartbeat);
       // controller is unavailable in cancel; stale controllers are cleaned on publish.
     },
   });

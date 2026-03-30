@@ -1,3 +1,4 @@
+// app/api/verification-documents/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -18,7 +19,7 @@ const ALLOWED_DOC_TYPES = [
   "other",
 ];
 
-// GET - Manufacturer fetches their own verification status
+// GET /api/verification-documents - Manufacturer fetches their own verification status
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -38,7 +39,7 @@ export async function GET(request) {
   }
 }
 
-// POST - Submit/resubmit verification application
+// POST /api/verification-documents - Submit/resubmit verification application
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -80,7 +81,10 @@ export async function POST(request) {
 
     if (sanitizedDocuments.length === 0) {
       return NextResponse.json(
-        { success: false, error: "No valid documents provided. Check document types." },
+        {
+          success: false,
+          error: "No valid documents provided. Check document types.",
+        },
         { status: 400 },
       );
     }
@@ -113,7 +117,8 @@ export async function POST(request) {
       existing.rejectionReason = undefined;
       if (ntnNumber) existing.ntnNumber = ntnNumber;
       if (strnNumber) existing.strnNumber = strnNumber;
-      if (secpRegistrationNumber) existing.secpRegistrationNumber = secpRegistrationNumber;
+      if (secpRegistrationNumber)
+        existing.secpRegistrationNumber = secpRegistrationNumber;
       await existing.save();
     } else {
       await VerificationDocument.create({
@@ -132,7 +137,8 @@ export async function POST(request) {
 
     return NextResponse.json({
       success: true,
-      message: "Verification application submitted. An admin will review your documents shortly.",
+      message:
+        "Verification application submitted. An admin will review your documents shortly.",
     });
   } catch (error) {
     console.error("Verification document submission error:", error);
@@ -142,5 +148,3 @@ export async function POST(request) {
     );
   }
 }
-
-

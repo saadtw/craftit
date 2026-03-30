@@ -79,7 +79,10 @@ export async function POST(request) {
     }
     if (product.manufacturerId?.verificationStatus === "unverified") {
       return NextResponse.json(
-        { error: "This manufacturer is not yet verified and cannot accept orders." },
+        {
+          error:
+            "This manufacturer is not yet verified and cannot accept orders.",
+        },
         { status: 400 },
       );
     }

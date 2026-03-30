@@ -1,3 +1,4 @@
+// app/manufacturer/settings/page.js
 "use client";
 
 import { Suspense, useState, useEffect, useCallback } from "react";
@@ -956,7 +957,6 @@ function VerificationTab({ user }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 function ManufacturerSettingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();

@@ -1,3 +1,4 @@
+// app/customer/group-buys/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -229,7 +230,6 @@ function GroupBuyCard({ gb }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function CustomerGroupBuysPage() {
   const { data: session, status } = useSession();
   const router = useRouter();

@@ -8,7 +8,7 @@ import "@/models/Bid";
 import "@/models/Product";
 import "@/models/GroupBuy";
 
-// GET - Get single order detail
+// GET /api/orders/[id] - Get single order detail
 export async function GET(request, context) {
   const { id } = await context.params;
 

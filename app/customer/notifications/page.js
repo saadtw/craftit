@@ -1,3 +1,4 @@
+// app/customer/notifications/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";

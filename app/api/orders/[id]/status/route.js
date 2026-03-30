@@ -19,7 +19,7 @@ try {
   // Stripe not available — payment steps will be no-ops
 }
 
-// PUT - Update order status (manufacturer actions)
+// PUT /api/orders/[id]/status - Update order status (manufacturer actions)
 export async function PUT(request, context) {
   const { id } = await context.params;
 
@@ -193,8 +193,6 @@ export async function PUT(request, context) {
       );
     }
 
-
-
     await order.save();
 
     const updatedOrder = await Order.findById(id)
@@ -213,7 +211,7 @@ export async function PUT(request, context) {
   }
 }
 
-// PATCH - Update shipping/tracking info only (no status transition)
+// PATCH /api/orders/[id]/status - Update shipping/tracking info only (no status transition)
 export async function PATCH(request, context) {
   const { id } = await context.params;
 

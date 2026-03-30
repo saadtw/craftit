@@ -9,6 +9,7 @@ CraftIt is a full-stack B2B web platform that connects **buyers** who need custo
 ## What It Does
 
 ### For Buyers (Customers)
+
 - Browse verified manufacturer profiles and product catalogues
 - Place direct product orders or submit **custom order requests** with specifications, drawings, and 3D model files
 - Issue **Requests for Quotation (RFQs)** and receive competitive bids from multiple manufacturers
@@ -18,6 +19,7 @@ CraftIt is a full-stack B2B web platform that connects **buyers** who need custo
 - File disputes on orders and leave verified reviews on completion
 
 ### For Manufacturers
+
 - Create a business profile and list products with pricing, minimum order quantities, and capabilities
 - New accounts start as **Unverified** — submit business documents (NTN/STRN, SECP/Form-C, Chamber Certificate) to get verified
 - Verified manufacturers can browse and bid on open RFQs, create Group Buy campaigns, and receive orders
@@ -25,6 +27,7 @@ CraftIt is a full-stack B2B web platform that connects **buyers** who need custo
 - View earnings, analytics, and respond to any disputes raised
 
 ### For Admins
+
 - Review manufacturer verification applications with approve / reject / request-more-info actions
 - Monitor platform activity: active orders, open disputes, pending verifications
 - Manage users (suspend / unsuspend with reason and duration)
@@ -91,6 +94,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 **Notes:**
+
 - Generate `NEXTAUTH_SECRET` with: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
 - File uploads will fail without AWS vars, but everything else works normally
 - Stripe is fully optional — orders and payments work in a demo mode without it
@@ -125,6 +129,42 @@ node page.js
 
 ---
 
+## Seeding Test Data
+
+To quickly populate the database with realistic sample data for development and testing, run the seed script:
+
+```bash
+node --env-file=.env.local scripts/seedDatabase.js
+```
+
+This script creates:
+
+- **2 Admin accounts** for platform management
+- **25 Customer accounts** with saved addresses and preferences
+- **15 Manufacturer accounts** (80% verified, 20% unverified) with business profiles
+- **75+ Products** across manufacturers with pricing and specifications
+- **Custom orders, RFQs, and competitive bids** for testing quotation workflows
+- **Group buy campaigns** with tiered bulk-pricing tiers
+- **45+ Orders** in various lifecycle states (pending, in-production, shipped, completed)
+- **Customer reviews** and dispute records for rating systems
+- **Chat conversations and messages** between buyers and manufacturers
+- **Notifications and admin activity logs** for audit trails
+
+**Test credentials generated:**
+
+- Admin: `admin1@craftit.com` / `Admin123!`
+- Customers: Any generated email / `Customer123!`
+- Manufacturers: Any generated email / `Manufacturer123!`
+
+**Notes:**
+
+- The script clears all existing data before seeding
+- File upload URLs to AWS S3 are excluded to prevent 403 errors in test mode
+- Stripe payment records are not created; use test card `4242 4242 4242 4242` manually
+- Only use on local/dev databases; never on production
+
+---
+
 ## Payments (Stripe)
 
 CraftIt uses an **authorize-then-capture** payment flow:
@@ -137,22 +177,25 @@ CraftIt uses an **authorize-then-capture** payment flow:
 **Test card:** `4242 4242 4242 4242`, any future expiry, any CVC.
 
 For local webhook testing (capture/refund events):
+
 ```bash
 stripe listen --forward-to localhost:3000/api/payments/webhook
 ```
+
 Copy the printed `whsec_...` key into `STRIPE_WEBHOOK_SECRET`.
 
 ---
 
 ## File Uploads (AWS S3)
 
-| Type     | Accepted formats                       | Max size |
-| -------- | -------------------------------------- | -------- |
-| Image    | `.jpg`, `.jpeg`, `.png`, `.webp`       | 5 MB     |
-| 3D Model | `.stl`, `.obj`, `.gltf`, `.glb`        | 50 MB    |
-| Document | `.pdf`, `.doc`, `.docx`                | 10 MB    |
+| Type     | Accepted formats                 | Max size |
+| -------- | -------------------------------- | -------- |
+| Image    | `.jpg`, `.jpeg`, `.png`, `.webp` | 5 MB     |
+| 3D Model | `.stl`, `.obj`, `.gltf`, `.glb`  | 50 MB    |
+| Document | `.pdf`, `.doc`, `.docx`          | 10 MB    |
 
 Minimum IAM policy for the S3 user:
+
 ```json
 {
   "Version": "2012-10-17",
@@ -176,6 +219,7 @@ npm start
 ```
 
 For production deployment:
+
 - Set `NEXTAUTH_URL` to your public domain
 - Use a MongoDB Atlas connection string
 - Configure CORS on your S3 bucket

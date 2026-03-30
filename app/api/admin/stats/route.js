@@ -1,3 +1,4 @@
+// app/api/admin/stats/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -6,7 +7,7 @@ import User from "@/models/User";
 import Order from "@/models/Order";
 import Dispute from "@/models/Dispute";
 
-// GET /api/admin/stats
+// GET /api/admin/stats — get overall platform statistics
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -25,7 +26,10 @@ export async function GET() {
     ] = await Promise.all([
       User.countDocuments({ role: "customer", isActive: true }),
       User.countDocuments({ role: "manufacturer" }),
-      User.countDocuments({ role: "manufacturer", verificationStatus: "unverified" }),
+      User.countDocuments({
+        role: "manufacturer",
+        verificationStatus: "unverified",
+      }),
       Order.countDocuments({
         status: {
           $in: ["pending_acceptance", "accepted", "in_production", "shipped"],

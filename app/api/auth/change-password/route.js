@@ -5,7 +5,7 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
 
-// POST /api/auth/change-password
+// POST /api/auth/change-password — change password for logged-in user
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);

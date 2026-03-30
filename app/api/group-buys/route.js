@@ -5,7 +5,7 @@ import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
 import Product from "@/models/Product";
 
-// GET - List group buys
+// GET  /api/group-buys - List group buys
 // Manufacturer sees their own; public/customer sees active ones
 export async function GET(request) {
   try {
@@ -111,7 +111,7 @@ export async function GET(request) {
   }
 }
 
-// POST - Create a new group buy campaign (manufacturer only)
+// POST /api/group-buys - Create a new group buy campaign (manufacturer only)
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);
@@ -120,7 +120,10 @@ export async function POST(request) {
     }
     if (session.user.verificationStatus === "unverified") {
       return NextResponse.json(
-        { error: "Only verified manufacturers can create Group Buys. Submit a verification application in Settings." },
+        {
+          error:
+            "Only verified manufacturers can create Group Buys. Submit a verification application in Settings.",
+        },
         { status: 403 },
       );
     }

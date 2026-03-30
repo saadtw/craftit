@@ -1,3 +1,4 @@
+// app/auth/signup/manufacturer/page.js
 "use client";
 
 import { useState, useEffect } from "react";

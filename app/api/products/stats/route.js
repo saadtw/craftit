@@ -1,3 +1,4 @@
+// app/api/products/stats/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import mongoose from "mongoose";
@@ -5,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 
-// GET - Catalog-level stats for the manufacturer
+// GET  /api/products/stats - Catalog-level stats for the manufacturer
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);

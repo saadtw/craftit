@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
 
-// POST - Customer joins a group buy
+// POST /api/group-buys/[id]/join - Customer joins a group buy
 export async function POST(request, context) {
   const { id } = await context.params;
 
@@ -108,7 +108,7 @@ export async function POST(request, context) {
   }
 }
 
-// DELETE - Customer cancels their participation
+// DELETE /api/group-buys/[id]/join - Customer cancels their participation
 export async function DELETE(request, context) {
   const { id } = await context.params;
 

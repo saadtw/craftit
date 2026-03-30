@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import AdminLog from "@/models/AdminLog";
 
-// GET /api/admin/activity-log
+// GET /api/admin/activity-log  — list admin activity logs with filters
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions);

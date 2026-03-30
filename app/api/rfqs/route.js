@@ -1,3 +1,4 @@
+// app/api/rfqs/route.js
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import RFQ from "@/models/RFQ";
@@ -5,7 +6,7 @@ import CustomOrder from "@/models/CustomOrder";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 
-// GET - List RFQs (for manufacturers)
+// GET /api/rfqs - List RFQs (for manufacturers)
 export async function GET(request) {
   try {
     // Pass request to getServerSession
@@ -29,7 +30,10 @@ export async function GET(request) {
       // Unverified manufacturers cannot see RFQs
       if (session.user.verificationStatus === "unverified") {
         return NextResponse.json(
-          { error: "Verified manufacturers only. Submit a verification application in Settings to access RFQs." },
+          {
+            error:
+              "Verified manufacturers only. Submit a verification application in Settings to access RFQs.",
+          },
           { status: 403 },
         );
       }
@@ -74,7 +78,7 @@ export async function GET(request) {
   }
 }
 
-// POST - Create RFQ from custom order
+// POST /api/rfqs - Create RFQ from custom order
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);

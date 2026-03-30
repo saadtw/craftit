@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import { bidService } from "@/services/bidService";
 
+// DELETE /api/bids/[id]/withdraw  — manufacturer withdraws a bid
 export async function DELETE(request, context) {
   const params = await context.params;
   const id = params.id;

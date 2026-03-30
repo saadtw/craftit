@@ -8,6 +8,7 @@ import CustomOrder from "@/models/CustomOrder";
 import Order from "@/models/Order";
 import { notify } from "@/services/notificationService";
 
+// POST /api/rfqs/[id]/accept-bid - Customer accepts a bid on their RFQ, creates order, notifies manufacturer
 export async function POST(request, context) {
   const params = await context.params;
   const id = params.id;

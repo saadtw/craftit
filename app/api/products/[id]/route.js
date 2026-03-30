@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 
-// GET - Get single product detail
+// GET  /api/products/[id] - Get single product detail
 export async function GET(request, context) {
   const params = await context.params;
   const { id } = params;
@@ -52,7 +52,7 @@ export async function GET(request, context) {
   }
 }
 
-// PUT - Update product
+// PUT  /api/products/[id] - Update product
 export async function PUT(request, context) {
   const params = await context.params;
   const { id } = params;
@@ -99,7 +99,7 @@ export async function PUT(request, context) {
   }
 }
 
-// DELETE - Soft delete (archive)
+// DELETE  /api/products/[id] - Soft delete (archive)
 export async function DELETE(request, context) {
   const params = await context.params;
   const { id } = params;

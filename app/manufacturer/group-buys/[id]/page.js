@@ -1,3 +1,4 @@
+// app/manufacturer/group-buys/[id]/page.js
 "use client";
 
 import { useState, useEffect } from "react";

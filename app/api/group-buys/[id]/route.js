@@ -5,7 +5,7 @@ import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
 import Product from "@/models/Product";
 
-// GET - Single group buy detail
+// GET /api/group-buys/[id] - Single group buy detail
 export async function GET(request, context) {
   const { id } = await context.params;
 
@@ -178,7 +178,7 @@ export async function PUT(request, context) {
   }
 }
 
-// DELETE - Cancel a group buy
+// DELETE /api/group-buys/[id] - Cancel a group buy
 export async function DELETE(request, context) {
   const { id } = await context.params;
 

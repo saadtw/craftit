@@ -1,3 +1,4 @@
+// app/customer/CustomerLayoutContext.js
 "use client";
 
 import { createContext } from "react";

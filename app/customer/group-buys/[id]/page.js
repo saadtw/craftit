@@ -1,3 +1,4 @@
+// app/customer/group-buys/[id]/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -186,7 +187,6 @@ function TierProgress({ tiers, currentQuantity, currentTierIndex }) {
   );
 }
 
-// ─── Main Page ────────────────────────────────────────────────────────────────
 export default function GroupBuyDetailPage() {
   const { data: session, status } = useSession();
   const router = useRouter();

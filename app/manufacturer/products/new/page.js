@@ -1,3 +1,4 @@
+// app/manufacturer/products/new/page.js
 "use client";
 
 import { useState, useEffect, useRef } from "react";

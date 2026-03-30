@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
 
-// PATCH - Control campaign status: pause, resume, end_early
+// PATCH /api/group-buys/[id]/status - Control campaign status: pause, resume, end_early
 export async function PATCH(request, context) {
   const { id } = await context.params;
 

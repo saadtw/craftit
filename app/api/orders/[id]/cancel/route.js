@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 
-// POST - Customer cancels order (only allowed before manufacturer accepts)
+// POST /api/orders/[id]/cancel - Customer cancels order (only allowed before manufacturer accepts)
 export async function POST(request, context) {
   const { id } = await context.params;
 

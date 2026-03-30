@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 
-// PATCH - Quick status change
+// PATCH  /api/products/[id]/status - Quick status change
 export async function PATCH(request, context) {
   const params = await context.params;
   const { id } = params;

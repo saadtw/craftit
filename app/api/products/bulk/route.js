@@ -4,7 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 
-// POST - Bulk actions on products
+// POST  /api/products/bulk - Bulk actions on products
 export async function POST(request) {
   try {
     const session = await getServerSession(authOptions);

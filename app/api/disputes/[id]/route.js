@@ -6,7 +6,7 @@ import Dispute from "@/models/Dispute";
 import Order from "@/models/Order";
 import { notify } from "@/services/notificationService";
 
-// GET /api/disputes/[id]
+// GET /api/disputes/[id] - get dispute details (only accessible to involved parties and admins)
 export async function GET(request, { params }) {
   try {
     const session = await getServerSession(authOptions);
