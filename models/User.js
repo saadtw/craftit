@@ -175,6 +175,55 @@ const UserSchema = new mongoose.Schema(
       },
     ],
 
+    // Saved payment methods (tokenized metadata only; never store full PAN/CVV)
+    paymentMethods: [
+      {
+        type: {
+          type: String,
+          enum: ["card"],
+          default: "card",
+        },
+        purpose: {
+          type: String,
+          enum: ["spending", "receiving"],
+          default: "spending",
+        },
+        provider: {
+          type: String,
+          enum: ["stripe", "manual"],
+          default: "stripe",
+        },
+        stripePaymentMethodId: String,
+        brand: String,
+        holderName: String,
+        nickname: String,
+        last4: String,
+        expMonth: Number,
+        expYear: Number,
+        billingAddress: {
+          line1: String,
+          city: String,
+          state: String,
+          country: String,
+          postalCode: String,
+        },
+        isDefault: {
+          type: Boolean,
+          default: false,
+        },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
+
+    // Stripe customer profile for saved card methods and future off-session charges
+    stripeCustomerId: String,
+
+    // Stripe Connect profile for manufacturer payout onboarding
+    stripeConnectAccountId: String,
+
     // Wishlist
     wishlist: [
       {

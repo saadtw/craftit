@@ -4,6 +4,7 @@
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import StripePaymentMethodsTab from "@/components/settings/StripePaymentMethodsTab";
 
 function Label({ children }) {
   return (
@@ -288,6 +289,11 @@ function ProfileTab({ user, onRefresh }) {
       </div>
     </form>
   );
+}
+
+// ─── PAYMENT METHODS TAB ─────────────────────────────────────────────────────
+function PaymentMethodsTab({ user }) {
+  return <StripePaymentMethodsTab user={user} />;
 }
 
 // ─── SECURITY TAB ─────────────────────────────────────────────────────────────
@@ -587,6 +593,7 @@ function CustomerSettingsPageContent() {
 
   const tabs = [
     { key: "profile", label: "Profile", icon: "manage_accounts" },
+    { key: "payment", label: "Payment Methods", icon: "credit_card" },
     { key: "security", label: "Security", icon: "lock" },
     { key: "notifications", label: "Notifications", icon: "notifications" },
   ];
@@ -663,6 +670,7 @@ function CustomerSettingsPageContent() {
           {activeTab === "profile" && (
             <ProfileTab user={user} onRefresh={fetchUser} />
           )}
+          {activeTab === "payment" && <PaymentMethodsTab user={user} />}
           {activeTab === "security" && <SecurityTab user={user} />}
           {activeTab === "notifications" && <NotificationsTab />}
         </div>

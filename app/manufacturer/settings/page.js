@@ -5,6 +5,7 @@ import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
+import StripeConnectPayoutsTab from "@/components/settings/StripeConnectPayoutsTab";
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
 function Label({ children, optional = false }) {
@@ -552,6 +553,11 @@ function BusinessProfileTab({ user, onRefresh }) {
   );
 }
 
+// ─── PAYOUTS TAB ─────────────────────────────────────────────────────────────
+function PayoutsTab({ user }) {
+  return <StripeConnectPayoutsTab user={user} />;
+}
+
 // ─── SECURITY TAB ─────────────────────────────────────────────────────────────
 function SecurityTab({ user }) {
   const [form, setForm] = useState({
@@ -962,7 +968,8 @@ function ManufacturerSettingsPageContent() {
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
 
-  const initialTab = searchParams.get("tab") || "profile";
+  const requestedTab = searchParams.get("tab") || "profile";
+  const initialTab = requestedTab === "payment" ? "payouts" : requestedTab;
   const [activeTab, setActiveTab] = useState(initialTab);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -1006,6 +1013,7 @@ function ManufacturerSettingsPageContent() {
 
   const tabs = [
     { key: "profile", label: "Business Profile", icon: "business" },
+    { key: "payouts", label: "Payouts", icon: "account_balance" },
     { key: "security", label: "Security", icon: "lock" },
     { key: "verification", label: "Verification", icon: "verified" },
   ];
@@ -1068,6 +1076,7 @@ function ManufacturerSettingsPageContent() {
         {activeTab === "profile" && (
           <BusinessProfileTab user={user} onRefresh={fetchUser} />
         )}
+        {activeTab === "payouts" && <PayoutsTab user={user} />}
         {activeTab === "security" && <SecurityTab user={user} />}
         {activeTab === "verification" && <VerificationTab user={user} />}
       </div>
