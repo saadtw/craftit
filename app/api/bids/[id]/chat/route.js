@@ -59,21 +59,58 @@ export async function GET(request, context) {
 
     const { searchParams } = new URL(request.url);
     const since = searchParams.get("since");
+    const sinceDate = since ? new Date(since) : null;
+    const hasValidSince = sinceDate && !Number.isNaN(sinceDate.getTime());
 
     const query = { conversationId: convo._id };
-    if (since) query.createdAt = { $gt: new Date(since) };
+    if (hasValidSince) query.createdAt = { $gt: sinceDate };
+
+    const unreadIncoming = await ChatMessage.find({
+      conversationId: convo._id,
+      senderId: { $ne: session.user.id },
+      "readBy.userId": { $ne: session.user.id },
+    })
+      .select("_id")
+      .limit(500)
+      .lean();
+
+    if (unreadIncoming.length) {
+      await ChatMessage.updateMany(
+        { _id: { $in: unreadIncoming.map((m) => m._id) } },
+        {
+          $push: {
+            readBy: { userId: session.user.id, readAt: new Date() },
+          },
+        },
+      );
+    }
 
     const messages = await ChatMessage.find(query)
       .sort({ createdAt: 1 })
       .limit(200)
       .lean();
 
+    // For efficient polling, also return read-status updates for my previously
+    // sent messages that were read after the last poll.
+    let readUpdates = [];
+    if (hasValidSince) {
+      readUpdates = await ChatMessage.find({
+        conversationId: convo._id,
+        senderId: session.user.id,
+        "readBy.userId": { $ne: session.user.id },
+        updatedAt: { $gt: sinceDate },
+      })
+        .select("_id readBy updatedAt")
+        .limit(200)
+        .lean();
+    }
+
     // Reset unread count for this user
     await Conversation.findByIdAndUpdate(convo._id, {
       $set: { [`unreadCounts.${session.user.id}`]: 0 },
     });
 
-    return NextResponse.json({ success: true, messages });
+    return NextResponse.json({ success: true, messages, readUpdates });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
@@ -117,6 +154,7 @@ export async function POST(request, context) {
       senderRole: session.user.role,
       senderName: session.user.name,
       message: body.message.trim(),
+      readBy: [{ userId: session.user.id, readAt: new Date() }],
     });
 
     // Update conversation's lastMessage snapshot + increment other user's unread

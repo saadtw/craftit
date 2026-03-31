@@ -1,7 +1,7 @@
 // app/admin/orders/[id]/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -25,6 +25,18 @@ export default function AdminOrderDetailPage() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  const fetchOrder = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/admin/orders/${id}`);
+      const data = await res.json();
+      if (data.success) setOrder(data.order);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
@@ -37,19 +49,7 @@ export default function AdminOrderDetailPage() {
       }
       fetchOrder();
     }
-  }, [status, session, id]);
-
-  const fetchOrder = async () => {
-    try {
-      const res = await fetch(`/api/admin/orders/${id}`);
-      const data = await res.json();
-      if (data.success) setOrder(data.order);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [status, session, router, fetchOrder]);
 
   if (status === "loading" || loading) {
     return (

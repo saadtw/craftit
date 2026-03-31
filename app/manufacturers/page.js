@@ -35,7 +35,7 @@ const CAPABILITY_LABELS = {
   Mass_Production: "Mass Production",
 };
 
-function ManufacturerCard({ mfr }) {
+function ManufacturerCard({ mfr, isWishlisted, onToggleWishlist }) {
   const displayName = mfr.businessName || mfr.name;
   const location = [mfr.businessAddress?.city, mfr.businessAddress?.country]
     .filter(Boolean)
@@ -44,10 +44,34 @@ function ManufacturerCard({ mfr }) {
   const reviews = mfr.stats?.totalReviews ?? 0;
   const completed = mfr.stats?.completedOrders ?? 0;
   const isVerified = mfr.verificationStatus === "verified";
+  const manufacturerId = mfr._id?.toString();
 
   return (
     <Link href={`/manufacturers/${mfr._id}`}>
-      <div className="group bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden hover:-translate-y-0.5 cursor-pointer h-full">
+      <div className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden hover:-translate-y-0.5 cursor-pointer h-full">
+        {onToggleWishlist && (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleWishlist(manufacturerId);
+            }}
+            className={`absolute top-3 left-3 z-20 inline-flex items-center justify-center w-8 h-8 rounded-full border backdrop-blur-sm transition-colors ${
+              isWishlisted
+                ? "text-[#eb9728] bg-white/95 border-[#eb9728]/40"
+                : "text-gray-500 bg-white/85 border-gray-200 hover:text-[#eb9728] hover:border-[#eb9728]/40"
+            }`}
+            title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            aria-label={
+              isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+            }
+          >
+            <span className="material-symbols-outlined text-lg">
+              {isWishlisted ? "favorite" : "favorite_border"}
+            </span>
+          </button>
+        )}
         {/* Banner */}
         <div className="relative h-28 bg-linear-to-br from-slate-100 to-slate-200 overflow-hidden">
           {mfr.businessBanner ? (
@@ -199,6 +223,71 @@ function ManufacturersPageContent() {
   );
   const [sort, setSort] = useState("rating");
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+  const [wishlistManufacturerIds, setWishlistManufacturerIds] = useState(
+    new Set(),
+  );
+
+  const fetchWishlist = useCallback(async () => {
+    if (session?.user?.role !== "customer") return;
+    try {
+      const response = await fetch("/api/users/wishlist", {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const ids = (data?.wishlist || [])
+        .filter((item) => item.itemType === "manufacturer" && item._id)
+        .map((item) => item._id.toString());
+
+      setWishlistManufacturerIds(new Set(ids));
+    } catch (_) {}
+  }, [session?.user?.role]);
+
+  const handleToggleWishlist = useCallback(
+    async (manufacturerId) => {
+      const targetId = manufacturerId?.toString();
+      if (!targetId || session?.user?.role !== "customer") return;
+
+      const isCurrentlyWishlisted = wishlistManufacturerIds.has(targetId);
+
+      setWishlistManufacturerIds((prev) => {
+        const next = new Set(prev);
+        if (isCurrentlyWishlisted) {
+          next.delete(targetId);
+        } else {
+          next.add(targetId);
+        }
+        return next;
+      });
+
+      try {
+        const response = await fetch("/api/users/wishlist", {
+          method: isCurrentlyWishlisted ? "DELETE" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            itemId: targetId,
+            itemType: "manufacturer",
+          }),
+        });
+
+        if (!response.ok && response.status !== 409) {
+          throw new Error("Wishlist update failed");
+        }
+      } catch (_) {
+        setWishlistManufacturerIds((prev) => {
+          const next = new Set(prev);
+          if (isCurrentlyWishlisted) {
+            next.add(targetId);
+          } else {
+            next.delete(targetId);
+          }
+          return next;
+        });
+      }
+    },
+    [wishlistManufacturerIds, session?.user?.role],
+  );
 
   const fetchManufacturers = useCallback(
     async (page = 1) => {
@@ -233,6 +322,12 @@ function ManufacturersPageContent() {
   useEffect(() => {
     fetchManufacturers(1);
   }, [fetchManufacturers]);
+
+  useEffect(() => {
+    if (session?.user?.role === "customer") {
+      fetchWishlist();
+    }
+  }, [session?.user?.role, fetchWishlist]);
 
   return (
     <div className="min-h-screen bg-[#f8f7f6]">
@@ -430,7 +525,18 @@ function ManufacturersPageContent() {
           <>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
               {manufacturers.map((mfr) => (
-                <ManufacturerCard key={mfr._id} mfr={mfr} />
+                <ManufacturerCard
+                  key={mfr._id}
+                  mfr={mfr}
+                  isWishlisted={wishlistManufacturerIds.has(
+                    mfr._id?.toString(),
+                  )}
+                  onToggleWishlist={
+                    session?.user?.role === "customer"
+                      ? handleToggleWishlist
+                      : undefined
+                  }
+                />
               ))}
             </div>
 

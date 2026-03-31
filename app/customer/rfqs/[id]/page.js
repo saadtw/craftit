@@ -11,14 +11,25 @@ export default function CustomerRFQDetails() {
   const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const rfqId = params?.id?.toString();
 
   const [rfq, setRfq] = useState(null);
   const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const fetchRFQ = useCallback(async () => {
+    if (!rfqId) {
+      setLoading(false);
+      return;
+    }
+
+    if (rfqId === "new") {
+      router.replace("/custom-orders/new");
+      setLoading(false);
+      return;
+    }
     try {
-      const response = await fetch(`/api/rfqs/${params.id}`);
+      const response = await fetch(`/api/rfqs/${rfqId}`);
       const data = await response.json();
 
       if (data.success && data.rfq) {
@@ -35,7 +46,7 @@ export default function CustomerRFQDetails() {
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [rfqId, router]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -68,7 +79,7 @@ export default function CustomerRFQDetails() {
     if (!confirm("Are you sure you want to cancel this RFQ?")) return;
 
     try {
-      const response = await fetch(`/api/rfqs/${params.id}`, {
+      const response = await fetch(`/api/rfqs/${rfqId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -93,7 +104,7 @@ export default function CustomerRFQDetails() {
   };
 
   const handleCompareBids = () => {
-    router.push(`/customer/rfqs/${params.id}/bids`);
+    router.push(`/customer/rfqs/${rfqId}/bids`);
   };
 
   if (status === "loading" || loading)

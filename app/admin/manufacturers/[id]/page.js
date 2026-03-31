@@ -1,7 +1,7 @@
 // app/admin/manufacturers/[id]/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -21,6 +21,18 @@ export default function AdminManufacturerDetailPage() {
     contact: false,
   });
 
+  const fetchManufacturer = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/admin/manufacturers/${id}/verify`);
+      const data = await res.json();
+      if (data.success) setManufacturer(data.manufacturer);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
@@ -33,19 +45,7 @@ export default function AdminManufacturerDetailPage() {
       }
       fetchManufacturer();
     }
-  }, [status, session, id]);
-
-  const fetchManufacturer = async () => {
-    try {
-      const res = await fetch(`/api/admin/manufacturers/${id}/verify`);
-      const data = await res.json();
-      if (data.success) setManufacturer(data.manufacturer);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [status, session, router, fetchManufacturer]);
 
   const handleAction = async (action) => {
     let reason = "";

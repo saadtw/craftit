@@ -27,6 +27,8 @@ export default function ManufacturerSignup() {
   });
   const [capabilities, setCapabilities] = useState([]);
   const [materials, setMaterials] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -127,7 +129,10 @@ export default function ManufacturerSignup() {
       const data = await response.json();
 
       if (data.success) {
-        alert("Registration successful! Please login to continue.");
+        alert(
+          data.message ||
+            "Registration successful. Verify your email before login.",
+        );
         router.push("/auth/login");
       } else {
         setError(data.message || "Registration failed");
@@ -386,35 +391,53 @@ export default function ManufacturerSignup() {
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Password *
                 </label>
-                <input
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  className="mt-1 block w-full rounded-md border-slate-300 shadow-sm bg-white dark:bg-slate-700 dark:border-slate-600 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-amber-600 focus:border-amber-600"
-                  placeholder="Create password"
-                  required
-                />
+                <div className="relative mt-1">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    className="block w-full rounded-md border-slate-300 shadow-sm bg-white pr-16 dark:bg-slate-700 dark:border-slate-600 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-amber-600 focus:border-amber-600"
+                    placeholder="Create password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">
                   Confirm Password *
                 </label>
-                <input
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      confirmPassword: e.target.value,
-                    })
-                  }
-                  className="mt-1 block w-full rounded-md border-slate-300 shadow-sm bg-white dark:bg-slate-700 dark:border-slate-600 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-amber-600 focus:border-amber-600"
-                  placeholder="Confirm password"
-                  required
-                />
+                <div className="relative mt-1">
+                  <input
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
+                    className="block w-full rounded-md border-slate-300 shadow-sm bg-white pr-16 dark:bg-slate-700 dark:border-slate-600 placeholder-slate-400 dark:placeholder-slate-500 focus:ring-amber-600 focus:border-amber-600"
+                    placeholder="Confirm password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-400"
+                  >
+                    {showConfirmPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
               </div>
             </div>
 

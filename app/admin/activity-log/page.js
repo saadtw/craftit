@@ -6,13 +6,14 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
 const ACTION_ICONS = {
-  approve_manufacturer: "✅",
-  reject_manufacturer: "❌",
-  request_info: "📋",
-  suspend_user: "🔒",
-  unsuspend_user: "🔓",
-  resolve_dispute: "⚖️",
-  view_order: "👁",
+  manufacturer_approved: "✅",
+  manufacturer_rejected: "❌",
+  manufacturer_info_requested: "📋",
+  user_suspended: "🔒",
+  user_unsuspended: "🔓",
+  dispute_resolved: "⚖️",
+  order_viewed: "👁",
+  support_ticket_updated: "🎫",
 };
 
 export default function AdminActivityLogPage() {
@@ -83,10 +84,11 @@ export default function AdminActivityLogPage() {
           className="bg-slate-900 border border-slate-700 text-slate-300 rounded-lg px-3 py-2 text-sm focus:border-amber-600 focus:outline-none"
         >
           <option value="all">All Actions</option>
-          <option value="approve_manufacturer">Manufacturer Approvals</option>
-          <option value="reject_manufacturer">Manufacturer Rejections</option>
-          <option value="suspend_user">User Suspensions</option>
-          <option value="resolve_dispute">Dispute Resolutions</option>
+          <option value="manufacturer_approved">Manufacturer Approvals</option>
+          <option value="manufacturer_rejected">Manufacturer Rejections</option>
+          <option value="user_suspended">User Suspensions</option>
+          <option value="dispute_resolved">Dispute Resolutions</option>
+          <option value="support_ticket_updated">Support Ticket Updates</option>
         </select>
       </div>
 

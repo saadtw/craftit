@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
+import { createRawToken, hashToken } from "@/lib/token";
+import { sendVerificationEmail } from "@/lib/email";
 
 // POST /api/auth/register/customer  — register a new customer
 export async function POST(request) {
@@ -9,9 +11,10 @@ export async function POST(request) {
 
     const body = await request.json();
     const { name, email, password, phone, location } = body;
+    const normalizedEmail = email?.toLowerCase().trim();
 
     // Validation
-    if (!name || !email || !password) {
+    if (!name || !normalizedEmail || !password) {
       return NextResponse.json(
         { success: false, message: "Name, email and password are required" },
         { status: 400 },
@@ -20,7 +23,7 @@ export async function POST(request) {
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       return NextResponse.json(
         { success: false, message: "Invalid email format" },
         { status: 400 },
@@ -35,7 +38,7 @@ export async function POST(request) {
       );
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return NextResponse.json(
         { success: false, message: "Email already registered" },
@@ -46,17 +49,30 @@ export async function POST(request) {
     const user = await User.create({
       role: "customer",
       name,
-      email,
+      email: normalizedEmail,
       password,
       phone,
       location: location || {},
       isActive: true,
+      isEmailVerified: false,
+    });
+
+    const rawVerificationToken = createRawToken(32);
+    user.emailVerificationToken = hashToken(rawVerificationToken);
+    user.emailVerificationExpires = new Date(Date.now() + 1000 * 60 * 60 * 24);
+    await user.save();
+
+    await sendVerificationEmail({
+      to: user.email,
+      name: user.name,
+      token: rawVerificationToken,
     });
 
     return NextResponse.json(
       {
         success: true,
-        message: "Customer registered successfully",
+        message:
+          "Customer registered successfully. Please check your email to verify your account.",
         data: {
           id: user._id,
           name: user.name,

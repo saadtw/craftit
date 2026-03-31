@@ -51,6 +51,13 @@ const ConversationSchema = new mongoose.Schema(
 ConversationSchema.index({ contextType: 1, contextId: 1 }, { unique: true });
 // Inbox query: all conversations for a user, newest first
 ConversationSchema.index({ participants: 1, "lastMessage.sentAt": -1 });
+// Optimized inbox list query used by /api/chat/inbox
+ConversationSchema.index({
+  participants: 1,
+  contextType: 1,
+  isActive: 1,
+  "lastMessage.sentAt": -1,
+});
 
 export default mongoose.models.Conversation ||
   mongoose.model("Conversation", ConversationSchema);

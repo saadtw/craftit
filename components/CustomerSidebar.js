@@ -9,22 +9,22 @@ import CustomerLayoutContext from "@/app/customer/CustomerLayoutContext";
 
 export default function CustomerSidebar({ active, session }) {
   const renderedByCustomerLayout = useContext(CustomerLayoutContext);
-  if (renderedByCustomerLayout) return null;
-
   const pathname = usePathname();
   const { data: clientSession } = useSession();
   const activeSession = session || clientSession;
   const [unreadNotifs, setUnreadNotifs] = useState(0);
 
   useEffect(() => {
-    if (!activeSession?.user?.id) return;
+    if (renderedByCustomerLayout || !activeSession?.user?.id) return;
     fetch("/api/notifications?unread=true&limit=1")
       .then((r) => r.json())
       .then((d) => {
         if (d.unreadCount !== undefined) setUnreadNotifs(d.unreadCount);
       })
       .catch(() => {});
-  }, [activeSession?.user?.id]);
+  }, [renderedByCustomerLayout, activeSession?.user?.id]);
+
+  if (renderedByCustomerLayout) return null;
 
   const navItems = [
     {
@@ -57,6 +57,12 @@ export default function CustomerSidebar({ active, session }) {
       icon: "mail",
       label: "Messages",
       key: "messages",
+    },
+    {
+      href: "/customer/support",
+      icon: "support_agent",
+      label: "Support",
+      key: "support",
     },
     {
       href: "/customer/payments",

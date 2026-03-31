@@ -4,6 +4,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { signIn } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import Logo from "@/components/CrafitLogo";
@@ -23,6 +24,8 @@ export default function CustomerSignup() {
     city: "",
     country: "",
   });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -75,7 +78,10 @@ export default function CustomerSignup() {
       const data = await response.json();
 
       if (data.success) {
-        alert("Registration successful! Please login.");
+        alert(
+          data.message ||
+            "Registration successful. Please verify your email before login.",
+        );
         router.push("/auth/login");
       } else {
         setError(data.message || "Registration failed");
@@ -207,32 +213,50 @@ export default function CustomerSignup() {
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">
                   Password *
                 </label>
-                <input
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500/50 transition-all"
-                  type="password"
-                  value={formData.password}
-                  onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
-                  }
-                  required
-                />
+                <div className="relative">
+                  <input
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 pr-16 text-sm focus:outline-none focus:border-purple-500/50 transition-all"
+                    type={showPassword ? "text" : "password"}
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-widest text-purple-300 hover:text-purple-200"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
               </div>
               <div className="space-y-1">
                 <label className="text-[10px] font-bold uppercase tracking-widest text-slate-500 ml-1">
                   Confirm *
                 </label>
-                <input
-                  className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 text-sm focus:outline-none focus:border-purple-500/50 transition-all"
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      confirmPassword: e.target.value,
-                    })
-                  }
-                  required
-                />
+                <div className="relative">
+                  <input
+                    className="w-full bg-white/5 border border-white/10 rounded-2xl px-4 py-3 pr-16 text-sm focus:outline-none focus:border-purple-500/50 transition-all"
+                    type={showConfirmPassword ? "text" : "password"}
+                    value={formData.confirmPassword}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        confirmPassword: e.target.value,
+                      })
+                    }
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirmPassword((prev) => !prev)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold uppercase tracking-widest text-purple-300 hover:text-purple-200"
+                  >
+                    {showConfirmPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -287,6 +311,7 @@ export default function CustomerSignup() {
           <div className="grid grid-cols-2 gap-4">
             <button
               type="button"
+              onClick={() => signIn("google")}
               className="flex items-center justify-center gap-3 bg-white/3 border border-white/10 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95"
             >
               <Image src={googleLogo} width={16} height={16} alt="google" />
@@ -294,6 +319,7 @@ export default function CustomerSignup() {
             </button>
             <button
               type="button"
+              onClick={() => signIn("facebook")}
               className="flex items-center justify-center gap-3 bg-white/3 border border-white/10 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95"
             >
               <Image src={facebookLogo} width={16} height={16} alt="fb" />

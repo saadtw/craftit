@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
+import "@/models/User";
 import Conversation from "@/models/Chat";
 import ChatMessage from "@/models/ChatMessage";
 import { publish } from "@/lib/chatEmitter";
@@ -55,6 +56,43 @@ function assertParticipant(session, order) {
   return isCustomer || isManufacturer;
 }
 
+async function markIncomingMessagesAsRead({
+  conversationId,
+  viewerId,
+  roomId,
+}) {
+  const unreadIncoming = await ChatMessage.find({
+    conversationId,
+    senderId: { $ne: viewerId },
+    "readBy.userId": { $ne: viewerId },
+  })
+    .select("_id")
+    .limit(500)
+    .lean();
+
+  if (!unreadIncoming.length) return [];
+
+  const messageIds = unreadIncoming.map((m) => m._id);
+  const readEntry = {
+    userId: viewerId,
+    readAt: new Date(),
+  };
+
+  await ChatMessage.updateMany(
+    { _id: { $in: messageIds } },
+    { $push: { readBy: readEntry } },
+  );
+
+  publish(roomId, {
+    type: "read_receipt",
+    readerId: viewerId,
+    messageIds: messageIds.map((id) => id.toString()),
+    readAt: readEntry.readAt.toISOString(),
+  });
+
+  return messageIds;
+}
+
 // ─── GET /api/chat/[orderId] ───────────────────────────────────────────────────
 // Returns the conversation + all messages. Also resets unread count for caller.
 
@@ -85,6 +123,12 @@ export async function GET(request, context) {
 
     // Get or create conversation
     const conversation = await getOrCreateConversation(order);
+
+    await markIncomingMessagesAsRead({
+      conversationId: conversation._id,
+      viewerId: session.user.id,
+      roomId: orderId,
+    });
 
     // Fetch all messages (chronological)
     const messages = await ChatMessage.find({
@@ -175,6 +219,7 @@ export async function POST(request, context) {
       senderRole: session.user.role,
       senderName,
       message: message.trim(),
+      readBy: [{ userId: session.user.id, readAt: new Date() }],
     });
 
     // Update conversation: last message snapshot + increment other participant's unread

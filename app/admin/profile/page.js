@@ -26,7 +26,7 @@ export default function AdminProfilePage() {
     if (status === "authenticated" && session?.user?.role !== "admin") {
       router.push("/");
     }
-  }, [status, session]);
+  }, [status, session, router]);
 
   const handleChangePassword = async (e) => {
     e.preventDefault();

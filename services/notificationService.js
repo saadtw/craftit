@@ -1,5 +1,7 @@
 import connectDB from "@/lib/mongodb";
 import Notification from "@/models/Notification";
+import User from "@/models/User";
+import { sendTransactionalNotificationEmail } from "@/lib/email";
 
 /**
  * Central helper to create notifications.
@@ -25,7 +27,7 @@ export async function createNotification({
 }) {
   try {
     await connectDB();
-    await Notification.create({
+    const notification = await Notification.create({
       userId,
       type,
       title,
@@ -34,6 +36,23 @@ export async function createNotification({
       relatedType,
       relatedId,
     });
+
+    const user = await User.findById(userId).select(
+      "email name emailNotifications isEmailVerified",
+    );
+
+    if (user?.email && user.emailNotifications && user.isEmailVerified) {
+      await sendTransactionalNotificationEmail({
+        to: user.email,
+        subject: `[Craftit] ${title}`,
+        title,
+        message,
+        link,
+      });
+
+      notification.emailSentAt = new Date();
+      await notification.save();
+    }
   } catch (err) {
     // Never let a notification failure break the calling flow
     console.error("Failed to create notification:", err.message);

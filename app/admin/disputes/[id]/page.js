@@ -1,7 +1,7 @@
 // app/admin/disputes/[id]/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -22,6 +22,18 @@ export default function AdminDisputeDetailPage() {
   const [resolutionMessage, setResolutionMessage] = useState("");
   const [adminNotes, setAdminNotes] = useState("");
 
+  const fetchDispute = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/disputes/${id}`);
+      const data = await res.json();
+      if (data.dispute) setDispute(data.dispute);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [id]);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
@@ -34,19 +46,7 @@ export default function AdminDisputeDetailPage() {
       }
       fetchDispute();
     }
-  }, [status, session, id]);
-
-  const fetchDispute = async () => {
-    try {
-      const res = await fetch(`/api/disputes/${id}`);
-      const data = await res.json();
-      if (data.dispute) setDispute(data.dispute);
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [status, session, router, fetchDispute]);
 
   const handleResolve = async () => {
     if (!resolutionMessage.trim()) {

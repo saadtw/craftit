@@ -21,6 +21,9 @@ export default function LoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [formData, setFormData] = useState({ email: "", password: "" });
+  const [showPassword, setShowPassword] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -53,11 +56,22 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email: formData.email,
         password: formData.password,
+        twoFactorCode: requiresTwoFactor ? twoFactorCode : undefined,
         redirect: false,
       });
 
       if (result.error) {
-        setError(result.error);
+        if (result.error === "TWO_FACTOR_REQUIRED") {
+          setRequiresTwoFactor(true);
+          setError("A 2FA code was sent to your email. Enter it to continue.");
+        } else if (result.error === "INVALID_TWO_FACTOR_CODE") {
+          setRequiresTwoFactor(true);
+          setError("Invalid or expired 2FA code. Please try again.");
+        } else if (result.error === "EMAIL_NOT_VERIFIED") {
+          setError("Please verify your email before logging in.");
+        } else {
+          setError(result.error);
+        }
       }
     } catch (err) {
       setError("Network error. Please try again.");
@@ -104,22 +118,48 @@ export default function LoginPage() {
               <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1 block ml-1">
                 Password
               </label>
-              <input
-                type="password"
-                placeholder="Password"
-                className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs outline-none focus:border-purple-500 transition-all placeholder:text-slate-600"
-                value={formData.password}
-                onChange={(e) =>
-                  setFormData({ ...formData, password: e.target.value })
-                }
-              />
+              <div className="relative">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Password"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 pr-16 text-xs outline-none focus:border-purple-500 transition-all placeholder:text-slate-600"
+                  value={formData.password}
+                  onChange={(e) =>
+                    setFormData({ ...formData, password: e.target.value })
+                  }
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold uppercase tracking-wider text-purple-300 hover:text-purple-200"
+                >
+                  {showPassword ? "Hide" : "Show"}
+                </button>
+              </div>
               <Link
-                href="#"
+                href="/auth/forgot-password"
                 className="mt-1 block text-right text-[9px] font-semibold text-purple-400 hover:text-purple-300"
               >
                 Forgot?
               </Link>
             </div>
+
+            {requiresTwoFactor && (
+              <div>
+                <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1 block ml-1">
+                  2FA Code
+                </label>
+                <input
+                  type="text"
+                  maxLength={6}
+                  value={twoFactorCode}
+                  onChange={(e) => setTwoFactorCode(e.target.value)}
+                  placeholder="6-digit code"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs outline-none focus:border-purple-500 transition-all placeholder:text-slate-600"
+                  required
+                />
+              </div>
+            )}
 
             {error && (
               <p className="text-[9px] text-red-400 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
@@ -145,6 +185,7 @@ export default function LoginPage() {
           <div className="flex gap-2.5 max-w-[280px]">
             <button
               type="button"
+              onClick={() => signIn("google")}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2 hover:bg-white/10 transition-all group"
             >
               <Image src={googleLogo} alt="G" width={16} height={16} />
@@ -152,6 +193,7 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
+              onClick={() => signIn("facebook")}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2 hover:bg-white/10 transition-all group"
             >
               <Image src={facebookLogo} alt="F" width={16} height={16} />

@@ -1,7 +1,7 @@
 // app/admin/users/[id]/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -23,21 +23,7 @@ export default function AdminUserDetailPage() {
   const [suspendDetail, setSuspendDetail] = useState("");
   const [suspendDuration, setSuspendDuration] = useState("30");
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-      return;
-    }
-    if (status === "authenticated") {
-      if (session?.user?.role !== "admin") {
-        router.push("/");
-        return;
-      }
-      fetchUser();
-    }
-  }, [status, session, id]);
-
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const res = await fetch(`/api/admin/users/${id}`);
       const data = await res.json();
@@ -50,7 +36,21 @@ export default function AdminUserDetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    if (status === "authenticated") {
+      if (session?.user?.role !== "admin") {
+        router.push("/");
+        return;
+      }
+      fetchUser();
+    }
+  }, [status, session, router, fetchUser]);
 
   const handleSuspend = async () => {
     if (!suspendDetail.trim()) {

@@ -31,9 +31,13 @@ export default function CustomerHomePage() {
   const router = useRouter();
   const { data: session, status } = useSession();
 
+  const [suggestedProducts, setSuggestedProducts] = useState([]);
+  const [isSuggestedPersonalized, setIsSuggestedPersonalized] = useState(true);
+  const [recentProducts, setRecentProducts] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [activeGroupBuys, setActiveGroupBuys] = useState([]);
   const [featuredManufacturers, setFeaturedManufacturers] = useState([]);
+  const [wishlistProductIds, setWishlistProductIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -41,18 +45,50 @@ export default function CustomerHomePage() {
     setLoading(true);
     setError("");
     try {
-      const [productsData, groupBuysData, manufacturersData] =
-        await Promise.all([
-          fetchWithCache("/api/products/public?sort=popular&limit=6", 180000),
-          fetchWithCache(
-            "/api/group-buys/public?sort=participants&limit=4",
-            120000,
-          ),
-          fetchWithCache(
-            "/api/manufacturers/public?sort=rating&limit=4",
-            300000,
-          ),
-        ]);
+      let recentIds = [];
+      if (typeof window !== "undefined") {
+        const storageKey = "craftit_recently_viewed_products";
+        const parsedIds = JSON.parse(localStorage.getItem(storageKey) || "[]");
+        recentIds = Array.isArray(parsedIds)
+          ? parsedIds.filter((pId) => typeof pId === "string").slice(0, 3)
+          : [];
+      }
+
+      const suggestedPath = recentIds.length
+        ? `/api/products/suggested?limit=6&recentIds=${recentIds.join(",")}`
+        : "/api/products/suggested?limit=6";
+
+      const [
+        suggestedData,
+        recentData,
+        productsData,
+        groupBuysData,
+        manufacturersData,
+        wishlistData,
+      ] = await Promise.all([
+        fetchWithCache(suggestedPath, 60000),
+        recentIds.length
+          ? fetchWithCache(
+              `/api/products/recently-viewed?ids=${recentIds.join(",")}`,
+              60000,
+            )
+          : Promise.resolve({ success: true, products: [] }),
+        fetchWithCache("/api/products/public?sort=popular&limit=6", 180000),
+        fetchWithCache(
+          "/api/group-buys/public?sort=participants&limit=4",
+          120000,
+        ),
+        fetchWithCache("/api/manufacturers/public?sort=rating&limit=4", 300000),
+        fetch("/api/users/wishlist", { cache: "no-store" })
+          .then((res) => (res.ok ? res.json() : { wishlist: [] }))
+          .catch(() => ({ wishlist: [] })),
+      ]);
+
+      setSuggestedProducts(
+        suggestedData?.success ? suggestedData.products || [] : [],
+      );
+      setIsSuggestedPersonalized(Boolean(suggestedData?.isPersonalized));
+      setRecentProducts(recentData?.success ? recentData.products || [] : []);
 
       setFeaturedProducts(
         productsData?.success ? productsData.products || [] : [],
@@ -63,6 +99,11 @@ export default function CustomerHomePage() {
       setFeaturedManufacturers(
         manufacturersData?.success ? manufacturersData.manufacturers || [] : [],
       );
+
+      const wishlistedProductIds = (wishlistData?.wishlist || [])
+        .filter((item) => item.itemType === "product" && item._id)
+        .map((item) => item._id.toString());
+      setWishlistProductIds(new Set(wishlistedProductIds));
     } catch (err) {
       console.error("Customer home fetch error:", err);
       setError("Could not load marketplace data. Please try again.");
@@ -89,6 +130,49 @@ export default function CustomerHomePage() {
   const firstName = useMemo(
     () => session?.user?.name?.split(" ")[0] || "there",
     [session?.user?.name],
+  );
+
+  const handleToggleWishlist = useCallback(
+    async (productId) => {
+      const id = productId?.toString();
+      if (!id) return;
+
+      const isCurrentlyWishlisted = wishlistProductIds.has(id);
+
+      setWishlistProductIds((prev) => {
+        const next = new Set(prev);
+        if (isCurrentlyWishlisted) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        return next;
+      });
+
+      try {
+        const response = await fetch("/api/users/wishlist", {
+          method: isCurrentlyWishlisted ? "DELETE" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ itemId: id, itemType: "product" }),
+        });
+
+        if (!response.ok && response.status !== 409) {
+          throw new Error("Wishlist update failed");
+        }
+      } catch (err) {
+        console.error("Wishlist update failed:", err);
+        setWishlistProductIds((prev) => {
+          const next = new Set(prev);
+          if (isCurrentlyWishlisted) {
+            next.add(id);
+          } else {
+            next.delete(id);
+          }
+          return next;
+        });
+      }
+    },
+    [wishlistProductIds],
   );
 
   if (status === "loading" || loading) {
@@ -171,6 +255,61 @@ export default function CustomerHomePage() {
         <section>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-base font-bold text-gray-900">
+              Suggested For You
+            </h2>
+            <Link
+              href="/customer/explore"
+              className="text-xs font-semibold text-[#eb9728] hover:underline"
+            >
+              See all
+            </Link>
+          </div>
+          {!isSuggestedPersonalized && (
+            <p className="text-xs text-gray-500 mb-3">
+              Popular picks to get you started.
+            </p>
+          )}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {suggestedProducts.slice(0, 6).map((product) => (
+              <ProductGridCard
+                key={product._id}
+                product={product}
+                isWishlisted={wishlistProductIds.has(product._id?.toString())}
+                onToggleWishlist={handleToggleWishlist}
+              />
+            ))}
+          </div>
+        </section>
+
+        {recentProducts.length > 0 && (
+          <section>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-base font-bold text-gray-900">
+                Recently Viewed
+              </h2>
+              <Link
+                href="/customer/explore"
+                className="text-xs font-semibold text-[#eb9728] hover:underline"
+              >
+                Explore more
+              </Link>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {recentProducts.slice(0, 3).map((product) => (
+                <ProductGridCard
+                  key={product._id}
+                  product={product}
+                  isWishlisted={wishlistProductIds.has(product._id?.toString())}
+                  onToggleWishlist={handleToggleWishlist}
+                />
+              ))}
+            </div>
+          </section>
+        )}
+
+        <section>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-base font-bold text-gray-900">
               Trending Products
             </h2>
             <Link
@@ -182,35 +321,12 @@ export default function CustomerHomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {featuredProducts.slice(0, 6).map((product) => (
-              <div
+              <ProductGridCard
                 key={product._id}
-                className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm"
-              >
-                <p className="text-xs uppercase tracking-wide text-gray-400">
-                  {product.category || "General"}
-                </p>
-                <h3 className="text-sm font-bold text-gray-900 mt-1 line-clamp-1">
-                  {product.name}
-                </h3>
-                <p className="text-xs text-gray-500 mt-1 line-clamp-2 min-h-8">
-                  {product.description ||
-                    "High-quality manufacturing-ready item."}
-                </p>
-                <div className="mt-3 flex items-center justify-between">
-                  <div>
-                    <p className="text-[11px] text-gray-400">Starting at</p>
-                    <p className="text-sm font-bold text-gray-900">
-                      {currency(product.price)}
-                    </p>
-                  </div>
-                  <Link
-                    href={`/customer/products/${product._id}`}
-                    className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#eb9728]/10 text-[#eb9728] hover:bg-[#eb9728]/20"
-                  >
-                    View
-                  </Link>
-                </div>
-              </div>
+                product={product}
+                isWishlisted={wishlistProductIds.has(product._id?.toString())}
+                onToggleWishlist={handleToggleWishlist}
+              />
             ))}
           </div>
         </section>
@@ -335,6 +451,55 @@ export default function CustomerHomePage() {
           </div>
         </section>
       </main>
+    </div>
+  );
+}
+
+function ProductGridCard({ product, isWishlisted, onToggleWishlist }) {
+  const productId = product._id?.toString();
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-4 shadow-sm">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-xs uppercase tracking-wide text-gray-400">
+          {product.category || "General"}
+        </p>
+        <button
+          type="button"
+          onClick={() => onToggleWishlist?.(productId)}
+          className={`inline-flex items-center justify-center rounded-full w-8 h-8 border transition-colors ${
+            isWishlisted
+              ? "text-[#eb9728] border-[#eb9728]/40 bg-[#eb9728]/10"
+              : "text-gray-400 border-gray-200 hover:text-[#eb9728] hover:border-[#eb9728]/40"
+          }`}
+          title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+        >
+          <span className="material-symbols-outlined text-[18px]">
+            {isWishlisted ? "favorite" : "favorite_border"}
+          </span>
+        </button>
+      </div>
+      <h3 className="text-sm font-bold text-gray-900 mt-1 line-clamp-1">
+        {product.name}
+      </h3>
+      <p className="text-xs text-gray-500 mt-1 line-clamp-2 min-h-8">
+        {product.description || "High-quality manufacturing-ready item."}
+      </p>
+      <div className="mt-3 flex items-center justify-between">
+        <div>
+          <p className="text-[11px] text-gray-400">Starting at</p>
+          <p className="text-sm font-bold text-gray-900">
+            {currency(product.price)}
+          </p>
+        </div>
+        <Link
+          href={`/customer/products/${product._id}`}
+          className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#eb9728]/10 text-[#eb9728] hover:bg-[#eb9728]/20"
+        >
+          View
+        </Link>
+      </div>
     </div>
   );
 }

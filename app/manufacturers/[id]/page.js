@@ -195,6 +195,9 @@ export default function ManufacturerPublicProfilePage() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("products");
+  const [wishlistManufacturerIds, setWishlistManufacturerIds] = useState(
+    new Set(),
+  );
 
   const fetchProfile = useCallback(async () => {
     setLoading(true);
@@ -223,6 +226,67 @@ export default function ManufacturerPublicProfilePage() {
       fetchProfile();
     }
   }, [status, fetchProfile]);
+
+  const fetchWishlist = useCallback(async () => {
+    if (session?.user?.role !== "customer") return;
+    try {
+      const response = await fetch("/api/users/wishlist", {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+
+      const data = await response.json();
+      const ids = (data?.wishlist || [])
+        .filter((item) => item.itemType === "manufacturer" && item._id)
+        .map((item) => item._id.toString());
+      setWishlistManufacturerIds(new Set(ids));
+    } catch (_) {}
+  }, [session?.user?.role]);
+
+  const handleToggleWishlist = useCallback(async () => {
+    const targetId = id?.toString();
+    if (!targetId || session?.user?.role !== "customer") return;
+
+    const isCurrentlyWishlisted = wishlistManufacturerIds.has(targetId);
+
+    setWishlistManufacturerIds((prev) => {
+      const next = new Set(prev);
+      if (isCurrentlyWishlisted) {
+        next.delete(targetId);
+      } else {
+        next.add(targetId);
+      }
+      return next;
+    });
+
+    try {
+      const response = await fetch("/api/users/wishlist", {
+        method: isCurrentlyWishlisted ? "DELETE" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId: targetId, itemType: "manufacturer" }),
+      });
+
+      if (!response.ok && response.status !== 409) {
+        throw new Error("Wishlist update failed");
+      }
+    } catch (_) {
+      setWishlistManufacturerIds((prev) => {
+        const next = new Set(prev);
+        if (isCurrentlyWishlisted) {
+          next.add(targetId);
+        } else {
+          next.delete(targetId);
+        }
+        return next;
+      });
+    }
+  }, [id, wishlistManufacturerIds, session?.user?.role]);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role === "customer") {
+      fetchWishlist();
+    }
+  }, [status, session?.user?.role, fetchWishlist]);
 
   const role = session?.user?.role;
 
@@ -260,6 +324,9 @@ export default function ManufacturerPublicProfilePage() {
 
   const isPublic = !role; // unauthenticated visitor
   const usesSidebar = role === "manufacturer";
+  const isCurrentManufacturerWishlisted = wishlistManufacturerIds.has(
+    id?.toString(),
+  );
 
   return (
     <div
@@ -379,12 +446,30 @@ export default function ManufacturerPublicProfilePage() {
 
               {/* CTAs — role-aware */}
               {role === "customer" && (
-                <Link
-                  href={`/customer/rfqs/new?manufacturerId=${id}`}
-                  className="shrink-0 px-5 py-2.5 bg-[#eb9728] text-white rounded-xl text-sm font-semibold hover:bg-[#eb9728]/90 transition-colors"
-                >
-                  Send RFQ
-                </Link>
+                <div className="shrink-0 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleToggleWishlist}
+                    className={`inline-flex items-center gap-1.5 px-4 py-2.5 border rounded-xl text-sm font-semibold transition-colors ${
+                      isCurrentManufacturerWishlisted
+                        ? "border-[#eb9728]/40 bg-[#eb9728]/10 text-[#eb9728]"
+                        : "border-gray-200 text-gray-700 hover:border-[#eb9728] hover:text-[#eb9728]"
+                    }`}
+                  >
+                    <span className="material-symbols-outlined text-base">
+                      {isCurrentManufacturerWishlisted
+                        ? "favorite"
+                        : "favorite_border"}
+                    </span>
+                    {isCurrentManufacturerWishlisted ? "Wishlisted" : "Save"}
+                  </button>
+                  <Link
+                    href={`/custom-orders/new?manufacturerId=${id}`}
+                    className="px-5 py-2.5 bg-[#eb9728] text-white rounded-xl text-sm font-semibold hover:bg-[#eb9728]/90 transition-colors"
+                  >
+                    Send RFQ
+                  </Link>
+                </div>
               )}
               {role === "manufacturer" && session?.user?.id === id && (
                 <Link

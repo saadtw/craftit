@@ -4,6 +4,7 @@ import RFQ from "@/models/RFQ";
 import Bid from "@/models/Bid";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import mongoose from "mongoose";
 
 // GET  /api/rfqs/[id] - Get RFQ details
 export async function GET(request, context) {
@@ -18,6 +19,10 @@ export async function GET(request, context) {
     }
 
     await connectDB();
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid RFQ id" }, { status: 400 });
+    }
 
     const rfq = await RFQ.findById(id)
       .populate({
@@ -79,6 +84,10 @@ export async function PUT(request, context) {
     }
 
     await connectDB();
+
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json({ error: "Invalid RFQ id" }, { status: 400 });
+    }
 
     const rfq = await RFQ.findById(id);
 

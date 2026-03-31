@@ -28,6 +28,19 @@ const ChatMessageSchema = new mongoose.Schema(
       trim: true,
       maxlength: 2000,
     },
+    readBy: [
+      {
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        readAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
     // Future: attachments: [{ url: String, filename: String, type: String }]
   },
   { timestamps: true },
@@ -35,6 +48,8 @@ const ChatMessageSchema = new mongoose.Schema(
 
 // Core query: all messages in a conversation, chronological
 ChatMessageSchema.index({ conversationId: 1, createdAt: 1 });
+// Read-receipt marking query: unread incoming messages for a participant
+ChatMessageSchema.index({ conversationId: 1, senderId: 1, createdAt: 1 });
 
 export default mongoose.models.ChatMessage ||
   mongoose.model("ChatMessage", ChatMessageSchema);

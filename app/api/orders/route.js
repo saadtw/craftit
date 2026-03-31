@@ -3,8 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
+import "@/models/User";
+import "@/models/Product";
 import "@/models/RFQ";
 import "@/models/Bid";
+import "@/models/GroupBuy";
 
 // GET  /api/orders - List orders (role-aware)
 export async function GET(request) {

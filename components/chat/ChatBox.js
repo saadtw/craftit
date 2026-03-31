@@ -29,6 +29,84 @@ export default function ChatBox({
 
   const messagesContainerRef = useRef(null);
   const inputRef = useRef(null);
+  const pendingReadIdsRef = useRef(new Set());
+  const readFlushTimerRef = useRef(null);
+
+  const applyReadReceipt = useCallback((messageIds, readerId, readAt) => {
+    if (!Array.isArray(messageIds) || !messageIds.length || !readerId) return;
+
+    const ids = new Set(messageIds.map((id) => String(id)));
+
+    setMessages((prev) =>
+      prev.map((m) => {
+        if (!ids.has(String(m._id))) return m;
+
+        const alreadyRead = Array.isArray(m.readBy)
+          ? m.readBy.some(
+              (entry) =>
+                String(entry?.userId) === String(readerId) ||
+                entry?.userId === readerId,
+            )
+          : false;
+
+        if (alreadyRead) return m;
+
+        return {
+          ...m,
+          readBy: [
+            ...(Array.isArray(m.readBy) ? m.readBy : []),
+            { userId: readerId, readAt: readAt || new Date().toISOString() },
+          ],
+        };
+      }),
+    );
+  }, []);
+
+  const markMessagesAsRead = useCallback(
+    async (messageIds) => {
+      if (!Array.isArray(messageIds) || !messageIds.length) return;
+
+      try {
+        await fetch(`/api/chat/${orderId}/read`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ messageIds }),
+        });
+      } catch (_) {
+        // Silent failure; receipts are eventually consistent via later refreshes.
+      }
+    },
+    [orderId],
+  );
+
+  const flushReadQueue = useCallback(() => {
+    if (readFlushTimerRef.current) {
+      clearTimeout(readFlushTimerRef.current);
+      readFlushTimerRef.current = null;
+    }
+
+    const ids = Array.from(pendingReadIdsRef.current);
+    pendingReadIdsRef.current.clear();
+
+    if (ids.length) {
+      markMessagesAsRead(ids);
+    }
+  }, [markMessagesAsRead]);
+
+  const queueReadReceipt = useCallback(
+    (messageId) => {
+      if (!messageId || document.visibilityState !== "visible") return;
+
+      pendingReadIdsRef.current.add(String(messageId));
+
+      if (readFlushTimerRef.current) return;
+
+      readFlushTimerRef.current = setTimeout(() => {
+        flushReadQueue();
+      }, 250);
+    },
+    [flushReadQueue],
+  );
 
   // ── Fetch messages (initial load + manual refresh) ────────────────────────
   const fetchMessages = useCallback(async () => {
@@ -68,6 +146,16 @@ export default function ChatBox({
             if (prev.some((m) => m._id === data.message._id)) return prev;
             return [...prev, data.message];
           });
+
+          const isIncoming =
+            String(data.message.senderId) !== String(currentUser.id);
+          if (isIncoming) {
+            queueReadReceipt(data.message._id);
+          }
+        }
+
+        if (data.type === "read_receipt") {
+          applyReadReceipt(data.messageIds, data.readerId, data.readAt);
         }
       } catch (_) {
         /* malformed event — ignore */
@@ -79,8 +167,77 @@ export default function ChatBox({
       // Suppress console noise for expected disconnect/reconnect cycles.
     };
 
-    return () => es.close();
-  }, [orderId]); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => {
+      es.close();
+      flushReadQueue();
+    };
+  }, [
+    orderId,
+    currentUser.id,
+    fetchMessages,
+    queueReadReceipt,
+    applyReadReceipt,
+    flushReadQueue,
+  ]);
+
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState !== "visible") return;
+
+      const unreadIncomingIds = messages
+        .filter((m) => {
+          const isMine =
+            String(m.senderId?.toString?.() || m.senderId) ===
+            String(currentUser.id);
+          if (isMine) return false;
+
+          const isReadByMe = Array.isArray(m.readBy)
+            ? m.readBy.some(
+                (entry) =>
+                  String(entry?.userId?.toString?.() || entry?.userId) ===
+                  String(currentUser.id),
+              )
+            : false;
+
+          return !isReadByMe;
+        })
+        .map((m) => String(m._id));
+
+      if (unreadIncomingIds.length) {
+        markMessagesAsRead(unreadIncomingIds);
+      }
+    };
+
+    if (document.visibilityState === "visible") {
+      const unreadIncomingIds = messages
+        .filter((m) => {
+          const isMine =
+            String(m.senderId?.toString?.() || m.senderId) ===
+            String(currentUser.id);
+          if (isMine) return false;
+
+          const isReadByMe = Array.isArray(m.readBy)
+            ? m.readBy.some(
+                (entry) =>
+                  String(entry?.userId?.toString?.() || entry?.userId) ===
+                  String(currentUser.id),
+              )
+            : false;
+
+          return !isReadByMe;
+        })
+        .map((m) => String(m._id));
+
+      if (unreadIncomingIds.length) {
+        markMessagesAsRead(unreadIncomingIds);
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [messages, currentUser.id, markMessagesAsRead]);
 
   // ── Scroll within the chat container (not the whole page) ───────────────
   // Only auto-scroll when the user is near the bottom, or when they just
@@ -309,6 +466,19 @@ export default function ChatBox({
                     isMe={isMe}
                     showAvatar={!isSameGroup}
                     isOptimistic={msg._optimistic}
+                    readStatus={
+                      isMe
+                        ? Array.isArray(msg.readBy) &&
+                          msg.readBy.some(
+                            (entry) =>
+                              String(
+                                entry?.userId?.toString?.() || entry?.userId,
+                              ) !== String(currentUser.id),
+                          )
+                          ? "Read"
+                          : "Sent"
+                        : ""
+                    }
                     highlight={
                       searchQuery &&
                       msg.message
@@ -366,7 +536,14 @@ export default function ChatBox({
 
 // ── MessageBubble sub-component ─────────────────────────────────────────────
 
-function MessageBubble({ msg, isMe, showAvatar, isOptimistic, highlight }) {
+function MessageBubble({
+  msg,
+  isMe,
+  showAvatar,
+  isOptimistic,
+  readStatus,
+  highlight,
+}) {
   const time = new Date(msg.createdAt).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
@@ -413,7 +590,7 @@ function MessageBubble({ msg, isMe, showAvatar, isOptimistic, highlight }) {
           }`}
         >
           {time}
-          {isOptimistic && " · Sending..."}
+          {isOptimistic ? " · Sending..." : isMe ? ` · ${readStatus}` : ""}
         </p>
       </div>
     </div>

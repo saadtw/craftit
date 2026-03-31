@@ -41,6 +41,13 @@ const NotificationSchema = new mongoose.Schema(
         "dispute_resolved",
         // Message events
         "new_message",
+        // Product Q&A events
+        "question_asked",
+        "question_answered",
+        // Support ticket events
+        "support_ticket_created",
+        "support_ticket_replied",
+        "support_ticket_updated",
         // Verification events
         "verification_approved",
         "verification_rejected",
@@ -68,7 +75,17 @@ const NotificationSchema = new mongoose.Schema(
     // Optional reference to the related entity
     relatedType: {
       type: String,
-      enum: ["order", "rfq", "bid", "group_buy", "dispute", "user"],
+      enum: [
+        "order",
+        "product",
+        "payment",
+        "rfq",
+        "bid",
+        "group_buy",
+        "dispute",
+        "support_ticket",
+        "user",
+      ],
     },
     relatedId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -79,6 +96,7 @@ const NotificationSchema = new mongoose.Schema(
       default: false,
     },
     readAt: Date,
+    emailSentAt: Date,
   },
   { timestamps: true },
 );

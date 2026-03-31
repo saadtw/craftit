@@ -239,6 +239,45 @@ const UserSchema = new mongoose.Schema(
     // Metadata
     lastLogin: Date,
     lastActive: Date,
+
+    // Password reset
+    passwordResetToken: {
+      type: String,
+      select: false,
+    },
+    passwordResetExpires: {
+      type: Date,
+      select: false,
+    },
+
+    // Email verification
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerifiedAt: Date,
+    emailVerificationToken: {
+      type: String,
+      select: false,
+    },
+    emailVerificationExpires: {
+      type: Date,
+      select: false,
+    },
+
+    // Optional email-based 2FA for login
+    twoFactorEnabled: {
+      type: Boolean,
+      default: false,
+    },
+    twoFactorCodeToken: {
+      type: String,
+      select: false,
+    },
+    twoFactorCodeExpires: {
+      type: Date,
+      select: false,
+    },
   },
   { timestamps: true },
 );

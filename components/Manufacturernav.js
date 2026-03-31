@@ -39,6 +39,7 @@ const NAV_ITEMS = [
   { href: "/manufacturer/bids", label: "My Bids", key: "bids" },
   { href: "/manufacturer/group-buys", label: "Group Buys", key: "group-buys" },
   { href: "/manufacturer/messages", label: "Messages", key: "messages" },
+  { href: "/manufacturer/support", label: "Support", key: "support" },
   { href: "/manufacturer/disputes", label: "Disputes", key: "disputes" },
   { href: "/manufacturer/financial", label: "Financials", key: "financial" },
   { href: "/manufacturer/analytics", label: "Analytics", key: "analytics" },

@@ -17,12 +17,13 @@ const AdminLogSchema = new mongoose.Schema(
         "user_unsuspended",
         "dispute_resolved",
         "order_viewed",
+        "support_ticket_updated",
       ],
       required: true,
     },
     targetType: {
       type: String,
-      enum: ["user", "manufacturer", "order", "dispute"],
+      enum: ["user", "manufacturer", "order", "dispute", "support_ticket"],
     },
     targetId: {
       type: mongoose.Schema.Types.ObjectId,

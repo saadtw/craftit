@@ -23,6 +23,9 @@ import AdminLog from "../models/AdminLog.js";
 import VerificationDocument from "../models/VerificationDocument.js";
 import Chat from "../models/Chat.js";
 import ChatMessage from "../models/ChatMessage.js";
+import ProductQuestion from "../models/ProductQuestion.js";
+import SupportTicket from "../models/SupportTicket.js";
+import SupportTicketMessage from "../models/SupportTicketMessage.js";
 
 // Configuration
 const CONFIG = {
@@ -131,6 +134,8 @@ async function createUsers() {
       name: faker.person.fullName(),
       phone: faker.phone.number("+92 3## #######"),
       verificationStatus: "verified",
+      isEmailVerified: true,
+      emailVerifiedAt: faker.date.past(),
     });
     users.admins.push(admin);
   }
@@ -154,6 +159,8 @@ async function createUsers() {
         },
       },
       verificationStatus: "verified",
+      isEmailVerified: true,
+      emailVerifiedAt: faker.date.past(),
       savedAddresses: [
         {
           label: "Home",
@@ -208,6 +215,8 @@ async function createUsers() {
       materialsAvailable: randomSubset(materials, 3, 6),
       minOrderQuantity: faker.number.int({ min: 10, max: 500 }),
       verificationStatus: isVerified ? "verified" : "unverified",
+      isEmailVerified: true,
+      emailVerifiedAt: faker.date.past(),
       verifiedAt: isVerified ? faker.date.past() : null,
       verifiedBy: isVerified ? randomItem(users.admins)._id : null,
       stats: {
@@ -1145,6 +1154,7 @@ async function seedDatabase() {
     await Promise.all([
       User.deleteMany({}),
       Product.deleteMany({}),
+      ProductQuestion.deleteMany({}),
       CustomOrder.deleteMany({}),
       RFQ.deleteMany({}),
       Bid.deleteMany({}),
@@ -1157,6 +1167,8 @@ async function seedDatabase() {
       VerificationDocument.deleteMany({}),
       Chat.deleteMany({}),
       ChatMessage.deleteMany({}),
+      SupportTicket.deleteMany({}),
+      SupportTicketMessage.deleteMany({}),
     ]);
     console.log("✓ Cleared existing data\n");
 

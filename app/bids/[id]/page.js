@@ -43,14 +43,46 @@ function ChatPanel({ bidId, session, bidStatus }) {
             : "";
         const res = await fetch(`/api/bids/${bidId}/chat${since}`);
         const data = await res.json();
-        if (data.success && data.messages.length > 0) {
+        if (data.success) {
+          const newMessages = Array.isArray(data.messages) ? data.messages : [];
+
           if (initial) {
-            setMessages(data.messages);
-          } else {
-            setMessages((prev) => [...prev, ...data.messages]);
+            setMessages(newMessages);
+          } else if (newMessages.length > 0) {
+            setMessages((prev) => {
+              const seen = new Set(prev.map((m) => String(m._id)));
+              const deduped = newMessages.filter(
+                (m) => !seen.has(String(m._id)),
+              );
+              return deduped.length ? [...prev, ...deduped] : prev;
+            });
           }
-          lastTimestampRef.current =
-            data.messages[data.messages.length - 1].createdAt;
+
+          if (
+            !initial &&
+            Array.isArray(data.readUpdates) &&
+            data.readUpdates.length
+          ) {
+            const byId = new Map(
+              data.readUpdates.map((entry) => [String(entry._id), entry]),
+            );
+            setMessages((prev) =>
+              prev.map((msg) => {
+                const update = byId.get(String(msg._id));
+                if (!update) return msg;
+                return {
+                  ...msg,
+                  readBy: update.readBy,
+                  updatedAt: update.updatedAt,
+                };
+              }),
+            );
+          }
+
+          if (newMessages.length > 0) {
+            lastTimestampRef.current =
+              newMessages[newMessages.length - 1].createdAt;
+          }
         }
       } catch (_) {
         // silent fail on poll
@@ -108,6 +140,12 @@ function ChatPanel({ bidId, session, bidStatus }) {
         ) : (
           messages.map((msg) => {
             const isMine = msg.senderId === session.user.id;
+            const isReadByOther =
+              isMine &&
+              Array.isArray(msg.readBy) &&
+              msg.readBy.some(
+                (entry) => String(entry?.userId) !== String(session.user.id),
+              );
             return (
               <div
                 key={msg._id}
@@ -135,6 +173,7 @@ function ChatPanel({ bidId, session, bidStatus }) {
                       hour: "2-digit",
                       minute: "2-digit",
                     })}
+                    {isMine ? ` · ${isReadByOther ? "Read" : "Sent"}` : ""}
                   </p>
                 </div>
               </div>

@@ -1,7 +1,7 @@
 // app/manufacturer/products/[id]/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
@@ -77,6 +77,11 @@ export default function ProductDetailPage() {
   const [statusLoading, setStatusLoading] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [showStatusMenu, setShowStatusMenu] = useState(false);
+  const [qaItems, setQaItems] = useState([]);
+  const [qaLoading, setQaLoading] = useState(true);
+  const [qaUpdatingId, setQaUpdatingId] = useState("");
+  const [answerDrafts, setAnswerDrafts] = useState({});
+  const [qaView, setQaView] = useState("all");
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/login");
@@ -104,6 +109,77 @@ export default function ProductDetailPage() {
     };
     if (status === "authenticated") fetchProduct();
   }, [id, status, router]);
+
+  const fetchQnA = useCallback(async () => {
+    setQaLoading(true);
+    try {
+      const res = await fetch(`/api/products/${id}/qa?status=all&limit=50`, {
+        cache: "no-store",
+      });
+      const data = await res.json();
+      if (data.success) {
+        setQaItems(data.questions || []);
+      }
+    } catch (_) {
+      setQaItems([]);
+    } finally {
+      setQaLoading(false);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    if (status === "authenticated") {
+      fetchQnA();
+    }
+  }, [status, fetchQnA]);
+
+  const handleAnswerQuestion = async (questionId) => {
+    const answer = String(answerDrafts[questionId] || "").trim();
+    if (answer.length < 2 || qaUpdatingId) return;
+
+    setQaUpdatingId(questionId);
+    try {
+      const res = await fetch(`/api/products/${id}/qa/${questionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "answer", answer }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setQaItems((prev) =>
+          prev.map((item) => (item._id === questionId ? data.question : item)),
+        );
+        setAnswerDrafts((prev) => ({ ...prev, [questionId]: "" }));
+      }
+    } catch (_) {
+      // no-op
+    } finally {
+      setQaUpdatingId("");
+    }
+  };
+
+  const toggleVisibility = async (questionId, nextVisible) => {
+    if (qaUpdatingId) return;
+
+    setQaUpdatingId(questionId);
+    try {
+      const res = await fetch(`/api/products/${id}/qa/${questionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "visibility", isVisible: nextVisible }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setQaItems((prev) =>
+          prev.map((item) => (item._id === questionId ? data.question : item)),
+        );
+      }
+    } catch (_) {
+      // no-op
+    } finally {
+      setQaUpdatingId("");
+    }
+  };
 
   const handleStatusChange = async (newStatus) => {
     setStatusLoading(true);
@@ -150,6 +226,18 @@ export default function ProductDetailPage() {
 
   const specs = product.specifications || {};
   const dims = specs.dimensions || {};
+  const qaCounts = {
+    all: qaItems.length,
+    pending: qaItems.filter((q) => q.status === "pending").length,
+    answered: qaItems.filter((q) => q.status === "answered").length,
+    hidden: qaItems.filter((q) => q.isVisible === false).length,
+  };
+  const visibleQaItems = qaItems.filter((qa) => {
+    if (qaView === "pending") return qa.status === "pending";
+    if (qaView === "answered") return qa.status === "answered";
+    if (qaView === "hidden") return qa.isVisible === false;
+    return true;
+  });
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -462,6 +550,129 @@ export default function ProductDetailPage() {
                 </div>
               </div>
             )}
+
+            <div className="bg-white rounded-2xl border border-slate-200 p-6">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-sm font-semibold text-slate-900">
+                  Product Q&A
+                </h3>
+                <span className="text-xs text-slate-500">
+                  {qaItems.filter((q) => q.status === "pending").length} pending
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2 mb-4">
+                <button
+                  type="button"
+                  onClick={() => setQaView("all")}
+                  className={`px-2.5 py-1 text-xs rounded-full border ${qaView === "all" ? "bg-slate-900 text-white border-slate-900" : "border-slate-200 text-slate-600"}`}
+                >
+                  All ({qaCounts.all})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQaView("pending")}
+                  className={`px-2.5 py-1 text-xs rounded-full border ${qaView === "pending" ? "bg-amber-500 text-white border-amber-500" : "border-slate-200 text-slate-600"}`}
+                >
+                  Pending ({qaCounts.pending})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQaView("answered")}
+                  className={`px-2.5 py-1 text-xs rounded-full border ${qaView === "answered" ? "bg-emerald-600 text-white border-emerald-600" : "border-slate-200 text-slate-600"}`}
+                >
+                  Answered ({qaCounts.answered})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setQaView("hidden")}
+                  className={`px-2.5 py-1 text-xs rounded-full border ${qaView === "hidden" ? "bg-slate-600 text-white border-slate-600" : "border-slate-200 text-slate-600"}`}
+                >
+                  Hidden ({qaCounts.hidden})
+                </button>
+              </div>
+
+              {qaLoading ? (
+                <p className="text-sm text-slate-400">Loading questions...</p>
+              ) : visibleQaItems.length === 0 ? (
+                <p className="text-sm text-slate-500">
+                  {qaItems.length === 0
+                    ? "No questions yet."
+                    : "No questions in this view."}
+                </p>
+              ) : (
+                <div className="space-y-4">
+                  {visibleQaItems.map((qa) => (
+                    <article
+                      key={qa._id}
+                      className={`border rounded-xl p-4 ${qa.isVisible ? "border-slate-200" : "border-slate-300 bg-slate-50"}`}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-medium text-slate-900">
+                          Q: {qa.question}
+                        </p>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            toggleVisibility(qa._id, !qa.isVisible)
+                          }
+                          disabled={qaUpdatingId === qa._id}
+                          className="text-xs px-2 py-1 rounded-md border border-slate-200 text-slate-600 hover:bg-slate-100"
+                        >
+                          {qa.isVisible ? "Hide" : "Show"}
+                        </button>
+                      </div>
+
+                      {qa.answer?.text ? (
+                        <div className="mt-3 bg-emerald-50 border border-emerald-100 rounded-lg p-3">
+                          <p className="text-xs font-semibold text-emerald-700 mb-1">
+                            Your answer
+                          </p>
+                          <p className="text-sm text-emerald-900 whitespace-pre-wrap">
+                            {qa.answer.text}
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="mt-3">
+                          <textarea
+                            rows={3}
+                            value={answerDrafts[qa._id] || ""}
+                            onChange={(e) =>
+                              setAnswerDrafts((prev) => ({
+                                ...prev,
+                                [qa._id]: e.target.value,
+                              }))
+                            }
+                            maxLength={1200}
+                            placeholder="Write an answer..."
+                            className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-slate-400"
+                          />
+                          <div className="flex items-center justify-end mt-2">
+                            <span className="mr-auto text-[11px] text-slate-400">
+                              {String(answerDrafts[qa._id] || "").length}/1200
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => handleAnswerQuestion(qa._id)}
+                              disabled={
+                                qaUpdatingId === qa._id ||
+                                String(answerDrafts[qa._id] || "").trim()
+                                  .length < 2
+                              }
+                              className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-900 text-white disabled:opacity-50"
+                            >
+                              {qaUpdatingId === qa._id
+                                ? "Saving..."
+                                : "Submit Answer"}
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Right: Sidebar */}

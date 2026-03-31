@@ -35,6 +35,7 @@ export default function CustomerExplorePage() {
   const router = useRouter();
 
   const [products, setProducts] = useState([]);
+  const [wishlistProductIds, setWishlistProductIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [meta, setMeta] = useState({
@@ -99,9 +100,68 @@ export default function CustomerExplorePage() {
     }
   }, [debouncedSearch, category, sort, priceMin, priceMax, page]);
 
+  const fetchWishlist = useCallback(async () => {
+    try {
+      const response = await fetch("/api/users/wishlist", {
+        cache: "no-store",
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      const ids = (data?.wishlist || [])
+        .filter((item) => item.itemType === "product" && item._id)
+        .map((item) => item._id.toString());
+      setWishlistProductIds(new Set(ids));
+    } catch (_) {}
+  }, []);
+
+  const handleToggleWishlist = useCallback(
+    async (productId) => {
+      const id = productId?.toString();
+      if (!id) return;
+
+      const isCurrentlyWishlisted = wishlistProductIds.has(id);
+
+      setWishlistProductIds((prev) => {
+        const next = new Set(prev);
+        if (isCurrentlyWishlisted) {
+          next.delete(id);
+        } else {
+          next.add(id);
+        }
+        return next;
+      });
+
+      try {
+        const response = await fetch("/api/users/wishlist", {
+          method: isCurrentlyWishlisted ? "DELETE" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ itemId: id, itemType: "product" }),
+        });
+
+        if (!response.ok && response.status !== 409) {
+          throw new Error("Wishlist update failed");
+        }
+      } catch (_) {
+        setWishlistProductIds((prev) => {
+          const next = new Set(prev);
+          if (isCurrentlyWishlisted) {
+            next.add(id);
+          } else {
+            next.delete(id);
+          }
+          return next;
+        });
+      }
+    },
+    [wishlistProductIds],
+  );
+
   useEffect(() => {
-    if (status === "authenticated") fetchProducts();
-  }, [fetchProducts, status]);
+    if (status === "authenticated") {
+      fetchProducts();
+      fetchWishlist();
+    }
+  }, [fetchProducts, fetchWishlist, status]);
 
   if (status === "loading") {
     return (
@@ -289,7 +349,12 @@ export default function CustomerExplorePage() {
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {products.map((product) => (
-              <ProductCard key={product._id} product={product} />
+              <ProductCard
+                key={product._id}
+                product={product}
+                isWishlisted={wishlistProductIds.has(product._id?.toString())}
+                onToggleWishlist={handleToggleWishlist}
+              />
             ))}
           </div>
         )}
@@ -336,7 +401,7 @@ export default function CustomerExplorePage() {
 
 // ── ProductCard ───────────────────────────────────────────────────────────────
 
-function ProductCard({ product }) {
+function ProductCard({ product, isWishlisted, onToggleWishlist }) {
   const primaryImage =
     product.images?.find((i) => i.isPrimary) || product.images?.[0];
 
@@ -364,13 +429,27 @@ function ProductCard({ product }) {
           <span className="absolute top-2 left-2 px-2 py-0.5 bg-white/90 rounded-full text-xs font-medium text-gray-600">
             {product.category}
           </span>
-          {product.isWishlisted && (
-            <span className="absolute top-2 right-2 text-[#eb9728]">
-              <span className="material-symbols-outlined text-lg">
-                favorite
-              </span>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleWishlist?.(product._id?.toString());
+            }}
+            className={`absolute top-2 right-2 inline-flex items-center justify-center w-8 h-8 rounded-full border backdrop-blur-sm transition-colors ${
+              isWishlisted
+                ? "text-[#eb9728] bg-white/90 border-[#eb9728]/40"
+                : "text-gray-500 bg-white/80 border-gray-200 hover:text-[#eb9728] hover:border-[#eb9728]/40"
+            }`}
+            title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
+            aria-label={
+              isWishlisted ? "Remove from wishlist" : "Add to wishlist"
+            }
+          >
+            <span className="material-symbols-outlined text-lg">
+              {isWishlisted ? "favorite" : "favorite_border"}
             </span>
-          )}
+          </button>
         </div>
 
         {/* Info */}

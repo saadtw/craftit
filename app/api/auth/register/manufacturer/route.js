@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import VerificationDocument from "@/models/VerificationDocument";
+import { createRawToken, hashToken } from "@/lib/token";
+import { sendVerificationEmail } from "@/lib/email";
 
 // POST /api/auth/register/manufacturer — register a new manufacturer
 export async function POST(request) {
@@ -29,9 +31,10 @@ export async function POST(request) {
       certifications,
       documents,
     } = body;
+    const normalizedEmail = email?.toLowerCase().trim();
 
     // Validation
-    if (!name || !email || !password || !businessName) {
+    if (!name || !normalizedEmail || !password || !businessName) {
       return NextResponse.json(
         {
           success: false,
@@ -43,7 +46,7 @@ export async function POST(request) {
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
+    if (!emailRegex.test(normalizedEmail)) {
       return NextResponse.json(
         { success: false, message: "Invalid email format" },
         { status: 400 },
@@ -58,7 +61,7 @@ export async function POST(request) {
       );
     }
 
-    const existingUser = await User.findOne({ email });
+    const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
       return NextResponse.json(
         { success: false, message: "Email already registered" },
@@ -68,7 +71,7 @@ export async function POST(request) {
     const user = await User.create({
       role: "manufacturer",
       name,
-      email,
+      email: normalizedEmail,
       password,
       phone,
       businessName,
@@ -86,6 +89,18 @@ export async function POST(request) {
       certifications: certifications || [],
       verificationStatus: "unverified",
       isActive: true,
+      isEmailVerified: false,
+    });
+
+    const rawVerificationToken = createRawToken(32);
+    user.emailVerificationToken = hashToken(rawVerificationToken);
+    user.emailVerificationExpires = new Date(Date.now() + 1000 * 60 * 60 * 24);
+    await user.save();
+
+    await sendVerificationEmail({
+      to: user.email,
+      name: user.name,
+      token: rawVerificationToken,
     });
 
     // Create verification document if documents provided
@@ -105,7 +120,8 @@ export async function POST(request) {
     return NextResponse.json(
       {
         success: true,
-        message: "Manufacturer registered successfully.",
+        message:
+          "Manufacturer registered successfully. Please verify your email to continue.",
         data: {
           id: user._id,
           name: user.name,

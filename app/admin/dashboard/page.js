@@ -1,7 +1,7 @@
 // app/admin/dashboard/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -13,21 +13,7 @@ export default function AdminDashboard() {
   const [activityLog, setActivityLog] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-      return;
-    }
-    if (status === "authenticated") {
-      if (session?.user?.role !== "admin") {
-        router.push("/");
-        return;
-      }
-      fetchDashboardData();
-    }
-  }, [status, session]);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       const [statsRes, logRes] = await Promise.all([
         fetch("/api/admin/stats"),
@@ -42,7 +28,21 @@ export default function AdminDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+      return;
+    }
+    if (status === "authenticated") {
+      if (session?.user?.role !== "admin") {
+        router.push("/");
+        return;
+      }
+      fetchDashboardData();
+    }
+  }, [status, session, router, fetchDashboardData]);
 
   if (status === "loading" || loading) {
     return (
