@@ -13,6 +13,7 @@ export async function GET(request) {
     const country = searchParams.get("country") || "";
     const capability = searchParams.get("capability") || "";
     const material = searchParams.get("material") || "";
+    const verifiedOnly = searchParams.get("verifiedOnly") === "true";
     const sort = searchParams.get("sort") || "rating";
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 12;
@@ -23,6 +24,10 @@ export async function GET(request) {
       isActive: true,
       verificationStatus: { $in: ["verified", "unverified"] }, // exclude suspended
     };
+
+    if (verifiedOnly) {
+      query.verificationStatus = "verified";
+    }
 
     if (country) query["businessAddress.country"] = country;
     if (capability) query.manufacturingCapabilities = capability;

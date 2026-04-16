@@ -20,6 +20,8 @@ export async function GET(request, context) {
 
     const order = await CustomOrder.findById(id)
       .populate("customerId", "name email")
+      .populate("sourceProductId", "name manufacturerId customizationOptions")
+      .populate("sourceManufacturerId", "name businessName")
       .populate("rfqId")
       .lean();
 
@@ -93,6 +95,8 @@ export async function PUT(request, context) {
       "budget",
       "items",
       "status",
+      "requestedCustomizationTypes",
+      "customizationDetails",
     ];
 
     allowedFields.forEach((field) => {

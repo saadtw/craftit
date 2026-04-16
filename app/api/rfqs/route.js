@@ -3,8 +3,10 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import RFQ from "@/models/RFQ";
 import CustomOrder from "@/models/CustomOrder";
+import User from "@/models/User";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
+import mongoose from "mongoose";
 
 // GET /api/rfqs - List RFQs (for manufacturers)
 export async function GET(request) {
@@ -37,15 +39,28 @@ export async function GET(request) {
           { status: 403 },
         );
       }
-      query.status = "active";
-      query.endDate = { $gte: new Date() };
+      query.$or = [
+        { broadcastToAll: true },
+        { targetManufacturers: session.user.id },
+      ];
+
+      query.status = status || "active";
+      if (query.status === "active") {
+        query.endDate = { $gte: new Date() };
+      }
     }
 
     if (session.user.role === "customer") {
       query.customerId = session.user.id;
+      if (status) query.status = status;
     }
 
-    if (status) query.status = status;
+    if (
+      session.user.role !== "manufacturer" &&
+      session.user.role !== "customer"
+    ) {
+      if (status) query.status = status;
+    }
 
     const rfqs = await RFQ.find(query)
       .populate({
@@ -122,6 +137,74 @@ export async function POST(request) {
     const duration = body.duration || 168;
     const endDate = new Date(startDate.getTime() + duration * 60 * 60 * 1000);
 
+    const rawTargets = Array.isArray(body.targetManufacturers)
+      ? body.targetManufacturers
+      : [];
+
+    const targetManufacturers = [
+      ...new Set(rawTargets.map(String).filter(Boolean)),
+    ];
+
+    const hasInvalidTargetIds = targetManufacturers.some(
+      (manufacturerId) => !mongoose.Types.ObjectId.isValid(manufacturerId),
+    );
+
+    if (hasInvalidTargetIds) {
+      return NextResponse.json(
+        { error: "One or more target manufacturer IDs are invalid" },
+        { status: 400 },
+      );
+    }
+
+    let broadcastToAll = body.broadcastToAll !== false;
+    const linkedManufacturerId = customOrder.sourceManufacturerId?.toString();
+
+    if (linkedManufacturerId && body.broadcastToAll === undefined) {
+      // Product-linked and direct-manufacturer requests default to scoped RFQs.
+      broadcastToAll = false;
+    }
+
+    if (!broadcastToAll && linkedManufacturerId) {
+      targetManufacturers.push(linkedManufacturerId);
+    }
+
+    const uniqueTargetManufacturers = [...new Set(targetManufacturers)];
+
+    if (!broadcastToAll && uniqueTargetManufacturers.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Please select at least one manufacturer when broadcast is disabled",
+        },
+        { status: 400 },
+      );
+    }
+
+    if (uniqueTargetManufacturers.length > 0) {
+      const validManufacturers = await User.find({
+        _id: { $in: uniqueTargetManufacturers },
+        role: "manufacturer",
+        isActive: true,
+        verificationStatus: "verified",
+      })
+        .select("_id")
+        .lean();
+
+      if (validManufacturers.length !== uniqueTargetManufacturers.length) {
+        return NextResponse.json(
+          {
+            error:
+              "One or more selected manufacturers are not active verified manufacturers",
+          },
+          { status: 400 },
+        );
+      }
+    }
+
+    const finalTargetManufacturers = broadcastToAll
+      ? []
+      : uniqueTargetManufacturers;
+
     const rfq = await RFQ.create({
       customOrderId: customOrder._id,
       customerId: session.user.id,
@@ -130,8 +213,8 @@ export async function POST(request) {
       endDate,
       status: "active",
       minBidThreshold: body.minBidThreshold || 0,
-      targetManufacturers: body.targetManufacturers || [],
-      broadcastToAll: body.broadcastToAll !== false,
+      targetManufacturers: finalTargetManufacturers,
+      broadcastToAll,
     });
 
     customOrder.rfqId = rfq._id;

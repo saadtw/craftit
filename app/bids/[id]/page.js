@@ -308,7 +308,7 @@ export default function BidDetailsPage() {
     setWithdrawing(true);
     try {
       const res = await fetch(`/api/bids/${params.id}/withdraw`, {
-        method: "POST",
+        method: "DELETE",
       });
       const data = await res.json();
       if (data.success) fetchBid();

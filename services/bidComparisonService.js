@@ -56,6 +56,19 @@ export const bidComparisonService = {
           priceRank,
           timelineRank,
           overallScore: Math.round(totalScore),
+          scoreBreakdown: {
+            price: Math.round(priceScore * 10) / 10,
+            timeline: Math.round(timelineScore * 10) / 10,
+            verification: verificationScore,
+            rating: Math.round(ratingScore * 10) / 10,
+            max: {
+              price: 40,
+              timeline: 30,
+              verification: 20,
+              rating: 10,
+              total: 100,
+            },
+          },
           pricePercentile: Math.round(
             (1 - (priceRank - 1) / bids.length) * 100,
           ),

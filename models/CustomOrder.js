@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { CUSTOMIZATION_TYPE_IDS } from "../lib/customization.js";
 
 const CustomOrderSchema = new mongoose.Schema(
   {
@@ -53,6 +54,37 @@ const CustomOrderSchema = new mongoose.Schema(
       min: 0,
     },
 
+    sourceType: {
+      type: String,
+      enum: ["general_custom", "product_customization", "manufacturer_direct"],
+      default: "general_custom",
+    },
+
+    sourceProductId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product",
+    },
+
+    sourceManufacturerId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+
+    requestedCustomizationTypes: [
+      {
+        type: String,
+        enum: CUSTOMIZATION_TYPE_IDS,
+      },
+    ],
+
+    customizationDetails: String,
+
+    sourceContext: {
+      productName: String,
+      manufacturerName: String,
+      productCustomizationCapabilities: [String],
+    },
+
     // Breakdown items (if customer breaks down the design)
     items: [
       {
@@ -84,6 +116,8 @@ CustomOrderSchema.index({ createdAt: -1 });
 CustomOrderSchema.index({ budget: 1 }); // For budget range filtering
 CustomOrderSchema.index({ materialPreferences: 1 }); // For material matching
 CustomOrderSchema.index({ deadline: 1 }); // For deadline sorting and filtering
+CustomOrderSchema.index({ sourceProductId: 1, createdAt: -1 });
+CustomOrderSchema.index({ sourceManufacturerId: 1, createdAt: -1 });
 
 export default mongoose.models.CustomOrder ||
   mongoose.model("CustomOrder", CustomOrderSchema);

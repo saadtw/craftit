@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
 
 const STEPS = [
   { id: 1, label: "Basic Info" },
@@ -65,6 +66,11 @@ const initialForm = {
   stock: "",
   leadTime: "",
   customizationOptions: false,
+  customizationCapabilities: {
+    allowedTypes: [],
+    minCustomizationQuantity: "",
+    notes: "",
+  },
   specifications: {
     material: "",
     dimensions: { length: "", width: "", height: "", unit: "cm" },
@@ -241,6 +247,15 @@ export default function NewProductPage() {
     );
   };
 
+  const toggleCustomizationType = (typeId) => {
+    const selectedTypes = form.customizationCapabilities.allowedTypes || [];
+    const nextTypes = selectedTypes.includes(typeId)
+      ? selectedTypes.filter((type) => type !== typeId)
+      : [...selectedTypes, typeId];
+
+    setField("customizationCapabilities.allowedTypes", nextTypes);
+  };
+
   const buildPayload = () => ({
     name: form.name.trim(),
     description: form.description.trim(),
@@ -251,6 +266,18 @@ export default function NewProductPage() {
     stock: form.stock ? Number(form.stock) : 0,
     leadTime: form.leadTime ? Number(form.leadTime) : undefined,
     customizationOptions: form.customizationOptions,
+    customizationCapabilities: form.customizationOptions
+      ? {
+          allowedTypes: form.customizationCapabilities.allowedTypes,
+          minCustomizationQuantity: form.customizationCapabilities
+            .minCustomizationQuantity
+            ? Number(form.customizationCapabilities.minCustomizationQuantity)
+            : undefined,
+          notes: form.customizationCapabilities.notes?.trim() || undefined,
+        }
+      : {
+          allowedTypes: [],
+        },
     specifications: {
       material: form.specifications.material,
       dimensions: {
@@ -597,6 +624,82 @@ export default function NewProductPage() {
                     </span>
                   </label>
                 </div>
+
+                {form.customizationOptions && (
+                  <div className="space-y-4 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                    <div>
+                      <p className="text-sm font-medium text-slate-700 mb-2">
+                        Allowed Customization Types
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {CUSTOMIZATION_TYPE_OPTIONS.map((type) => {
+                          const isSelected =
+                            form.customizationCapabilities.allowedTypes.includes(
+                              type.id,
+                            );
+
+                          return (
+                            <button
+                              key={type.id}
+                              type="button"
+                              onClick={() => toggleCustomizationType(type.id)}
+                              className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
+                                isSelected
+                                  ? "bg-slate-900 text-white border-slate-900"
+                                  : "border-slate-200 text-slate-600 hover:border-slate-400"
+                              }`}
+                              title={type.description}
+                            >
+                              {type.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                          Minimum Custom Order Quantity
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={
+                            form.customizationCapabilities
+                              .minCustomizationQuantity
+                          }
+                          onChange={(e) =>
+                            setField(
+                              "customizationCapabilities.minCustomizationQuantity",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Defaults to MOQ"
+                          className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-slate-700 mb-1.5">
+                          Customization Notes
+                        </label>
+                        <input
+                          type="text"
+                          value={form.customizationCapabilities.notes}
+                          onChange={(e) =>
+                            setField(
+                              "customizationCapabilities.notes",
+                              e.target.value,
+                            )
+                          }
+                          placeholder="Brand guide, print method, tolerances..."
+                          className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 

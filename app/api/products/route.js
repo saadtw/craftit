@@ -3,6 +3,89 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
+import { normalizeCustomizationTypes } from "@/lib/customization";
+
+function resolveCustomizationConfig(payload, existingProduct = null) {
+  const customizationOptions =
+    payload.customizationOptions !== undefined
+      ? Boolean(payload.customizationOptions)
+      : Boolean(existingProduct?.customizationOptions);
+
+  const incomingCapabilities = payload.customizationCapabilities || {};
+  const existingCapabilities = existingProduct?.customizationCapabilities || {};
+
+  const rawAllowedTypes =
+    incomingCapabilities.allowedTypes !== undefined
+      ? incomingCapabilities.allowedTypes
+      : existingCapabilities.allowedTypes || [];
+
+  const allowedTypes = normalizeCustomizationTypes(rawAllowedTypes);
+
+  const rawMinCustomizationQuantity =
+    incomingCapabilities.minCustomizationQuantity !== undefined
+      ? incomingCapabilities.minCustomizationQuantity
+      : existingCapabilities.minCustomizationQuantity;
+
+  let minCustomizationQuantity;
+  if (
+    rawMinCustomizationQuantity !== undefined &&
+    rawMinCustomizationQuantity !== null &&
+    rawMinCustomizationQuantity !== ""
+  ) {
+    minCustomizationQuantity = Number(rawMinCustomizationQuantity);
+    if (
+      !Number.isFinite(minCustomizationQuantity) ||
+      minCustomizationQuantity < 1
+    ) {
+      return {
+        error:
+          "Minimum customization quantity must be a whole number greater than 0",
+      };
+    }
+  }
+
+  const moq =
+    payload.moq !== undefined
+      ? Number(payload.moq)
+      : Number(existingProduct?.moq || 0);
+
+  if (customizationOptions && allowedTypes.length === 0) {
+    return {
+      error:
+        "Select at least one allowed customization type when customization is enabled",
+    };
+  }
+
+  if (
+    customizationOptions &&
+    minCustomizationQuantity !== undefined &&
+    moq > 0 &&
+    minCustomizationQuantity < moq
+  ) {
+    return {
+      error:
+        "Minimum customization quantity cannot be lower than the product MOQ",
+    };
+  }
+
+  const rawNotes =
+    incomingCapabilities.notes !== undefined
+      ? incomingCapabilities.notes
+      : existingCapabilities.notes;
+
+  return {
+    customizationOptions,
+    customizationCapabilities: customizationOptions
+      ? {
+          allowedTypes,
+          minCustomizationQuantity,
+          notes: rawNotes ? String(rawNotes).trim() : undefined,
+        }
+      : {
+          allowedTypes: [],
+        },
+  };
+}
 
 // GET  /api/products - List manufacturer's own products with filters + pagination
 export async function GET(request) {
@@ -100,6 +183,14 @@ export async function POST(request) {
     const body = await request.json();
     const { publishNow, ...productData } = body;
 
+    const customizationConfig = resolveCustomizationConfig(productData);
+    if (customizationConfig.error) {
+      return NextResponse.json(
+        { error: customizationConfig.error },
+        { status: 400 },
+      );
+    }
+
     // Validate required fields
     if (
       !productData.name ||
@@ -154,6 +245,8 @@ export async function POST(request) {
 
     const product = await Product.create({
       ...productData,
+      customizationOptions: customizationConfig.customizationOptions,
+      customizationCapabilities: customizationConfig.customizationCapabilities,
       manufacturerId: session.user.id,
       status: publishNow ? "active" : "draft",
     });

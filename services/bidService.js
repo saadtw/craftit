@@ -22,6 +22,17 @@ export const bidService = {
       throw new Error(`Bid must be at least ${rfq.minBidThreshold}`);
     }
 
+    const isTargetedToManufacturer =
+      rfq.broadcastToAll ||
+      (Array.isArray(rfq.targetManufacturers) &&
+        rfq.targetManufacturers.some(
+          (targetId) => targetId.toString() === manufacturerId.toString(),
+        ));
+
+    if (!isTargetedToManufacturer) {
+      throw new Error("You are not eligible to bid on this RFQ");
+    }
+
     const existingBid = await Bid.findOne({
       rfqId: bidData.rfqId,
       manufacturerId,

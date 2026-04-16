@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { CUSTOMIZATION_TYPE_IDS } from "../lib/customization.js";
 
 const ProductSchema = new mongoose.Schema(
   {
@@ -88,6 +89,20 @@ const ProductSchema = new mongoose.Schema(
       default: false,
     },
 
+    customizationCapabilities: {
+      allowedTypes: [
+        {
+          type: String,
+          enum: CUSTOMIZATION_TYPE_IDS,
+        },
+      ],
+      minCustomizationQuantity: {
+        type: Number,
+        min: 1,
+      },
+      notes: String,
+    },
+
     leadTime: Number, // in days
 
     tags: [String],
@@ -126,6 +141,7 @@ const ProductSchema = new mongoose.Schema(
 // Indexes
 ProductSchema.index({ manufacturerId: 1, status: 1 });
 ProductSchema.index({ category: 1, status: 1 });
+ProductSchema.index({ customizationOptions: 1, status: 1 });
 ProductSchema.index({ name: "text", description: "text", tags: "text" });
 ProductSchema.index({ price: 1 });
 ProductSchema.index({ averageRating: -1 });

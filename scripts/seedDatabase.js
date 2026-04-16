@@ -26,6 +26,7 @@ import ChatMessage from "../models/ChatMessage.js";
 import ProductQuestion from "../models/ProductQuestion.js";
 import SupportTicket from "../models/SupportTicket.js";
 import SupportTicketMessage from "../models/SupportTicketMessage.js";
+import { CUSTOMIZATION_TYPE_IDS } from "../lib/customization.js";
 
 // Configuration
 const CONFIG = {
@@ -301,6 +302,17 @@ async function createProducts(manufacturers) {
     for (let i = 0; i < productCount; i++) {
       const category = randomItem(categories);
       const price = faker.number.int({ min: 500, max: 50000 });
+      const moq = faker.number.int({ min: 10, max: 500 });
+      const supportsCustomization = randomBool(0.4);
+      const allowedCustomizationTypes = supportsCustomization
+        ? randomSubset(CUSTOMIZATION_TYPE_IDS, 1, 4)
+        : [];
+      const minCustomizationQuantity = supportsCustomization
+        ? faker.number.int({
+            min: moq,
+            max: Math.max(moq, moq * 3),
+          })
+        : undefined;
 
       const product = await Product.create({
         manufacturerId: manufacturer._id,
@@ -309,7 +321,7 @@ async function createProducts(manufacturers) {
         category,
         subCategory: faker.commerce.department(),
         price,
-        moq: faker.number.int({ min: 10, max: 500 }),
+        moq,
         stock: faker.number.int({ min: 0, max: 1000 }),
         // Image seeding disabled.
         images: [],
@@ -333,7 +345,21 @@ async function createProducts(manufacturers) {
           weight: faker.number.int({ min: 100, max: 5000 }),
           color: randomSubset(["Red", "Blue", "Green", "Black", "White"], 1, 3),
         },
-        customizationOptions: randomBool(0.4),
+        customizationOptions: supportsCustomization,
+        customizationCapabilities: supportsCustomization
+          ? {
+              allowedTypes: allowedCustomizationTypes,
+              minCustomizationQuantity,
+              notes: faker.helpers.arrayElement([
+                "Share branding guidelines before production.",
+                "Color matching may require Pantone references.",
+                "Packaging customizations need final artwork approval.",
+                "Dimensional changes are reviewed per batch.",
+              ]),
+            }
+          : {
+              allowedTypes: [],
+            },
         leadTime: faker.number.int({ min: 7, max: 60 }),
         tags: randomSubset(
           ["custom", "bulk", "industrial", "premium", "eco-friendly"],
@@ -355,9 +381,19 @@ async function createProducts(manufacturers) {
 // 4. CREATE CUSTOM ORDERS
 // ============================================================================
 
-async function createCustomOrders(customers) {
+async function createCustomOrders(customers, products, manufacturers) {
   console.log("Creating custom orders...");
   const customOrders = [];
+
+  const customizableProducts = products.filter((product) =>
+    Boolean(product.customizationOptions),
+  );
+  const manufacturerNameById = new Map(
+    manufacturers.map((manufacturer) => [
+      manufacturer._id.toString(),
+      manufacturer.businessName || manufacturer.name,
+    ]),
+  );
 
   for (const customer of customers) {
     const orderCount = faker.number.int({
@@ -366,11 +402,77 @@ async function createCustomOrders(customers) {
     });
 
     for (let i = 0; i < orderCount; i++) {
+      const shouldUseProductCustomization =
+        customizableProducts.length > 0 && randomBool(0.4);
+      const shouldUseManufacturerDirect =
+        !shouldUseProductCustomization && randomBool(0.2);
+
+      let sourceType = "general_custom";
+      let sourceProductId;
+      let sourceManufacturerId;
+      let sourceContext;
+      let requestedCustomizationTypes = [];
+      let customizationDetails;
+      let quantity = faker.number.int({ min: 50, max: 1000 });
+      let title = faker.commerce.productName();
+
+      if (shouldUseProductCustomization) {
+        const selectedProduct = randomItem(customizableProducts);
+        const productAllowedTypes =
+          selectedProduct.customizationCapabilities?.allowedTypes?.length > 0
+            ? selectedProduct.customizationCapabilities.allowedTypes
+            : CUSTOMIZATION_TYPE_IDS;
+
+        const minCustomQty =
+          selectedProduct.customizationCapabilities?.minCustomizationQuantity ||
+          selectedProduct.moq ||
+          1;
+
+        quantity = faker.number.int({
+          min: minCustomQty,
+          max: Math.max(minCustomQty, minCustomQty * 6),
+        });
+        title = `${selectedProduct.name} Customization Request`;
+
+        sourceType = "product_customization";
+        sourceProductId = selectedProduct._id;
+        sourceManufacturerId = selectedProduct.manufacturerId;
+        requestedCustomizationTypes = randomSubset(
+          productAllowedTypes,
+          1,
+          Math.min(3, productAllowedTypes.length),
+        );
+        customizationDetails = faker.lorem.sentences(2);
+        sourceContext = {
+          productName: selectedProduct.name,
+          manufacturerName:
+            manufacturerNameById.get(
+              selectedProduct.manufacturerId.toString(),
+            ) || "Manufacturer",
+          productCustomizationCapabilities: productAllowedTypes,
+        };
+      } else if (shouldUseManufacturerDirect && manufacturers.length > 0) {
+        const selectedManufacturer = randomItem(manufacturers);
+
+        sourceType = "manufacturer_direct";
+        sourceManufacturerId = selectedManufacturer._id;
+        requestedCustomizationTypes = randomSubset(
+          CUSTOMIZATION_TYPE_IDS,
+          1,
+          3,
+        );
+        customizationDetails = faker.lorem.sentences(2);
+        sourceContext = {
+          manufacturerName:
+            selectedManufacturer.businessName || selectedManufacturer.name,
+        };
+      }
+
       const customOrder = await CustomOrder.create({
         customerId: customer._id,
-        title: faker.commerce.productName(),
+        title,
         description: faker.commerce.productDescription(),
-        quantity: faker.number.int({ min: 50, max: 1000 }),
+        quantity,
         materialPreferences: randomSubset(materials, 1, 3),
         colorSpecifications: randomSubset(
           ["Red", "Blue", "Green", "Black", "White"],
@@ -397,6 +499,12 @@ async function createCustomOrders(customers) {
         specialRequirements: faker.lorem.paragraph(),
         budget: faker.number.int({ min: 10000, max: 500000 }),
         status: "submitted",
+        sourceType,
+        sourceProductId,
+        sourceManufacturerId,
+        requestedCustomizationTypes,
+        customizationDetails,
+        sourceContext,
       });
       customOrders.push(customOrder);
     }
@@ -410,9 +518,12 @@ async function createCustomOrders(customers) {
 // 5. CREATE RFQs
 // ============================================================================
 
-async function createRFQs(customOrders) {
+async function createRFQs(customOrders, manufacturers) {
   console.log("Creating RFQs...");
   const rfqs = [];
+  const verifiedManufacturerIds = manufacturers
+    .filter((manufacturer) => manufacturer.verificationStatus === "verified")
+    .map((manufacturer) => manufacturer._id.toString());
 
   // Select a subset of custom orders to become RFQs
   const rfqOrders = customOrders.filter(() =>
@@ -424,6 +535,35 @@ async function createRFQs(customOrders) {
     const startDate = faker.date.recent({ days: 30 });
     const endDate = new Date(startDate.getTime() + duration * 60 * 60 * 1000);
     const isActive = endDate > new Date();
+    const linkedManufacturerId = customOrder.sourceManufacturerId
+      ? customOrder.sourceManufacturerId.toString()
+      : null;
+
+    let broadcastToAll = linkedManufacturerId
+      ? randomBool(0.15)
+      : randomBool(0.8);
+    let targetManufacturers = [];
+
+    if (!broadcastToAll) {
+      if (
+        linkedManufacturerId &&
+        verifiedManufacturerIds.includes(linkedManufacturerId)
+      ) {
+        targetManufacturers = [customOrder.sourceManufacturerId];
+      } else if (verifiedManufacturerIds.length > 0) {
+        const targetCount = faker.number.int({
+          min: 1,
+          max: Math.min(3, verifiedManufacturerIds.length),
+        });
+        targetManufacturers = faker.helpers
+          .arrayElements(verifiedManufacturerIds, targetCount)
+          .map((id) => new mongoose.Types.ObjectId(id));
+      }
+
+      if (targetManufacturers.length === 0) {
+        broadcastToAll = true;
+      }
+    }
 
     const rfq = await RFQ.create({
       customOrderId: customOrder._id,
@@ -435,7 +575,8 @@ async function createRFQs(customOrders) {
       minBidThreshold: customOrder.budget
         ? customOrder.budget * 0.7
         : undefined,
-      broadcastToAll: randomBool(0.8),
+      broadcastToAll,
+      targetManufacturers,
       bidsCount: 0, // Will be updated when creating bids
     });
     rfqs.push(rfq);
@@ -466,12 +607,28 @@ async function createBids(rfqs, manufacturers) {
 
   for (const rfq of rfqs) {
     const customOrder = await CustomOrder.findById(rfq.customOrderId);
-    const bidCount = faker.number.int({ min: 2, max: CONFIG.BIDS_PER_RFQ });
+    const eligibleManufacturers = verifiedManufacturers.filter(
+      (manufacturer) =>
+        rfq.broadcastToAll ||
+        rfq.targetManufacturers.some(
+          (targetId) => targetId.toString() === manufacturer._id.toString(),
+        ),
+    );
 
-    // Select random manufacturers for this RFQ
-    const biddingManufacturers = randomSubset(
-      verifiedManufacturers,
-      bidCount,
+    if (eligibleManufacturers.length === 0) {
+      continue;
+    }
+
+    const maxBidCount = Math.min(
+      CONFIG.BIDS_PER_RFQ,
+      eligibleManufacturers.length,
+    );
+    const minBidCount = Math.min(2, maxBidCount);
+    const bidCount = faker.number.int({ min: minBidCount, max: maxBidCount });
+
+    // Select random eligible manufacturers for this RFQ
+    const biddingManufacturers = faker.helpers.arrayElements(
+      eligibleManufacturers,
       bidCount,
     );
 
@@ -1176,8 +1333,12 @@ async function seedDatabase() {
     const users = await createUsers();
     await createVerificationDocuments(users.manufacturers, users.admins);
     const products = await createProducts(users.manufacturers);
-    const customOrders = await createCustomOrders(users.customers);
-    const rfqs = await createRFQs(customOrders);
+    const customOrders = await createCustomOrders(
+      users.customers,
+      products,
+      users.manufacturers,
+    );
+    const rfqs = await createRFQs(customOrders, users.manufacturers);
     const bids = await createBids(rfqs, users.manufacturers);
     const groupBuys = await createGroupBuys(users.manufacturers, products);
     const orders = await createOrders(

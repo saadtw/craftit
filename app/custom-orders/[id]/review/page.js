@@ -7,6 +7,15 @@ import { useSession } from "next-auth/react";
 import Script from "next/script";
 import Image from "next/image";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
+import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
+
+const customizationTypeLabelMap = CUSTOMIZATION_TYPE_OPTIONS.reduce(
+  (acc, item) => {
+    acc[item.id] = item.label;
+    return acc;
+  },
+  {},
+);
 
 export default function CustomOrderReview() {
   const router = useRouter();
@@ -205,6 +214,54 @@ export default function CustomOrderReview() {
                   </p>
                 </div>
               )}
+
+              {(customOrder.sourceProductId ||
+                customOrder.sourceManufacturerId) && (
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Request Source
+                  </label>
+                  {customOrder.sourceProductId && (
+                    <p className="text-gray-900">
+                      Product:{" "}
+                      {customOrder.sourceContext?.productName ||
+                        "Linked Product"}
+                    </p>
+                  )}
+                  {customOrder.sourceManufacturerId && (
+                    <p className="text-gray-900">
+                      Manufacturer:{" "}
+                      {customOrder.sourceContext?.manufacturerName ||
+                        "Linked Manufacturer"}
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {Array.isArray(customOrder.requestedCustomizationTypes) &&
+                customOrder.requestedCustomizationTypes.length > 0 && (
+                  <div>
+                    <label className="block font-semibold text-gray-700 mb-1">
+                      Requested Customizations
+                    </label>
+                    <p className="text-gray-900">
+                      {customOrder.requestedCustomizationTypes
+                        .map((type) => customizationTypeLabelMap[type] || type)
+                        .join(", ")}
+                    </p>
+                  </div>
+                )}
+
+              {customOrder.customizationDetails && (
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Customization Details
+                  </label>
+                  <p className="text-gray-900 whitespace-pre-wrap">
+                    {customOrder.customizationDetails}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 
@@ -267,22 +324,12 @@ export default function CustomOrderReview() {
                   View RFQ Details
                 </button>
               ) : (
-                <>
-                  <button
-                    onClick={handleCreateRFQ}
-                    className="flex-1 px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
-                  >
-                    Create RFQ (Auction)
-                  </button>
-
-                  <button
-                    disabled
-                    className="px-6 py-3 bg-gray-300 text-gray-500 rounded cursor-not-allowed"
-                    title="Coming soon"
-                  >
-                    Find Suitable Manufacturer
-                  </button>
-                </>
+                <button
+                  onClick={handleCreateRFQ}
+                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
+                >
+                  Create RFQ (Auction)
+                </button>
               )}
             </div>
 
@@ -311,10 +358,10 @@ export default function CustomOrderReview() {
             </div>
           </div>
 
-          {!customOrder.rfqId && (
+          {!customOrder.rfqId && customOrder.sourceManufacturerId && (
             <p className="text-sm text-gray-600 mt-4">
-              Note: &quot;Find Suitable Manufacturer&quot; feature is not
-              available in this version.
+              This request is linked to a manufacturer and will default to a
+              direct RFQ when you proceed.
             </p>
           )}
         </div>

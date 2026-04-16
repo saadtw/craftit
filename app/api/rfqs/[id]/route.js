@@ -38,13 +38,46 @@ export async function GET(request, context) {
       return NextResponse.json({ error: "RFQ not found" }, { status: 404 });
     }
 
+    const isCustomerOwner =
+      session.user.role === "customer" &&
+      rfq.customerId?._id?.toString() === session.user.id;
+
+    const isManufacturerTargeted =
+      session.user.role === "manufacturer" &&
+      (rfq.broadcastToAll ||
+        (Array.isArray(rfq.targetManufacturers) &&
+          rfq.targetManufacturers.some(
+            (manufacturerId) =>
+              manufacturerId?.toString() === session.user.id.toString(),
+          )));
+
+    let hasManufacturerBid = false;
+    if (session.user.role === "manufacturer") {
+      hasManufacturerBid = await Bid.exists({
+        rfqId: id,
+        manufacturerId: session.user.id,
+      });
+    }
+
+    if (session.user.role === "customer" && !isCustomerOwner) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (
+      session.user.role === "manufacturer" &&
+      !isManufacturerTargeted &&
+      !hasManufacturerBid
+    ) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
     // Get bids if customer or if manufacturer viewing their own bid
     let bids = [];
-    if (
-      session.user.role === "customer" &&
-      rfq.customerId._id.toString() === session.user.id
-    ) {
-      bids = await Bid.find({ rfqId: id })
+    if (isCustomerOwner) {
+      bids = await Bid.find({
+        rfqId: id,
+        status: { $ne: "withdrawn" },
+      })
         .populate(
           "manufacturerId",
           "name businessName email verificationStatus stats",

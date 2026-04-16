@@ -1,6 +1,7 @@
 import User from "@/models/User";
 import RFQ from "@/models/RFQ";
 import CustomOrder from "@/models/CustomOrder";
+import mongoose from "mongoose";
 
 export const matchingService = {
   async getRecommendedRFQs(manufacturerId) {
@@ -17,6 +18,10 @@ export const matchingService = {
         $match: {
           status: "active",
           endDate: { $gt: new Date() },
+          $or: [
+            { broadcastToAll: true },
+            { targetManufacturers: manufacturer._id },
+          ],
         },
       },
       // Join with CustomOrder (required)
@@ -187,6 +192,10 @@ export const matchingService = {
   },
 
   async searchRFQs(manufacturerId, filters) {
+    const manufacturerRef = mongoose.Types.ObjectId.isValid(manufacturerId)
+      ? new mongoose.Types.ObjectId(manufacturerId)
+      : manufacturerId;
+
     // Build aggregation pipeline for DB-level filtering
     const pipeline = [
       // Initial match for active RFQs
@@ -194,6 +203,10 @@ export const matchingService = {
         $match: {
           status: "active",
           endDate: { $gt: new Date() },
+          $or: [
+            { broadcastToAll: true },
+            { targetManufacturers: manufacturerRef },
+          ],
         },
       },
       // Join with CustomOrder

@@ -436,12 +436,19 @@ export default function CustomerProductDetailPage() {
                 >
                   Place Order
                 </Link>
-                <Link
-                  href={`/custom-orders/new?productId=${id}`}
-                  className="w-full py-3.5 border-2 border-[#eb9728] text-[#eb9728] font-semibold text-center rounded-xl hover:bg-[#eb9728]/5 transition-colors"
-                >
-                  Request Custom Quote (RFQ)
-                </Link>
+                {product.customizationOptions ? (
+                  <Link
+                    href={`/custom-orders/new?productId=${id}`}
+                    className="w-full py-3.5 border-2 border-[#eb9728] text-[#eb9728] font-semibold text-center rounded-xl hover:bg-[#eb9728]/5 transition-colors"
+                  >
+                    Request Custom Quote (RFQ)
+                  </Link>
+                ) : (
+                  <p className="text-xs text-gray-500 text-center py-1">
+                    This manufacturer has not enabled customization for this
+                    product.
+                  </p>
+                )}
               </div>
             </div>
           </div>
