@@ -17,6 +17,7 @@ const AdminLogSchema = new mongoose.Schema(
         "user_unsuspended",
         "dispute_resolved",
         "order_viewed",
+        "order_force_cancelled",
         "support_ticket_updated",
       ],
       required: true,

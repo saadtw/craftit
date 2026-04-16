@@ -73,6 +73,16 @@ export async function POST(request, context) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    if (order.cancellationStatus === "requested") {
+      return NextResponse.json(
+        {
+          error:
+            "This order has a pending cancellation request. Resolve it before modifying milestones.",
+        },
+        { status: 409 },
+      );
+    }
+
     const milestone = {
       name,
       description: description || "",
@@ -121,6 +131,16 @@ export async function PUT(request, context) {
 
     if (order.manufacturerId.toString() !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (order.cancellationStatus === "requested") {
+      return NextResponse.json(
+        {
+          error:
+            "This order has a pending cancellation request. Resolve it before modifying milestones.",
+        },
+        { status: 409 },
+      );
     }
 
     const milestone = order.milestones.id(milestoneId);

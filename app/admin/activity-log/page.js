@@ -13,6 +13,7 @@ const ACTION_ICONS = {
   user_unsuspended: "🔓",
   dispute_resolved: "⚖️",
   order_viewed: "👁",
+  order_force_cancelled: "🛑",
   support_ticket_updated: "🎫",
 };
 
@@ -88,6 +89,9 @@ export default function AdminActivityLogPage() {
           <option value="manufacturer_rejected">Manufacturer Rejections</option>
           <option value="user_suspended">User Suspensions</option>
           <option value="dispute_resolved">Dispute Resolutions</option>
+          <option value="order_force_cancelled">
+            Order Force Cancellations
+          </option>
           <option value="support_ticket_updated">Support Ticket Updates</option>
         </select>
       </div>

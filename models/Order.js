@@ -145,6 +145,18 @@ const OrderSchema = new mongoose.Schema(
       ref: "User",
     },
     cancellationReason: String,
+    cancellationStatus: {
+      type: String,
+      enum: ["requested", "confirmed", "rejected"],
+    },
+    cancellationRequestedAt: Date,
+    cancellationRequestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    cancellationConfirmedAt: Date,
+    cancellationRejectedAt: Date,
+    cancellationRejectionReason: String,
     completedAt: Date,
 
     // Reviews & Feedback
@@ -167,6 +179,7 @@ OrderSchema.index({ manufacturerId: 1, status: 1 });
 OrderSchema.index({ orderType: 1 });
 OrderSchema.index({ status: 1 });
 OrderSchema.index({ createdAt: -1 });
+OrderSchema.index({ cancellationStatus: 1 });
 
 // Generate order number before saving
 OrderSchema.pre("save", async function () {

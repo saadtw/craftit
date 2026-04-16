@@ -38,6 +38,8 @@ export default function ManufacturerOrderDetailPage() {
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [showShipModal, setShowShipModal] = useState(false);
   const [showTrackingModal, setShowTrackingModal] = useState(false);
+  const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
+  const [showCancelRejectModal, setShowCancelRejectModal] = useState(false);
 
   const [acceptForm, setAcceptForm] = useState({ estimatedDeliveryDate: "" });
   const [rejectForm, setRejectForm] = useState({ reason: "" });
@@ -50,6 +52,7 @@ export default function ManufacturerOrderDetailPage() {
     trackingNumber: "",
     shippingMethod: "",
   });
+  const [cancelRejectReason, setCancelRejectReason] = useState("");
 
   const fetchOrder = useCallback(async () => {
     setLoading(true);
@@ -157,6 +160,59 @@ export default function ManufacturerOrderDetailPage() {
     }
   };
 
+  const handleConfirmCancellation = async () => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${id}/cancel?action=confirm`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchOrder();
+        setShowCancelConfirmModal(false);
+        alert("Cancellation approved. The order has been cancelled.");
+      } else {
+        alert(data.error || "Failed to confirm cancellation");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error confirming cancellation");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRejectCancellation = async () => {
+    if (!cancelRejectReason.trim()) {
+      alert("Please provide a reason for rejecting the cancellation request.");
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${id}/cancel?action=reject`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: cancelRejectReason.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchOrder();
+        setShowCancelRejectModal(false);
+        setCancelRejectReason("");
+        alert("Cancellation request declined.");
+      } else {
+        alert(data.error || "Failed to reject cancellation");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error rejecting cancellation");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex items-center justify-center">
@@ -179,6 +235,8 @@ export default function ManufacturerOrderDetailPage() {
     totalMilestones > 0
       ? Math.round((completedMilestones / totalMilestones) * 100)
       : 0;
+  const hasPendingCancellationRequest =
+    order.cancellationStatus === "requested";
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
@@ -325,14 +383,15 @@ export default function ManufacturerOrderDetailPage() {
                 <h2 className="text-lg font-bold text-blue-900">
                   Production Milestones
                 </h2>
-                {["accepted", "in_production"].includes(order.status) && (
-                  <Link
-                    href={`/manufacturer/orders/${id}/milestones`}
-                    className="text-sm text-orange-500 hover:text-orange-600 font-medium"
-                  >
-                    Manage →
-                  </Link>
-                )}
+                {["accepted", "in_production"].includes(order.status) &&
+                  !hasPendingCancellationRequest && (
+                    <Link
+                      href={`/manufacturer/orders/${id}/milestones`}
+                      className="text-sm text-orange-500 hover:text-orange-600 font-medium"
+                    >
+                      Manage →
+                    </Link>
+                  )}
               </div>
 
               {totalMilestones > 0 && (
@@ -356,14 +415,15 @@ export default function ManufacturerOrderDetailPage() {
               {order.milestones?.length === 0 ? (
                 <div className="text-center py-6 text-gray-400">
                   <p className="text-sm">No milestones yet.</p>
-                  {["accepted", "in_production"].includes(order.status) && (
-                    <Link
-                      href={`/manufacturer/orders/${id}/milestones`}
-                      className="text-sm text-orange-500 underline"
-                    >
-                      Add milestones
-                    </Link>
-                  )}
+                  {["accepted", "in_production"].includes(order.status) &&
+                    !hasPendingCancellationRequest && (
+                      <Link
+                        href={`/manufacturer/orders/${id}/milestones`}
+                        className="text-sm text-orange-500 underline"
+                      >
+                        Add milestones
+                      </Link>
+                    )}
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -399,6 +459,7 @@ export default function ManufacturerOrderDetailPage() {
                           {m.status.replace("_", " ")}
                         </span>
                         {["accepted", "in_production"].includes(order.status) &&
+                          !hasPendingCancellationRequest &&
                           m.status !== "completed" && (
                             <select
                               defaultValue=""
@@ -484,40 +545,140 @@ export default function ManufacturerOrderDetailPage() {
                 )}
                 {order.status === "accepted" && (
                   <>
-                    <Link
-                      href={`/manufacturer/orders/${id}/milestones`}
-                      className="block w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 text-center"
-                    >
-                      📋 Manage Milestones
-                    </Link>
-                    <button
-                      onClick={() => setShowTrackingModal(true)}
-                      className="w-full py-3 bg-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-200"
-                    >
-                      🚚 Update Shipping Info
-                    </button>
+                    {hasPendingCancellationRequest && (
+                      <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 mb-1">
+                        <div className="flex items-start gap-2 mb-3">
+                          <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs shrink-0 mt-0.5">
+                            !
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-red-800">
+                              Cancellation Request
+                            </p>
+                            <p className="text-xs text-red-700 mt-1">
+                              The customer requested cancellation for this
+                              order.
+                            </p>
+                            {order.cancellationReason && (
+                              <p className="text-xs text-gray-600 mt-2 italic">
+                                &quot;{order.cancellationReason}&quot;
+                              </p>
+                            )}
+                            {order.cancellationRequestedAt && (
+                              <p className="text-xs text-gray-500 mt-2">
+                                Requested{" "}
+                                {new Date(
+                                  order.cancellationRequestedAt,
+                                ).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setShowCancelConfirmModal(true)}
+                            className="flex-1 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 text-sm"
+                          >
+                            ✓ Approve Cancellation
+                          </button>
+                          <button
+                            onClick={() => setShowCancelRejectModal(true)}
+                            className="flex-1 py-2 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 text-sm"
+                          >
+                            ✗ Decline
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {!hasPendingCancellationRequest && (
+                      <>
+                        <Link
+                          href={`/manufacturer/orders/${id}/milestones`}
+                          className="block w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 text-center"
+                        >
+                          📋 Manage Milestones
+                        </Link>
+                        <button
+                          onClick={() => setShowTrackingModal(true)}
+                          className="w-full py-3 bg-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-200"
+                        >
+                          🚚 Update Shipping Info
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
                 {order.status === "in_production" && (
                   <>
-                    <Link
-                      href={`/manufacturer/orders/${id}/milestones`}
-                      className="block w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 text-center"
-                    >
-                      📋 Update Milestones
-                    </Link>
-                    <button
-                      onClick={() => setShowShipModal(true)}
-                      className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700"
-                    >
-                      📦 Mark as Shipped
-                    </button>
-                    <button
-                      onClick={() => setShowTrackingModal(true)}
-                      className="w-full py-3 bg-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-200"
-                    >
-                      🚚 Update Tracking
-                    </button>
+                    {hasPendingCancellationRequest && (
+                      <div className="bg-red-50 border-2 border-red-300 rounded-lg p-4 mb-1">
+                        <div className="flex items-start gap-2 mb-3">
+                          <div className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-white text-xs shrink-0 mt-0.5">
+                            !
+                          </div>
+                          <div>
+                            <p className="text-sm font-bold text-red-800">
+                              Cancellation Request
+                            </p>
+                            <p className="text-xs text-red-700 mt-1">
+                              The customer requested cancellation for this
+                              order.
+                            </p>
+                            {order.cancellationReason && (
+                              <p className="text-xs text-gray-600 mt-2 italic">
+                                &quot;{order.cancellationReason}&quot;
+                              </p>
+                            )}
+                            {order.cancellationRequestedAt && (
+                              <p className="text-xs text-gray-500 mt-2">
+                                Requested{" "}
+                                {new Date(
+                                  order.cancellationRequestedAt,
+                                ).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => setShowCancelConfirmModal(true)}
+                            className="flex-1 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 text-sm"
+                          >
+                            ✓ Approve Cancellation
+                          </button>
+                          <button
+                            onClick={() => setShowCancelRejectModal(true)}
+                            className="flex-1 py-2 bg-gray-600 text-white font-bold rounded-lg hover:bg-gray-700 text-sm"
+                          >
+                            ✗ Decline
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {!hasPendingCancellationRequest && (
+                      <>
+                        <Link
+                          href={`/manufacturer/orders/${id}/milestones`}
+                          className="block w-full py-3 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-700 text-center"
+                        >
+                          📋 Update Milestones
+                        </Link>
+                        <button
+                          onClick={() => setShowShipModal(true)}
+                          className="w-full py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700"
+                        >
+                          📦 Mark as Shipped
+                        </button>
+                        <button
+                          onClick={() => setShowTrackingModal(true)}
+                          className="w-full py-3 bg-blue-100 text-blue-700 font-bold rounded-lg hover:bg-blue-200"
+                        >
+                          🚚 Update Tracking
+                        </button>
+                      </>
+                    )}
                   </>
                 )}
                 {order.status === "shipped" && (
@@ -857,6 +1018,80 @@ export default function ManufacturerOrderDetailPage() {
             </button>
             <button
               onClick={() => setShowTrackingModal(false)}
+              className="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200"
+            >
+              Cancel
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {showCancelConfirmModal && (
+        <Modal
+          title="Approve Cancellation Request"
+          onClose={() => setShowCancelConfirmModal(false)}
+        >
+          <p className="text-sm text-gray-600 mb-2">
+            Approving this request will cancel the order and issue a full
+            refund.
+          </p>
+          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 my-4">
+            <p className="text-sm text-yellow-800 font-medium">Important</p>
+            <ul className="text-xs text-yellow-700 mt-2 space-y-1 list-disc list-inside">
+              <li>The customer receives a full refund</li>
+              <li>The order will be permanently cancelled</li>
+              <li>Payment for this order will not be released</li>
+            </ul>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={handleConfirmCancellation}
+              disabled={actionLoading}
+              className="flex-1 py-2 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 disabled:opacity-50"
+            >
+              {actionLoading ? "Processing..." : "Approve Cancellation"}
+            </button>
+            <button
+              onClick={() => setShowCancelConfirmModal(false)}
+              className="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200"
+            >
+              Go Back
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {showCancelRejectModal && (
+        <Modal
+          title="Decline Cancellation Request"
+          onClose={() => setShowCancelRejectModal(false)}
+        >
+          <p className="text-sm text-gray-600 mb-4">
+            Provide a reason. This will be shared with the customer.
+          </p>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            Reason *
+          </label>
+          <textarea
+            value={cancelRejectReason}
+            onChange={(e) => setCancelRejectReason(e.target.value)}
+            rows={4}
+            placeholder="E.g. production already started and materials are consumed"
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 resize-none focus:outline-none focus:border-orange-400"
+          />
+          <div className="flex gap-3">
+            <button
+              onClick={handleRejectCancellation}
+              disabled={actionLoading || !cancelRejectReason.trim()}
+              className="flex-1 py-2 bg-gray-700 text-white font-bold rounded-lg hover:bg-gray-800 disabled:opacity-50"
+            >
+              {actionLoading ? "Processing..." : "Decline Request"}
+            </button>
+            <button
+              onClick={() => {
+                setShowCancelRejectModal(false);
+                setCancelRejectReason("");
+              }}
               className="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200"
             >
               Cancel

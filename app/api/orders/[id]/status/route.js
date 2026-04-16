@@ -49,6 +49,16 @@ export async function PUT(request, context) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    if (order.cancellationStatus === "requested") {
+      return NextResponse.json(
+        {
+          error:
+            "This order has a pending cancellation request. Resolve it before changing order status.",
+        },
+        { status: 409 },
+      );
+    }
+
     const originalStatus = order.status;
 
     // Valid transitions — includes "shipped" between in_production and completed
@@ -233,6 +243,16 @@ export async function PATCH(request, context) {
 
     if (order.manufacturerId.toString() !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    if (order.cancellationStatus === "requested") {
+      return NextResponse.json(
+        {
+          error:
+            "This order has a pending cancellation request. Resolve it before updating shipping details.",
+        },
+        { status: 409 },
+      );
     }
 
     if (trackingNumber !== undefined) order.trackingNumber = trackingNumber;

@@ -141,6 +141,39 @@ export const notify = {
       relatedId: orderId,
     }),
 
+  cancellationRequested: (manufacturerId, orderId, orderNumber, reason) =>
+    createNotification({
+      userId: manufacturerId,
+      type: "system",
+      title: "Cancellation request received",
+      message: `Customer requested cancellation for order #${orderNumber}.${reason ? ` Reason: ${reason}` : ""}`,
+      link: `/manufacturer/orders/${orderId}`,
+      relatedType: "order",
+      relatedId: orderId,
+    }),
+
+  cancellationConfirmed: (customerId, orderId, orderNumber) =>
+    createNotification({
+      userId: customerId,
+      type: "system",
+      title: "Cancellation approved",
+      message: `Your cancellation request for order #${orderNumber} was approved. A full refund will be processed.`,
+      link: `/customer/orders/${orderId}`,
+      relatedType: "order",
+      relatedId: orderId,
+    }),
+
+  cancellationRejected: (customerId, orderId, orderNumber, rejectionReason) =>
+    createNotification({
+      userId: customerId,
+      type: "system",
+      title: "Cancellation declined",
+      message: `Your cancellation request for order #${orderNumber} was declined.${rejectionReason ? ` Reason: ${rejectionReason}` : ""}`,
+      link: `/customer/orders/${orderId}`,
+      relatedType: "order",
+      relatedId: orderId,
+    }),
+
   // Bids
   bidReceived: (customerId, rfqId, bidId, manufacturerName) =>
     createNotification({

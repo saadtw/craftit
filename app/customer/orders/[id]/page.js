@@ -18,6 +18,9 @@ const STATUS_COLORS = {
   disputed: "bg-orange-100 text-orange-800",
 };
 
+const DIRECT_CANCEL_WINDOW_HOURS = 48;
+const REQUEST_CANCEL_WINDOW_TOTAL_HOURS = 168;
+
 function CustomerOrderDetailPageContent() {
   const { id } = useParams();
   const router = useRouter();
@@ -79,7 +82,7 @@ function CustomerOrderDetailPageContent() {
   const handleCancel = async () => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/orders/${id}/cancel`, {
+      const res = await fetch(`/api/orders/${id}/cancel?action=request`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -87,15 +90,34 @@ function CustomerOrderDetailPageContent() {
         }),
       });
       const data = await res.json();
+
       if (data.success) {
-        setOrder((prev) => ({ ...prev, status: "cancelled" }));
+        await fetchOrder();
         setShowCancelModal(false);
-        alert("Order cancelled. A full refund will be processed.");
+        setCancelReason("");
+
+        if (data.requiresConfirmation) {
+          alert(
+            "Cancellation request sent to manufacturer. They have up to 72 hours to respond.",
+          );
+        } else {
+          alert("Order cancelled. A full refund will be processed.");
+        }
       } else {
         alert(data.error || "Failed to cancel order");
+
+        if (data.requiresDispute) {
+          const openDispute = confirm(
+            "This order cannot be cancelled directly. Would you like to file a dispute instead?",
+          );
+          if (openDispute) {
+            router.push(`/customer/orders/${id}/dispute`);
+          }
+        }
       }
     } catch (err) {
-      alert("Error cancelling order");
+      console.error(err);
+      alert("Error processing cancellation request");
     } finally {
       setActionLoading(false);
     }
@@ -161,6 +183,26 @@ function CustomerOrderDetailPageContent() {
     order.trackingNumber && order.shippingMethod
       ? getTrackingUrl(order.shippingMethod, order.trackingNumber)
       : null;
+  const acceptanceReferenceDate =
+    order.manufacturerAcceptedAt || order.createdAt || null;
+  const acceptedHoursSince = acceptanceReferenceDate
+    ? (Date.now() - new Date(acceptanceReferenceDate).getTime()) /
+      (1000 * 60 * 60)
+    : null;
+  const canDirectCancelAccepted =
+    order.status === "accepted" &&
+    acceptedHoursSince !== null &&
+    acceptedHoursSince <= DIRECT_CANCEL_WINDOW_HOURS;
+  const canRequestCancelAccepted =
+    order.status === "accepted" &&
+    acceptedHoursSince !== null &&
+    acceptedHoursSince > DIRECT_CANCEL_WINDOW_HOURS &&
+    acceptedHoursSince <= REQUEST_CANCEL_WINDOW_TOTAL_HOURS;
+  const cancellationWindowExpired =
+    order.status === "accepted" &&
+    !order.cancellationStatus &&
+    acceptedHoursSince !== null &&
+    acceptedHoursSince > REQUEST_CANCEL_WINDOW_TOTAL_HOURS;
 
   return (
     <div className="flex h-screen bg-[#f8f7f6]">
@@ -453,6 +495,90 @@ function CustomerOrderDetailPageContent() {
                     </button>
                   )}
 
+                  {order.status === "accepted" &&
+                    !order.cancellationStatus &&
+                    (canDirectCancelAccepted || canRequestCancelAccepted) && (
+                      <button
+                        onClick={() => setShowCancelModal(true)}
+                        className="w-full py-2.5 bg-red-100 text-red-700 font-semibold rounded-lg hover:bg-red-200 text-sm"
+                      >
+                        {canDirectCancelAccepted
+                          ? "Cancel Order"
+                          : "Request Cancellation"}
+                      </button>
+                    )}
+
+                  {order.status === "accepted" &&
+                    order.cancellationStatus === "requested" && (
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-5 h-5 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin shrink-0 mt-0.5" />
+                          <div>
+                            <p className="text-sm font-semibold text-yellow-800">
+                              Cancellation Pending
+                            </p>
+                            <p className="text-xs text-yellow-700 mt-1">
+                              Waiting for manufacturer response (up to 72
+                              hours).
+                            </p>
+                            {order.cancellationRequestedAt && (
+                              <p className="text-xs text-gray-500 mt-1">
+                                Requested{" "}
+                                {new Date(
+                                  order.cancellationRequestedAt,
+                                ).toLocaleString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                  {order.status === "accepted" &&
+                    order.cancellationStatus === "rejected" && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <p className="text-sm font-semibold text-red-800">
+                          Cancellation Request Declined
+                        </p>
+                        <p className="text-xs text-red-700 mt-1">
+                          The manufacturer declined your request.
+                        </p>
+                        {order.cancellationRejectionReason && (
+                          <p className="text-xs text-gray-600 mt-2 italic">
+                            &quot;{order.cancellationRejectionReason}&quot;
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-2">
+                          You can file a dispute if you disagree with this
+                          decision.
+                        </p>
+                      </div>
+                    )}
+
+                  {cancellationWindowExpired && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm text-gray-700">
+                        Direct cancellation and cancellation-request windows
+                        have ended for this order.
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Please file a dispute if you need admin intervention.
+                      </p>
+                    </div>
+                  )}
+
+                  {["in_production", "shipped"].includes(order.status) && (
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <p className="text-sm text-gray-700">
+                        Cancellation is not available once an order is in
+                        production or shipped.
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Please file a dispute if you need intervention.
+                      </p>
+                    </div>
+                  )}
+
                   {order.status === "completed" && !reviewSubmitted && (
                     <button
                       onClick={() => setShowReviewModal(true)}
@@ -602,13 +728,55 @@ function CustomerOrderDetailPageContent() {
       {/* Cancel Modal */}
       {showCancelModal && (
         <Modal title="Cancel Order" onClose={() => setShowCancelModal(false)}>
-          <p className="text-sm text-gray-600 mb-1">
-            You can only cancel orders that haven&apos;t been accepted yet. A
-            full refund will be processed.
-          </p>
-          <p className="text-sm text-red-500 font-medium mb-4">
-            This action cannot be undone.
-          </p>
+          {order.status === "pending_acceptance" && (
+            <>
+              <p className="text-sm text-gray-600 mb-1">
+                The manufacturer has not accepted yet, so this can be cancelled
+                immediately with a full refund.
+              </p>
+              <p className="text-sm text-red-500 font-medium mb-4">
+                This action cannot be undone.
+              </p>
+            </>
+          )}
+
+          {order.status === "accepted" && canDirectCancelAccepted && (
+            <>
+              <p className="text-sm text-gray-600 mb-1">
+                You are within the 48-hour cooling-off period after acceptance.
+                This cancellation will be immediate with a full refund.
+              </p>
+              <p className="text-sm text-red-500 font-medium mb-4">
+                This action cannot be undone.
+              </p>
+            </>
+          )}
+
+          {order.status === "accepted" && canRequestCancelAccepted && (
+            <>
+              <p className="text-sm text-gray-600 mb-1">
+                More than 48 hours have passed since acceptance. Your
+                cancellation will be sent to the manufacturer for approval.
+              </p>
+              <p className="text-sm text-blue-600 font-medium mb-4">
+                They have up to 72 hours to respond.
+              </p>
+            </>
+          )}
+
+          {order.status === "accepted" &&
+            !canDirectCancelAccepted &&
+            !canRequestCancelAccepted && (
+              <>
+                <p className="text-sm text-gray-600 mb-1">
+                  The cancellation-request window has expired for this order.
+                </p>
+                <p className="text-sm text-blue-600 font-medium mb-4">
+                  Please file a dispute if you need escalation.
+                </p>
+              </>
+            )}
+
           <label className="block text-sm font-medium text-gray-700 mb-1">
             Reason (optional)
           </label>
@@ -622,13 +790,25 @@ function CustomerOrderDetailPageContent() {
           <div className="flex gap-3">
             <button
               onClick={handleCancel}
-              disabled={actionLoading}
+              disabled={
+                actionLoading ||
+                (order.status === "accepted" &&
+                  !canDirectCancelAccepted &&
+                  !canRequestCancelAccepted)
+              }
               className="flex-1 py-2.5 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 disabled:opacity-50 text-sm"
             >
-              {actionLoading ? "Cancelling..." : "Confirm Cancel"}
+              {actionLoading
+                ? "Processing..."
+                : order.status === "accepted" && canRequestCancelAccepted
+                  ? "Request Cancellation"
+                  : "Confirm Cancel"}
             </button>
             <button
-              onClick={() => setShowCancelModal(false)}
+              onClick={() => {
+                setShowCancelModal(false);
+                setCancelReason("");
+              }}
               className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 text-sm"
             >
               Keep Order
