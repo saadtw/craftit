@@ -6,11 +6,12 @@ import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Order from "@/models/Order";
 import Dispute from "@/models/Dispute";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/admin/stats — get overall platform statistics
-export async function GET() {
+export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

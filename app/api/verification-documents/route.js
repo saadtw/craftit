@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import VerificationDocument from "@/models/VerificationDocument";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 const ALLOWED_DOC_TYPES = [
   "ntn_certificate",
@@ -22,7 +23,7 @@ const ALLOWED_DOC_TYPES = [
 // GET /api/verification-documents - Manufacturer fetches their own verification status
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -42,7 +43,7 @@ export async function GET(request) {
 // POST /api/verification-documents - Submit/resubmit verification application
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     if (!session || !session.user) {
       return NextResponse.json(

@@ -5,6 +5,7 @@ import connectDB from "@/lib/mongodb";
 import Conversation from "@/models/Chat";
 import Order from "@/models/Order";
 import "@/models/User";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 const MAX_LIMIT = 50;
 const MAX_SCAN = 500;
@@ -32,7 +33,7 @@ function getUnreadCount(unreadCounts, userId) {
 // - page, limit
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

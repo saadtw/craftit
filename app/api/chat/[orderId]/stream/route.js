@@ -4,6 +4,7 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import "@/models/User";
 import { subscribe, unsubscribe } from "@/lib/chatEmitter";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 /**
  * GET /api/chat/[orderId]/stream
@@ -25,7 +26,7 @@ export async function GET(request, context) {
   const { orderId } = await context.params;
 
   // ── Auth ──────────────────────────────────────────────────────────────────
-  const session = await getServerSession(authOptions);
+  const session = await resolveRequestSession(request);
   if (!session) {
     return new Response("Unauthorized", { status: 401 });
   }

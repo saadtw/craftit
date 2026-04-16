@@ -1,12 +1,9 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import VerificationDocument from "@/models/VerificationDocument";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
-// GET /api/auth/me  — get current logged in user info
 export async function GET(request) {
   try {
     const session = await resolveRequestSession(request);
@@ -18,7 +15,7 @@ export async function GET(request) {
       );
     }
 
-    if (!session || !session.user) {
+    if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
         { status: 401 },
@@ -28,37 +25,12 @@ export async function GET(request) {
     await connectDB();
 
     const user = await User.findById(session.user.id).select("-password");
-
     if (!user) {
       return NextResponse.json(
         { success: false, message: "User not found" },
         { status: 404 },
       );
     }
-
-    if (!user.isActive) {
-      return NextResponse.json(
-        { success: false, message: "Account is deactivated" },
-        { status: 403 },
-      );
-    }
-
-    if (user.isCurrentlySuspended && user.isCurrentlySuspended()) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "Account is suspended",
-          suspendedUntil: user.suspendedUntil,
-          suspensionReason: user.suspensionReason,
-        },
-        { status: 403 },
-      );
-    }
-
-    // Update last active
-    user
-      .updateLastActive()
-      .catch((err) => console.error("Failed to update last active:", err));
 
     let verificationDocuments = null;
     if (user.role === "manufacturer") {
@@ -75,7 +47,7 @@ export async function GET(request) {
       user: userData,
     });
   } catch (error) {
-    console.error("Get user error:", error);
+    console.error("Mobile me error:", error);
     return NextResponse.json(
       { success: false, message: "Failed to fetch user data" },
       { status: 500 },

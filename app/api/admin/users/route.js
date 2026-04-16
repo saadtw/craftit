@@ -4,11 +4,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/admin/users  — list all users with filters
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

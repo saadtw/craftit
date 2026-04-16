@@ -278,6 +278,32 @@ const UserSchema = new mongoose.Schema(
       type: Date,
       select: false,
     },
+
+    // Mobile refresh token sessions (stored hashed, never plaintext)
+    mobileRefreshTokens: {
+      type: [
+        {
+          tokenHash: {
+            type: String,
+            required: true,
+          },
+          expiresAt: {
+            type: Date,
+            required: true,
+          },
+          revokedAt: Date,
+          deviceId: String,
+          deviceName: String,
+          createdAt: {
+            type: Date,
+            default: Date.now,
+          },
+          lastUsedAt: Date,
+        },
+      ],
+      default: [],
+      select: false,
+    },
   },
   { timestamps: true },
 );
@@ -288,6 +314,7 @@ UserSchema.index({ verificationStatus: 1, role: 1 });
 UserSchema.index({ businessName: "text", name: "text" });
 UserSchema.index({ "location.country": 1 }); // For location-based filtering
 UserSchema.index({ "location.state": 1 }); // For state-based manufacturer matching
+UserSchema.index({ "mobileRefreshTokens.tokenHash": 1 });
 
 UserSchema.pre("save", async function () {
   // Only hash if password is modified

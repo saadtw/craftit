@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import RFQ from "@/models/RFQ";
 import { bidComparisonService } from "@/services/bidComparisonService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET  /api/rfqs/[id]/bids - List bids for an RFQ with optional status filter
 export async function GET(request, context) {
@@ -11,7 +12,7 @@ export async function GET(request, context) {
   const id = params.id;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "customer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -3,13 +3,14 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // PATCH /api/group-buys/[id]/status - Control campaign status: pause, resume, end_early
 export async function PATCH(request, context) {
   const { id } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

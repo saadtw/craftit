@@ -7,11 +7,12 @@ import Review from "@/models/Review";
 import Order from "@/models/Order";
 import User from "@/models/User";
 import Product from "@/models/Product";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // POST /api/reviews  — customer submits a review for a completed order
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "customer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

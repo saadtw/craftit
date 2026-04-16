@@ -7,11 +7,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { normalizeCustomizationTypes } from "@/lib/customization";
 import mongoose from "mongoose";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/custom-orders - List customer's custom orders
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -56,7 +57,7 @@ export async function GET(request) {
 // POST /api/custom-orders - Create new custom order
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     if (!session || session.user.role !== "customer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

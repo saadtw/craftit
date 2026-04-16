@@ -5,11 +5,12 @@ import connectDB from "@/lib/mongodb";
 import Dispute from "@/models/Dispute";
 import Order from "@/models/Order";
 import { notify } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/disputes/[id] - get dispute details (only accessible to involved parties and admins)
 export async function GET(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -48,7 +49,7 @@ export async function GET(request, { params }) {
 // PATCH /api/disputes/[id]  — manufacturer response OR admin resolution
 export async function PATCH(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

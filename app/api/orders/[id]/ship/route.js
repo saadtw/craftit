@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import { notify } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 /**
  * PATCH /api/orders/[id]/ship
@@ -17,7 +18,7 @@ import { notify } from "@/services/notificationService";
  */
 export async function PATCH(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

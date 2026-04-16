@@ -5,6 +5,7 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import AdminLog from "@/models/AdminLog";
 import { notify } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // Stripe is optional in dev environments.
 let stripe = null;
@@ -89,7 +90,7 @@ export async function POST(request, context) {
   const action = searchParams.get("action") || "request";
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

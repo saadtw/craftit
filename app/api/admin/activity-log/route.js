@@ -3,11 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import AdminLog from "@/models/AdminLog";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/admin/activity-log  — list admin activity logs with filters
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -48,7 +49,7 @@ export async function GET(request) {
 // POST /api/admin/activity-log  — internal use (called from other admin routes)
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

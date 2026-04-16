@@ -7,6 +7,7 @@ import "@/models/User";
 import Conversation from "@/models/Chat";
 import ChatMessage from "@/models/ChatMessage";
 import { publish } from "@/lib/chatEmitter";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -100,7 +101,7 @@ export async function GET(request, context) {
   const { orderId } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -166,7 +167,7 @@ export async function POST(request, context) {
   const { orderId } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -3,10 +3,11 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
-export async function GET() {
+export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },
@@ -42,7 +43,7 @@ export async function GET() {
 
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session?.user?.id) {
       return NextResponse.json(
         { success: false, message: "Unauthorized" },

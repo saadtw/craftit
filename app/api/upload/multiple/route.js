@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -15,7 +16,7 @@ const s3Client = new S3Client({
 export async function POST(request) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },

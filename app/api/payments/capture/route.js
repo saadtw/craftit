@@ -5,6 +5,7 @@ import getStripe from "@/lib/stripe";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import { notify } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 /**
  * POST /api/payments/capture
@@ -16,7 +17,7 @@ import { notify } from "@/services/notificationService";
  */
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

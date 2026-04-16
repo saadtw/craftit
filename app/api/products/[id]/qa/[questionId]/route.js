@@ -5,6 +5,7 @@ import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import ProductQuestion from "@/models/ProductQuestion";
 import { createNotification } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // PATCH /api/products/[id]/qa/[questionId]
 // Actions:
@@ -14,7 +15,7 @@ export async function PATCH(request, context) {
   const { id, questionId } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -1,10 +1,11 @@
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { subscribeUser, unsubscribeUser } from "@/lib/sessionEmitter";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/auth/events — SSE stream for auth-related events (login/logout)
-export async function GET() {
-  const session = await getServerSession(authOptions);
+export async function GET(request) {
+  const session = await resolveRequestSession(request);
   if (!session?.user?.id) {
     return new Response("Unauthorized", { status: 401 });
   }

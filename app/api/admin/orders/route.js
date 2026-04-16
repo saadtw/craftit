@@ -6,11 +6,12 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import Dispute from "@/models/Dispute";
 import "@/models/Product";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/admin/orders — list orders with filters
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (session?.user?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

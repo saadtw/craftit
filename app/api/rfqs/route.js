@@ -7,12 +7,13 @@ import User from "@/models/User";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/rfqs - List RFQs (for manufacturers)
 export async function GET(request) {
   try {
     // Pass request to getServerSession
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -96,7 +97,7 @@ export async function GET(request) {
 // POST /api/rfqs - Create RFQ from custom order
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     if (!session || session.user.role !== "customer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

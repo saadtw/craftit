@@ -7,11 +7,12 @@ import Dispute from "@/models/Dispute";
 import "@/models/Product";
 import "@/models/RFQ";
 import "@/models/Bid";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/admin/orders/[id] - get order details by ID, including dispute info if exists
 export async function GET(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (session?.user?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

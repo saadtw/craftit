@@ -4,11 +4,12 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import Product from "@/models/Product";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/users/wishlist  — get current user's wishlist with populated items
-export async function GET() {
+export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -90,7 +91,7 @@ export async function GET() {
 // POST /api/users/wishlist  — add item to wishlist
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -131,7 +132,7 @@ export async function POST(request) {
 // DELETE /api/users/wishlist  — remove item from wishlist
 export async function DELETE(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

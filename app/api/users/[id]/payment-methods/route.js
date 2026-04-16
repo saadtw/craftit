@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import getStripe from "@/lib/stripe";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 const ALLOWED_ROLES = ["customer"];
 const MAX_PAYMENT_METHODS = 8;
@@ -38,7 +39,7 @@ function paymentMethodsForResponse(methods = []) {
 
 async function getAuthorizedUser(paramsPromise) {
   const params = await paramsPromise;
-  const session = await getServerSession(authOptions);
+  const session = await resolveRequestSession(request);
 
   if (!session || !session.user) {
     return {

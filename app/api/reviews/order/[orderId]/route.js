@@ -3,11 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Review from "@/models/Review";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/reviews/order/[orderId] - Get review for a specific order (if exists)
 export async function GET(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

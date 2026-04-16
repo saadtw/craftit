@@ -6,6 +6,7 @@ import SupportTicket from "@/models/SupportTicket";
 import SupportTicketMessage from "@/models/SupportTicketMessage";
 import User from "@/models/User";
 import { createNotification } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 const STATUSES = new Set([
   "open",
@@ -27,7 +28,7 @@ const CATEGORIES = new Set([
 // GET /api/support-tickets
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -116,7 +117,7 @@ export async function GET(request) {
 // Body: { subject, message, category?, priority?, relatedType?, relatedId? }
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || !["customer", "manufacturer"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

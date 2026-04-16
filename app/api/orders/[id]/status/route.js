@@ -5,6 +5,7 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import User from "@/models/User";
 import { notify } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // ── Stripe is optional — if STRIPE_SECRET_KEY is not set, payment steps are skipped
 let stripe = null;
@@ -24,7 +25,7 @@ export async function PUT(request, context) {
   const { id } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -226,7 +227,7 @@ export async function PATCH(request, context) {
   const { id } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -4,11 +4,12 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // POST /api/auth/change-password — change password for logged-in user
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     if (!session || !session.user) {
       return NextResponse.json(

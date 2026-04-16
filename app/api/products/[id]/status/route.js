@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // PATCH  /api/products/[id]/status - Quick status change
 export async function PATCH(request, context) {
@@ -10,7 +11,7 @@ export async function PATCH(request, context) {
   const { id } = params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

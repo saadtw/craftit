@@ -7,6 +7,7 @@ import "@/models/User";
 import Conversation from "@/models/Chat";
 import ChatMessage from "@/models/ChatMessage";
 import { publish } from "@/lib/chatEmitter";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 function assertParticipant(session, order) {
   const uid = session.user.id;
@@ -28,7 +29,7 @@ export async function PATCH(request, context) {
   const { orderId } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

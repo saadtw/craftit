@@ -8,13 +8,14 @@ import "@/models/RFQ";
 import "@/models/Bid";
 import "@/models/Product";
 import "@/models/GroupBuy";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/orders/[id] - Get single order detail
 export async function GET(request, context) {
   const { id } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -6,6 +6,7 @@ import Bid from "@/models/Bid";
 import RFQ from "@/models/RFQ";
 import User from "@/models/User";
 import { notify } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/bids/[id] — get bid details with manufacturer info and RFQ context
 export async function GET(request, context) {
@@ -13,7 +14,7 @@ export async function GET(request, context) {
   const id = params.id;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -63,7 +64,7 @@ export async function PUT(request, context) {
   const id = params.id;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -165,7 +166,7 @@ export async function PATCH(request, context) {
   const id = params.id;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "customer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -212,7 +213,7 @@ export async function DELETE(request, context) {
   const id = params.id;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

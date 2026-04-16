@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import User from "@/models/User";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/products/public
 // Public catalog — all active products from verified manufacturers.
@@ -13,7 +14,7 @@ export async function GET(request) {
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     const { searchParams } = new URL(request.url);
     const search = searchParams.get("search") || "";

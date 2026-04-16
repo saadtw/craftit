@@ -8,11 +8,12 @@ import "@/models/Product";
 import "@/models/RFQ";
 import "@/models/Bid";
 import "@/models/GroupBuy";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET  /api/orders - List orders (role-aware)
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

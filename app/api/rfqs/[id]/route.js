@@ -5,6 +5,7 @@ import Bid from "@/models/Bid";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET  /api/rfqs/[id] - Get RFQ details
 export async function GET(request, context) {
@@ -12,7 +13,7 @@ export async function GET(request, context) {
   const id = params.id;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -110,7 +111,7 @@ export async function PUT(request, context) {
   const id = params.id;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

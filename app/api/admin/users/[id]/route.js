@@ -6,11 +6,12 @@ import User from "@/models/User";
 import Order from "@/models/Order";
 import AdminLog from "@/models/AdminLog";
 import { publishSessionEvent } from "@/lib/sessionEmitter";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/admin/users/[id] — get user details and recent orders
 export async function GET(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (session?.user?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -52,7 +53,7 @@ export async function GET(request, { params }) {
 // PATCH /api/admin/users/[id]  — suspend or unsuspend
 export async function PATCH(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (session?.user?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

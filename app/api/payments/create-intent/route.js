@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import getStripe from "@/lib/stripe";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 /**
  * POST /api/payments/create-intent
@@ -13,7 +14,7 @@ import getStripe from "@/lib/stripe";
  */
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "customer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

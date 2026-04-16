@@ -7,6 +7,7 @@ import Bid from "@/models/Bid";
 import CustomOrder from "@/models/CustomOrder";
 import Order from "@/models/Order";
 import { notify } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // POST /api/rfqs/[id]/accept-bid - Customer accepts a bid on their RFQ, creates order, notifies manufacturer
 export async function POST(request, context) {
@@ -14,7 +15,7 @@ export async function POST(request, context) {
   const id = params.id;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     if (!session || session.user.role !== "customer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

@@ -3,11 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import { matchingService } from "@/services/matchingService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET  /api/rfqs/recommended - Get RFQs recommended for the logged-in manufacturer
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

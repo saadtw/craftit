@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 const CAPABILITY_ENUM = [
   "CNC_Machining",
@@ -33,7 +34,7 @@ const MATERIAL_ENUM = [
 // PATCH /api/users/[id] — update own profile
 export async function PATCH(request, { params }) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     if (!session || !session.user) {
       return NextResponse.json(

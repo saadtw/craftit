@@ -5,13 +5,14 @@ import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import ProductQuestion from "@/models/ProductQuestion";
 import { createNotification } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/products/[id]/qa
 export async function GET(request, context) {
   const { id } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     await connectDB();
 
     const product = await Product.findById(id)
@@ -82,7 +83,7 @@ export async function POST(request, context) {
   const { id } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "customer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

@@ -5,11 +5,12 @@ import connectDB from "@/lib/mongodb";
 import Dispute from "@/models/Dispute";
 import Order from "@/models/Order";
 import { notify } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // POST /api/disputes  — customer opens a dispute
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "customer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -95,7 +96,7 @@ export async function POST(request) {
 // GET /api/disputes  — list disputes for the current user
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

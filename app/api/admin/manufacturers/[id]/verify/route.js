@@ -7,6 +7,7 @@ import User from "@/models/User";
 import VerificationDocument from "@/models/VerificationDocument";
 import AdminLog from "@/models/AdminLog";
 import { notify, createNotification } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 /**
  * PUT /api/admin/manufacturers/[id]/verify
@@ -18,7 +19,7 @@ export async function PUT(request, context) {
   const rawId = params.id;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     if (!session || session.user.role !== "admin") {
       return NextResponse.json(
@@ -171,7 +172,7 @@ export async function GET(request, context) {
   const params = await context.params;
   const rawId = params.id;
 
-  const session = await getServerSession(authOptions);
+  const session = await resolveRequestSession(request);
 
   if (!session || session.user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

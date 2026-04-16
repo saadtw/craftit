@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import User from "@/models/User";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 function topEntries(weightMap, limit = 6) {
   return [...weightMap.entries()]
@@ -24,7 +25,7 @@ export async function GET(request) {
   try {
     await connectDB();
 
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     const { searchParams } = new URL(request.url);
     const limit = Math.min(parseInt(searchParams.get("limit")) || 6, 12);
 

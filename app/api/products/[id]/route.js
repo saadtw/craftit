@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import { normalizeCustomizationTypes } from "@/lib/customization";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 function resolveCustomizationConfig(payload, existingProduct = null) {
   const customizationOptions =
@@ -93,7 +94,7 @@ export async function GET(request, context) {
   const { id } = params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -141,7 +142,7 @@ export async function PUT(request, context) {
   const { id } = params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -200,7 +201,7 @@ export async function DELETE(request, context) {
   const { id } = params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

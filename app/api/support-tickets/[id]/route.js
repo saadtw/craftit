@@ -6,6 +6,7 @@ import SupportTicket from "@/models/SupportTicket";
 import SupportTicketMessage from "@/models/SupportTicketMessage";
 import AdminLog from "@/models/AdminLog";
 import { createNotification } from "@/services/notificationService";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 function hasAccess(ticket, session) {
   if (session.user.role === "admin") return true;
@@ -22,7 +23,7 @@ export async function GET(request, context) {
   const { id } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -74,7 +75,7 @@ export async function PATCH(request, context) {
   const { id } = await context.params;
 
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

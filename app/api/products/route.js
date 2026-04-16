@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import { normalizeCustomizationTypes } from "@/lib/customization";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 function resolveCustomizationConfig(payload, existingProduct = null) {
   const customizationOptions =
@@ -90,7 +91,7 @@ function resolveCustomizationConfig(payload, existingProduct = null) {
 // GET  /api/products - List manufacturer's own products with filters + pagination
 export async function GET(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -173,7 +174,7 @@ export async function GET(request) {
 // POST  /api/products - Create a new product
 export async function POST(request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

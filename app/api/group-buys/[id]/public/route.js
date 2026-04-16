@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/group-buys/[id]/public — no auth required
 // If authenticated customer, also returns whether they've already joined
@@ -13,7 +14,7 @@ export async function GET(request, context) {
     await connectDB();
 
     // Optional auth — used to check if customer already joined
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
 
     // Auto-sync status
     const now = new Date();

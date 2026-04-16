@@ -5,6 +5,7 @@ import connectDB from "@/lib/mongodb";
 import Bid from "@/models/Bid";
 import Conversation from "@/models/Chat";
 import ChatMessage from "@/models/ChatMessage";
+import { resolveRequestSession } from "@/lib/requestAuth";
 
 // Verify the user is a participant in this bid, return the bid if so
 async function getAccessibleBid(bidId, session) {
@@ -45,7 +46,7 @@ async function getOrCreateConversation(bid) {
 export async function GET(request, context) {
   const { id } = await context.params;
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -120,7 +121,7 @@ export async function GET(request, context) {
 export async function POST(request, context) {
   const { id } = await context.params;
   try {
-    const session = await getServerSession(authOptions);
+    const session = await resolveRequestSession(request);
     if (!session)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
