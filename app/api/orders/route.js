@@ -14,6 +14,10 @@ import { resolveRequestSession } from "@/lib/requestAuth";
 export async function GET(request) {
   try {
     const session = await resolveRequestSession(request);
+    if (session?.error === "SESSION_INVALID") {
+      return NextResponse.json({ error: "Session invalid" }, { status: 401 });
+    }
+
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }

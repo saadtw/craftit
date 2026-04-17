@@ -34,6 +34,8 @@ const MATERIAL_ENUM = [
 // PATCH /api/users/[id] — update own profile
 export async function PATCH(request, { params }) {
   try {
+    const { id: userId } = await params;
+
     const session = await resolveRequestSession(request);
 
     if (!session || !session.user) {
@@ -44,7 +46,7 @@ export async function PATCH(request, { params }) {
     }
 
     // Users may only update their own profile
-    if (session.user.id !== params.id) {
+    if (session.user.id !== userId) {
       return NextResponse.json(
         { success: false, error: "Forbidden" },
         { status: 403 },
@@ -162,7 +164,7 @@ export async function PATCH(request, { params }) {
     }
 
     const user = await User.findByIdAndUpdate(
-      params.id,
+      userId,
       { $set: update },
       { new: true, runValidators: true },
     ).select("-password");

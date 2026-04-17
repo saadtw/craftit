@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import mongoose from "mongoose";
 
 // GET /api/group-buys/[id]/public — no auth required
 // If authenticated customer, also returns whether they've already joined
@@ -11,6 +12,13 @@ export async function GET(request, context) {
   const { id } = await context.params;
 
   try {
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return NextResponse.json(
+        { error: "Invalid group buy id" },
+        { status: 400 },
+      );
+    }
+
     await connectDB();
 
     // Optional auth — used to check if customer already joined
