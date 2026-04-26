@@ -165,6 +165,7 @@ export default function NewProductPage() {
     setImageUploading(true);
     try {
       const formData = new FormData();
+      formData.append("type", "image");
       Array.from(files).forEach((f) => formData.append("files", f));
       const res = await fetch("/api/upload/multiple", {
         method: "POST",
@@ -172,8 +173,8 @@ export default function NewProductPage() {
       });
       const data = await res.json();
       if (data.success) {
-        const newImgs = data.urls.map((url, i) => ({
-          url,
+        const newImgs = data.files.map((f, i) => ({
+          url: f.url,
           isPrimary: form.images.length === 0 && i === 0,
         }));
         setForm((prev) => ({ ...prev, images: [...prev.images, ...newImgs] }));
@@ -204,6 +205,7 @@ export default function NewProductPage() {
     setModelUploading(true);
     try {
       const formData = new FormData();
+      formData.append("type", "3d-model");
       formData.append("file", file);
       const res = await fetch("/api/upload", {
         method: "POST",
@@ -213,7 +215,7 @@ export default function NewProductPage() {
       if (data.success) {
         setForm((prev) => ({
           ...prev,
-          model3D: { url: data.url, filename: file.name, fileSize: file.size },
+          model3D: { url: data.file.url, filename: file.name, fileSize: file.size },
         }));
       }
     } catch (_) {}

@@ -1,0 +1,244 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@400;700&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-error-container: #93000a;
+  --color-surface-variant: #353534;
+  --color-error: #ffb4ab;
+  --color-secondary-fixed: #c8c6c6;
+  --color-on-error: #690005;
+  --color-on-primary: #1a1c1c;
+  --color-secondary: #c8c6c6;
+  --color-on-surface: #e5e2e1;
+  --color-primary-container: #d4d4d4;
+  --color-primary: #ffffff;
+  --color-outline-variant: #474747;
+  --color-secondary-container: #474747;
+  --color-inverse-primary: #5d5f5f;
+  --color-inverse-surface: #e5e2e1;
+  --color-inverse-on-surface: #313030;
+  --color-surface-bright: #3a3939;
+  --color-on-primary-container: #000000;
+  --color-primary-fixed: #5d5f5f;
+  --color-secondary-fixed-dim: #acabaa;
+  --color-on-secondary-container: #e4e2e1;
+  --color-surface-container-high: #2a2a2a;
+  --color-on-tertiary: #1b1c1c;
+  --color-on-primary-fixed-variant: #e2e2e2;
+  --color-tertiary-container: #929090;
+  --color-tertiary-fixed-dim: #474746;
+  --color-on-primary-fixed: #ffffff;
+  --color-background: #131313;
+  --color-on-secondary: #1b1c1c;
+  --color-surface: #131313;
+  --color-tertiary-fixed: #5f5e5e;
+  --color-on-secondary-fixed-variant: #3b3b3b;
+  --color-on-secondary-fixed: #1b1c1c;
+  --color-surface-container-highest: #353534;
+  --color-on-tertiary-fixed: #ffffff;
+  --color-surface-container-low: #1c1b1b;
+  --color-surface-container: #201f1f;
+  --color-on-error-container: #ffdad6;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-outline: #919191;
+  --color-surface-tint: #c6c6c7;
+  --color-on-tertiary-fixed-variant: #e4e2e1;
+  --color-surface-dim: #131313;
+  --color-on-surface-variant: #c6c6c6;
+  --color-tertiary: #e4e2e1;
+  --color-primary-fixed-dim: #454747;
+  --color-on-background: #e5e2e1;
+  --color-on-tertiary-container: #000000;
+
+  --font-headline: "Inter", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-label: "Inter", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+}
+
+body {
+  background: var(--color-background);
+  color: var(--color-on-surface);
+  font-family: var(--font-body);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+}
+
+/* Custom classes from Stitch */
+.catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1px;
+  background-color: #4747471a;
+}
+.glass-card {
+  background: rgba(25, 25, 25, 0.7);
+  backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+}
+.glass-card:hover {
+  background: rgba(40, 40, 40, 0.8);
+}
+
+.skeleton-pulse {
+  background: linear-gradient(90deg, #1c1b1b 25%, #2a2a2a 50%, #1c1b1b 75%);
+  background-size: 200% 100%;
+}
+
+.order-container {
+  background-image: radial-gradient(circle at 50% 50%, #1c1b1b 0%, #131313 100%);
+}
+
+.glass-panel {
+  background: rgba(25, 25, 25, 0.7);
+  backdrop-filter: blur(12px);
+}
+.muted-crimson-glass {
+  background: rgba(147, 0, 10, 0.15);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(147, 0, 10, 0.3);
+}
+.muted-crimson-glass:hover {
+  background: rgba(147, 0, 10, 0.25);
+}
+.ghost-border-top {
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+.custom-scrollbar::-webkit-scrollbar {
+  width: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #131313;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #474747;
+}
+
+/* ─── Tag Overlay System ──────────────────────────────────────────────────── */
+
+/* Full-canvas container that sits on top of the 3D canvas */
+.tag-overlay-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+/* Individual tag badge — positioned via JS in screen-space */
+.tag-badge {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transform: translate(-50%, -50%);
+  pointer-events: auto;
+  cursor: default;
+  z-index: 10;
+}
+
+/* The coloured dot anchor that sits on the 3D surface */
+.tag-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+  box-shadow: 0 0 6px rgba(0, 0, 0, 0.6);
+}
+
+/* The pill label next to the dot */
+.tag-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 10px;
+  border-radius: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+  white-space: nowrap;
+  backdrop-filter: blur(4px);
+}
+
+.tag-pill-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(0, 0, 0, 0.85);
+  letter-spacing: 0.01em;
+}
+
+/* Small × delete button inside the pill */
+.tag-delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background: rgba(0, 0, 0, 0.2);
+  border: none;
+  border-radius: 50%;
+  color: rgba(0, 0, 0, 0.7);
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  transition: background 0.15s;
+}
+.tag-delete-btn:hover {
+  background: rgba(0, 0, 0, 0.4);
+  color: black;
+}
+
+/* ─── Dimension Label ─────────────────────────────────────────────────────── */
+
+/* Floating text label at the midpoint of a measurement line */
+.dim-label {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  background: rgba(10, 10, 10, 0.75);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  padding: 3px 8px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.06em;
+  pointer-events: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+/* ─── Catalog Detail Page Hotspots ────────────────────────────────────────── */
+.catalog-measurement-hotspot {
+  background: transparent;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+}
+
+.catalog-measurement-hotspot .hotspot-label {
+  background: rgba(10, 10, 10, 0.75);
+  backdrop-filter: blur(6px);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 3px;
+  padding: 4px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  font-weight: 700;
+  color: white;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.catalog-measurement-hotspot:hover .hotspot-label {
+  background: rgba(10, 10, 10, 0.95);
+  border-color: rgba(255, 255, 255, 0.3);
+}

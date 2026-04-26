@@ -2,7 +2,12 @@ import { NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
-import { resolveRequestSession } from "@/lib/requestAuth";
+import fs from "fs/promises";
+import path from "path";
+import os from "os";
+import util from "util";
+
+const execPromise = util.promisify(require("child_process").exec);
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -30,7 +35,7 @@ const FILE_TYPES = {
   },
 };
 
-// POST /api/upload/multiple - Handle multiple file uploads to S3
+// POST /api/upload
 export async function POST(request) {
   try {
     // Check authentication
@@ -95,11 +100,63 @@ export async function POST(request) {
 
     // Convert to buffer
     const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
+    let buffer = Buffer.from(bytes);
+    let uploadContentType = file.type;
+    let finalFileName = file.name;
+
+    let tempInputPath = null;
+    let tempOutputPath = null;
+
+    if (fileType === "3d-model") {
+      const ext = path.extname(fileName).toLowerCase();
+      if (ext !== ".glb" && ext !== ".gltf") {
+        try {
+          const tempDir = os.tmpdir();
+          const timestampStr = Date.now().toString();
+          tempInputPath = path.join(tempDir, `input-${timestampStr}${ext}`);
+          tempOutputPath = path.join(tempDir, `output-${timestampStr}.glb`);
+
+          // Write the incoming Next.js File arrayBuffer to the inputFilePath on disk
+          await fs.writeFile(tempInputPath, buffer);
+
+          // Execute the Python script
+          const pythonScriptPath = path.join(process.cwd(), "python-converters", "converter.py");
+          const { stdout, stderr } = await execPromise(
+            `python "${pythonScriptPath}" "${tempInputPath}" "${tempOutputPath}"`
+          );
+
+          if (stderr && stderr.includes("FATAL:")) {
+            throw new Error(`Conversion failed: ${stderr}`);
+          }
+
+          // Read the newly created .glb file
+          buffer = await fs.readFile(tempOutputPath);
+          uploadContentType = "model/gltf-binary";
+          
+          // Change the S3 key/filename to reflect the new .glb extension
+          finalFileName = file.name.replace(new RegExp(`\\${ext}$`, "i"), ".glb");
+        } catch (convErr) {
+          console.error("3D Conversion error:", convErr);
+          throw new Error("Failed to convert 3D model: " + convErr.message);
+        } finally {
+          // Cleanup
+          if (tempInputPath) {
+            await fs.unlink(tempInputPath).catch(() => {});
+          }
+          if (tempOutputPath) {
+            await fs.unlink(tempOutputPath).catch(() => {});
+          }
+        }
+      } else {
+        if (!uploadContentType) {
+          uploadContentType = "model/gltf-binary";
+        }
+      }
+    }
 
     // Generate unique filename
     const timestamp = Date.now();
-    const sanitizedName = file.name.replace(/\s+/g, "-");
+    const sanitizedName = finalFileName.replace(/\s+/g, "-");
     const uniqueFileName = `${fileConfig.folder}/${timestamp}-${sanitizedName}`;
 
     // Upload to S3
@@ -107,7 +164,7 @@ export async function POST(request) {
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: uniqueFileName,
       Body: buffer,
-      ContentType: file.type,
+      ContentType: uploadContentType,
     });
 
     await s3Client.send(command);
@@ -119,8 +176,8 @@ export async function POST(request) {
       success: true,
       file: {
         url: fileUrl,
-        filename: file.name,
-        fileSize: file.size,
+        filename: finalFileName,
+        fileSize: buffer.length,
         type: fileType,
       },
     });

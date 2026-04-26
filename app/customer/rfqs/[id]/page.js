@@ -4,8 +4,8 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Script from "next/script";
 import Image from "next/image";
+import Editor3DWrapper from "../../../../modules/components/Editor3DWrapper";
 
 export default function CustomerRFQDetails() {
   const params = useParams();
@@ -119,14 +119,10 @@ export default function CustomerRFQDetails() {
 
   const isActive = rfq.status === "active";
   const isClosed = ["closed", "bid_accepted", "cancelled"].includes(rfq.status);
+  const model3D = rfq?.customOrderId?.model3D;
 
   return (
     <>
-      <Script
-        type="module"
-        src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
-      />
-
       <div className="max-w-6xl mx-auto p-6">
         <div className="flex justify-between items-start mb-6">
           <div>
@@ -248,16 +244,18 @@ export default function CustomerRFQDetails() {
             </div>
 
             {/* 3D Model Viewer */}
-            {rfq.customOrderId.model3D && (
+            {model3D?.url && (
               <div className="mt-6">
                 <h3 className="font-bold mb-2">3D Model</h3>
-                <model-viewer
-                  src={rfq.customOrderId.model3D.url}
-                  alt="3D Model"
-                  auto-rotate
-                  camera-controls
-                  className="w-full h-96 bg-gray-100 rounded"
-                />
+                <div className="w-full rounded overflow-hidden">
+                  <Editor3DWrapper
+                    modelUrl={model3D.url}
+                    initialAnnotations={model3D.annotations || []}
+                    initialCameraState={model3D.cameraState || null}
+                    readOnly={true}
+                    onSave={() => {}}
+                  />
+                </div>
               </div>
             )}
 

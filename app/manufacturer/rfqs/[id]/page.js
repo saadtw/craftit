@@ -4,9 +4,9 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Script from "next/script";
 import Link from "next/link";
 import Image from "next/image";
+import Editor3DWrapper from "../../../../modules/components/Editor3DWrapper";
 
 export default function ManufacturerRFQDetails() {
   const params = useParams();
@@ -90,14 +90,10 @@ export default function ManufacturerRFQDetails() {
 
   const isActive = rfq.status === "active";
   const hasBid = !!myBid;
+  const model3D = rfq?.customOrderId?.model3D;
 
   return (
     <>
-      <Script
-        type="module"
-        src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
-      />
-
       <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
         {/* Header */}
         <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
@@ -301,16 +297,18 @@ export default function ManufacturerRFQDetails() {
             </div>
 
             {/* 3D Model Viewer */}
-            {rfq.customOrderId?.model3D?.url && (
+            {model3D?.url && (
               <div className="mt-6">
                 <h3 className="font-bold text-gray-900 mb-2">3D Model</h3>
-                <model-viewer
-                  src={rfq.customOrderId.model3D.url}
-                  alt="3D Model"
-                  auto-rotate
-                  camera-controls
-                  className="w-full h-96 bg-gray-100 rounded-lg"
-                />
+                <div className="w-full rounded-lg overflow-hidden">
+                  <Editor3DWrapper
+                    modelUrl={model3D.url}
+                    initialAnnotations={model3D.annotations || []}
+                    initialCameraState={model3D.cameraState || null}
+                    readOnly={true}
+                    onSave={() => {}}
+                  />
+                </div>
               </div>
             )}
 

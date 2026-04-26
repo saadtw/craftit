@@ -30,6 +30,19 @@ const CustomOrderSchema = new mongoose.Schema(
       url: String,
       filename: String,
       fileSize: Number,
+      annotations: [
+        {
+          id: String,
+          text: String,
+          position: { x: Number, y: Number, z: Number },
+          normal: { x: Number, y: Number, z: Number },
+        },
+      ],
+      cameraState: {
+        position: { x: Number, y: Number, z: Number },
+        target: { x: Number, y: Number, z: Number },
+        zoom: Number,
+      },
       dimensions: {
         length: Number,
         width: Number,
