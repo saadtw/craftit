@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ChatBox from "@/components/chat/ChatBox";
 import { CARRIER_NAMES } from "@/lib/carriers";
+import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-yellow-100 text-yellow-800",
@@ -237,6 +238,13 @@ export default function ManufacturerOrderDetailPage() {
       : 0;
   const hasPendingCancellationRequest =
     order.cancellationStatus === "requested";
+  const orderModel3D = order.productDetails?.model3D?.url
+    ? order.productDetails.model3D
+    : order.productId?.model3D?.url
+      ? order.productId.model3D
+      : order.rfqId?.customOrderId?.model3D?.url
+        ? order.rfqId.customOrderId.model3D
+        : null;
 
   return (
     <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
@@ -347,6 +355,36 @@ export default function ManufacturerOrderDetailPage() {
                 </div>
               )}
             </div>
+
+            {orderModel3D?.url && (
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+                <h2 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
+                  <span className="px-1.5 py-0.5 bg-slate-900 text-white text-xs rounded font-medium">
+                    3D
+                  </span>
+                  3D Model
+                </h2>
+                <Editor3DWrapper
+                  modelUrl={orderModel3D.url}
+                  initialAnnotations={orderModel3D.annotations}
+                  initialCameraState={orderModel3D.cameraState}
+                  readOnly={true}
+                />
+                <div className="mt-3 flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                  <p className="text-sm text-gray-700 truncate">
+                    {orderModel3D.filename || "Attached 3D model"}
+                  </p>
+                  <a
+                    href={orderModel3D.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100"
+                  >
+                    Download
+                  </a>
+                </div>
+              </div>
+            )}
 
             {/* Delivery Address */}
             {order.deliveryAddress?.street && (

@@ -362,6 +362,7 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
   const product = gb.productId;
   const primaryImage =
     product?.images?.find((i) => i.isPrimary)?.url || product?.images?.[0]?.url;
+  const has3DModel = Boolean(product?.model3D?.url);
   const highestTier = gb.tiers?.[gb.tiers.length - 1];
   const tier1 = gb.tiers?.[0];
 
@@ -402,6 +403,11 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
                 />
               </svg>
             </div>
+          )}
+          {has3DModel && (
+            <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-slate-900/85 text-white text-[10px] font-semibold">
+              3D
+            </span>
           )}
         </div>
 

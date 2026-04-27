@@ -49,10 +49,24 @@ export async function GET(request) {
     const orders = await Order.find(query)
       .populate("customerId", "name email")
       .populate("manufacturerId", "name businessName email")
-      .populate("productId", "name images price")
-      .populate("rfqId", "rfqNumber")
+      .populate("productId", "name images price model3D")
+      .populate({
+        path: "rfqId",
+        select: "rfqNumber customOrderId",
+        populate: {
+          path: "customOrderId",
+          select: "model3D",
+        },
+      })
       .populate("bidId", "amount timeline")
-      .populate("groupBuyId", "title")
+      .populate({
+        path: "groupBuyId",
+        select: "title productId",
+        populate: {
+          path: "productId",
+          select: "model3D",
+        },
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)

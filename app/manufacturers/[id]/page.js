@@ -579,6 +579,12 @@ export default function ManufacturerPublicProfilePage() {
                                 </span>
                               </div>
                             )}
+                            {/* 3D badge */}
+                            {product.model3D?.url && (
+                              <span className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded tracking-wide">
+                                3D
+                              </span>
+                            )}
                           </div>
                           <div className="p-4">
                             <p className="font-semibold text-gray-900 text-sm line-clamp-2 mb-1 group-hover:text-[#eb9728] transition-colors">

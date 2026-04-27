@@ -356,6 +356,13 @@ export default function ManufacturerBidsPage() {
                     key={bid._id}
                     className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition p-4"
                   >
+                    {bid.rfqId?.customOrderId?.model3D?.url && (
+                      <div className="mb-3">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                          3D Model Available
+                        </span>
+                      </div>
+                    )}
                     <div className="flex flex-col md:flex-row gap-4">
                       {bid.rfqId?.customOrderId?.images?.[0]?.url && (
                         <div

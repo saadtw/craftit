@@ -25,8 +25,15 @@ export async function GET(request, context) {
     const order = await Order.findById(id)
       .populate("customerId", "name email phone")
       .populate("manufacturerId", "name businessName email phone")
-      .populate("productId", "name images price description")
-      .populate("rfqId", "rfqNumber endDate")
+      .populate("productId", "name images price description model3D")
+      .populate({
+        path: "rfqId",
+        select: "rfqNumber endDate customOrderId",
+        populate: {
+          path: "customOrderId",
+          select: "title model3D images",
+        },
+      })
       .populate(
         "bidId",
         "amount timeline proposedMilestones costBreakdown materialsDescription processDescription",

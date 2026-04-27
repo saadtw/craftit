@@ -429,6 +429,12 @@ function ProductCard({ product, isWishlisted, onToggleWishlist }) {
           <span className="absolute top-2 left-2 px-2 py-0.5 bg-white/90 rounded-full text-xs font-medium text-gray-600">
             {product.category}
           </span>
+          {/* 3D badge */}
+          {product.model3D?.url && (
+            <span className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded tracking-wide">
+              3D
+            </span>
+          )}
           <button
             type="button"
             onClick={(e) => {

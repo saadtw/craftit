@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Editor3DWrapper from "../../../../../modules/components/Editor3DWrapper";
 
 const MAX_COMPARE_BIDS = 3;
 
@@ -76,6 +77,7 @@ export default function BidComparisonPage() {
   const { data: session, status } = useSession();
   const [bids, setBids] = useState([]);
   const [analysis, setAnalysis] = useState(null);
+  const [rfq, setRfq] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedBidIds, setSelectedBidIds] = useState([]);
 
@@ -87,6 +89,7 @@ export default function BidComparisonPage() {
       if (res.ok) {
         setBids(data.bids || []);
         setAnalysis(data.analysis);
+        setRfq(data.rfq || null);
       } else {
         alert(data.error || "Failed to fetch bids");
       }
@@ -207,6 +210,26 @@ export default function BidComparisonPage() {
           Back to RFQ
         </button>
       </div>
+
+      {rfq?.customOrderId?.model3D?.url && (
+        <section className="bg-white border rounded p-5">
+          <div className="flex items-center justify-between gap-3 mb-3">
+            <h2 className="text-xl font-semibold">RFQ 3D Model</h2>
+            {rfq?.rfqNumber && (
+              <span className="text-sm text-gray-500">
+                RFQ #{rfq.rfqNumber}
+              </span>
+            )}
+          </div>
+          <Editor3DWrapper
+            modelUrl={rfq.customOrderId.model3D.url}
+            initialAnnotations={rfq.customOrderId.model3D.annotations || []}
+            initialCameraState={rfq.customOrderId.model3D.cameraState || null}
+            readOnly={true}
+            onSave={() => {}}
+          />
+        </section>
+      )}
 
       {analysis && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">

@@ -3,9 +3,9 @@
 import React, { useState } from 'react';
 import * as THREE from 'three';
 import { useAnnotations } from './AnnotationStore';
-import { Measurement, SCALE_FACTORS, ScaleUnit } from './types';
+import { SCALE_FACTORS } from './types';
 
-const SCALE_OPTIONS: { value: ScaleUnit; label: string }[] = [
+const SCALE_OPTIONS = [
   { value: 'units', label: 'Units' },
   { value: 'mm', label: 'mm' },
   { value: 'cm', label: 'cm' },
@@ -14,18 +14,10 @@ const SCALE_OPTIONS: { value: ScaleUnit; label: string }[] = [
   { value: 'ft', label: 'ft' },
 ];
 
-interface Props {
-  screenX: number;
-  screenY: number;
-  pointA: [number, number, number];
-  pointB: [number, number, number];
-  onClose: () => void;
-}
-
-export default function MeasurementForm({ pointA, pointB, onClose }: Props) {
+export default function MeasurementForm({ pointA, pointB, onClose }) {
   const { state, dispatch } = useAnnotations();
   const [manualLength, setManualLength] = useState('');
-  const [manualUnit, setManualUnit] = useState<ScaleUnit>(state.scaleUnit);
+  const [manualUnit, setManualUnit] = useState(state.scaleUnit);
 
   // Calculate 3D distance
   const vA = new THREE.Vector3(...pointA);
@@ -38,11 +30,10 @@ export default function MeasurementForm({ pointA, pointB, onClose }: Props) {
   const handleSave = () => {
     const mUnit = manualUnit === 'units' ? '' : manualUnit;
     const baseLabel = `${manualLength || display3D} ${mUnit}`.trim();
-    // Auto-sequence to M1, M2, etc.
     const mIndex = state.measurements.length + 1;
     const finalLabel = `M${mIndex}: ${baseLabel}`;
     
-    const measurement: Measurement = {
+    const measurement = {
       id: crypto.randomUUID(),
       pointA,
       pointB,
@@ -53,7 +44,7 @@ export default function MeasurementForm({ pointA, pointB, onClose }: Props) {
     onClose();
   };
 
-  const inputStyle: React.CSSProperties = {
+  const inputStyle = {
     background: 'rgba(255,255,255,0.06)',
     border: '1px solid rgba(255,255,255,0.1)',
     borderRadius: '2px',
@@ -148,7 +139,7 @@ export default function MeasurementForm({ pointA, pointB, onClose }: Props) {
             />
             <select
               value={manualUnit}
-              onChange={(e) => setManualUnit(e.target.value as ScaleUnit)}
+              onChange={(e) => setManualUnit(e.target.value)}
               onClick={(e) => e.stopPropagation()}
               style={{
                 ...inputStyle,

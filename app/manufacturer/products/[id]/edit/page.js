@@ -7,6 +7,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
+import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
 
 const STEPS = [
   { id: 1, label: "Basic Info" },
@@ -73,6 +74,8 @@ export default function EditProductPage() {
   const [errors, setErrors] = useState({});
   const [lastSaved, setLastSaved] = useState(null);
   const [showRestockNotice, setShowRestockNotice] = useState(false);
+  const [isModelEditorOpen, setIsModelEditorOpen] = useState(false);
+  const [baseModelUrl, setBaseModelUrl] = useState("");
 
   const imageInputRef = useRef();
   const modelInputRef = useRef();
@@ -132,6 +135,7 @@ export default function EditProductPage() {
             seoDescription: p.seoDescription || "",
             currentStatus: p.status,
           });
+          setBaseModelUrl(p.model3D?.url || "");
         } else {
           router.push("/manufacturer/products");
         }
@@ -248,10 +252,52 @@ export default function EditProductPage() {
       if (data.success) {
         setForm((prev) => ({
           ...prev,
-          model3D: { url: data.file.url, filename: file.name, fileSize: file.size },
+          model3D: {
+            url: data.file.url,
+            filename: file.name,
+            fileSize: file.size,
+          },
         }));
+        setBaseModelUrl(data.file.url);
+        setIsModelEditorOpen(true);
       }
     } catch (_) {}
+    setModelUploading(false);
+  };
+
+  const handleModelEditorSave = async (gltfBlob, annotations, cameraState) => {
+    setModelUploading(true);
+    try {
+      const file = new File([gltfBlob], "annotated-model.glb", {
+        type: "model/gltf-binary",
+      });
+      const uploadData = new FormData();
+      uploadData.append("type", "3d-model");
+      uploadData.append("file", file);
+
+      const res = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadData,
+      });
+      const data = await res.json();
+
+      if (data.success) {
+        const nextModel = {
+          url: data.file.url,
+          filename: file.name,
+          fileSize: file.size,
+          annotations,
+          cameraState,
+        };
+        setForm((prev) => ({ ...prev, model3D: nextModel }));
+        setBaseModelUrl(nextModel.url);
+        setIsModelEditorOpen(false);
+      } else {
+        alert(data.error || "Failed to save 3D model edits");
+      }
+    } catch (_) {
+      alert("Failed to save 3D model edits");
+    }
     setModelUploading(false);
   };
 
@@ -1075,35 +1121,74 @@ export default function EditProductPage() {
                     3D Model
                   </label>
                   {form.model3D ? (
-                    <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
-                      <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
-                        <svg
-                          className="w-5 h-5 text-slate-500"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
+                          <svg
+                            className="w-5 h-5 text-slate-500"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                            />
+                          </svg>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-slate-900 truncate">
+                            {form.model3D.filename}
+                          </p>
+                          {form.model3D.fileSize && (
+                            <p className="text-xs text-slate-400">
+                              {(form.model3D.fileSize / 1024 / 1024).toFixed(2)}{" "}
+                              MB
+                            </p>
+                          )}
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setBaseModelUrl(form.model3D.url);
+                            setIsModelEditorOpen(true);
+                          }}
+                          className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                          Edit 3D Model
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setForm((prev) => ({ ...prev, model3D: null }))
+                          }
+                          className="text-sm text-red-500 hover:text-red-700"
+                        >
+                          Remove
+                        </button>
+                      </div>
+
+                      {isModelEditorOpen && baseModelUrl && (
+                        <div className="border border-slate-200 rounded-xl p-2 bg-slate-50">
+                          <Editor3DWrapper
+                            modelUrl={baseModelUrl}
+                            initialAnnotations={form.model3D?.annotations}
+                            initialCameraState={form.model3D?.cameraState}
+                            onSave={handleModelEditorSave}
                           />
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <p className="text-sm font-medium text-slate-900 truncate">
-                          {form.model3D.filename}
-                        </p>
-                      </div>
-                      <button
-                        onClick={() =>
-                          setForm((prev) => ({ ...prev, model3D: null }))
-                        }
-                        className="text-sm text-red-500 hover:text-red-700"
-                      >
-                        Remove
-                      </button>
+                          <div className="mt-2 flex justify-end">
+                            <button
+                              type="button"
+                              onClick={() => setIsModelEditorOpen(false)}
+                              className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg text-slate-600 hover:bg-white"
+                            >
+                              Close Editor
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div

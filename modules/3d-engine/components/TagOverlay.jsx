@@ -2,19 +2,13 @@
 
 import React from 'react';
 import { useAnnotations } from './AnnotationStore';
-import type { Tag } from './types';
 
-interface Props {
-  /** Projected screen positions for each tag, updated each frame */
-  positions: Map<string, { x: number; y: number; visible: boolean }>;
-}
-
-export default function TagOverlay({ positions }: Props) {
+export default function TagOverlay({ positions }) {
   const { state, dispatch } = useAnnotations();
 
   return (
     <div className="tag-overlay-container" aria-label="Tag overlays">
-      {state.tags.map((tag: Tag) => {
+      {state.tags.map((tag) => {
         const pos = positions.get(tag.id);
         if (!pos || !pos.visible) return null;
 
@@ -28,7 +22,7 @@ export default function TagOverlay({ positions }: Props) {
               top: pos.y,
               borderColor: tag.colour,
               '--tag-colour': tag.colour,
-            } as React.CSSProperties}
+            }}
           >
             {/* Dot anchor */}
             <div className="tag-dot" style={{ background: tag.colour }} />

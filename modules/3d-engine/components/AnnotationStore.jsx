@@ -6,22 +6,10 @@ import React, {
   useReducer,
   useEffect,
   useCallback,
-  ReactNode,
 } from 'react';
-import type {
-  AnnotationState,
-  ActiveTool,
-  ScaleUnit,
-  Tag,
-  Measurement,
-  ComponentMark,
-  PendingTag,
-  PendingMeasurement,
-  PersistedAnnotations,
-} from './types';
 
 // ─── Initial State ────────────────────────────────────────────────────────────
-const initialState: AnnotationState = {
+const initialState = {
   activeTool: 'select',
   scaleUnit: 'units',
   paintColour: '#ff6b35',
@@ -37,28 +25,8 @@ const initialState: AnnotationState = {
   isReadOnly: false,
 };
 
-// ─── Actions ──────────────────────────────────────────────────────────────────
-type Action =
-  | { type: 'SET_TOOL'; payload: ActiveTool }
-  | { type: 'SET_SCALE'; payload: ScaleUnit }
-  | { type: 'SET_PAINT_COLOUR'; payload: string }
-  | { type: 'ADD_TAG'; payload: Tag }
-  | { type: 'DELETE_TAG'; payload: string }
-  | { type: 'ADD_MEASUREMENT'; payload: Measurement }
-  | { type: 'DELETE_MEASUREMENT'; payload: string }
-  | { type: 'SET_COMPONENT_MARK'; payload: ComponentMark }
-  | { type: 'SET_SELECTED_MESH'; payload: string | null }
-  | { type: 'SET_MEASURE_POINT_A'; payload: [number, number, number] | null }
-  | { type: 'SET_PENDING_TAG'; payload: PendingTag | null }
-  | { type: 'SET_PENDING_MEASUREMENT'; payload: PendingMeasurement | null }
-  | { type: 'SET_INTERACTING'; payload: boolean }
-  | { type: 'CLEAR_ALL' }
-  | { type: 'TOGGLE_GRID' }
-  | { type: 'LOAD'; payload: PersistedAnnotations }
-  | { type: 'SET_READ_ONLY'; payload: boolean };
-
 // ─── Reducer ──────────────────────────────────────────────────────────────────
-function reducer(state: AnnotationState, action: Action): AnnotationState {
+function reducer(state, action) {
   if (state.isReadOnly) {
     const mutationTypes = [
       'SET_TOOL',
@@ -140,28 +108,12 @@ function reducer(state: AnnotationState, action: Action): AnnotationState {
 }
 
 // ─── Context ──────────────────────────────────────────────────────────────────
-interface AnnotationContextValue {
-  state: AnnotationState;
-  dispatch: React.Dispatch<Action>;
-  exportJSON: () => void;
-  sceneRef: React.MutableRefObject<import('three').Scene | null>;
-}
-
-const AnnotationContext = createContext<AnnotationContextValue | null>(null);
+const AnnotationContext = createContext(null);
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
-
-interface Props {
-  children: ReactNode;
-  modelUrl?: string;
-  initialAnnotations?: any[];
-  initialCameraState?: any;
-  readOnly?: boolean;
-}
-
-export function AnnotationProvider({ children, modelUrl, initialAnnotations, initialCameraState, readOnly = false }: Props) {
+export function AnnotationProvider({ children, modelUrl, initialAnnotations, initialCameraState, readOnly = false }) {
   const [state, dispatch] = useReducer(reducer, initialState);
-  const sceneRef = React.useRef<import('three').Scene | null>(null);
+  const sceneRef = React.useRef(null);
 
   useEffect(() => {
     dispatch({ type: 'SET_READ_ONLY', payload: readOnly });
@@ -170,11 +122,10 @@ export function AnnotationProvider({ children, modelUrl, initialAnnotations, ini
   // Load on mount
   useEffect(() => {
     if (initialAnnotations && initialAnnotations.length > 0) {
-      // Assuming initialAnnotations maps directly to tags for now
       dispatch({ 
         type: 'LOAD', 
         payload: { 
-          tags: initialAnnotations as any, 
+          tags: initialAnnotations, 
           measurements: [], 
           componentMarks: {}, 
           showGrid: true 
@@ -184,7 +135,7 @@ export function AnnotationProvider({ children, modelUrl, initialAnnotations, ini
   }, [initialAnnotations]);
 
   const exportJSON = useCallback(() => {
-    const data: PersistedAnnotations = {
+    const data = {
       tags: state.tags,
       measurements: state.measurements,
       componentMarks: state.componentMarks,

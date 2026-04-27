@@ -106,6 +106,7 @@ function GroupBuyCard({ gb }) {
   const maxTier = gb.tiers[gb.tiers.length - 1];
   const activeTier =
     gb.currentTierIndex >= 0 ? gb.tiers[gb.currentTierIndex] : null;
+  const has3DModel = Boolean(gb.productId?.model3D?.url);
   const displayPrice = gb.currentDiscountedPrice ?? gb.basePrice;
   const maxQty = maxTier?.minQuantity || 1;
   const pct = Math.min((gb.currentQuantity / maxQty) * 100, 100);
@@ -150,6 +151,13 @@ function GroupBuyCard({ gb }) {
           <div className="absolute top-3 right-3">
             <CountdownPill endDate={gb.endDate} />
           </div>
+          {has3DModel && (
+            <div className="absolute bottom-3 right-3">
+              <span className="px-2 py-0.5 rounded-full bg-gray-900/85 text-white text-[10px] font-semibold">
+                3D Model
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Content */}

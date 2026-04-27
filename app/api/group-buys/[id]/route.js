@@ -21,7 +21,7 @@ export async function GET(request, context) {
     const groupBuy = await GroupBuy.findById(id)
       .populate(
         "productId",
-        "name images category price specifications description moq",
+        "name images category price specifications description moq model3D",
       )
       .populate(
         "manufacturerId",

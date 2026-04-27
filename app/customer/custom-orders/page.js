@@ -153,6 +153,11 @@ export default function CustomOrdersListPage() {
                       <h3 className="text-lg font-semibold text-gray-900">
                         {order.title}
                       </h3>
+                      {order.model3D?.url && (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                          3D Model
+                        </span>
+                      )}
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
                           order.status,

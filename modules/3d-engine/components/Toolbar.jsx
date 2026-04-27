@@ -2,17 +2,16 @@
 
 import React from 'react';
 import { useAnnotations } from './AnnotationStore';
-import type { ActiveTool, ScaleUnit } from './types';
 import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 
-const TOOLS: { id: ActiveTool; icon: string; label: string }[] = [
+const TOOLS = [
   { id: 'select', icon: 'arrow_selector_tool', label: 'SELECT' },
   { id: 'tag', icon: 'label', label: 'TAG' },
   { id: 'measure', icon: 'straighten', label: 'MEASURE' },
   { id: 'paint', icon: 'colors', label: 'PAINT' },
 ];
 
-const SCALE_OPTIONS: { value: ScaleUnit; label: string }[] = [
+const SCALE_OPTIONS = [
   { value: 'units', label: 'Units' },
   { value: 'mm', label: 'mm' },
   { value: 'cm', label: 'cm' },
@@ -21,12 +20,6 @@ const SCALE_OPTIONS: { value: ScaleUnit; label: string }[] = [
   { value: 'ft', label: 'ft' },
 ];
 
-interface ToolbarProps {
-  modelUrl?: string;
-  onSave?: (gltfBlob: Blob, annotations: any[], cameraState: any) => void;
-  readOnly?: boolean;
-}
-
 const S = {
   aside: {
     width: '220px',
@@ -34,8 +27,8 @@ const S = {
     background: '#0e0e0e',
     borderRight: '1px solid rgba(255,255,255,0.06)',
     display: 'flex',
-    flexDirection: 'column' as const,
-    overflowY: 'auto' as const,
+    flexDirection: 'column',
+    overflowY: 'auto',
     padding: '16px 0',
   },
   logo: {
@@ -55,18 +48,18 @@ const S = {
     fontFamily: "'JetBrains Mono', monospace",
     fontSize: '9px',
     color: '#525252',
-    textTransform: 'uppercase' as const,
+    textTransform: 'uppercase',
     letterSpacing: '0.15em',
   },
   sectionLabel: {
     fontFamily: "'JetBrains Mono', monospace",
     fontSize: '9px',
     color: '#525252',
-    textTransform: 'uppercase' as const,
+    textTransform: 'uppercase',
     letterSpacing: '0.15em',
     padding: '12px 16px 6px',
   },
-  toolBtn: (active: boolean) => ({
+  toolBtn: (active) => ({
     display: 'flex',
     alignItems: 'center',
     gap: '10px',
@@ -81,9 +74,9 @@ const S = {
     fontSize: '10px',
     fontWeight: 700,
     letterSpacing: '0.12em',
-    textTransform: 'uppercase' as const,
+    textTransform: 'uppercase',
     transition: 'all 0.15s',
-    textAlign: 'left' as const,
+    textAlign: 'left',
   }),
   divider: {
     height: '1px',
@@ -101,7 +94,7 @@ const S = {
     fontSize: '9px',
     color: '#525252',
     letterSpacing: '0.08em',
-    textTransform: 'uppercase' as const,
+    textTransform: 'uppercase',
   },
   statValue: {
     fontFamily: "'JetBrains Mono', monospace",
@@ -122,7 +115,7 @@ const S = {
     outline: 'none',
     cursor: 'pointer',
   },
-  actionBtn: (variant: 'primary' | 'secondary' | 'danger') => ({
+  actionBtn: (variant) => ({
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
@@ -138,12 +131,12 @@ const S = {
     fontSize: '10px',
     fontWeight: 700,
     letterSpacing: '0.1em',
-    textTransform: 'uppercase' as const,
+    textTransform: 'uppercase',
     transition: 'all 0.15s',
   }),
 };
 
-export default function Toolbar({ modelUrl, onSave, readOnly }: ToolbarProps) {
+export default function Toolbar({ modelUrl, onSave, readOnly }) {
   const { state, dispatch, exportJSON, sceneRef } = useAnnotations();
 
   if (readOnly) return null;
@@ -152,13 +145,13 @@ export default function Toolbar({ modelUrl, onSave, readOnly }: ToolbarProps) {
     try {
       if (sceneRef && sceneRef.current) {
         const scene = sceneRef.current;
-        const hiddenObjects: any[] = [];
+        const hiddenObjects = [];
         scene.traverse((child) => {
           if (
             child.type === 'GridHelper' ||
             child.type.includes('Light') ||
             child.type.includes('Camera') ||
-            (child as any).isPreview
+            child.isPreview
           ) {
             if (child.visible) {
               child.visible = false;
@@ -168,21 +161,19 @@ export default function Toolbar({ modelUrl, onSave, readOnly }: ToolbarProps) {
         });
 
         const exporter = new GLTFExporter();
-        const exportData = await new Promise<ArrayBuffer | string>((resolve, reject) => {
+        const exportData = await new Promise((resolve, reject) => {
           exporter.parse(
             scene,
-            (result) => resolve(result as ArrayBuffer),
+            (result) => resolve(result),
             (error) => reject(error),
             { binary: true, onlyVisible: true }
           );
         });
         hiddenObjects.forEach(child => { child.visible = true; });
 
-        const blob = new Blob([exportData as ArrayBuffer], { type: 'model/gltf-binary' });
+        const blob = new Blob([exportData], { type: 'model/gltf-binary' });
         
-        // Fire the onSave callback with the GLTF blob, annotations, and camera state
         if (onSave) {
-          // Pass null for cameraState for now until implemented in EditorCanvas
           onSave(blob, state.tags, null);
         }
       }
@@ -263,7 +254,7 @@ export default function Toolbar({ modelUrl, onSave, readOnly }: ToolbarProps) {
         id="scaleUnitSelect"
         style={S.select}
         value={state.scaleUnit}
-        onChange={(e) => dispatch({ type: 'SET_SCALE', payload: e.target.value as ScaleUnit })}
+        onChange={(e) => dispatch({ type: 'SET_SCALE', payload: e.target.value })}
       >
         {SCALE_OPTIONS.map((opt) => (
           <option key={opt.value} value={opt.value}>{opt.label}</option>

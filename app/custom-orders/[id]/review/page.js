@@ -4,10 +4,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Script from "next/script";
 import Image from "next/image";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
+import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
 
 const customizationTypeLabelMap = CUSTOMIZATION_TYPE_OPTIONS.reduce(
   (acc, item) => {
@@ -112,260 +112,251 @@ export default function CustomOrderReview() {
   if (!customOrder) return <div className="p-6">Order not found</div>;
 
   return (
-    <>
-      <Script
-        type="module"
-        src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
-      />
+    <div className="min-h-screen bg-[#f8f7f6]">
+      <CustomerMainNavbar />
+      <div className="max-w-4xl mx-auto p-6">
+        <h1 className="text-3xl font-bold mb-6">Review Custom Order</h1>
 
-      <div className="min-h-screen bg-[#f8f7f6]">
-        <CustomerMainNavbar />
-        <div className="max-w-4xl mx-auto p-6">
-          <h1 className="text-3xl font-bold mb-6">Review Custom Order</h1>
+        <div className="bg-yellow-50 border border-yellow-200 p-4 rounded mb-6">
+          <p className="text-sm text-yellow-800">
+            Please review your custom order details carefully before proceeding.
+            These details cannot be edited after creating an RFQ.
+          </p>
+        </div>
 
-          <div className="bg-yellow-50 border border-yellow-200 p-4 rounded mb-6">
-            <p className="text-sm text-yellow-800">
-              Please review your custom order details carefully before
-              proceeding. These details cannot be edited after creating an RFQ.
-            </p>
-          </div>
+        {/* Order Details - Read Only */}
+        <div className="bg-white p-6 rounded shadow mb-6">
+          <h2 className="text-xl font-bold mb-4">Order Details</h2>
 
-          {/* Order Details - Read Only */}
-          <div className="bg-white p-6 rounded shadow mb-6">
-            <h2 className="text-xl font-bold mb-4">Order Details</h2>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">
-                  Title
-                </label>
-                <p className="text-gray-900">{customOrder.title}</p>
-              </div>
-
-              <div>
-                <label className="block font-semibold text-gray-700 mb-1">
-                  Description
-                </label>
-                <p className="text-gray-900 whitespace-pre-wrap">
-                  {customOrder.description}
-                </p>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
-                    Quantity
-                  </label>
-                  <p className="text-gray-900">{customOrder.quantity}</p>
-                </div>
-
-                {customOrder.budget && (
-                  <div>
-                    <label className="block font-semibold text-gray-700 mb-1">
-                      Budget
-                    </label>
-                    <p className="text-gray-900">${customOrder.budget}</p>
-                  </div>
-                )}
-              </div>
-
-              {customOrder.materialPreferences &&
-                customOrder.materialPreferences.length > 0 && (
-                  <div>
-                    <label className="block font-semibold text-gray-700 mb-1">
-                      Material Preferences
-                    </label>
-                    <p className="text-gray-900">
-                      {customOrder.materialPreferences.join(", ")}
-                    </p>
-                  </div>
-                )}
-
-              {customOrder.colorSpecifications &&
-                customOrder.colorSpecifications.length > 0 && (
-                  <div>
-                    <label className="block font-semibold text-gray-700 mb-1">
-                      Color Specifications
-                    </label>
-                    <p className="text-gray-900">
-                      {customOrder.colorSpecifications.join(", ")}
-                    </p>
-                  </div>
-                )}
-
-              {customOrder.deadline && (
-                <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
-                    Deadline
-                  </label>
-                  <p className="text-gray-900">
-                    {new Date(customOrder.deadline).toLocaleDateString()}
-                  </p>
-                </div>
-              )}
-
-              {customOrder.specialRequirements && (
-                <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
-                    Special Requirements
-                  </label>
-                  <p className="text-gray-900 whitespace-pre-wrap">
-                    {customOrder.specialRequirements}
-                  </p>
-                </div>
-              )}
-
-              {(customOrder.sourceProductId ||
-                customOrder.sourceManufacturerId) && (
-                <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
-                    Request Source
-                  </label>
-                  {customOrder.sourceProductId && (
-                    <p className="text-gray-900">
-                      Product:{" "}
-                      {customOrder.sourceContext?.productName ||
-                        "Linked Product"}
-                    </p>
-                  )}
-                  {customOrder.sourceManufacturerId && (
-                    <p className="text-gray-900">
-                      Manufacturer:{" "}
-                      {customOrder.sourceContext?.manufacturerName ||
-                        "Linked Manufacturer"}
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {Array.isArray(customOrder.requestedCustomizationTypes) &&
-                customOrder.requestedCustomizationTypes.length > 0 && (
-                  <div>
-                    <label className="block font-semibold text-gray-700 mb-1">
-                      Requested Customizations
-                    </label>
-                    <p className="text-gray-900">
-                      {customOrder.requestedCustomizationTypes
-                        .map((type) => customizationTypeLabelMap[type] || type)
-                        .join(", ")}
-                    </p>
-                  </div>
-                )}
-
-              {customOrder.customizationDetails && (
-                <div>
-                  <label className="block font-semibold text-gray-700 mb-1">
-                    Customization Details
-                  </label>
-                  <p className="text-gray-900 whitespace-pre-wrap">
-                    {customOrder.customizationDetails}
-                  </p>
-                </div>
-              )}
+          <div className="space-y-4">
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">
+                Title
+              </label>
+              <p className="text-gray-900">{customOrder.title}</p>
             </div>
-          </div>
 
-          {/* 3D Model */}
-          {customOrder.model3D && (
-            <div className="bg-white p-6 rounded shadow mb-6">
-              <h2 className="text-xl font-bold mb-4">3D Model</h2>
-              <model-viewer
-                src={customOrder.model3D.url}
-                alt="3D Model"
-                auto-rotate
-                camera-controls
-                className="w-full h-96 bg-gray-100 rounded"
-              />
-              <p className="text-sm text-gray-600 mt-2">
-                File: {customOrder.model3D.filename}
+            <div>
+              <label className="block font-semibold text-gray-700 mb-1">
+                Description
+              </label>
+              <p className="text-gray-900 whitespace-pre-wrap">
+                {customOrder.description}
               </p>
             </div>
-          )}
 
-          {/* Images */}
-          {customOrder.images && customOrder.images.length > 0 && (
-            <div className="bg-white p-6 rounded shadow mb-6">
-              <h2 className="text-xl font-bold mb-4">Images</h2>
-              <div className="grid grid-cols-3 gap-4">
-                {customOrder.images.map((img, idx) => (
-                  <div
-                    key={idx}
-                    className="relative h-48 rounded overflow-hidden"
-                  >
-                    <Image
-                      src={img.url}
-                      alt={`Image ${idx + 1}`}
-                      fill
-                      className="object-cover"
-                      sizes="33vw"
-                    />
-                  </div>
-                ))}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">
+                  Quantity
+                </label>
+                <p className="text-gray-900">{customOrder.quantity}</p>
               </div>
-            </div>
-          )}
 
-          {/* Action Buttons */}
-          <div className="space-y-4">
-            {/* Primary Actions */}
-            <div className="flex gap-4">
-              <button
-                onClick={handleEdit}
-                className="px-6 py-3 bg-gray-500 text-white rounded hover:bg-gray-600"
-              >
-                Edit Order
-              </button>
-
-              {customOrder.rfqId ? (
-                <button
-                  onClick={handleViewRFQ}
-                  className="flex-1 px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700"
-                >
-                  View RFQ Details
-                </button>
-              ) : (
-                <button
-                  onClick={handleCreateRFQ}
-                  className="flex-1 px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
-                >
-                  Create RFQ (Auction)
-                </button>
+              {customOrder.budget && (
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Budget
+                  </label>
+                  <p className="text-gray-900">${customOrder.budget}</p>
+                </div>
               )}
             </div>
 
-            {/* Secondary Actions */}
-            <div className="flex gap-4">
-              <button
-                onClick={handleBackToDashboard}
-                className="flex-1 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
-              >
-                Back to Dashboard
-              </button>
-              <button
-                onClick={handleBackToList}
-                className="flex-1 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
-              >
-                View All Custom Orders
-              </button>
-              {customOrder.status === "submitted" && (
-                <button
-                  onClick={handleSaveAsDraft}
-                  className="flex-1 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
-                >
-                  Revert to Draft
-                </button>
+            {customOrder.materialPreferences &&
+              customOrder.materialPreferences.length > 0 && (
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Material Preferences
+                  </label>
+                  <p className="text-gray-900">
+                    {customOrder.materialPreferences.join(", ")}
+                  </p>
+                </div>
               )}
+
+            {customOrder.colorSpecifications &&
+              customOrder.colorSpecifications.length > 0 && (
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Color Specifications
+                  </label>
+                  <p className="text-gray-900">
+                    {customOrder.colorSpecifications.join(", ")}
+                  </p>
+                </div>
+              )}
+
+            {customOrder.deadline && (
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">
+                  Deadline
+                </label>
+                <p className="text-gray-900">
+                  {new Date(customOrder.deadline).toLocaleDateString()}
+                </p>
+              </div>
+            )}
+
+            {customOrder.specialRequirements && (
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">
+                  Special Requirements
+                </label>
+                <p className="text-gray-900 whitespace-pre-wrap">
+                  {customOrder.specialRequirements}
+                </p>
+              </div>
+            )}
+
+            {(customOrder.sourceProductId ||
+              customOrder.sourceManufacturerId) && (
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">
+                  Request Source
+                </label>
+                {customOrder.sourceProductId && (
+                  <p className="text-gray-900">
+                    Product:{" "}
+                    {customOrder.sourceContext?.productName || "Linked Product"}
+                  </p>
+                )}
+                {customOrder.sourceManufacturerId && (
+                  <p className="text-gray-900">
+                    Manufacturer:{" "}
+                    {customOrder.sourceContext?.manufacturerName ||
+                      "Linked Manufacturer"}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {Array.isArray(customOrder.requestedCustomizationTypes) &&
+              customOrder.requestedCustomizationTypes.length > 0 && (
+                <div>
+                  <label className="block font-semibold text-gray-700 mb-1">
+                    Requested Customizations
+                  </label>
+                  <p className="text-gray-900">
+                    {customOrder.requestedCustomizationTypes
+                      .map((type) => customizationTypeLabelMap[type] || type)
+                      .join(", ")}
+                  </p>
+                </div>
+              )}
+
+            {customOrder.customizationDetails && (
+              <div>
+                <label className="block font-semibold text-gray-700 mb-1">
+                  Customization Details
+                </label>
+                <p className="text-gray-900 whitespace-pre-wrap">
+                  {customOrder.customizationDetails}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* 3D Model */}
+        {customOrder.model3D && (
+          <div className="bg-white p-6 rounded shadow mb-6">
+            <h2 className="text-xl font-bold mb-4">3D Model</h2>
+            <Editor3DWrapper
+              modelUrl={customOrder.model3D.url}
+              initialAnnotations={customOrder.model3D.annotations}
+              initialCameraState={customOrder.model3D.cameraState}
+              readOnly={true}
+            />
+            <p className="text-sm text-gray-600 mt-2">
+              File: {customOrder.model3D.filename}
+            </p>
+          </div>
+        )}
+
+        {/* Images */}
+        {customOrder.images && customOrder.images.length > 0 && (
+          <div className="bg-white p-6 rounded shadow mb-6">
+            <h2 className="text-xl font-bold mb-4">Images</h2>
+            <div className="grid grid-cols-3 gap-4">
+              {customOrder.images.map((img, idx) => (
+                <div
+                  key={idx}
+                  className="relative h-48 rounded overflow-hidden"
+                >
+                  <Image
+                    src={img.url}
+                    alt={`Image ${idx + 1}`}
+                    fill
+                    className="object-cover"
+                    sizes="33vw"
+                  />
+                </div>
+              ))}
             </div>
           </div>
+        )}
 
-          {!customOrder.rfqId && customOrder.sourceManufacturerId && (
-            <p className="text-sm text-gray-600 mt-4">
-              This request is linked to a manufacturer and will default to a
-              direct RFQ when you proceed.
-            </p>
-          )}
+        {/* Action Buttons */}
+        <div className="space-y-4">
+          {/* Primary Actions */}
+          <div className="flex gap-4">
+            <button
+              onClick={handleEdit}
+              className="px-6 py-3 bg-gray-500 text-white rounded hover:bg-gray-600"
+            >
+              Edit Order
+            </button>
+
+            {customOrder.rfqId ? (
+              <button
+                onClick={handleViewRFQ}
+                className="flex-1 px-6 py-3 bg-green-600 text-white rounded hover:bg-green-700"
+              >
+                View RFQ Details
+              </button>
+            ) : (
+              <button
+                onClick={handleCreateRFQ}
+                className="flex-1 px-6 py-3 bg-blue-600 text-white rounded hover:bg-blue-700"
+              >
+                Create RFQ (Auction)
+              </button>
+            )}
+          </div>
+
+          {/* Secondary Actions */}
+          <div className="flex gap-4">
+            <button
+              onClick={handleBackToDashboard}
+              className="flex-1 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+            >
+              Back to Dashboard
+            </button>
+            <button
+              onClick={handleBackToList}
+              className="flex-1 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+            >
+              View All Custom Orders
+            </button>
+            {customOrder.status === "submitted" && (
+              <button
+                onClick={handleSaveAsDraft}
+                className="flex-1 px-6 py-2 bg-white border border-gray-300 text-gray-700 rounded hover:bg-gray-50"
+              >
+                Revert to Draft
+              </button>
+            )}
+          </div>
         </div>
+
+        {!customOrder.rfqId && customOrder.sourceManufacturerId && (
+          <p className="text-sm text-gray-600 mt-4">
+            This request is linked to a manufacturer and will default to a
+            direct RFQ when you proceed.
+          </p>
+        )}
       </div>
-    </>
+    </div>
   );
 }

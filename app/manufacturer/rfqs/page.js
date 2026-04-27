@@ -267,6 +267,13 @@ export default function ManufacturerRFQsPage() {
                     key={rfq._id}
                     className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition p-5"
                   >
+                    {rfq.customOrderId?.model3D?.url && (
+                      <div className="mb-3">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                          3D Model Available
+                        </span>
+                      </div>
+                    )}
                     <div className="flex justify-between items-start mb-3">
                       <div>
                         <h3 className="text-base font-bold text-blue-900">
@@ -374,6 +381,13 @@ export default function ManufacturerRFQsPage() {
                     key={rfq._id}
                     className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition p-5"
                   >
+                    {rfq.customOrderId?.model3D?.url && (
+                      <div className="mb-3">
+                        <span className="inline-flex items-center px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                          3D Model Available
+                        </span>
+                      </div>
+                    )}
                     <div className="flex flex-col md:flex-row gap-5">
                       {rfq.customOrderId?.images?.[0]?.url && (
                         <div className="relative w-full md:w-40 h-40 shrink-0 rounded-lg overflow-hidden">

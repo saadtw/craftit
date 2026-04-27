@@ -19,7 +19,13 @@ export async function GET(request, context) {
 
     await connectDB();
 
-    const rfq = await RFQ.findById(id).select("customerId").lean();
+    const rfq = await RFQ.findById(id)
+      .populate({
+        path: "customOrderId",
+        select: "title description model3D images",
+      })
+      .select("customerId rfqNumber customOrderId")
+      .lean();
     if (!rfq) {
       return NextResponse.json({ error: "RFQ not found" }, { status: 404 });
     }
@@ -42,6 +48,7 @@ export async function GET(request, context) {
 
     return NextResponse.json({
       success: true,
+      rfq,
       bids,
       analysis: result.analysis,
     });

@@ -164,6 +164,11 @@ export default function CustomerRFQsListPage() {
                       <h3 className="text-lg font-semibold text-gray-900">
                         {rfq.customOrderId?.title || "RFQ"}
                       </h3>
+                      {rfq.customOrderId?.model3D?.url && (
+                        <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                          3D Model
+                        </span>
+                      )}
                       <span
                         className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
                           rfq.status,

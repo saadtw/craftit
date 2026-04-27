@@ -2,7 +2,7 @@
 
 CraftIt is a full-stack B2B web platform that connects **buyers** who need custom manufactured parts and products with **manufacturers** who can fulfil those orders. The platform handles the full order lifecycle — from discovery and quotation through production, delivery, payment, and post-order feedback.
 
-> Final Year Project (FYP) — built with Next.js, MongoDB, and Tailwind CSS.
+> Project — built with Next.js, MongoDB, and Tailwind CSS.
 
 ---
 
@@ -71,33 +71,62 @@ npm install
 
 ## Environment Variables
 
-Create a `.env.local` file in the project root. This file is never committed.
+Create a `.env.local` file in the project root (never committed). A ready-to-use example is provided in `.env.example`.
+
+The project reads environment variables at runtime. Below is a consolidated list of variables used across the codebase and recommended example values.
 
 ```env
-# Database
-MONGODB_URI=mongodb://localhost:27017/craftit_local
-
-# NextAuth
+# App / NextAuth
 NEXTAUTH_URL=http://localhost:3000
-NEXTAUTH_SECRET=your-long-random-secret-here
+NEXTAUTH_SECRET=your-nextauth-secret
+APP_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 
-# AWS S3 (file uploads)
+# Database
+MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.mongodb.net/craftit?retryWrites=true&w=majority
+
+# OAuth providers
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+FACEBOOK_CLIENT_ID=your-facebook-client-id
+FACEBOOK_CLIENT_SECRET=your-facebook-client-secret
+
+# Stripe
+STRIPE_SECRET_KEY=sk_test_...                # server secret
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_... # client publishable
+STRIPE_WEBHOOK_SECRET=whsec_...               # optional (webhooks)
+
+# AWS / S3 (file uploads)
 AWS_ACCESS_KEY_ID=your-access-key-id
 AWS_SECRET_ACCESS_KEY=your-secret-access-key
 AWS_REGION=us-east-1
-AWS_S3_BUCKET_NAME=your-s3-bucket-name
+AWS_BUCKET_NAME=your-s3-bucket-name
+# NOTE: `AWS_BUCKET_NAME` is referenced in server code. `AWS_S3_BUCKET_NAME` was previously shown in docs — prefer `AWS_BUCKET_NAME`.
 
-# Stripe — optional
-STRIPE_SECRET_KEY=sk_test_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
-STRIPE_WEBHOOK_SECRET=whsec_...
+# Email (Resend)
+RESEND_API_KEY=your-resend-api-key
+RESEND_FROM_EMAIL="Craftit <no-reply@example.com>"
+EMAIL_TIMEOUT_MS=10000
+EMAIL_MAX_ATTEMPTS=3
+EMAIL_RETRY_BASE_MS=300
+
+# Mobile / API tokens
+MOBILE_ACCESS_TOKEN_TTL=15m
+MOBILE_REFRESH_TOKEN_TTL_DAYS=30
+MOBILE_JWT_SECRET=your-mobile-jwt-secret
+
+# Misc
+NODE_ENV=development
 ```
 
-**Notes:**
+Notes:
 
-- Generate `NEXTAUTH_SECRET` with: `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"`
-- File uploads will fail without AWS vars, but everything else works normally
-- Stripe is fully optional — orders and payments work in a demo mode without it
+- Use `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` to generate a strong `NEXTAUTH_SECRET`.
+- The app will attempt to read `AWS_BUCKET_NAME` for uploads; if you previously used `AWS_S3_BUCKET_NAME`, keep an alias in your environment for compatibility.
+- Public client keys (prefixed with `NEXT_PUBLIC_`) are safe to expose in the browser; server secrets must be kept private.
+- For local development, create `.env.local` and copy values from `.env.example`.
+
+See `.env.example` for a ready template and `CHANGES_SINCE_IRTAZA.md` for recent repository changes.
 
 ---
 

@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
+import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
 
 export default function EditCustomOrder() {
   const router = useRouter();
@@ -27,6 +28,8 @@ export default function EditCustomOrder() {
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [baseModelUrl, setBaseModelUrl] = useState("");
 
   const fetchCustomOrder = useCallback(async () => {
     try {
@@ -46,6 +49,7 @@ export default function EditCustomOrder() {
           budget: order.budget || "",
         });
         setModel3D(order.model3D);
+        setBaseModelUrl(order.model3D?.url || "");
         setImages(order.images || []);
       } else {
         alert("Error loading order: " + (data.error || "Unknown error"));
@@ -110,12 +114,50 @@ export default function EditCustomOrder() {
       const data = await response.json();
 
       if (data.success) {
-        setModel3D(data.file);
+        setBaseModelUrl(data.file.url);
+        setIsEditorOpen(true);
       } else {
         alert("Upload failed: " + data.error);
       }
     } catch (error) {
       alert("Upload error: " + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleEditorSave = async (gltfBlob, annotations, cameraState) => {
+    setUploading(true);
+    try {
+      const file = new File([gltfBlob], "annotated-model.glb", {
+        type: "model/gltf-binary",
+      });
+      const uploadData = new FormData();
+      uploadData.append("file", file);
+      uploadData.append("type", "3d-model");
+
+      const response = await fetch("/api/upload", {
+        method: "POST",
+        body: uploadData,
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        const nextModel = {
+          url: data.file.url,
+          filename: file.name,
+          fileSize: file.size,
+          annotations,
+          cameraState,
+        };
+        setModel3D(nextModel);
+        setBaseModelUrl(nextModel.url);
+        setIsEditorOpen(false);
+      } else {
+        alert("Save failed: " + data.error);
+      }
+    } catch (error) {
+      alert("Save error: " + error.message);
     } finally {
       setUploading(false);
     }
@@ -299,15 +341,49 @@ export default function EditCustomOrder() {
 
           <div className="mb-4">
             <label className="block mb-2 font-semibold">Upload 3D Model</label>
-            <input
-              type="file"
-              accept=".stl,.obj,.gltf,.glb"
-              onChange={handle3DUpload}
-              className="w-full border p-2 rounded"
-            />
-            {model3D && (
-              <div className="mt-2 p-2 bg-green-100 rounded">
-                ✓ {model3D.filename} uploaded
+            {!isEditorOpen && (
+              <>
+                <input
+                  type="file"
+                  accept=".stl,.obj,.gltf,.glb"
+                  onChange={handle3DUpload}
+                  className="w-full border p-2 rounded"
+                />
+                {model3D && (
+                  <div className="mt-2 p-3 bg-green-100 rounded flex items-center justify-between gap-3">
+                    <span className="text-sm">✓ {model3D.filename} ready</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setBaseModelUrl(model3D.url);
+                        setIsEditorOpen(true);
+                      }}
+                      className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded hover:bg-blue-700"
+                    >
+                      Open 3D Editor
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {isEditorOpen && baseModelUrl && (
+              <div className="mt-4 border rounded p-2">
+                <Editor3DWrapper
+                  modelUrl={baseModelUrl}
+                  initialAnnotations={model3D?.annotations}
+                  initialCameraState={model3D?.cameraState}
+                  onSave={handleEditorSave}
+                />
+                <div className="mt-2 flex justify-end">
+                  <button
+                    type="button"
+                    onClick={() => setIsEditorOpen(false)}
+                    className="px-3 py-1.5 bg-gray-200 text-gray-700 text-xs rounded hover:bg-gray-300"
+                  >
+                    Close Editor
+                  </button>
+                </div>
               </div>
             )}
           </div>

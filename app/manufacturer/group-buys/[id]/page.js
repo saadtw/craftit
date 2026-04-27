@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import Editor3DWrapper from "../../../../modules/components/Editor3DWrapper";
 
 const STATUS_STYLES = {
   active: "bg-emerald-100 text-emerald-700",
@@ -148,6 +149,7 @@ export default function GroupBuyDetailPage() {
       ? groupBuy.tiers[groupBuy.currentTierIndex]
       : null;
   const nextTier = groupBuy.tiers[groupBuy.currentTierIndex + 1] || null;
+  const hasProductModel3D = Boolean(product?.model3D?.url);
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -297,9 +299,16 @@ export default function GroupBuyDetailPage() {
                   <p className="font-semibold text-slate-900">
                     {product?.name}
                   </p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {product?.category}
-                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-xs text-slate-500">
+                      {product?.category}
+                    </p>
+                    {hasProductModel3D && (
+                      <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-slate-900 text-white">
+                        3D Model
+                      </span>
+                    )}
+                  </div>
                   <Link
                     href={`/manufacturer/products/${product?._id}`}
                     className="text-xs text-slate-400 underline hover:text-slate-600 mt-1 inline-block"
@@ -312,6 +321,20 @@ export default function GroupBuyDetailPage() {
                 <p className="text-sm text-slate-600 mt-4 pt-4 border-t border-slate-100">
                   {groupBuy.description}
                 </p>
+              )}
+              {hasProductModel3D && (
+                <div className="mt-4 pt-4 border-t border-slate-100">
+                  <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">
+                    Product 3D Preview
+                  </h4>
+                  <Editor3DWrapper
+                    modelUrl={product.model3D.url}
+                    initialAnnotations={product.model3D.annotations || []}
+                    initialCameraState={product.model3D.cameraState || null}
+                    readOnly={true}
+                    onSave={() => {}}
+                  />
+                </div>
               )}
             </div>
 

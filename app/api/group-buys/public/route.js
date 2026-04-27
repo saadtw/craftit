@@ -50,7 +50,7 @@ export async function GET(request) {
     let groupBuys = await GroupBuy.find(query)
       .populate({
         path: "productId",
-        select: "name images category price",
+        select: "name images category price model3D",
       })
       .populate({
         path: "manufacturerId",

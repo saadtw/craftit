@@ -277,6 +277,12 @@ export default function CustomerOrdersPage() {
 function CustomerOrderCard({ order, onRefresh }) {
   const router = useRouter();
   const [cancelling, setCancelling] = useState(false);
+  const has3DModel = Boolean(
+    order?.productDetails?.model3D?.url ||
+    order?.productId?.model3D?.url ||
+    order?.rfqId?.customOrderId?.model3D?.url ||
+    order?.groupBuyId?.productId?.model3D?.url,
+  );
 
   const handleCancel = async () => {
     if (!confirm("Are you sure you want to cancel this order?")) return;
@@ -324,6 +330,11 @@ function CustomerOrderCard({ order, onRefresh }) {
                 <span className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-600">
                   {TYPE_LABELS[order.orderType] || order.orderType}
                 </span>
+                {has3DModel && (
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                    3D Model
+                  </span>
+                )}
               </div>
               <h3 className="text-base font-semibold text-gray-900">
                 {order.productDetails?.name || "Custom Order"}

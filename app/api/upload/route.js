@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { resolveRequestSession } from "@/lib/requestAuth";
+import { exec } from "child_process";
+import { promisify } from "util";
 import fs from "fs/promises";
 import path from "path";
 import os from "os";
-import util from "util";
 
-const execPromise = util.promisify(require("child_process").exec);
+const execPromise = promisify(exec);
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,

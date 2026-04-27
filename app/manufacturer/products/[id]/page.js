@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
 
 const STATUS_STYLES = {
   active: "bg-emerald-100 text-emerald-700",
@@ -409,25 +410,16 @@ export default function ProductDetailPage() {
                   </span>
                   3D Model Available
                 </h3>
-                <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
-                  <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
-                    <svg
-                      className="w-5 h-5 text-slate-500"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                      />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-slate-900">
-                      {product.model3D.filename}
+                <Editor3DWrapper
+                  modelUrl={product.model3D.url}
+                  initialAnnotations={product.model3D.annotations}
+                  initialCameraState={product.model3D.cameraState}
+                  readOnly={true}
+                />
+                <div className="mt-3 flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-slate-900 truncate">
+                      {product.model3D.filename || "3D Model"}
                     </p>
                     {product.model3D.fileSize && (
                       <p className="text-xs text-slate-400">

@@ -378,6 +378,12 @@ export default function ManufacturerOrdersPage() {
 function OrderCard({ order, onRefresh }) {
   const [accepting, setAccepting] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const has3DModel = Boolean(
+    order?.productDetails?.model3D?.url ||
+    order?.productId?.model3D?.url ||
+    order?.rfqId?.customOrderId?.model3D?.url ||
+    order?.groupBuyId?.productId?.model3D?.url,
+  );
 
   const handleQuickAccept = async () => {
     setAccepting(true);
@@ -475,6 +481,11 @@ function OrderCard({ order, onRefresh }) {
                 <span className="shrink-0 px-2 py-0.5 text-xs font-medium rounded-full bg-slate-100 text-slate-500">
                   {TYPE_LABELS[order.orderType] || order.orderType}
                 </span>
+                {has3DModel && (
+                  <span className="shrink-0 px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    3D Model
+                  </span>
+                )}
               </div>
               <p className="text-xs text-slate-400 mt-0.5 font-mono">
                 {order.orderNumber}

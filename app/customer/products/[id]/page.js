@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchWithCache } from "@/lib/clientCache";
+import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
 
 export default function CustomerProductDetailPage() {
   const { id } = useParams();
@@ -494,14 +495,23 @@ export default function CustomerProductDetailPage() {
                 </div>
               )}
 
-              {/* 3D Model */}
+              {/* 3D Model Viewer */}
               {product.model3D?.url && (
                 <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3">
+                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <span className="px-1.5 py-0.5 bg-slate-900 text-white text-xs rounded font-medium">
+                      3D
+                    </span>
                     3D Model
                   </h3>
-                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <span className="material-symbols-outlined text-2xl text-blue-500">
+                  <Editor3DWrapper
+                    modelUrl={product.model3D.url}
+                    initialAnnotations={product.model3D.annotations}
+                    initialCameraState={product.model3D.cameraState}
+                    readOnly={true}
+                  />
+                  <div className="flex items-center gap-3 mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                    <span className="material-symbols-outlined text-xl text-blue-500">
                       view_in_ar
                     </span>
                     <div className="flex-1 min-w-0">
@@ -521,7 +531,7 @@ export default function CustomerProductDetailPage() {
                       rel="noopener noreferrer"
                       className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100"
                     >
-                      View
+                      Download
                     </a>
                   </div>
                 </div>
@@ -808,6 +818,11 @@ function ProductMiniCard({ product, isWishlisted, onToggleWishlist }) {
   return (
     <div className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-[#eb9728]/60 hover:shadow-md transition-all">
       <div className="aspect-square bg-gray-50 relative">
+        {product.model3D?.url && (
+          <span className="absolute bottom-2 left-2 z-10 px-1.5 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded tracking-wide">
+            3D
+          </span>
+        )}
         <button
           type="button"
           onClick={() => onToggleWishlist?.(product._id?.toString())}

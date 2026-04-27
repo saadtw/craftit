@@ -67,7 +67,14 @@ export const bidService = {
     }
 
     const bids = await Bid.find(query)
-      .populate("rfqId")
+      .populate({
+        path: "rfqId",
+        populate: {
+          path: "customOrderId",
+          select:
+            "title description quantity materialPreferences deadline images model3D",
+        },
+      })
       .sort({ createdAt: -1 })
       .limit(filters.limit || 50);
 

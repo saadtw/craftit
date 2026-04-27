@@ -4,9 +4,15 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
+import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
 import Editor3DWrapper from "../../../modules/components/Editor3DWrapper";
 
-export default function NewCustomOrder() {
+function formatCurrency(value) {
+  if (!value) return "-";
+  return `$${Number(value).toLocaleString()}`;
+}
+
+function NewCustomOrderContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
@@ -46,6 +52,159 @@ export default function NewCustomOrder() {
   const [loading, setLoading] = useState(false);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [baseModelUrl, setBaseModelUrl] = useState("");
+
+  const customizationChoices = useMemo(() => {
+    const allowed = sourceContext.allowedCustomizationTypes;
+
+    if (
+      sourceContext.sourceType === "product_customization" &&
+      Array.isArray(allowed) &&
+      allowed.length > 0
+    ) {
+      return CUSTOMIZATION_TYPE_OPTIONS.filter((type) =>
+        allowed.includes(type.id),
+      );
+    }
+
+    return CUSTOMIZATION_TYPE_OPTIONS;
+  }, [sourceContext.allowedCustomizationTypes, sourceContext.sourceType]);
+
+  const loadSourceContext = useCallback(async () => {
+    if (!productIdParam && !manufacturerIdParam) {
+      setSourceContext((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: "",
+      }));
+      return;
+    }
+
+    setSourceContext((prev) => ({
+      ...prev,
+      isLoading: true,
+      error: "",
+    }));
+
+    try {
+      if (productIdParam) {
+        const productRes = await fetch(
+          `/api/products/${productIdParam}/public`,
+          {
+            cache: "no-store",
+          },
+        );
+        const productData = await productRes.json();
+
+        if (!productRes.ok || !productData.success || !productData.product) {
+          throw new Error(
+            productData.error || "Unable to load selected product",
+          );
+        }
+
+        const product = productData.product;
+        const productManufacturer = product.manufacturerId || null;
+        const productManufacturerId = productManufacturer?._id || "";
+
+        if (!product.customizationOptions) {
+          throw new Error(
+            "This product does not currently support customization requests.",
+          );
+        }
+
+        if (
+          manufacturerIdParam &&
+          productManufacturerId &&
+          manufacturerIdParam !== String(productManufacturerId)
+        ) {
+          throw new Error(
+            "Selected manufacturer does not match the selected product.",
+          );
+        }
+
+        const allowedTypes =
+          product.customizationCapabilities?.allowedTypes || [];
+        const minCustomizationQuantity =
+          product.customizationCapabilities?.minCustomizationQuantity ||
+          product.moq ||
+          null;
+
+        setSourceContext({
+          isLoading: false,
+          error: "",
+          sourceType: "product_customization",
+          sourceProductId: product._id,
+          sourceManufacturerId: String(productManufacturerId || ""),
+          product,
+          manufacturer: productManufacturer,
+          allowedCustomizationTypes: allowedTypes,
+          minCustomizationQuantity,
+          capabilityNotes: product.customizationCapabilities?.notes || "",
+        });
+
+        setFormData((prev) => ({
+          ...prev,
+          title: prev.title || `${product.name} Customization Request`,
+          quantity:
+            minCustomizationQuantity &&
+            Number(prev.quantity) < minCustomizationQuantity
+              ? minCustomizationQuantity
+              : prev.quantity,
+        }));
+
+        return;
+      }
+
+      if (manufacturerIdParam) {
+        const manufacturerRes = await fetch(
+          `/api/manufacturers/${manufacturerIdParam}`,
+          { cache: "no-store" },
+        );
+        const manufacturerData = await manufacturerRes.json();
+
+        if (
+          !manufacturerRes.ok ||
+          !manufacturerData.success ||
+          !manufacturerData.manufacturer
+        ) {
+          throw new Error(
+            manufacturerData.error || "Unable to load selected manufacturer",
+          );
+        }
+
+        setSourceContext({
+          isLoading: false,
+          error: "",
+          sourceType: "manufacturer_direct",
+          sourceProductId: "",
+          sourceManufacturerId: String(manufacturerData.manufacturer._id),
+          product: null,
+          manufacturer: manufacturerData.manufacturer,
+          allowedCustomizationTypes: [],
+          minCustomizationQuantity: null,
+          capabilityNotes: "",
+        });
+
+        setFormData((prev) => ({
+          ...prev,
+          title:
+            prev.title ||
+            `${manufacturerData.manufacturer.businessName || manufacturerData.manufacturer.name} Custom Request`,
+        }));
+      }
+    } catch (error) {
+      setSourceContext((prev) => ({
+        ...prev,
+        isLoading: false,
+        error: error.message || "Failed to load source context",
+      }));
+    }
+  }, [manufacturerIdParam, productIdParam]);
+
+  useEffect(() => {
+    if (status === "authenticated" && session?.user?.role === "customer") {
+      loadSourceContext();
+    }
+  }, [loadSourceContext, session?.user?.role, status]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;

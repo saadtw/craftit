@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
+import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
 
 function StatusBadge({ status }) {
   const styles = {
@@ -414,6 +415,7 @@ export default function BidDetailsPage() {
   const canWithdraw =
     isManufacturer && bid.status !== "accepted" && bid.status !== "withdrawn";
   const canAccept = isCustomer && bidOpen && rfqActive;
+  const bidModel3D = bid.rfqId?.customOrderId?.model3D || null;
 
   return (
     <div className="min-h-screen bg-linear-to-br from-slate-50 via-white to-blue-50/30">
@@ -777,6 +779,40 @@ export default function BidDetailsPage() {
             )}
           </div>
         </div>
+
+        {bidModel3D?.url && (
+          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
+              <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                <span className="px-1.5 py-0.5 bg-slate-900 text-white text-xs rounded font-medium">
+                  3D
+                </span>
+                Custom Order 3D Model
+              </h2>
+            </div>
+            <div className="p-6">
+              <Editor3DWrapper
+                modelUrl={bidModel3D.url}
+                initialAnnotations={bidModel3D.annotations}
+                initialCameraState={bidModel3D.cameraState}
+                readOnly={true}
+              />
+              <div className="mt-3 flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
+                <p className="text-sm text-gray-700 truncate">
+                  {bidModel3D.filename || "Attached 3D model"}
+                </p>
+                <a
+                  href={bidModel3D.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100"
+                >
+                  Download
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Chat */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
