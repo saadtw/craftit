@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchWithCache } from "@/lib/clientCache";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelManager from "@/modules/components/ModelManager";
 
 export default function CustomerProductDetailPage() {
   const { id } = useParams();
@@ -504,11 +504,11 @@ export default function CustomerProductDetailPage() {
                     </span>
                     3D Model
                   </h3>
-                  <Editor3DWrapper
-                    modelUrl={product.model3D.url}
-                    initialAnnotations={product.model3D.annotations}
-                    initialCameraState={product.model3D.cameraState}
-                    readOnly={true}
+                  <ModelManager
+                    model3D={product.model3D}
+                    resourceId={product._id}
+                    resourceType="product"
+                    canEdit={false}
                   />
                   <div className="flex items-center gap-3 mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <span className="material-symbols-outlined text-xl text-blue-500">

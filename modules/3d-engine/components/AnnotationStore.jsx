@@ -25,8 +25,16 @@ const initialState = {
   isReadOnly: false,
 };
 
+// ─── History-tracked action types ─────────────────────────────────────────────
+// Only these action types create a history entry (undo point).
+const HISTORY_ACTIONS = new Set([
+  'ADD_TAG', 'DELETE_TAG',
+  'ADD_MEASUREMENT', 'DELETE_MEASUREMENT',
+  'SET_COMPONENT_MARK', 'CLEAR_ALL',
+]);
+
 // ─── Reducer ──────────────────────────────────────────────────────────────────
-function reducer(state, action) {
+function coreReducer(state, action) {
   if (state.isReadOnly) {
     const mutationTypes = [
       'SET_TOOL',
@@ -107,12 +115,72 @@ function reducer(state, action) {
   }
 }
 
+// ─── History-aware wrapper reducer ────────────────────────────────────────────
+// Wraps coreReducer. Tracks a past[] stack of annotation snapshots.
+// UNDO pops the last snapshot; REDO pushes current onto the future stack.
+const SNAPSHOT_KEYS = ['tags', 'measurements', 'componentMarks'];
+
+function snapshot(state) {
+  return Object.fromEntries(SNAPSHOT_KEYS.map((k) => [k, state[k]]));
+}
+
+function reducer(withHistory, action) {
+  const { past, present, future } = withHistory;
+
+  if (action.type === 'UNDO') {
+    if (past.length === 0) return withHistory;
+    const previous = past[past.length - 1];
+    const newPast = past.slice(0, -1);
+    return {
+      past: newPast,
+      present: { ...present, ...previous },
+      future: [snapshot(present), ...future],
+    };
+  }
+
+  if (action.type === 'REDO') {
+    if (future.length === 0) return withHistory;
+    const next = future[0];
+    const newFuture = future.slice(1);
+    return {
+      past: [...past, snapshot(present)],
+      present: { ...present, ...next },
+      future: newFuture,
+    };
+  }
+
+  const newPresent = coreReducer(present, action);
+  if (newPresent === present) return withHistory; // no change
+
+  if (HISTORY_ACTIONS.has(action.type)) {
+    return {
+      past: [...past, snapshot(present)],
+      present: newPresent,
+      future: [], // clear redo stack on new action
+    };
+  }
+
+  return { past, present: newPresent, future };
+}
+
+
 // ─── Context ──────────────────────────────────────────────────────────────────
 const AnnotationContext = createContext(null);
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
 export function AnnotationProvider({ children, modelUrl, initialAnnotations, initialCameraState, readOnly = false }) {
-  const [state, dispatch] = useReducer(reducer, initialState);
+  // history shape: { past: Snapshot[], present: State, future: Snapshot[] }
+  const [history, dispatch] = useReducer(reducer, {
+    past: [],
+    present: initialState,
+    future: [],
+  });
+
+  // All consumers see `state` — they never need to know about past/future
+  const state = history.present;
+  const canUndo = history.past.length > 0;
+  const canRedo = history.future.length > 0;
+
   const sceneRef = React.useRef(null);
 
   useEffect(() => {
@@ -151,11 +219,12 @@ export function AnnotationProvider({ children, modelUrl, initialAnnotations, ini
   }, [state]);
 
   return (
-    <AnnotationContext.Provider value={{ state, dispatch, exportJSON, sceneRef }}>
+    <AnnotationContext.Provider value={{ state, dispatch, exportJSON, sceneRef, canUndo, canRedo }}>
       {children}
     </AnnotationContext.Provider>
   );
 }
+
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
 export function useAnnotations() {

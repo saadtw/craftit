@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelManager from "@/modules/components/ModelManager";
 
 const STATUS_STYLES = {
   active: "bg-emerald-100 text-emerald-700",
@@ -410,11 +410,11 @@ export default function ProductDetailPage() {
                   </span>
                   3D Model Available
                 </h3>
-                <Editor3DWrapper
-                  modelUrl={product.model3D.url}
-                  initialAnnotations={product.model3D.annotations}
-                  initialCameraState={product.model3D.cameraState}
-                  readOnly={true}
+                <ModelManager
+                  model3D={product.model3D}
+                  resourceId={product._id}
+                  resourceType="product"
+                  canEdit={true}
                 />
                 <div className="mt-3 flex items-center gap-3 p-4 bg-slate-50 rounded-xl">
                   <div className="flex-1 min-w-0">

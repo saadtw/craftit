@@ -233,21 +233,31 @@ export default function EditorCanvas({ modelUrl }) {
     };
     animate();
 
-    // ─── Resize Handler ───
-    const onResize = () => {
-      if (!containerRef.current) return;
-      const w = container.clientWidth;
-      const h = container.clientHeight;
-      camera.aspect = w / h;
-      camera.updateProjectionMatrix();
-      renderer.setSize(w, h);
-    };
-    window.addEventListener('resize', onResize);
+    // ─── Resize Handler (ResizeObserver) ───────────────────────────────────
+    // window.addEventListener('resize') is NOT sufficient here because:
+    //   1. It doesn't fire when the flex layout first settles after mount,
+    //      meaning the renderer is permanently initialised at the wrong size.
+    //   2. It doesn't fire when the Toolbar (a flex sibling) resizes the canvas
+    //      container without changing the window dimensions.
+    // ResizeObserver fires on the container element itself, immediately after
+    // layout resolves — covering both cases.
+    const resizeObserver = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (!entry || !cameraRef.current || !rendererRef.current) return;
+      // Use contentRect for the live, post-layout dimensions.
+      const w = entry.contentRect.width;
+      const h = entry.contentRect.height;
+      if (w === 0 || h === 0) return; // guard: flex not yet settled
+      cameraRef.current.aspect = w / h;
+      cameraRef.current.updateProjectionMatrix();
+      rendererRef.current.setSize(w, h);
+    });
+    resizeObserver.observe(container);
 
     // ─── Disassembly / Cleanup ───
     return () => {
       cancelAnimationFrame(animFrameRef.current);
-      window.removeEventListener('resize', onResize);
+      resizeObserver.disconnect();
       renderer.dispose();
       controls.dispose();
       scene.clear();
@@ -429,8 +439,7 @@ export default function EditorCanvas({ modelUrl }) {
 
   const handleCanvasClick = useCallback(
     (e) => {
-      if (pendingTagLocal || state.pendingMeasurement) return; 
-      
+      if (pendingTagLocal || state.pendingMeasurement) return;
       const hit = getRaycastHit(e);
       if (!hit) return;
 
@@ -438,7 +447,6 @@ export default function EditorCanvas({ modelUrl }) {
       const point = hit.point;
       const hitMesh = hit.object instanceof THREE.Mesh ? hit.object : null;
       const meshName = hitMesh?.name || '';
-
       const tool = state.activeTool;
 
       if (tool === 'select') {
@@ -486,117 +494,127 @@ export default function EditorCanvas({ modelUrl }) {
   };
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-      {/* Three.js canvas fills the center panel */}
-        <div
-          ref={containerRef}
-          style={{
-            position: 'absolute', inset: 0,
-            cursor: cursorMap[state.activeTool] || 'default',
-          }}
-          onClick={handleCanvasClick}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-        >
-          <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%' }} />
+    <div
+      ref={containerRef}
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: '100%',
+        overflow: 'hidden',
+        cursor: cursorMap[state.activeTool] || 'default',
+      }}
+      onClick={handleCanvasClick}
+      onPointerDown={handleMouseDown}
+      onPointerMove={handleMouseMove}
+      onPointerUp={handleMouseUp}
+    >
+      {/* 
+        The canvas receives all native pointer events directly so OrbitControls
+        works perfectly (drag to rotate, wheel to zoom). Events bubble up to the
+        parent div where our React tools intercept them.
+      */}
+      <canvas
+        ref={canvasRef}
+        style={{ display: 'block', width: '100%', height: '100%', position: 'absolute', inset: 0, touchAction: 'none' }}
+      />
 
-          {/* Loading overlay */}
-          {loading && (
-            <div style={{
-              position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-              alignItems: 'center', justifyContent: 'center', background: 'rgba(14,14,18,0.85)',
-            }}>
-              <div style={{
-                width: '24px', height: '24px', border: '2px solid rgba(255,255,255,0.1)',
-                borderTopColor: 'white', borderRadius: '50%',
-                animation: 'spin 0.8s linear infinite', marginBottom: '12px',
-              }} />
-              <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#525252', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Loading_Model...</p>
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            </div>
-          )}
-
-          {/* Error overlay */}
-          {loadError && (
-            <div style={{
-              position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(14,14,18,0.85)',
-            }}>
-              <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: '#ffb4ab' }}>⚠ {loadError}</p>
-            </div>
-          )}
-
-          {/* Active tool hint — bottom center */}
-          {!loading && (
-            <div style={{
-              position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)',
-              background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
-              border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px',
-              padding: '6px 16px', pointerEvents: 'none',
-              fontFamily: "'JetBrains Mono', monospace", fontSize: '10px',
-              color: '#a3a3a3', letterSpacing: '0.06em', whiteSpace: 'nowrap',
-            }}>
-              {state.activeTool === 'select' && 'SELECT — click mesh  ·  Pan: right-click or arrows'}
-              {state.activeTool === 'tag' && 'TAG — click any surface to place label'}
-              {state.activeTool === 'measure' && (state.measurePointA ? 'Release to save dimension' : 'Drag to measure distance')}
-              {state.activeTool === 'paint' && 'PAINT — click mesh to apply colour'}
-            </div>
-          )}
-
-          {/* HTML Tag Input Form Overlay */}
-          {pendingTagLocal && (
-            <TagForm
-              screenX={pendingTagLocal.screenX}
-              screenY={pendingTagLocal.screenY}
-              worldPosition={pendingTagLocal.worldPosition}
-              meshName={pendingTagLocal.meshName}
-              onClose={closeTagForm}
-            />
-          )}
-
-          {/* Dimension Selection Form */}
-          {state.pendingMeasurement && (
-            <MeasurementForm
-              screenX={state.pendingMeasurement.screenX}
-              screenY={state.pendingMeasurement.screenY}
-              pointA={state.pendingMeasurement.pointA}
-              pointB={state.pendingMeasurement.pointB}
-              onClose={closeMeasureForm}
-            />
-          )}
-
-          {/* Dimension Labels HTML */}
-          {state.measurements.map((m) => {
-            if (!cameraRef.current || !containerRef.current) return null;
-            
-            const mid = new THREE.Vector3(
-              (m.pointA[0] + m.pointB[0]) / 2,
-              (m.pointA[1] + m.pointB[1]) / 2,
-              (m.pointA[2] + m.pointB[2]) / 2
-            );
-            
-            const proj = mid.clone().project(cameraRef.current);
-            const rect = containerRef.current.getBoundingClientRect();
-            const x = ((proj.x + 1) / 2) * rect.width;
-            const y = ((-proj.y + 1) / 2) * rect.height;
-            
-            if (proj.z > 1) return null;
-            
-            return (
-              <div
-                key={m.id}
-                id={`dim-label-${m.id}`}
-                className="dim-label"
-                style={{ left: x, top: y }}
-              >
-                {m.label}
-              </div>
-            );
-          })}
+      {/* Loading overlay */}
+      {loading && (
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center', background: 'rgba(14,14,18,0.85)',
+          zIndex: 50,
+        }}>
+          <div style={{
+            width: '24px', height: '24px', border: '2px solid rgba(255,255,255,0.1)',
+            borderTopColor: 'white', borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite', marginBottom: '12px',
+          }} />
+          <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#525252', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Loading_Model...</p>
+          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
+      )}
 
-      {/* Render the saved, completed floating HTML Tags */}
+      {/* Error overlay */}
+      {loadError && (
+        <div style={{
+          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(14,14,18,0.85)',
+          zIndex: 50,
+        }}>
+          <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: '#ffb4ab' }}>⚠ {loadError}</p>
+        </div>
+      )}
+
+      {/* Active tool hint */}
+      {!loading && (
+        <div style={{
+          position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)',
+          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
+          border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px',
+          padding: '6px 16px', pointerEvents: 'none',
+          fontFamily: "'JetBrains Mono', monospace", fontSize: '10px',
+          color: '#a3a3a3', letterSpacing: '0.06em', whiteSpace: 'nowrap',
+          zIndex: 10,
+        }}>
+          {state.activeTool === 'select' && 'SELECT — click mesh  ·  Scroll: zoom  ·  Right-drag: pan'}
+          {state.activeTool === 'tag' && 'TAG — click any surface to place label'}
+          {state.activeTool === 'measure' && (state.measurePointA ? 'Release to save dimension' : 'Drag to measure distance')}
+          {state.activeTool === 'paint' && 'PAINT — click mesh to apply colour'}
+        </div>
+      )}
+
+      {/* HTML Tag Input Form Overlay */}
+      {pendingTagLocal && (
+        <TagForm
+          screenX={pendingTagLocal.screenX}
+          screenY={pendingTagLocal.screenY}
+          worldPosition={pendingTagLocal.worldPosition}
+          meshName={pendingTagLocal.meshName}
+          onClose={closeTagForm}
+        />
+      )}
+
+      {/* Dimension Selection Form */}
+      {state.pendingMeasurement && (
+        <MeasurementForm
+          screenX={state.pendingMeasurement.screenX}
+          screenY={state.pendingMeasurement.screenY}
+          pointA={state.pendingMeasurement.pointA}
+          pointB={state.pendingMeasurement.pointB}
+          onClose={closeMeasureForm}
+        />
+      )}
+
+      {/* Dimension Labels HTML */}
+      {state.measurements.map((m) => {
+        if (!cameraRef.current || !containerRef.current) return null;
+        const mid = new THREE.Vector3(
+          (m.pointA[0] + m.pointB[0]) / 2,
+          (m.pointA[1] + m.pointB[1]) / 2,
+          (m.pointA[2] + m.pointB[2]) / 2
+        );
+        const proj = mid.clone().project(cameraRef.current);
+        const rect = containerRef.current.getBoundingClientRect();
+        const x = ((proj.x + 1) / 2) * rect.width;
+        const y = ((-proj.y + 1) / 2) * rect.height;
+        if (proj.z > 1) return null;
+        return (
+          <div
+            key={m.id}
+            id={`dim-label-${m.id}`}
+            className="tag-badge"
+            style={{ position: 'absolute', left: x, top: y, pointerEvents: 'none', zIndex: 5, '--tag-colour': '#ffff00' }}
+          >
+            <div className="tag-dot" style={{ background: '#ffff00' }} />
+            <div className="tag-pill" style={{ background: '#ffff00' }}>
+              <span className="tag-pill-text">{m.label}</span>
+            </div>
+          </div>
+        );
+      })}
+
+      {/* Tag badges — rendered inside the container so left/top are relative to canvas */}
       <TagOverlay positions={tagPositions} />
     </div>
   );

@@ -7,7 +7,11 @@ export default function TagOverlay({ positions }) {
   const { state, dispatch } = useAnnotations();
 
   return (
-    <div className="tag-overlay-container" aria-label="Tag overlays">
+    <div
+      className="tag-overlay-container"
+      aria-label="Tag overlays"
+      style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden' }}
+    >
       {state.tags.map((tag) => {
         const pos = positions.get(tag.id);
         if (!pos || !pos.visible) return null;

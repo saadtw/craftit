@@ -14,7 +14,7 @@ export default function Editor3DWrapper({
   readOnly = false,
 }) {
   return (
-    <div className="relative w-full h-[600px] bg-gray-900 rounded-lg overflow-hidden">
+    <div className="relative w-full h-full flex flex-row bg-gray-900 overflow-hidden">
       <AnnotationProvider
         modelUrl={modelUrl}
         initialAnnotations={initialAnnotations}

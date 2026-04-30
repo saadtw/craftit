@@ -7,7 +7,10 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
+
+// Key shared between this page and the dedicated model-editor route
+const DRAFT_MODEL_KEY = "draftModel3D";
 
 const STEPS = [
   { id: 1, label: "Basic Info" },
@@ -105,8 +108,37 @@ export default function NewProductPage() {
   const [modelUploading, setModelUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
-  const [isModelEditorOpen, setIsModelEditorOpen] = useState(false);
-  const [baseModelUrl, setBaseModelUrl] = useState("");
+
+  // ── Hydration: restore annotation data written by the model-editor page ────
+  // Runs once on mount. If the user visited /model-editor and saved their
+  // annotations, the editor writes the updated model3D JSON into sessionStorage
+  // before navigating back here. We pick it up, merge it into form state, and
+  // clear it so subsequent mounts start clean.
+  useEffect(() => {
+    // 1. Restore the full form state if the user was sent back from the editor
+    const rawForm = sessionStorage.getItem("draftProductForm");
+    if (rawForm) {
+      try {
+        const parsed = JSON.parse(rawForm);
+        if (parsed.form) setForm(parsed.form);
+        if (parsed.step) setStep(parsed.step);
+      } catch (e) {}
+    }
+
+    // 2. Restore the model annotations returned from the editor
+    const raw = sessionStorage.getItem(DRAFT_MODEL_KEY);
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw);
+      if (saved?.url) {
+        setForm((prev) => ({ ...prev, model3D: saved }));
+      }
+    } catch {
+      // Corrupted data — discard silently
+    } finally {
+      sessionStorage.removeItem(DRAFT_MODEL_KEY);
+    }
+  }, []);
 
   const imageInputRef = useRef();
   const modelInputRef = useRef();
@@ -224,47 +256,22 @@ export default function NewProductPage() {
             fileSize: file.size,
           },
         }));
-        setBaseModelUrl(data.file.url);
-        setIsModelEditorOpen(true);
+        // ✓ Editor no longer auto-mounts here.
+        // The user sees ModelViewerPreview and can optionally click
+        // "Edit / Annotate" to navigate to the dedicated editor page.
       }
     } catch (_) {}
     setModelUploading(false);
   };
 
-  const handleModelEditorSave = async (gltfBlob, annotations, cameraState) => {
-    setModelUploading(true);
-    try {
-      const file = new File([gltfBlob], "annotated-model.glb", {
-        type: "model/gltf-binary",
-      });
-      const uploadData = new FormData();
-      uploadData.append("type", "3d-model");
-      uploadData.append("file", file);
-
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: uploadData,
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        const nextModel = {
-          url: data.file.url,
-          filename: file.name,
-          fileSize: file.size,
-          annotations,
-          cameraState,
-        };
-        setForm((prev) => ({ ...prev, model3D: nextModel }));
-        setBaseModelUrl(nextModel.url);
-        setIsModelEditorOpen(false);
-      } else {
-        alert(data.error || "Failed to save 3D model edits");
-      }
-    } catch (_) {
-      alert("Failed to save 3D model edits");
-    }
-    setModelUploading(false);
+  // Navigate to the dedicated model-editor route.
+  // We serialise the current model3D state into sessionStorage so the
+  // editor page can read it without any server round-trip.
+  const handleOpenModelEditor = () => {
+    if (!form.model3D?.url) return;
+    sessionStorage.setItem("draftProductForm", JSON.stringify({ form, step }));
+    sessionStorage.setItem(DRAFT_MODEL_KEY, JSON.stringify(form.model3D));
+    router.push("/manufacturer/products/model-editor");
   };
 
   const addTag = () => {
@@ -377,6 +384,7 @@ export default function NewProductPage() {
       });
       const data = await res.json();
       if (data.success) {
+        sessionStorage.removeItem("draftProductForm");
         router.push(`/manufacturer/products/${data.product._id}`);
       } else {
         alert(data.error || "Failed to save product");
@@ -1051,6 +1059,7 @@ export default function NewProductPage() {
                   </label>
                   {form.model3D ? (
                     <div className="space-y-3">
+                      {/* ── File info row ── */}
                       <div className="flex items-center gap-3 p-4 bg-slate-50 rounded-xl border border-slate-200">
                         <div className="w-10 h-10 bg-slate-200 rounded-lg flex items-center justify-center">
                           <svg
@@ -1073,20 +1082,23 @@ export default function NewProductPage() {
                           </p>
                           {form.model3D.fileSize && (
                             <p className="text-xs text-slate-400">
-                              {(form.model3D.fileSize / 1024 / 1024).toFixed(2)}{" "}
-                              MB
+                              {(form.model3D.fileSize / 1024 / 1024).toFixed(2)} MB
+                              {form.model3D.annotations?.length > 0 && (
+                                <span className="ml-2 text-emerald-600">
+                                  · {form.model3D.annotations.length} annotation
+                                  {form.model3D.annotations.length !== 1 ? "s" : ""} saved
+                                </span>
+                              )}
                             </p>
                           )}
                         </div>
                         <button
+                          id="openModelEditorBtn"
                           type="button"
-                          onClick={() => {
-                            setBaseModelUrl(form.model3D.url);
-                            setIsModelEditorOpen(true);
-                          }}
+                          onClick={handleOpenModelEditor}
                           className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                         >
-                          Edit 3D Model
+                          Edit / Annotate
                         </button>
                         <button
                           type="button"
@@ -1099,25 +1111,12 @@ export default function NewProductPage() {
                         </button>
                       </div>
 
-                      {isModelEditorOpen && baseModelUrl && (
-                        <div className="border border-slate-200 rounded-xl p-2 bg-slate-50">
-                          <Editor3DWrapper
-                            modelUrl={baseModelUrl}
-                            initialAnnotations={form.model3D?.annotations}
-                            initialCameraState={form.model3D?.cameraState}
-                            onSave={handleModelEditorSave}
-                          />
-                          <div className="mt-2 flex justify-end">
-                            <button
-                              type="button"
-                              onClick={() => setIsModelEditorOpen(false)}
-                              className="text-xs px-3 py-1.5 border border-slate-200 rounded-lg text-slate-600 hover:bg-white"
-                            >
-                              Close Editor
-                            </button>
-                          </div>
-                        </div>
-                      )}
+                      {/* ── Lightweight preview (always shown) ── */}
+                      <ModelViewerPreview
+                        modelUrl={form.model3D.url}
+                        annotations={form.model3D.annotations || []}
+                        height="380px"
+                      />
                     </div>
                   ) : (
                     <div

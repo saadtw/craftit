@@ -91,9 +91,8 @@ export async function POST(request) {
       return NextResponse.json(
         {
           success: false,
-          error: `File too large. Max size: ${
-            fileConfig.maxSize / 1024 / 1024
-          }MB`,
+          error: `File too large. Max size: ${fileConfig.maxSize / 1024 / 1024
+            }MB`,
         },
         { status: 400 },
       );
@@ -133,7 +132,7 @@ export async function POST(request) {
           // Read the newly created .glb file
           buffer = await fs.readFile(tempOutputPath);
           uploadContentType = "model/gltf-binary";
-          
+
           // Change the S3 key/filename to reflect the new .glb extension
           finalFileName = file.name.replace(new RegExp(`\\${ext}$`, "i"), ".glb");
         } catch (convErr) {
@@ -142,10 +141,10 @@ export async function POST(request) {
         } finally {
           // Cleanup
           if (tempInputPath) {
-            await fs.unlink(tempInputPath).catch(() => {});
+            await fs.unlink(tempInputPath).catch(() => { });
           }
           if (tempOutputPath) {
-            await fs.unlink(tempOutputPath).catch(() => {});
+            await fs.unlink(tempOutputPath).catch(() => { });
           }
         }
       } else {

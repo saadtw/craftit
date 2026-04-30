@@ -22,23 +22,23 @@ const SCALE_OPTIONS = [
 
 const S = {
   aside: {
-    width: '220px',
+    width: '200px',
     flexShrink: 0,
     background: '#0e0e0e',
     borderRight: '1px solid rgba(255,255,255,0.06)',
     display: 'flex',
     flexDirection: 'column',
     overflowY: 'auto',
-    padding: '16px 0',
+    padding: '8px 0',
   },
   logo: {
-    padding: '0 16px 16px',
+    padding: '0 12px 8px',
     borderBottom: '1px solid rgba(255,255,255,0.06)',
-    marginBottom: '8px',
+    marginBottom: '4px',
   },
   logoTitle: {
     fontFamily: "'Inter', sans-serif",
-    fontSize: '14px',
+    fontSize: '13px',
     fontWeight: 900,
     letterSpacing: '-0.03em',
     color: 'white',
@@ -46,32 +46,32 @@ const S = {
   },
   logoSub: {
     fontFamily: "'JetBrains Mono', monospace",
-    fontSize: '9px',
+    fontSize: '8px',
     color: '#525252',
     textTransform: 'uppercase',
     letterSpacing: '0.15em',
   },
   sectionLabel: {
     fontFamily: "'JetBrains Mono', monospace",
-    fontSize: '9px',
+    fontSize: '8px',
     color: '#525252',
     textTransform: 'uppercase',
     letterSpacing: '0.15em',
-    padding: '12px 16px 6px',
+    padding: '6px 12px 4px',
   },
   toolBtn: (active) => ({
     display: 'flex',
     alignItems: 'center',
-    gap: '10px',
+    gap: '8px',
     width: '100%',
-    padding: '8px 16px',
+    padding: '6px 12px',
     background: active ? 'rgba(255,255,255,0.08)' : 'none',
     border: 'none',
     borderLeft: active ? '2px solid white' : '2px solid transparent',
     color: active ? 'white' : '#737373',
     cursor: 'pointer',
     fontFamily: "'JetBrains Mono', monospace",
-    fontSize: '10px',
+    fontSize: '9px',
     fontWeight: 700,
     letterSpacing: '0.12em',
     textTransform: 'uppercase',
@@ -81,54 +81,55 @@ const S = {
   divider: {
     height: '1px',
     background: 'rgba(255,255,255,0.06)',
-    margin: '12px 0',
+    margin: '6px 0',
   },
   statRow: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'space-between',
-    padding: '6px 16px',
+    padding: '4px 12px',
   },
   statLabel: {
     fontFamily: "'JetBrains Mono', monospace",
-    fontSize: '9px',
+    fontSize: '8px',
     color: '#525252',
     letterSpacing: '0.08em',
     textTransform: 'uppercase',
   },
   statValue: {
     fontFamily: "'JetBrains Mono', monospace",
-    fontSize: '12px',
+    fontSize: '10px',
     color: 'white',
     fontWeight: 700,
   },
   select: {
-    margin: '4px 16px',
-    padding: '7px 10px',
+    margin: '2px 12px',
+    padding: '5px 8px',
     background: 'rgba(255,255,255,0.04)',
     border: '1px solid rgba(255,255,255,0.08)',
     borderRadius: '2px',
     color: 'white',
     fontFamily: "'JetBrains Mono', monospace",
-    fontSize: '10px',
-    width: 'calc(100% - 32px)',
+    fontSize: '9px',
+    width: 'calc(100% - 24px)',
     outline: 'none',
     cursor: 'pointer',
   },
   actionBtn: (variant) => ({
     display: 'flex',
     alignItems: 'center',
-    gap: '8px',
-    width: 'calc(100% - 32px)',
-    margin: '4px 16px',
-    padding: '9px 12px',
+    justifyContent: 'center',
+    gap: '6px',
+    width: 'calc(100% - 24px)',
+    margin: '2px 12px',
+    padding: '6px 10px',
     background: variant === 'primary' ? 'white' : variant === 'danger' ? 'rgba(147,0,10,0.15)' : 'rgba(255,255,255,0.06)',
     border: variant === 'danger' ? '1px solid rgba(147,0,10,0.3)' : '1px solid rgba(255,255,255,0.08)',
     borderRadius: '2px',
     color: variant === 'primary' ? '#0a0a0a' : variant === 'danger' ? '#ffb4ab' : '#a3a3a3',
     cursor: 'pointer',
     fontFamily: "'Inter', sans-serif",
-    fontSize: '10px',
+    fontSize: '9px',
     fontWeight: 700,
     letterSpacing: '0.1em',
     textTransform: 'uppercase',
@@ -137,9 +138,10 @@ const S = {
 };
 
 export default function Toolbar({ modelUrl, onSave, readOnly }) {
-  const { state, dispatch, exportJSON, sceneRef } = useAnnotations();
+  const { state, dispatch, exportJSON, sceneRef, canUndo, canRedo } = useAnnotations();
 
   if (readOnly) return null;
+
 
   const handleSaveFinish = async () => {
     try {
@@ -296,6 +298,67 @@ export default function Toolbar({ modelUrl, onSave, readOnly }) {
       <div style={S.divider} />
 
       {/* Actions */}
+      {/* Actions */}
+      <div style={{ display: 'flex', gap: '4px', padding: '0 12px', marginBottom: '2px' }}>
+        <button
+          id="undoBtn"
+          title="Undo last annotation action"
+          disabled={!canUndo}
+          onClick={() => dispatch({ type: 'UNDO' })}
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '5px',
+            padding: '6px 4px',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '2px',
+            color: canUndo ? '#a3a3a3' : '#333',
+            cursor: canUndo ? 'pointer' : 'not-allowed',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '8px',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            transition: 'all 0.15s',
+            opacity: canUndo ? 1 : 0.3,
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>undo</span>
+          UNDO
+        </button>
+        <button
+          id="redoBtn"
+          title="Redo last undone action"
+          disabled={!canRedo}
+          onClick={() => dispatch({ type: 'REDO' })}
+          style={{
+            flex: 1,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '5px',
+            padding: '6px 4px',
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: '2px',
+            color: canRedo ? '#a3a3a3' : '#333',
+            cursor: canRedo ? 'pointer' : 'not-allowed',
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: '8px',
+            fontWeight: 700,
+            letterSpacing: '0.1em',
+            textTransform: 'uppercase',
+            transition: 'all 0.15s',
+            opacity: canRedo ? 1 : 0.3,
+          }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '12px' }}>redo</span>
+          REDO
+        </button>
+      </div>
       <button id="clearAllBtn" style={S.actionBtn('danger')} onClick={handleClearAll}>
         <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete_sweep</span>
         CLEAR_ALL
@@ -304,7 +367,7 @@ export default function Toolbar({ modelUrl, onSave, readOnly }) {
         <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>download</span>
         EXPORT_JSON
       </button>
-      <button id="saveFinishBtn" style={{ ...S.actionBtn('primary'), marginTop: '8px' }} onClick={handleSaveFinish}>
+      <button id="saveFinishBtn" style={{ ...S.actionBtn('primary'), marginTop: '4px' }} onClick={handleSaveFinish}>
         <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check</span>
         SAVE_&_FINISH
       </button>
