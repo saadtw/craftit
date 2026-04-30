@@ -17,6 +17,33 @@ const UserSchema = new mongoose.Schema(
       required: true,
       select: false,
     },
+
+    // OAuth Provider Tracking
+    authMethod: {
+      type: String,
+      enum: ["credentials", "oauth"],
+      default: "credentials",
+    },
+    oauthProviders: [
+      {
+        provider: {
+          type: String,
+          enum: ["google"],
+          required: true,
+        },
+        providerId: {
+          type: String,
+          required: true,
+        },
+        email: String,
+        linkedAt: {
+          type: Date,
+          default: Date.now,
+        },
+        _id: false,
+      },
+    ],
+
     role: {
       type: String,
       enum: ["customer", "manufacturer", "admin"],
@@ -256,6 +283,11 @@ const UserSchema = new mongoose.Schema(
       default: false,
     },
     emailVerifiedAt: Date,
+    emailVerificationMethod: {
+      type: String,
+      enum: ["manual", "oauth"],
+      default: "manual",
+    },
     emailVerificationToken: {
       type: String,
       select: false,
@@ -315,6 +347,11 @@ UserSchema.index({ businessName: "text", name: "text" });
 UserSchema.index({ "location.country": 1 }); // For location-based filtering
 UserSchema.index({ "location.state": 1 }); // For state-based manufacturer matching
 UserSchema.index({ "mobileRefreshTokens.tokenHash": 1 });
+UserSchema.index({
+  "oauthProviders.provider": 1,
+  "oauthProviders.providerId": 1,
+}); // For OAuth provider lookups
+UserSchema.index({ authMethod: 1 }); // For auth method filtering
 
 UserSchema.pre("save", async function () {
   // Only hash if password is modified

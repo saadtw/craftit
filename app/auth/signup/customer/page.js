@@ -10,7 +10,6 @@ import Image from "next/image";
 import Logo from "@/components/CrafitLogo";
 import leftArrow from "@/assets/backArrow.png";
 import googleLogo from "@/assets/google.png";
-import facebookLogo from "@/assets/facebook.png";
 
 export default function CustomerSignup() {
   const router = useRouter();
@@ -308,22 +307,14 @@ export default function CustomerSignup() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="flex justify-center">
             <button
               type="button"
               onClick={() => signIn("google")}
-              className="flex items-center justify-center gap-3 bg-white/3 border border-white/10 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95"
+              className="flex items-center justify-center gap-3 bg-white/3 border border-white/10 py-3 px-6 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95"
             >
               <Image src={googleLogo} width={16} height={16} alt="google" />
               Google
-            </button>
-            <button
-              type="button"
-              onClick={() => signIn("facebook")}
-              className="flex items-center justify-center gap-3 bg-white/3 border border-white/10 py-3 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95"
-            >
-              <Image src={facebookLogo} width={16} height={16} alt="fb" />
-              Facebook
             </button>
           </div>
 

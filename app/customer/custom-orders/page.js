@@ -48,7 +48,16 @@ export default function CustomOrdersListPage() {
   }, [status, session, router, fetchOrders]);
 
   if (status === "loading" || loading) {
-    return <div className="p-6">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
+          <p className="text-sm text-white/50 tracking-wide">
+            Loading custom orders...
+          </p>
+        </div>
+      </div>
+    );
   }
 
   if (status === "unauthenticated") {
@@ -58,59 +67,63 @@ export default function CustomOrdersListPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case "draft":
-        return "bg-gray-100 text-gray-800";
+        return "bg-white/8 text-white/75 border border-white/10";
       case "pending":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20";
       case "accepted":
-        return "bg-green-100 text-green-800";
+        return "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20";
       case "rejected":
-        return "bg-red-100 text-red-800";
+        return "bg-red-500/10 text-red-300 border border-red-500/20";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-white/8 text-white/75 border border-white/10";
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center justify-between">
+    <div className="min-h-screen bg-[#050507] text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-7 space-y-6">
+        <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0c0c11] p-6 sm:p-8 shadow-[0_20px_60px_rgba(0,0,0,0.45)]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.14),transparent_30%),radial-gradient(circle_at_left,rgba(235,151,40,0.12),transparent_28%)] pointer-events-none" />
+
+          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
+              <p className="text-[11px] uppercase tracking-[0.28em] text-[#eb9728] font-bold">
+                Customer Orders
+              </p>
+              <h1 className="mt-3 text-3xl sm:text-4xl font-black tracking-tight">
                 My Custom Orders
               </h1>
-              <p className="text-gray-600 mt-1">
-                Manage your custom manufacturing orders
+              <p className="mt-2 text-sm sm:text-base text-white/60 max-w-2xl leading-7">
+                Manage your custom manufacturing orders, track their status, and
+                continue working on drafts before submission.
               </p>
             </div>
-            <div className="flex gap-3">
-              <Link href="/customer/dashboard">
-                <button className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
-                  Back to Dashboard
-                </button>
-              </Link>
-              <Link href="/custom-orders/new">
-                <button className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
-                  + Create New Order
-                </button>
+
+            <div className="flex flex-wrap gap-3">
+              <Link
+                href="/custom-orders/new"
+                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#eb9728] text-sm font-bold text-white hover:bg-amber-500 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[18px]">
+                  add
+                </span>
+                Create New Order
               </Link>
             </div>
           </div>
-        </div>
+        </section>
 
-        {/* Filter Tabs */}
-        <div className="mb-6 border-b border-gray-200">
-          <div className="flex gap-6">
+        <section className="rounded-[24px] border border-white/8 bg-[#0c0c11]/75 p-4 sm:p-5">
+          <div className="flex flex-wrap gap-2">
             {["all", "draft", "pending", "accepted", "rejected"].map(
               (statusFilter) => (
                 <button
                   key={statusFilter}
                   onClick={() => setFilter(statusFilter)}
-                  className={`pb-3 px-2 text-sm font-medium capitalize transition-colors ${
+                  className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all ${
                     filter === statusFilter
-                      ? "border-b-2 border-amber-600 text-amber-600"
-                      : "text-gray-600 hover:text-gray-900"
+                      ? "bg-[#eb9728] text-white shadow-[0_8px_20px_rgba(235,151,40,0.24)]"
+                      : "bg-white/[0.03] border border-white/10 text-white/60 hover:bg-white/[0.06] hover:text-white"
                   }`}
                 >
                   {statusFilter}
@@ -118,82 +131,108 @@ export default function CustomOrdersListPage() {
               ),
             )}
           </div>
-        </div>
+        </section>
 
-        {/* Orders List */}
         {orders.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-sm p-12 text-center">
-            <div className="text-gray-400 mb-4">
-              <span className="material-symbols-outlined text-6xl">
+          <section className="rounded-[28px] border border-white/8 bg-[#0c0c11] p-12 text-center shadow-[0_16px_40px_rgba(0,0,0,0.25)]">
+            <div className="mx-auto w-20 h-20 rounded-3xl bg-[#eb9728]/10 border border-[#eb9728]/20 text-[#eb9728] flex items-center justify-center">
+              <span className="material-symbols-outlined text-5xl">
                 inventory_2
               </span>
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+
+            <h3 className="mt-6 text-2xl font-bold text-white">
               No custom orders yet
             </h3>
-            <p className="text-gray-600 mb-6">
-              Start by creating your first custom manufacturing order
+            <p className="mt-2 text-white/55 max-w-md mx-auto">
+              Start by creating your first custom manufacturing order and send
+              it to the right production partners.
             </p>
-            <Link href="/custom-orders/new">
-              <button className="px-6 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700">
-                Create Custom Order
-              </button>
+
+            <Link
+              href="/custom-orders/new"
+              className="mt-6 inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#eb9728] text-white font-bold hover:bg-amber-500 transition-colors"
+            >
+              Create Custom Order
             </Link>
-          </div>
+          </section>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {orders.map((order) => (
               <div
                 key={order._id}
-                className="bg-white rounded-lg shadow-sm p-6 hover:shadow-md transition-shadow"
+                className="rounded-[24px] border border-white/8 bg-[#0c0c11] p-5 sm:p-6 shadow-[0_12px_34px_rgba(0,0,0,0.22)] hover:border-purple-500/20 transition-all"
               >
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900">
+                <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-3 mb-3">
+                      <h3 className="text-lg sm:text-xl font-bold text-white line-clamp-1">
                         {order.title}
                       </h3>
                       {order.model3D?.url && (
-                        <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200">
+                        <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20">
                           3D Model
                         </span>
                       )}
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusColor(
+                        className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wide ${getStatusColor(
                           order.status,
                         )}`}
                       >
                         {order.status}
                       </span>
                     </div>
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
+
+                    <p className="text-sm text-white/55 mb-4 line-clamp-2 max-w-3xl">
                       {order.description}
                     </p>
-                    <div className="flex items-center gap-6 text-sm text-gray-500">
-                      <span>Quantity: {order.quantity}</span>
-                      {order.deadline && (
-                        <span>
-                          Deadline:{" "}
-                          {new Date(order.deadline).toLocaleDateString()}
+
+                    <div className="flex flex-wrap items-center gap-3 sm:gap-6 text-sm text-white/40">
+                      <div className="inline-flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px] text-[#eb9728]">
+                          layers
                         </span>
+                        <span>Quantity: {order.quantity}</span>
+                      </div>
+
+                      {order.deadline && (
+                        <div className="inline-flex items-center gap-2">
+                          <span className="material-symbols-outlined text-[16px] text-purple-400">
+                            event
+                          </span>
+                          <span>
+                            Deadline:{" "}
+                            {new Date(order.deadline).toLocaleDateString()}
+                          </span>
+                        </div>
                       )}
-                      <span>
-                        Created:{" "}
-                        {new Date(order.createdAt).toLocaleDateString()}
-                      </span>
+
+                      <div className="inline-flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[16px] text-white/35">
+                          schedule
+                        </span>
+                        <span>
+                          Created:{" "}
+                          {new Date(order.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2 ml-4">
-                    <Link href={`/custom-orders/${order._id}/review`}>
-                      <button className="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg hover:bg-blue-700 whitespace-nowrap">
-                        View Details
-                      </button>
+
+                  <div className="flex flex-row lg:flex-col gap-2 lg:min-w-[160px]">
+                    <Link
+                      href={`/custom-orders/${order._id}/review`}
+                      className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl bg-[#eb9728] text-white text-sm font-bold hover:bg-amber-500 transition-colors whitespace-nowrap"
+                    >
+                      View Details
                     </Link>
+
                     {order.status === "draft" && (
-                      <Link href={`/custom-orders/${order._id}/edit`}>
-                        <button className="px-4 py-2 border border-gray-300 text-gray-700 text-sm rounded-lg hover:bg-gray-50 whitespace-nowrap">
-                          Edit
-                        </button>
+                      <Link
+                        href={`/custom-orders/${order._id}/edit`}
+                        className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white/80 text-sm font-semibold hover:bg-white/[0.06] hover:text-white transition-all whitespace-nowrap"
+                      >
+                        Edit Draft
                       </Link>
                     )}
                   </div>

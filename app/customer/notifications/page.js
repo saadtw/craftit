@@ -4,7 +4,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Link from "next/link";
 
 const TYPE_ICONS = {
   order_placed: "shopping_bag",
@@ -31,21 +30,22 @@ const TYPE_ICONS = {
 };
 
 const TYPE_COLORS = {
-  order_accepted: "text-green-600 bg-green-50",
-  order_rejected: "text-red-600 bg-red-50",
-  order_shipped: "text-indigo-600 bg-indigo-50",
-  order_completed: "text-green-700 bg-green-50",
-  order_cancelled: "text-red-600 bg-red-50",
-  bid_accepted: "text-green-600 bg-green-50",
-  bid_rejected: "text-red-600 bg-red-50",
-  new_message: "text-blue-600 bg-blue-50",
-  dispute_opened: "text-orange-600 bg-orange-50",
-  dispute_resolved: "text-purple-600 bg-purple-50",
-  payment_received: "text-emerald-600 bg-emerald-50",
-  payment_refunded: "text-cyan-600 bg-cyan-50",
-  verification_approved: "text-green-600 bg-green-50",
-  verification_rejected: "text-red-600 bg-red-50",
-  default: "text-gray-600 bg-gray-100",
+  order_accepted: "text-emerald-300 bg-emerald-500/10 border-emerald-500/20",
+  order_rejected: "text-red-300 bg-red-500/10 border-red-500/20",
+  order_shipped: "text-indigo-300 bg-indigo-500/10 border-indigo-500/20",
+  order_completed: "text-emerald-300 bg-emerald-500/10 border-emerald-500/20",
+  order_cancelled: "text-red-300 bg-red-500/10 border-red-500/20",
+  bid_accepted: "text-emerald-300 bg-emerald-500/10 border-emerald-500/20",
+  bid_rejected: "text-red-300 bg-red-500/10 border-red-500/20",
+  new_message: "text-blue-300 bg-blue-500/10 border-blue-500/20",
+  dispute_opened: "text-[#eb9728] bg-[#eb9728]/10 border-[#eb9728]/20",
+  dispute_resolved: "text-purple-300 bg-purple-500/10 border-purple-500/20",
+  payment_received: "text-emerald-300 bg-emerald-500/10 border-emerald-500/20",
+  payment_refunded: "text-cyan-300 bg-cyan-500/10 border-cyan-500/20",
+  verification_approved:
+    "text-emerald-300 bg-emerald-500/10 border-emerald-500/20",
+  verification_rejected: "text-red-300 bg-red-500/10 border-red-500/20",
+  default: "text-white/55 bg-white/[0.04] border-white/10",
 };
 
 export default function CustomerNotificationsPage() {
@@ -109,10 +109,11 @@ export default function CustomerNotificationsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex h-screen bg-[#f8f7f6]">
-        <main className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
-        </main>
+      <div className="flex min-h-screen items-center justify-center bg-[#050507]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
+          <p className="text-sm text-white/45">Loading notifications...</p>
+        </div>
       </div>
     );
   }
@@ -129,98 +130,125 @@ export default function CustomerNotificationsPage() {
   }, {});
 
   return (
-    <div className="flex h-screen bg-[#f8f7f6]">
-      <main className="flex-1 overflow-y-auto">
-        <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-10 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <span className="text-lg font-bold text-gray-900">
-              Notifications
-            </span>
-            {unreadCount > 0 && (
-              <span className="px-2 py-0.5 bg-[#eb9728] text-white text-xs font-bold rounded-full">
-                {unreadCount} new
-              </span>
-            )}
-          </div>
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllRead}
-              disabled={markingAll}
-              className="text-sm text-[#eb9728] font-semibold hover:underline disabled:opacity-50"
-            >
-              Mark all as read
-            </button>
-          )}
-        </header>
+    <div className="min-h-screen bg-[#050507] text-white">
+      <main className="mx-auto max-w-4xl px-4 py-7 sm:px-6 space-y-6">
+        <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0c0c11] p-6 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.14),transparent_32%),radial-gradient(circle_at_left,rgba(235,151,40,0.12),transparent_28%)] pointer-events-none" />
 
-        <div className="max-w-2xl mx-auto p-6">
-          {notifications.length === 0 ? (
-            <div className="text-center py-20">
-              <span className="material-symbols-outlined text-5xl text-gray-300 block mb-3">
-                notifications
-              </span>
-              <p className="text-gray-500 font-medium">No notifications yet</p>
-              <p className="text-sm text-gray-400 mt-1">
-                You&apos;ll see order updates, messages, and more here.
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#eb9728]">
+                Notification Center
+              </p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight">
+                Notifications
+              </h1>
+              <p className="mt-2 text-sm text-white/50">
+                Track order updates, messages, bids, payments, and account
+                activity.
               </p>
             </div>
-          ) : (
-            <div className="space-y-6">
-              {Object.entries(groupedByDate).map(([day, items]) => (
-                <div key={day}>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                    {day}
-                  </p>
-                  <div className="space-y-1">
-                    {items.map((notif) => {
-                      const icon = TYPE_ICONS[notif.type] || TYPE_ICONS.default;
-                      const colorClass =
-                        TYPE_COLORS[notif.type] || TYPE_COLORS.default;
-                      return (
-                        <button
-                          key={notif._id}
-                          onClick={() => handleClick(notif)}
-                          className={`w-full text-left flex items-start gap-4 p-4 rounded-xl transition-colors ${
-                            notif.isRead
-                              ? "bg-white hover:bg-gray-50"
-                              : "bg-amber-50/60 hover:bg-amber-50 border border-amber-100"
-                          }`}
-                        >
+
+            <div className="flex items-center gap-3">
+              {unreadCount > 0 && (
+                <span className="rounded-full border border-[#eb9728]/20 bg-[#eb9728]/10 px-3 py-1 text-xs font-bold text-[#eb9728]">
+                  {unreadCount} new
+                </span>
+              )}
+
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllRead}
+                  disabled={markingAll}
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-bold text-white/70 hover:border-[#eb9728]/40 hover:text-[#eb9728] disabled:opacity-50"
+                >
+                  {markingAll ? "Marking..." : "Mark all as read"}
+                </button>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {notifications.length === 0 ? (
+          <section className="rounded-[28px] border border-white/8 bg-[#0c0c11] px-6 py-20 text-center">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-[#eb9728]/20 bg-[#eb9728]/10 text-[#eb9728]">
+              <span className="material-symbols-outlined text-5xl">
+                notifications
+              </span>
+            </div>
+            <p className="text-lg font-bold text-white">No notifications yet</p>
+            <p className="mt-2 text-sm text-white/45">
+              You&apos;ll see order updates, messages, and more here.
+            </p>
+          </section>
+        ) : (
+          <section className="space-y-6">
+            {Object.entries(groupedByDate).map(([day, items]) => (
+              <div key={day}>
+                <p className="mb-3 text-xs font-bold uppercase tracking-[0.22em] text-white/35">
+                  {day}
+                </p>
+
+                <div className="space-y-2">
+                  {items.map((notif) => {
+                    const icon = TYPE_ICONS[notif.type] || TYPE_ICONS.default;
+                    const colorClass =
+                      TYPE_COLORS[notif.type] || TYPE_COLORS.default;
+
+                    return (
+                      <button
+                        key={notif._id}
+                        onClick={() => handleClick(notif)}
+                        className={`group w-full rounded-[22px] border p-4 text-left transition-all duration-200 hover:-translate-y-0.5 ${
+                          notif.isRead
+                            ? "border-white/8 bg-[#0c0c11] hover:border-[#eb9728]/30 hover:bg-white/[0.03]"
+                            : "border-[#eb9728]/25 bg-[#eb9728]/10 hover:border-[#eb9728]/45"
+                        }`}
+                      >
+                        <div className="flex items-start gap-4">
                           <div
-                            className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${colorClass}`}
+                            className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${colorClass}`}
                           >
-                            <span className="material-symbols-outlined text-lg">
+                            <span className="material-symbols-outlined text-[21px]">
                               {icon}
                             </span>
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p
-                              className={`text-sm font-semibold ${notif.isRead ? "text-gray-700" : "text-gray-900"}`}
-                            >
-                              {notif.title}
-                            </p>
-                            <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-start justify-between gap-3">
+                              <p
+                                className={`text-sm font-bold ${
+                                  notif.isRead ? "text-white/75" : "text-white"
+                                }`}
+                              >
+                                {notif.title}
+                              </p>
+
+                              {!notif.isRead && (
+                                <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#eb9728]" />
+                              )}
+                            </div>
+
+                            <p className="mt-1 line-clamp-2 text-sm leading-6 text-white/45">
                               {notif.message}
                             </p>
-                            <p className="text-xs text-gray-400 mt-1">
+
+                            <p className="mt-2 text-xs text-white/30">
                               {new Date(notif.createdAt).toLocaleTimeString(
                                 "en-US",
                                 { hour: "2-digit", minute: "2-digit" },
                               )}
                             </p>
                           </div>
-                          {!notif.isRead && (
-                            <div className="w-2 h-2 bg-[#eb9728] rounded-full shrink-0 mt-2" />
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
+                        </div>
+                      </button>
+                    );
+                  })}
                 </div>
-              ))}
-            </div>
-          )}
-        </div>
+              </div>
+            ))}
+          </section>
+        )}
       </main>
     </div>
   );

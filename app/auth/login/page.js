@@ -1,13 +1,12 @@
 // app/auth/login/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import googleLogo from "@/assets/google.png";
-import facebookLogo from "@/assets/facebook.png";
 import smartMatch from "@/assets/smartmatch.png";
 import orderIcon from "@/assets/order.png";
 import bidIcon from "@/assets/bid.png";
@@ -19,17 +18,23 @@ import previewIcon from "@/assets/preview.png";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [showPassword, setShowPassword] = useState(false);
   const [twoFactorCode, setTwoFactorCode] = useState("");
   const [requiresTwoFactor, setRequiresTwoFactor] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const hasRedirected = useRef(false);
 
   // Redirect if already logged in
   useEffect(() => {
-    if (status === "authenticated" && session?.user) {
+    if (hasRedirected.current) return; // Prevent multiple redirects
+
+    if (status === "authenticated" && session?.user?.role) {
+      console.log("Session authenticated, redirecting...", session.user.role);
+      hasRedirected.current = true;
+
       const role = session.user.role;
       if (role === "customer") {
         router.push("/customer");
@@ -69,9 +74,42 @@ export default function LoginPage() {
           setError("Invalid or expired 2FA code. Please try again.");
         } else if (result.error === "EMAIL_NOT_VERIFIED") {
           setError("Please verify your email before logging in.");
+        } else if (result.error?.startsWith("OAUTH_ACCOUNT_ONLY")) {
+          const provider = result.error.split(":")[1] || "Google";
+          setError(
+            `This account uses ${provider} for login. Please sign in with ${provider} instead.`,
+          );
         } else {
           setError(result.error);
         }
+      } else {
+        // Successful login - redirect directly
+        console.log("Login successful, redirecting...");
+
+        // Give auth cookie time to set, then redirect
+        setTimeout(() => {
+          // Fetch session to get role
+          fetch("/api/auth/session")
+            .then((res) => res.json())
+            .then((data) => {
+              console.log("Session after login:", data);
+              const role = data?.user?.role || "customer";
+
+              if (role === "customer") {
+                router.push("/customer");
+              } else if (role === "manufacturer") {
+                router.push("/manufacturer/dashboard");
+              } else if (role === "admin") {
+                router.push("/admin/dashboard");
+              } else {
+                router.push("/customer");
+              }
+            })
+            .catch((err) => {
+              console.error("Failed to fetch session:", err);
+              router.push("/customer");
+            });
+        }, 500);
       }
     } catch (err) {
       setError("Network error. Please try again.");
@@ -190,14 +228,6 @@ export default function LoginPage() {
             >
               <Image src={googleLogo} alt="G" width={16} height={16} />
               <span className="text-[10px] font-bold">Google</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => signIn("facebook")}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2 hover:bg-white/10 transition-all group"
-            >
-              <Image src={facebookLogo} alt="F" width={16} height={16} />
-              <span className="text-[10px] font-bold">Facebook</span>
             </button>
           </div>
 

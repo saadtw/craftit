@@ -4,6 +4,7 @@ import CustomOrder from "@/models/CustomOrder";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import RFQ from "@/models/RFQ";
 
 // GET /api/custom-orders/[id] - Get single custom order
 export async function GET(request, context) {

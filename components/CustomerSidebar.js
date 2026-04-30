@@ -4,8 +4,21 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useContext } from "react";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import LogoutButton from "@/components/LogoutButton";
 import CustomerLayoutContext from "@/app/customer/CustomerLayoutContext";
+
+import HomeIcon from "@/assets/home.png";
+import DashboardIcon from "@/assets/Dashboard.png";
+import OrderIcon from "@/assets/orders.png";
+import CustomOrderIcon from "@/assets/CustomOrderIcon.png";
+import RFQIcon from "@/assets/RFQ.png";
+import WishlistIcon from "@/assets/wishlist.png";
+import MessageIcon from "@/assets/message.png";
+import SupportIcon from "@/assets/support.png";
+import PaymentsIcon from "@/assets/payments.png";
+import NotificationIcon from "@/assets/notification.png";
+import SettingsIcon from "@/assets/settings.png";
 
 export default function CustomerSidebar({ active, session }) {
   const renderedByCustomerLayout = useContext(CustomerLayoutContext);
@@ -28,58 +41,69 @@ export default function CustomerSidebar({ active, session }) {
 
   const navItems = [
     {
+      href: "/customer",
+      icon: HomeIcon,
+      label: "Home",
+      key: "home",
+    },
+    {
       href: "/customer/dashboard",
-      icon: "monitoring",
+      icon: DashboardIcon,
       label: "Dashboard",
       key: "dashboard",
     },
     {
       href: "/customer/orders",
-      icon: "receipt_long",
+      icon: OrderIcon,
       label: "Orders",
       key: "orders",
     },
     {
       href: "/customer/custom-orders",
-      icon: "inventory_2",
-      label: "My Custom Orders",
+      icon: CustomOrderIcon,
+      label: "Custom",
       key: "custom-orders",
     },
-    { href: "/customer/rfqs", icon: "gavel", label: "My RFQs", key: "rfqs" },
+    {
+      href: "/customer/rfqs",
+      icon: RFQIcon,
+      label: "RFQs",
+      key: "rfqs",
+    },
     {
       href: "/customer/wishlist",
-      icon: "favorite",
+      icon: WishlistIcon,
       label: "Wishlist",
       key: "wishlist",
     },
     {
       href: "/customer/messages",
-      icon: "mail",
+      icon: MessageIcon,
       label: "Messages",
       key: "messages",
     },
     {
       href: "/customer/support",
-      icon: "support_agent",
+      icon: SupportIcon,
       label: "Support",
       key: "support",
     },
     {
       href: "/customer/payments",
-      icon: "payments",
+      icon: PaymentsIcon,
       label: "Payments",
       key: "payments",
     },
     {
       href: "/customer/notifications",
-      icon: "notifications",
+      icon: NotificationIcon,
       label: "Notifications",
       key: "notifications",
       badge: unreadNotifs > 0 ? unreadNotifs : null,
     },
     {
       href: "/customer/settings",
-      icon: "settings",
+      icon: SettingsIcon,
       label: "Settings",
       key: "settings",
     },
@@ -87,61 +111,55 @@ export default function CustomerSidebar({ active, session }) {
 
   const isActive = (item) => {
     if (active) return active === item.key;
+    if (item.href === "/customer") return pathname === item.href;
     if (item.href === "/customer/dashboard") return pathname === item.href;
     return pathname.startsWith(item.href);
   };
 
   return (
-    <aside className="w-64 shrink-0 bg-[#f8f7f6] p-6 flex flex-col justify-between border-r border-gray-200">
-      <div>
-        <div className="mb-10">
-          <svg
-            className="h-8 w-8 text-amber-600"
-            fill="none"
-            viewBox="0 0 48 48"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M4.177,14.686,21.5,4.2a3,3,0,0,1,3,0l17.323,10.485a3,3,0,0,1,1.5,2.6V30.714a3,3,0,0,1-1.5,2.6L24.5,43.8a3,3,0,0,1-3,0L4.177,33.314a3,3,0,0,1-1.5-2.6V17.286a3,3,0,0,1,1.5-2.6Z"
-              stroke="currentColor"
-              strokeLinejoin="round"
-              strokeWidth="3"
-            />
-            <path
-              d="m22.5,24,14.5-8.5M22.5,24V43.5M22.5,24,9,16"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="3"
-            />
-          </svg>
-          <h1 className="text-2xl font-bold text-gray-900 mt-1">Craftit</h1>
-        </div>
-        <nav className="flex flex-col space-y-1">
-          {navItems.map((item) => (
+    <aside className="w-24 shrink-0 border-r border-white/10 bg-[#050507] text-white flex flex-col h-screen sticky top-0 overflow-hidden">
+      <div className="flex flex-col py-4 overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {navItems.map((item) => {
+          const activeItem = isActive(item);
+
+          return (
             <Link
               key={item.key}
               href={item.href}
-              className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-colors ${
-                isActive(item)
-                  ? "bg-[#eb9728]/20 text-[#eb9728]"
-                  : "text-gray-700 hover:bg-[#eb9728]/10"
+              className={`group flex flex-col items-center gap-1.5 px-2 py-3 w-full border-l-2 transition-all ${
+                activeItem
+                  ? "bg-[#eb9728]/10 border-l-[#eb9728]"
+                  : "bg-transparent border-l-transparent hover:border-l-white/40"
               }`}
             >
-              <span className="material-symbols-outlined text-lg">
-                {item.icon}
+              <div className="relative">
+                <Image
+                  src={item.icon}
+                  alt={item.label}
+                  width={22}
+                  height={22}
+                  className="transition-all"
+                />
+                {item.badge && (
+                  <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-[3px] bg-[#eb9728] text-white text-[8px] font-bold rounded-full flex items-center justify-center">
+                    {item.badge > 9 ? "9+" : item.badge}
+                  </span>
+                )}
+              </div>
+
+              <span
+                className={`text-[11px] font-semibold text-center leading-tight transition-colors ${
+                  activeItem ? "text-[#eb9728]" : "text-white/70"
+                }`}
+              >
+                {item.label}
               </span>
-              <span className="font-medium text-sm flex-1">{item.label}</span>
-              {item.badge && (
-                <span className="w-5 h-5 bg-[#eb9728] text-white text-[10px] font-bold rounded-full flex items-center justify-center">
-                  {item.badge > 9 ? "9+" : item.badge}
-                </span>
-              )}
             </Link>
-          ))}
-        </nav>
+          );
+        })}
+
+        <LogoutButton />
       </div>
-      <LogoutButton />
     </aside>
   );
 }

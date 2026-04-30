@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchWithCache } from "@/lib/clientCache";
-import ModelManager from "@/modules/components/ModelManager";
+import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
 
 export default function CustomerProductDetailPage() {
   const { id } = useParams();
@@ -29,7 +29,6 @@ export default function CustomerProductDetailPage() {
 
   const fetchManufacturer = useCallback(async (mId) => {
     try {
-      // 3-min TTL — manufacturer profiles change rarely.
       const data = await fetchWithCache(
         `/api/manufacturers/${mId}`,
         3 * 60 * 1000,
@@ -41,13 +40,14 @@ export default function CustomerProductDetailPage() {
   const fetchProduct = useCallback(async () => {
     setLoading(true);
     try {
-      // 2-min TTL — product details (price, stock, status) can change.
       const data = await fetchWithCache(
         `/api/products/${id}/public`,
         2 * 60 * 1000,
       );
+
       if (data.success) {
         setProduct(data.product);
+
         if (data.product.manufacturerId) {
           fetchManufacturer(
             data.product.manufacturerId._id || data.product.manufacturerId,
@@ -74,8 +74,8 @@ export default function CustomerProductDetailPage() {
               id,
               ...sanitized.filter((pId) => pId !== id),
             ].slice(0, 12);
-            localStorage.setItem(storageKey, JSON.stringify(nextIds));
 
+            localStorage.setItem(storageKey, JSON.stringify(nextIds));
             recentIds = nextIds.filter((pId) => pId !== id).slice(0, 6);
           }
 
@@ -98,7 +98,6 @@ export default function CustomerProductDetailPage() {
           setRecentProducts([]);
         }
 
-        // Increment view count silently
         fetch(`/api/products/${id}/view`, { method: "POST" }).catch(() => {});
       } else {
         router.push("/customer/explore");
@@ -122,6 +121,7 @@ export default function CustomerProductDetailPage() {
       const ids = (data?.wishlist || [])
         .filter((item) => item.itemType === "product" && item._id)
         .map((item) => item._id.toString());
+
       setWishlistProductIds(new Set(ids));
     } catch (_) {}
   }, []);
@@ -133,9 +133,7 @@ export default function CustomerProductDetailPage() {
         cache: "no-store",
       });
       const data = await res.json();
-      if (data.success) {
-        setQaItems(data.questions || []);
-      }
+      if (data.success) setQaItems(data.questions || []);
     } catch (_) {
       setQaItems([]);
     } finally {
@@ -154,6 +152,7 @@ export default function CustomerProductDetailPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question }),
       });
+
       const data = await res.json();
 
       if (data.success) {
@@ -178,11 +177,8 @@ export default function CustomerProductDetailPage() {
 
       setWishlistProductIds((prev) => {
         const next = new Set(prev);
-        if (isCurrentlyWishlisted) {
-          next.delete(targetId);
-        } else {
-          next.add(targetId);
-        }
+        if (isCurrentlyWishlisted) next.delete(targetId);
+        else next.add(targetId);
         return next;
       });
 
@@ -199,11 +195,8 @@ export default function CustomerProductDetailPage() {
       } catch (_) {
         setWishlistProductIds((prev) => {
           const next = new Set(prev);
-          if (isCurrentlyWishlisted) {
-            next.add(targetId);
-          } else {
-            next.delete(targetId);
-          }
+          if (isCurrentlyWishlisted) next.add(targetId);
+          else next.delete(targetId);
           return next;
         });
       }
@@ -216,11 +209,13 @@ export default function CustomerProductDetailPage() {
       router.push("/auth/login");
       return;
     }
+
     if (status === "authenticated") {
       if (session.user.role !== "customer") {
         router.push("/auth/login");
         return;
       }
+
       fetchProduct();
       fetchWishlist();
       fetchQnA();
@@ -229,23 +224,23 @@ export default function CustomerProductDetailPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex h-screen bg-[#f8f7f6]">
-        <main className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
-        </main>
+      <div className="flex min-h-screen items-center justify-center bg-[#050507]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
+          <p className="text-sm text-white/45">Loading product...</p>
+        </div>
       </div>
     );
   }
 
   if (!product) return null;
 
-  const primaryImage =
-    product.images?.find((i) => i.isPrimary) || product.images?.[0];
   const isCurrentProductWishlisted = wishlistProductIds.has(id?.toString());
   const specs = product.specifications || {};
   const dims = specs.dimensions || {};
   const answeredCount = qaItems.filter((q) => q.status === "answered").length;
   const pendingCount = qaItems.filter((q) => q.status !== "answered").length;
+
   const visibleQaItems = qaItems.filter((q) => {
     if (qaView === "answered") return q.status === "answered";
     if (qaView === "pending") return q.status !== "answered";
@@ -253,275 +248,244 @@ export default function CustomerProductDetailPage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#f8f7f6]">
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <div className="mb-4">
-          <Link
-            href="/customer/explore"
-            className="inline-flex items-center gap-1.5 text-sm text-gray-600 hover:text-[#eb9728]"
-          >
-            <span className="material-symbols-outlined text-base">
-              arrow_back
-            </span>
-            Back to Explore
-          </Link>
-        </div>
+    <div className="min-h-screen bg-[#050507] text-white">
+      <main className="mx-auto max-w-6xl px-4 py-7 sm:px-6 space-y-8">
+        <Link
+          href="/customer/explore"
+          className="inline-flex items-center gap-1.5 text-sm font-semibold text-white/45 hover:text-[#eb9728]"
+        >
+          <span className="material-symbols-outlined text-base">
+            arrow_back
+          </span>
+          Back to Explore
+        </Link>
 
-        <div>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-            {/* ── Left: Images ── */}
-            <div>
-              {/* Main image */}
-              <div className="bg-white rounded-xl border border-gray-200 overflow-hidden mb-3 aspect-square relative">
-                {product.images?.[activeImage]?.url ? (
-                  <Image
-                    src={product.images[activeImage].url}
-                    alt={product.name}
-                    fill
-                    className="object-contain p-4"
-                    sizes="(max-width: 768px) 100vw, 50vw"
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="material-symbols-outlined text-6xl text-gray-200">
-                      inventory_2
-                    </span>
-                  </div>
-                )}
-              </div>
-              {/* Thumbnails */}
-              {product.images?.length > 1 && (
-                <div className="flex gap-2 flex-wrap">
-                  {product.images.map((img, i) => (
-                    <button
-                      key={i}
-                      onClick={() => setActiveImage(i)}
-                      className={`w-16 h-16 rounded-lg border-2 overflow-hidden transition-all ${
-                        i === activeImage
-                          ? "border-[#eb9728]"
-                          : "border-gray-200 hover:border-gray-300"
-                      }`}
-                    >
-                      <Image
-                        src={img.url}
-                        alt=""
-                        width={64}
-                        height={64}
-                        className="w-full h-full object-cover"
-                      />
-                    </button>
-                  ))}
+        <section className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+          <div>
+            <div className="relative aspect-square overflow-hidden rounded-[28px] border border-white/8 bg-[#0c0c11]">
+              {product.images?.[activeImage]?.url ? (
+                <Image
+                  src={product.images[activeImage].url}
+                  alt={product.name}
+                  fill
+                  className="object-contain p-5 transition-transform duration-500 hover:scale-105"
+                  sizes="(max-width: 768px) 100vw, 50vw"
+                />
+              ) : (
+                <div className="flex h-full items-center justify-center">
+                  <span className="material-symbols-outlined text-7xl text-white/15">
+                    inventory_2
+                  </span>
                 </div>
               )}
             </div>
 
-            {/* ── Right: Info + CTA ── */}
-            <div className="flex flex-col gap-5">
-              {/* Category + Status */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                  {product.category}
-                </span>
-                {product.subCategory && (
-                  <span className="px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-xs">
-                    {product.subCategory}
-                  </span>
-                )}
-                {product.customizationOptions && (
-                  <span className="px-3 py-1 bg-amber-50 text-amber-600 border border-amber-200 rounded-full text-xs font-medium">
-                    ✦ Customizable
-                  </span>
-                )}
-              </div>
-
-              {/* Name */}
-              <h1 className="text-2xl font-bold text-gray-900">
-                {product.name}
-              </h1>
-
-              {/* Rating */}
-              {product.totalReviews > 0 && (
-                <div className="flex items-center gap-2">
-                  <div className="flex">
-                    {[1, 2, 3, 4, 5].map((s) => (
-                      <span
-                        key={s}
-                        className={`text-lg ${
-                          s <= Math.round(product.averageRating)
-                            ? "text-[#eb9728]"
-                            : "text-gray-200"
-                        }`}
-                      >
-                        ★
-                      </span>
-                    ))}
-                  </div>
-                  <span className="text-sm font-medium text-gray-700">
-                    {product.averageRating?.toFixed(1)}
-                  </span>
-                  <span className="text-sm text-gray-400">
-                    ({product.totalReviews} reviews)
-                  </span>
-                </div>
-              )}
-
-              {/* Price block */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5">
-                <div className="flex items-baseline gap-2 mb-1">
-                  <span className="text-3xl font-bold text-[#eb9728]">
-                    ${product.price?.toLocaleString()}
-                  </span>
-                  <span className="text-sm text-gray-400">per unit</span>
-                </div>
-                <div className="flex gap-4 text-sm text-gray-600 mt-2">
-                  <span>
-                    <strong className="text-gray-900">MOQ:</strong>{" "}
-                    {product.moq} units
-                  </span>
-                  {product.leadTime && (
-                    <span>
-                      <strong className="text-gray-900">Lead time:</strong>{" "}
-                      {product.leadTime} days
-                    </span>
-                  )}
-                  {product.stock > 0 && (
-                    <span className="text-green-600">
-                      ✓ {product.stock} in stock
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Description */}
-              <div>
-                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-2">
-                  Description
-                </h3>
-                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line">
-                  {product.description}
-                </p>
-              </div>
-
-              {/* Tags */}
-              {product.tags?.length > 0 && (
-                <div className="flex flex-wrap gap-1.5">
-                  {product.tags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="px-2 py-0.5 bg-gray-100 text-gray-500 rounded-full text-xs"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* CTA */}
-              <div className="flex flex-col gap-2 mt-auto">
-                <button
-                  type="button"
-                  onClick={() => handleToggleWishlist(id)}
-                  className={`w-full py-3 border rounded-xl text-sm font-semibold transition-colors ${
-                    isCurrentProductWishlisted
-                      ? "border-[#eb9728]/40 bg-[#eb9728]/10 text-[#eb9728]"
-                      : "border-gray-200 text-gray-700 hover:border-[#eb9728] hover:text-[#eb9728]"
-                  }`}
-                >
-                  {isCurrentProductWishlisted
-                    ? "Remove from Wishlist"
-                    : "Add to Wishlist"}
-                </button>
-                <Link
-                  href={`/customer/products/${id}/order`}
-                  className="w-full py-3.5 bg-[#eb9728] text-white font-semibold text-center rounded-xl hover:bg-[#eb9728]/90 transition-colors"
-                >
-                  Place Order
-                </Link>
-                {product.customizationOptions ? (
-                  <Link
-                    href={`/custom-orders/new?productId=${id}`}
-                    className="w-full py-3.5 border-2 border-[#eb9728] text-[#eb9728] font-semibold text-center rounded-xl hover:bg-[#eb9728]/5 transition-colors"
+            {product.images?.length > 1 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {product.images.map((img, i) => (
+                  <button
+                    key={i}
+                    onClick={() => setActiveImage(i)}
+                    className={`h-16 w-16 overflow-hidden rounded-xl border-2 bg-[#0c0c11] transition-all ${
+                      i === activeImage
+                        ? "border-[#eb9728]"
+                        : "border-white/10 hover:border-[#eb9728]/40"
+                    }`}
                   >
-                    Request Custom Quote (RFQ)
-                  </Link>
-                ) : (
-                  <p className="text-xs text-gray-500 text-center py-1">
-                    This manufacturer has not enabled customization for this
-                    product.
-                  </p>
-                )}
+                    <Image
+                      src={img.url}
+                      alt=""
+                      width={64}
+                      height={64}
+                      className="h-full w-full object-cover"
+                    />
+                  </button>
+                ))}
               </div>
-            </div>
+            )}
           </div>
 
-          {/* ── Bottom section ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Specifications */}
-            <div className="lg:col-span-2 space-y-6">
-              {(specs.material || specs.weight || dims.length) && (
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4">
-                    Specifications
-                  </h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
-                    {specs.material && (
-                      <SpecRow label="Material" value={specs.material} />
-                    )}
-                    {specs.weight && (
-                      <SpecRow label="Weight" value={`${specs.weight} kg`} />
-                    )}
-                    {specs.color?.length > 0 && (
-                      <SpecRow label="Colors" value={specs.color.join(", ")} />
-                    )}
-                    {dims.length && (
-                      <SpecRow
-                        label="Dimensions"
-                        value={`${dims.length} × ${dims.width} × ${dims.height} ${dims.unit || "cm"}`}
-                      />
-                    )}
-                    {product.shippingWeight && (
-                      <SpecRow
-                        label="Shipping Weight"
-                        value={`${product.shippingWeight} kg`}
-                      />
-                    )}
-                    {product.leadTime && (
-                      <SpecRow
-                        label="Lead Time"
-                        value={`${product.leadTime} days`}
-                      />
-                    )}
-                  </div>
-                </div>
+          <div className="flex flex-col gap-5">
+            <div className="flex flex-wrap items-center gap-2">
+              <Badge>{product.category}</Badge>
+              {product.subCategory && (
+                <Badge muted>{product.subCategory}</Badge>
               )}
+              {product.customizationOptions && (
+                <Badge amber>✦ Customizable</Badge>
+              )}
+            </div>
 
-              {/* 3D Model Viewer */}
-              {product.model3D?.url && (
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-white text-xs rounded font-medium">
-                      3D
+            <h1 className="text-3xl font-black leading-tight tracking-tight text-white">
+              {product.name}
+            </h1>
+
+            {product.totalReviews > 0 && (
+              <div className="flex items-center gap-2">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((s) => (
+                    <span
+                      key={s}
+                      className={`text-lg ${
+                        s <= Math.round(product.averageRating)
+                          ? "text-[#eb9728]"
+                          : "text-white/15"
+                      }`}
+                    >
+                      ★
                     </span>
-                    3D Model
-                  </h3>
-                  <ModelManager
-                    model3D={product.model3D}
-                    resourceId={product._id}
-                    resourceType="product"
-                    canEdit={false}
+                  ))}
+                </div>
+                <span className="text-sm font-bold text-white/80">
+                  {product.averageRating?.toFixed(1)}
+                </span>
+                <span className="text-sm text-white/35">
+                  ({product.totalReviews} reviews)
+                </span>
+              </div>
+            )}
+
+            <div className="rounded-[24px] border border-[#eb9728]/20 bg-[#0c0c11] p-5">
+              <div className="mb-2 flex items-baseline gap-2">
+                <span className="text-4xl font-black text-[#eb9728]">
+                  ${product.price?.toLocaleString()}
+                </span>
+                <span className="text-sm text-white/35">per unit</span>
+              </div>
+
+              <div className="mt-3 flex flex-wrap gap-3 text-sm text-white/55">
+                <span>
+                  <strong className="text-white">MOQ:</strong> {product.moq}{" "}
+                  units
+                </span>
+                {product.leadTime && (
+                  <span>
+                    <strong className="text-white">Lead time:</strong>{" "}
+                    {product.leadTime} days
+                  </span>
+                )}
+                {product.stock > 0 && (
+                  <span className="font-semibold text-emerald-300">
+                    ✓ {product.stock} in stock
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <section>
+              <h3 className="mb-2 text-xs font-black uppercase tracking-[0.22em] text-white/35">
+                Description
+              </h3>
+              <p className="whitespace-pre-line text-sm leading-7 text-white/55">
+                {product.description}
+              </p>
+            </section>
+
+            {product.tags?.length > 0 && (
+              <div className="flex flex-wrap gap-1.5">
+                {product.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full border border-white/8 bg-white/[0.03] px-2.5 py-1 text-xs text-white/45"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+
+            <div className="mt-auto flex flex-col gap-2">
+              <button
+                type="button"
+                onClick={() => handleToggleWishlist(id)}
+                className={`w-full rounded-xl border py-3 text-sm font-bold transition-colors ${
+                  isCurrentProductWishlisted
+                    ? "border-[#eb9728]/40 bg-[#eb9728]/10 text-[#eb9728]"
+                    : "border-white/10 bg-white/[0.03] text-white/70 hover:border-[#eb9728]/40 hover:text-[#eb9728]"
+                }`}
+              >
+                {isCurrentProductWishlisted
+                  ? "Remove from Wishlist"
+                  : "Add to Wishlist"}
+              </button>
+
+              <Link
+                href={`/customer/products/${id}/order`}
+                className="w-full rounded-xl bg-[#eb9728] py-3.5 text-center text-sm font-black text-white hover:bg-amber-500"
+              >
+                Place Order
+              </Link>
+
+              {product.customizationOptions ? (
+                <Link
+                  href={`/custom-orders/new?productId=${id}`}
+                  className="w-full rounded-xl border border-[#eb9728]/40 bg-[#eb9728]/10 py-3.5 text-center text-sm font-bold text-[#eb9728] hover:bg-[#eb9728]/15"
+                >
+                  Request Custom Quote (RFQ)
+                </Link>
+              ) : (
+                <p className="py-1 text-center text-xs text-white/35">
+                  This manufacturer has not enabled customization for this
+                  product.
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="space-y-6 lg:col-span-2">
+            {(specs.material || specs.weight || dims.length) && (
+              <Card title="Specifications">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  {specs.material && (
+                    <SpecRow label="Material" value={specs.material} />
+                  )}
+                  {specs.weight && (
+                    <SpecRow label="Weight" value={`${specs.weight} kg`} />
+                  )}
+                  {specs.color?.length > 0 && (
+                    <SpecRow label="Colors" value={specs.color.join(", ")} />
+                  )}
+                  {dims.length && (
+                    <SpecRow
+                      label="Dimensions"
+                      value={`${dims.length} × ${dims.width} × ${dims.height} ${dims.unit || "cm"}`}
+                    />
+                  )}
+                  {product.shippingWeight && (
+                    <SpecRow
+                      label="Shipping Weight"
+                      value={`${product.shippingWeight} kg`}
+                    />
+                  )}
+                  {product.leadTime && (
+                    <SpecRow
+                      label="Lead Time"
+                      value={`${product.leadTime} days`}
+                    />
+                  )}
+                </div>
+              </Card>
+            )}
+
+            {product.model3D?.url && (
+              <Card title="3D Model">
+                <div className="overflow-hidden rounded-[20px] border border-white/8 bg-[#0c0c11]">
+                  <Editor3DWrapper
+                    modelUrl={product.model3D.url}
+                    initialAnnotations={product.model3D.annotations}
+                    initialCameraState={product.model3D.cameraState}
+                    readOnly={true}
                   />
-                  <div className="flex items-center gap-3 mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                    <span className="material-symbols-outlined text-xl text-blue-500">
-                      view_in_ar
-                    </span>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 truncate">
+                  <div className="flex items-center justify-between gap-3 p-4 bg-white/[0.02] border-t border-white/8">
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-white">
                         {product.model3D.filename || "3D Model"}
                       </p>
                       {product.model3D.fileSize && (
-                        <p className="text-xs text-gray-400">
-                          {(product.model3D.fileSize / 1024 / 1024).toFixed(1)}{" "}
-                          MB
+                        <p className="text-xs text-white/35">
+                          {(product.model3D.fileSize / 1024 / 1024).toFixed(1)} MB
                         </p>
                       )}
                     </div>
@@ -529,285 +493,322 @@ export default function CustomerProductDetailPage() {
                       href={product.model3D.url}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100"
+                      className="px-4 py-2 bg-[#eb9728]/10 text-[#eb9728] rounded-xl text-xs font-bold hover:bg-[#eb9728]/20 transition-colors"
                     >
                       Download
                     </a>
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* Manufacturer panel */}
-            {manufacturer && (
-              <div className="bg-white rounded-xl border border-gray-200 p-6">
-                <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-4">
-                  Manufacturer
-                </h3>
-                {/* Logo + name */}
-                <div className="flex items-center gap-3 mb-4">
-                  {manufacturer.businessLogo ? (
-                    <Image
-                      src={manufacturer.businessLogo}
-                      alt=""
-                      width={48}
-                      height={48}
-                      className="rounded-xl object-cover border border-gray-200"
-                    />
-                  ) : (
-                    <div className="w-12 h-12 rounded-xl bg-blue-100 flex items-center justify-center font-bold text-blue-700 text-lg">
-                      {(
-                        manufacturer.businessName ||
-                        manufacturer.name ||
-                        "M"
-                      ).charAt(0)}
-                    </div>
-                  )}
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <p className="font-semibold text-gray-900 text-sm">
-                        {manufacturer.businessName || manufacturer.name}
-                      </p>
-                      {manufacturer.verificationStatus === "verified" && (
-                        <span
-                          className="text-blue-500"
-                          title="Verified Manufacturer"
-                        >
-                          <span className="material-symbols-outlined text-base">
-                            verified
-                          </span>
-                        </span>
-                      )}
-                    </div>
-                    {manufacturer.location?.city && (
-                      <p className="text-xs text-gray-400 flex items-center gap-1">
-                        <span className="material-symbols-outlined text-xs">
-                          location_on
-                        </span>
-                        {manufacturer.location.city},{" "}
-                        {manufacturer.location.country}
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Stats */}
-                <div className="grid grid-cols-2 gap-2 mb-4">
-                  <StatPill
-                    label="Orders"
-                    value={
-                      manufacturer.completedOrders ||
-                      manufacturer.stats?.completedOrders ||
-                      0
-                    }
-                  />
-                  <StatPill
-                    label="Rating"
-                    value={
-                      manufacturer.stats?.averageRating > 0
-                        ? `★ ${manufacturer.stats.averageRating.toFixed(1)}`
-                        : "—"
-                    }
-                  />
-                </div>
-
-                {/* Capabilities */}
-                {manufacturer.manufacturingCapabilities?.length > 0 && (
-                  <div className="mb-4">
-                    <p className="text-xs font-semibold text-gray-500 uppercase mb-2">
-                      Capabilities
-                    </p>
-                    <div className="flex flex-wrap gap-1">
-                      {manufacturer.manufacturingCapabilities
-                        .slice(0, 4)
-                        .map((c) => (
-                          <span
-                            key={c}
-                            className="px-2 py-0.5 bg-blue-50 text-blue-600 text-xs rounded-full"
-                          >
-                            {c.replace(/_/g, " ")}
-                          </span>
-                        ))}
-                      {manufacturer.manufacturingCapabilities.length > 4 && (
-                        <span className="px-2 py-0.5 bg-gray-100 text-gray-500 text-xs rounded-full">
-                          +{manufacturer.manufacturingCapabilities.length - 4}{" "}
-                          more
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                <Link
-                  href={`/manufacturers/${manufacturer._id}`}
-                  className="block w-full py-2.5 text-center border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:border-[#eb9728] hover:text-[#eb9728] transition-colors"
-                >
-                  View Full Profile
-                </Link>
-              </div>
+              </Card>
             )}
           </div>
 
-          <section className="mt-8 bg-white rounded-xl border border-gray-200 p-6">
-            <div className="flex items-center justify-between gap-3 mb-4">
-              <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide">
-                Product Q&A
-              </h3>
-              <span className="text-xs text-gray-500">
-                {qaItems.length} question{qaItems.length !== 1 ? "s" : ""}
-              </span>
-            </div>
+          {manufacturer && (
+            <Card title="Manufacturer">
+              <div className="mb-4 flex items-center gap-3">
+                {manufacturer.businessLogo ? (
+                  <Image
+                    src={manufacturer.businessLogo}
+                    alt=""
+                    width={48}
+                    height={48}
+                    className="rounded-xl border border-white/10 object-cover"
+                  />
+                ) : (
+                  <div className="flex h-12 w-12 items-center justify-center rounded-xl border border-[#eb9728]/20 bg-[#eb9728]/10 text-lg font-black text-[#eb9728]">
+                    {(
+                      manufacturer.businessName ||
+                      manufacturer.name ||
+                      "M"
+                    ).charAt(0)}
+                  </div>
+                )}
 
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <button
-                type="button"
-                onClick={() => setQaView("all")}
-                className={`px-2.5 py-1 text-xs rounded-full border ${qaView === "all" ? "bg-gray-900 text-white border-gray-900" : "border-gray-200 text-gray-600"}`}
-              >
-                All ({qaItems.length})
-              </button>
-              <button
-                type="button"
-                onClick={() => setQaView("answered")}
-                className={`px-2.5 py-1 text-xs rounded-full border ${qaView === "answered" ? "bg-blue-600 text-white border-blue-600" : "border-gray-200 text-gray-600"}`}
-              >
-                Answered ({answeredCount})
-              </button>
-              <button
-                type="button"
-                onClick={() => setQaView("pending")}
-                className={`px-2.5 py-1 text-xs rounded-full border ${qaView === "pending" ? "bg-amber-500 text-white border-amber-500" : "border-gray-200 text-gray-600"}`}
-              >
-                Waiting ({pendingCount})
-              </button>
-            </div>
-
-            <div className="mb-5">
-              <textarea
-                value={qaQuestion}
-                onChange={(e) => setQaQuestion(e.target.value)}
-                rows={3}
-                maxLength={800}
-                placeholder="Ask about materials, lead time, customization, or anything else..."
-                className="w-full border border-gray-200 rounded-xl px-3 py-2.5 text-sm resize-none focus:outline-none focus:border-[#eb9728]"
-              />
-              <div className="flex items-center justify-between mt-2">
-                <p className="text-xs text-gray-400">
-                  {qaQuestion.length}/800 · Keep your question specific for
-                  faster replies
-                </p>
-                <button
-                  type="button"
-                  onClick={handleAskQuestion}
-                  disabled={qaSubmitting || qaQuestion.trim().length < 5}
-                  className="px-4 py-2 bg-[#eb9728] text-white text-sm font-semibold rounded-lg disabled:opacity-50"
-                >
-                  {qaSubmitting ? "Submitting..." : "Ask Question"}
-                </button>
-              </div>
-            </div>
-
-            {qaLoading ? (
-              <p className="text-sm text-gray-400">Loading questions...</p>
-            ) : visibleQaItems.length === 0 ? (
-              <p className="text-sm text-gray-500">
-                {qaItems.length === 0
-                  ? "No questions yet. Ask the first one."
-                  : "No questions in this view yet."}
-              </p>
-            ) : (
-              <div className="space-y-4">
-                {visibleQaItems.map((qa) => (
-                  <article
-                    key={qa._id}
-                    className="border border-gray-100 rounded-xl p-4"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <p className="text-sm font-medium text-gray-900">
-                        Q: {qa.question}
-                      </p>
-                      <span className="text-[11px] text-gray-400 shrink-0">
-                        {new Date(qa.createdAt).toLocaleDateString()}
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <p className="truncate text-sm font-bold text-white">
+                      {manufacturer.businessName || manufacturer.name}
+                    </p>
+                    {manufacturer.verificationStatus === "verified" && (
+                      <span
+                        className="material-symbols-outlined text-base text-blue-300"
+                        title="Verified Manufacturer"
+                      >
+                        verified
                       </span>
-                    </div>
-
-                    {qa.status === "answered" && qa.answer?.text ? (
-                      <div className="mt-3 bg-blue-50 border border-blue-100 rounded-lg p-3">
-                        <p className="text-xs font-semibold text-blue-700 mb-1">
-                          A:{" "}
-                          {qa.answer?.answeredBy?.businessName ||
-                            qa.answer?.answeredBy?.name ||
-                            "Manufacturer"}
-                        </p>
-                        <p className="text-sm text-blue-900 whitespace-pre-wrap">
-                          {qa.answer.text}
-                        </p>
-                      </div>
-                    ) : (
-                      <p className="mt-2 text-xs text-amber-600">
-                        Awaiting manufacturer response
-                      </p>
                     )}
-                  </article>
-                ))}
+                  </div>
+
+                  {manufacturer.location?.city && (
+                    <p className="mt-1 flex items-center gap-1 text-xs text-white/35">
+                      <span className="material-symbols-outlined text-xs">
+                        location_on
+                      </span>
+                      {manufacturer.location.city},{" "}
+                      {manufacturer.location.country}
+                    </p>
+                  )}
+                </div>
               </div>
-            )}
-          </section>
 
-          {(relatedProducts.length > 0 || recentProducts.length > 0) && (
-            <div className="mt-10 space-y-8">
-              {relatedProducts.length > 0 && (
-                <section>
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-lg font-bold text-gray-900">
-                      Related Products
-                    </h2>
-                    <Link
-                      href="/customer/explore"
-                      className="text-sm text-[#eb9728] hover:underline"
-                    >
-                      Browse more
-                    </Link>
+              <div className="mb-4 grid grid-cols-2 gap-2">
+                <StatPill
+                  label="Orders"
+                  value={
+                    manufacturer.completedOrders ||
+                    manufacturer.stats?.completedOrders ||
+                    0
+                  }
+                />
+                <StatPill
+                  label="Rating"
+                  value={
+                    manufacturer.stats?.averageRating > 0
+                      ? `★ ${manufacturer.stats.averageRating.toFixed(1)}`
+                      : "—"
+                  }
+                />
+              </div>
+
+              {manufacturer.manufacturingCapabilities?.length > 0 && (
+                <div className="mb-4">
+                  <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-white/35">
+                    Capabilities
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {manufacturer.manufacturingCapabilities
+                      .slice(0, 4)
+                      .map((c) => (
+                        <span
+                          key={c}
+                          className="rounded-full border border-blue-500/20 bg-blue-500/10 px-2 py-0.5 text-xs text-blue-300"
+                        >
+                          {c.replace(/_/g, " ")}
+                        </span>
+                      ))}
+                    {manufacturer.manufacturingCapabilities.length > 4 && (
+                      <span className="rounded-full border border-white/8 bg-white/[0.04] px-2 py-0.5 text-xs text-white/40">
+                        +{manufacturer.manufacturingCapabilities.length - 4}{" "}
+                        more
+                      </span>
+                    )}
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {relatedProducts.map((item) => (
-                      <ProductMiniCard
-                        key={item._id}
-                        product={item}
-                        isWishlisted={wishlistProductIds.has(
-                          item._id?.toString(),
-                        )}
-                        onToggleWishlist={handleToggleWishlist}
-                      />
-                    ))}
-                  </div>
-                </section>
+                </div>
               )}
 
-              {recentProducts.length > 0 && (
-                <section>
-                  <h2 className="text-lg font-bold text-gray-900 mb-3">
-                    Recently Viewed
-                  </h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {recentProducts.map((item) => (
-                      <ProductMiniCard
-                        key={item._id}
-                        product={item}
-                        isWishlisted={wishlistProductIds.has(
-                          item._id?.toString(),
-                        )}
-                        onToggleWishlist={handleToggleWishlist}
-                      />
-                    ))}
+              <Link
+                href={`/manufacturers/${manufacturer._id}`}
+                className="block w-full rounded-xl border border-white/10 bg-white/[0.03] py-3 text-center text-sm font-bold text-white/70 hover:border-[#eb9728]/40 hover:text-[#eb9728]"
+              >
+                View Full Profile
+              </Link>
+            </Card>
+          )}
+        </section>
+
+        <Card title="Product Q&A">
+          <div className="mb-4 flex items-center justify-between gap-3">
+            <span className="text-xs text-white/40">
+              {qaItems.length} question{qaItems.length !== 1 ? "s" : ""}
+            </span>
+          </div>
+
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <QaTab active={qaView === "all"} onClick={() => setQaView("all")}>
+              All ({qaItems.length})
+            </QaTab>
+            <QaTab
+              active={qaView === "answered"}
+              onClick={() => setQaView("answered")}
+              blue
+            >
+              Answered ({answeredCount})
+            </QaTab>
+            <QaTab
+              active={qaView === "pending"}
+              onClick={() => setQaView("pending")}
+              amber
+            >
+              Waiting ({pendingCount})
+            </QaTab>
+          </div>
+
+          <div className="mb-5">
+            <textarea
+              value={qaQuestion}
+              onChange={(e) => setQaQuestion(e.target.value)}
+              rows={3}
+              maxLength={800}
+              placeholder="Ask about materials, lead time, customization, or anything else..."
+              className="w-full resize-none rounded-xl border border-white/10 bg-white/[0.03] px-4 py-3 text-sm text-white placeholder:text-white/30 focus:border-[#eb9728] focus:outline-none"
+            />
+
+            <div className="mt-2 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-white/35">
+                {qaQuestion.length}/800 · Keep your question specific for faster
+                replies
+              </p>
+
+              <button
+                type="button"
+                onClick={handleAskQuestion}
+                disabled={qaSubmitting || qaQuestion.trim().length < 5}
+                className="rounded-xl bg-[#eb9728] px-4 py-2 text-sm font-bold text-white hover:bg-amber-500 disabled:opacity-50"
+              >
+                {qaSubmitting ? "Submitting..." : "Ask Question"}
+              </button>
+            </div>
+          </div>
+
+          {qaLoading ? (
+            <p className="text-sm text-white/40">Loading questions...</p>
+          ) : visibleQaItems.length === 0 ? (
+            <p className="text-sm text-white/45">
+              {qaItems.length === 0
+                ? "No questions yet. Ask the first one."
+                : "No questions in this view yet."}
+            </p>
+          ) : (
+            <div className="space-y-4">
+              {visibleQaItems.map((qa) => (
+                <article
+                  key={qa._id}
+                  className="rounded-2xl border border-white/8 bg-white/[0.02] p-4"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <p className="text-sm font-bold text-white">
+                      Q: {qa.question}
+                    </p>
+                    <span className="shrink-0 text-[11px] text-white/30">
+                      {new Date(qa.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
-                </section>
-              )}
+
+                  {qa.status === "answered" && qa.answer?.text ? (
+                    <div className="mt-3 rounded-xl border border-blue-500/20 bg-blue-500/10 p-3">
+                      <p className="mb-1 text-xs font-bold text-blue-300">
+                        A:{" "}
+                        {qa.answer?.answeredBy?.businessName ||
+                          qa.answer?.answeredBy?.name ||
+                          "Manufacturer"}
+                      </p>
+                      <p className="whitespace-pre-wrap text-sm text-blue-100/85">
+                        {qa.answer.text}
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs font-semibold text-[#eb9728]">
+                      Awaiting manufacturer response
+                    </p>
+                  )}
+                </article>
+              ))}
             </div>
           )}
-        </div>
+        </Card>
+
+        {(relatedProducts.length > 0 || recentProducts.length > 0) && (
+          <div className="space-y-8">
+            {relatedProducts.length > 0 && (
+              <section>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-lg font-black text-white">
+                    Related Products
+                  </h2>
+                  <Link
+                    href="/customer/explore"
+                    className="text-sm font-semibold text-[#eb9728] hover:text-amber-400"
+                  >
+                    Browse more
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                  {relatedProducts.map((item) => (
+                    <ProductMiniCard
+                      key={item._id}
+                      product={item}
+                      isWishlisted={wishlistProductIds.has(
+                        item._id?.toString(),
+                      )}
+                      onToggleWishlist={handleToggleWishlist}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {recentProducts.length > 0 && (
+              <section>
+                <h2 className="mb-4 text-lg font-black text-white">
+                  Recently Viewed
+                </h2>
+
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                  {recentProducts.map((item) => (
+                    <ProductMiniCard
+                      key={item._id}
+                      product={item}
+                      isWishlisted={wishlistProductIds.has(
+                        item._id?.toString(),
+                      )}
+                      onToggleWishlist={handleToggleWishlist}
+                    />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
+        )}
       </main>
     </div>
+  );
+}
+
+function Badge({ children, amber = false, muted = false }) {
+  return (
+    <span
+      className={`rounded-full border px-3 py-1 text-xs font-bold ${
+        amber
+          ? "border-[#eb9728]/25 bg-[#eb9728]/10 text-[#eb9728]"
+          : muted
+            ? "border-white/8 bg-white/[0.03] text-white/40"
+            : "border-white/10 bg-white/[0.04] text-white/60"
+      }`}
+    >
+      {children}
+    </span>
+  );
+}
+
+function Card({ title, children }) {
+  return (
+    <section className="rounded-[24px] border border-white/8 bg-[#0c0c11] p-5 sm:p-6">
+      <h3 className="mb-4 text-sm font-black uppercase tracking-[0.22em] text-white">
+        {title}
+      </h3>
+      {children}
+    </section>
+  );
+}
+
+function QaTab({ active, onClick, children, amber = false, blue = false }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-full border px-3 py-1.5 text-xs font-bold transition-colors ${
+        active
+          ? amber
+            ? "border-[#eb9728] bg-[#eb9728] text-white"
+            : blue
+              ? "border-blue-500 bg-blue-500 text-white"
+              : "border-white bg-white text-[#050507]"
+          : "border-white/10 bg-white/[0.03] text-white/55 hover:border-[#eb9728]/40 hover:text-white"
+      }`}
+    >
+      {children}
+    </button>
   );
 }
 
@@ -816,20 +817,15 @@ function ProductMiniCard({ product, isWishlisted, onToggleWishlist }) {
     product.images?.find((img) => img.isPrimary) || product.images?.[0];
 
   return (
-    <div className="group bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-[#eb9728]/60 hover:shadow-md transition-all">
-      <div className="aspect-square bg-gray-50 relative">
-        {product.model3D?.url && (
-          <span className="absolute bottom-2 left-2 z-10 px-1.5 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded tracking-wide">
-            3D
-          </span>
-        )}
+    <div className="group overflow-hidden rounded-[24px] border border-white/8 bg-[#0c0c11] transition-all hover:border-[#eb9728]/45 hover:bg-white/[0.025]">
+      <div className="relative aspect-square bg-white/[0.04]">
         <button
           type="button"
           onClick={() => onToggleWishlist?.(product._id?.toString())}
-          className={`absolute top-2 right-2 z-10 inline-flex items-center justify-center w-8 h-8 rounded-full border bg-white/90 transition-colors ${
+          className={`absolute right-3 top-3 z-10 inline-flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md transition-colors ${
             isWishlisted
-              ? "text-[#eb9728] border-[#eb9728]/40"
-              : "text-gray-500 border-gray-200 hover:text-[#eb9728] hover:border-[#eb9728]/40"
+              ? "border-[#eb9728]/40 bg-[#050507]/80 text-[#eb9728]"
+              : "border-white/10 bg-[#050507]/65 text-white/65 hover:border-[#eb9728]/40 hover:text-[#eb9728]"
           }`}
           title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
           aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
@@ -838,6 +834,7 @@ function ProductMiniCard({ product, isWishlisted, onToggleWishlist }) {
             {isWishlisted ? "favorite" : "favorite_border"}
           </span>
         </button>
+
         <Link
           href={`/customer/products/${product._id}`}
           className="block h-full"
@@ -848,32 +845,43 @@ function ProductMiniCard({ product, isWishlisted, onToggleWishlist }) {
               alt={product.name}
               fill
               sizes="(max-width: 768px) 100vw, 25vw"
-              className="object-cover group-hover:scale-[1.02] transition-transform"
+              className="object-cover transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-gray-300">
+            <div className="flex h-full w-full items-center justify-center text-white/15">
               <span className="material-symbols-outlined text-5xl">
                 inventory_2
               </span>
             </div>
           )}
         </Link>
+        {product.model3D?.url && (
+          <div className="absolute bottom-3 right-3 z-10 flex h-7 items-center gap-1.5 rounded-full border border-[#eb9728]/20 bg-[#050507]/80 px-2.5 shadow-sm backdrop-blur-md">
+            <span className="text-[10px] font-black uppercase tracking-wider text-[#eb9728]">
+              3D
+            </span>
+          </div>
+        )}
       </div>
-      <Link href={`/customer/products/${product._id}`} className="block p-3">
-        <p className="text-xs text-gray-500 truncate">{product.category}</p>
-        <h3 className="text-sm font-semibold text-gray-900 line-clamp-2 min-h-10">
+
+      <Link href={`/customer/products/${product._id}`} className="block p-4">
+        <p className="truncate text-xs text-white/35">{product.category}</p>
+
+        <h3 className="mt-1 min-h-10 line-clamp-2 text-sm font-bold text-white group-hover:text-[#eb9728]">
           {product.name}
         </h3>
-        <div className="mt-2 flex items-center justify-between gap-3">
-          <p className="text-sm font-bold text-[#eb9728]">
+
+        <div className="mt-3 flex items-center justify-between gap-3">
+          <p className="text-sm font-black text-[#eb9728]">
             ${product.price?.toLocaleString()}
           </p>
+
           {product.averageRating > 0 ? (
-            <p className="text-xs text-gray-500">
+            <p className="text-xs text-white/45">
               ★ {product.averageRating.toFixed(1)}
             </p>
           ) : (
-            <p className="text-xs text-gray-400">No ratings</p>
+            <p className="text-xs text-white/30">No ratings</p>
           )}
         </div>
       </Link>
@@ -884,17 +892,17 @@ function ProductMiniCard({ product, isWishlisted, onToggleWishlist }) {
 function SpecRow({ label, value }) {
   return (
     <>
-      <div className="text-gray-500">{label}</div>
-      <div className="font-medium text-gray-900">{value}</div>
+      <div className="text-white/35">{label}</div>
+      <div className="font-bold text-white/80">{value}</div>
     </>
   );
 }
 
 function StatPill({ label, value }) {
   return (
-    <div className="bg-gray-50 rounded-lg p-2 text-center border border-gray-100">
-      <p className="text-sm font-bold text-gray-900">{value}</p>
-      <p className="text-xs text-gray-400">{label}</p>
+    <div className="rounded-xl border border-white/8 bg-white/[0.03] p-3 text-center">
+      <p className="text-sm font-black text-white">{value}</p>
+      <p className="text-xs text-white/35">{label}</p>
     </div>
   );
 }

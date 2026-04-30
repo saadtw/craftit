@@ -1,14 +1,14 @@
-'use client';
+"use client";
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
-import * as THREE from 'three';
-import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-import { useAnnotations } from './AnnotationStore';
-import TagOverlay from './TagOverlay';
-import TagForm from './TagForm';
-import MeasurementForm from './MeasurementForm';
-import { SCALE_FACTORS } from './types';
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import * as THREE from "three";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
+import { useAnnotations } from "./AnnotationStore";
+import TagOverlay from "./TagOverlay";
+import TagForm from "./TagForm";
+import MeasurementForm from "./MeasurementForm";
+import { SCALE_FACTORS } from "./types";
 
 // ─── Dimension Line Helpers ───────────────────────────────────────────────────
 
@@ -28,34 +28,42 @@ function createDimLine(a, b, color = 0xffffff) {
  */
 function createDimPin(pos, color = 0xffffff, scale = 1.0) {
   const group = new THREE.Group();
-  
+
   const radius = 0.04;
   const height = 0.15;
-  
+
   // High-poly head with Phong shading for a premium rounded look
   const headGeo = new THREE.SphereGeometry(radius, 16, 16);
-  const headMat = new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.4 });
+  const headMat = new THREE.MeshPhongMaterial({
+    color,
+    emissive: color,
+    emissiveIntensity: 0.4,
+  });
   const head = new THREE.Mesh(headGeo, headMat);
   head.position.set(0, height, 0);
-  
+
   // The tapering body connecting to the exact coordinate
   const bodyGeo = new THREE.ConeGeometry(radius * 0.95, height, 16);
-  const bodyMat = new THREE.MeshPhongMaterial({ color, emissive: color, emissiveIntensity: 0.4 });
+  const bodyMat = new THREE.MeshPhongMaterial({
+    color,
+    emissive: color,
+    emissiveIntensity: 0.4,
+  });
   const body = new THREE.Mesh(bodyGeo, bodyMat);
   body.rotation.x = Math.PI;
   body.position.set(0, height / 2, 0);
-  
+
   group.add(body);
   group.add(head);
   group.position.copy(pos);
   group.scale.set(scale, scale, scale);
-  
+
   return group;
 }
 
 /**
  * EditorCanvas Component
- * 
+ *
  * The heavyweight heart of the 3D model editor. It manages:
  * - The Three.js WebGL context, scene, camera, and lighting
  * - Loading and displaying the central 3D model
@@ -78,7 +86,7 @@ export default function EditorCanvas({ modelUrl }) {
   const rendererRef = useRef(null);
   const controlsRef = useRef(null);
   const modelGroupRef = useRef(null);
-  
+
   // Math utilities kept outside of loop to avoid GC pausing
   const raycasterRef = useRef(new THREE.Raycaster());
   const pointerRef = useRef(new THREE.Vector2());
@@ -116,12 +124,17 @@ export default function EditorCanvas({ modelUrl }) {
     // --- Grid Floor ---
     const grid = new THREE.GridHelper(20, 40, 0x333355, 0x222233);
     gridRef.current = grid;
-    grid.visible = state.showGrid !== false; 
+    grid.visible = state.showGrid !== false;
     scene.add(grid);
 
     // --- Camera ---
     const { width: initW, height: initH } = container.getBoundingClientRect();
-    const camera = new THREE.PerspectiveCamera(55, initW / initH || 1, 0.01, 2000);
+    const camera = new THREE.PerspectiveCamera(
+      55,
+      initW / initH || 1,
+      0.01,
+      2000,
+    );
     camera.position.set(0, 2, 6);
     cameraRef.current = camera;
 
@@ -155,12 +168,24 @@ export default function EditorCanvas({ modelUrl }) {
     controls.keyPanSpeed = 15.0;
     controlsRef.current = controls;
 
-    controls.addEventListener('start', () => dispatch({ type: 'SET_INTERACTING', payload: true }));
-    controls.addEventListener('end', () => dispatch({ type: 'SET_INTERACTING', payload: false }));
+    controls.addEventListener("start", () =>
+      dispatch({ type: "SET_INTERACTING", payload: true }),
+    );
+    controls.addEventListener("end", () =>
+      dispatch({ type: "SET_INTERACTING", payload: false }),
+    );
 
     // --- Model Loading ---
     const loader = new GLTFLoader();
     setLoading(true);
+
+    // Guard: Check if modelUrl is available
+    if (!modelUrl) {
+      console.warn("EditorCanvas: No modelUrl provided");
+      setLoading(false);
+      return;
+    }
+
     loader.load(
       modelUrl,
       (gltf) => {
@@ -172,7 +197,7 @@ export default function EditorCanvas({ modelUrl }) {
         const center = box.getCenter(new THREE.Vector3());
         const size = box.getSize(new THREE.Vector3());
         const maxDim = Math.max(size.x, size.y, size.z);
-        
+
         const fov = camera.fov * (Math.PI / 180);
         const dist = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.2;
 
@@ -188,7 +213,7 @@ export default function EditorCanvas({ modelUrl }) {
           if (child instanceof THREE.Mesh) {
             child.castShadow = true;
             child.receiveShadow = true;
-            if (child.material && 'color' in child.material) {
+            if (child.material && "color" in child.material) {
               child._origColor = child.material.color.clone();
             }
           }
@@ -199,10 +224,10 @@ export default function EditorCanvas({ modelUrl }) {
       },
       undefined,
       (err) => {
-        console.error('Model load error:', err);
-        setLoadError('Failed to load model.');
+        console.error("Model load error:", err);
+        setLoadError("Failed to load model.");
         setLoading(false);
-      }
+      },
     );
 
     // ─── Animation loop (The Engine) ───
@@ -227,7 +252,7 @@ export default function EditorCanvas({ modelUrl }) {
           const visible = proj.z < 1 && proj.z > -1;
           newMap.set(tag.id, { x, y, visible });
         });
-        
+
         setTagPositions(newMap);
       }
     };
@@ -296,11 +321,11 @@ export default function EditorCanvas({ modelUrl }) {
       if (!existing.has(m.id)) {
         const a = new THREE.Vector3(...m.pointA);
         const b = new THREE.Vector3(...m.pointB);
-        
+
         const line = createDimLine(a, b);
         const pA = createDimPin(a, 0xffffff, 0.4);
         const pB = createDimPin(b, 0xffffff, 0.4);
-        
+
         scene.add(line, pA, pB);
         existing.set(m.id, [line, pA, pB]);
       }
@@ -316,12 +341,12 @@ export default function EditorCanvas({ modelUrl }) {
       scene.remove(pointASphereRef.current);
       pointASphereRef.current = null;
     }
-    
+
     if (state.measurePointA) {
       const pin = createDimPin(
         new THREE.Vector3(...state.measurePointA),
         0xaaaaaa,
-        0.8
+        0.8,
       );
       scene.add(pin);
       pointASphereRef.current = pin;
@@ -352,7 +377,7 @@ export default function EditorCanvas({ modelUrl }) {
   }, [state.selectedMeshName, state.componentMarks]);
 
   // ─── Event Handlers for Tools ───────────────────────────────────────────────
-  
+
   const getRaycastHit = useCallback((e) => {
     const container = containerRef.current;
     if (!container || !cameraRef.current) return null;
@@ -370,22 +395,30 @@ export default function EditorCanvas({ modelUrl }) {
   const handleMouseDown = (e) => {
     if (pendingTagLocal || state.pendingMeasurement) return;
 
-    if (state.activeTool === 'measure') {
-      dispatch({ type: 'SET_INTERACTING', payload: true });
+    if (state.activeTool === "measure") {
+      dispatch({ type: "SET_INTERACTING", payload: true });
     }
 
     const hit = getRaycastHit(e);
     if (!hit) return;
 
-    if (state.activeTool === 'measure') {
+    if (state.activeTool === "measure") {
       const point = hit.point;
-      dispatch({ type: 'SET_MEASURE_POINT_A', payload: [point.x, point.y, point.z] });
+      dispatch({
+        type: "SET_MEASURE_POINT_A",
+        payload: [point.x, point.y, point.z],
+      });
       if (controlsRef.current) controlsRef.current.enabled = false;
     }
   };
 
   const handleMouseMove = (e) => {
-    if (state.activeTool !== 'measure' || !state.measurePointA || state.pendingMeasurement) return;
+    if (
+      state.activeTool !== "measure" ||
+      !state.measurePointA ||
+      state.pendingMeasurement
+    )
+      return;
 
     const hit = getRaycastHit(e);
     if (!hit) return;
@@ -393,14 +426,14 @@ export default function EditorCanvas({ modelUrl }) {
     const scene = sceneRef.current;
     if (!scene) return;
 
-    previewObjectsRef.current.forEach(obj => scene.remove(obj));
+    previewObjectsRef.current.forEach((obj) => scene.remove(obj));
     previewObjectsRef.current = [];
 
     const a = new THREE.Vector3(...state.measurePointA);
     const b = hit.point;
     const line = createDimLine(a, b, 0xffff00);
     const pinB = createDimPin(b, 0xffff00, 1.3);
-    
+
     scene.add(line, pinB);
     previewObjectsRef.current = [line, pinB];
   };
@@ -408,30 +441,30 @@ export default function EditorCanvas({ modelUrl }) {
   const handleMouseUp = (e) => {
     if (pendingTagLocal || state.pendingMeasurement) return;
 
-    if (state.activeTool === 'measure' && state.measurePointA) {
-      dispatch({ type: 'SET_INTERACTING', payload: false });
+    if (state.activeTool === "measure" && state.measurePointA) {
+      dispatch({ type: "SET_INTERACTING", payload: false });
       const hit = getRaycastHit(e);
       const container = containerRef.current;
-      
+
       const scene = sceneRef.current;
       if (scene) {
-        previewObjectsRef.current.forEach(obj => scene.remove(obj));
+        previewObjectsRef.current.forEach((obj) => scene.remove(obj));
         previewObjectsRef.current = [];
       }
 
       if (hit && container) {
         const rect = container.getBoundingClientRect();
-        dispatch({ 
-          type: 'SET_PENDING_MEASUREMENT', 
+        dispatch({
+          type: "SET_PENDING_MEASUREMENT",
           payload: {
             pointA: state.measurePointA,
             pointB: [hit.point.x, hit.point.y, hit.point.z],
             screenX: e.clientX - rect.left,
             screenY: e.clientY - rect.top,
-          } 
+          },
         });
       } else {
-        dispatch({ type: 'SET_MEASURE_POINT_A', payload: null });
+        dispatch({ type: "SET_MEASURE_POINT_A", payload: null });
         if (controlsRef.current) controlsRef.current.enabled = true;
       }
     }
@@ -446,16 +479,16 @@ export default function EditorCanvas({ modelUrl }) {
       const rect = containerRef.current.getBoundingClientRect();
       const point = hit.point;
       const hitMesh = hit.object instanceof THREE.Mesh ? hit.object : null;
-      const meshName = hitMesh?.name || '';
+      const meshName = hitMesh?.name || "";
       const tool = state.activeTool;
 
-      if (tool === 'select') {
+      if (tool === "select") {
         if (state.selectedMeshName === meshName) {
-          dispatch({ type: 'SET_SELECTED_MESH', payload: null });
+          dispatch({ type: "SET_SELECTED_MESH", payload: null });
         } else {
-          dispatch({ type: 'SET_SELECTED_MESH', payload: meshName || null });
+          dispatch({ type: "SET_SELECTED_MESH", payload: meshName || null });
         }
-      } else if (tool === 'tag') {
+      } else if (tool === "tag") {
         setPendingTagLocal({
           screenX: e.clientX - rect.left,
           screenY: e.clientY - rect.top,
@@ -463,16 +496,16 @@ export default function EditorCanvas({ modelUrl }) {
           meshName: meshName || undefined,
         });
         controlsRef.current.enabled = false;
-      } else if (tool === 'paint') {
+      } else if (tool === "paint") {
         if (hitMesh) {
           const mat = hitMesh.material;
-          if (mat && 'color' in mat) {
+          if (mat && "color" in mat) {
             mat.color.set(state.paintColour);
           }
         }
       }
     },
-    [state, dispatch, pendingTagLocal, getRaycastHit]
+    [state, dispatch, pendingTagLocal, getRaycastHit],
   );
 
   const closeTagForm = useCallback(() => {
@@ -481,27 +514,27 @@ export default function EditorCanvas({ modelUrl }) {
   }, []);
 
   const closeMeasureForm = useCallback(() => {
-    dispatch({ type: 'SET_PENDING_MEASUREMENT', payload: null });
+    dispatch({ type: "SET_PENDING_MEASUREMENT", payload: null });
     if (controlsRef.current) controlsRef.current.enabled = true;
   }, [dispatch]);
 
   // ─── Swap mouse pointer CSS based on active tool ────────────────────────────
   const cursorMap = {
-    select: 'default',
-    tag: 'crosshair',
-    measure: 'crosshair',
-    paint: 'cell',
+    select: "default",
+    tag: "crosshair",
+    measure: "crosshair",
+    paint: "cell",
   };
 
   return (
     <div
       ref={containerRef}
       style={{
-        position: 'relative',
-        width: '100%',
-        height: '100%',
-        overflow: 'hidden',
-        cursor: cursorMap[state.activeTool] || 'default',
+        position: "relative",
+        width: "100%",
+        height: "100%",
+        overflow: "hidden",
+        cursor: cursorMap[state.activeTool] || "default",
       }}
       onClick={handleCanvasClick}
       onPointerDown={handleMouseDown}
@@ -515,52 +548,112 @@ export default function EditorCanvas({ modelUrl }) {
       */}
       <canvas
         ref={canvasRef}
-        style={{ display: 'block', width: '100%', height: '100%', position: 'absolute', inset: 0, touchAction: 'none' }}
+        style={{
+          display: "block",
+          width: "100%",
+          height: "100%",
+          position: "absolute",
+          inset: 0,
+          touchAction: "none",
+        }}
       />
 
       {/* Loading overlay */}
       {loading && (
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', flexDirection: 'column',
-          alignItems: 'center', justifyContent: 'center', background: 'rgba(14,14,18,0.85)',
-          zIndex: 50,
-        }}>
-          <div style={{
-            width: '24px', height: '24px', border: '2px solid rgba(255,255,255,0.1)',
-            borderTopColor: 'white', borderRadius: '50%',
-            animation: 'spin 0.8s linear infinite', marginBottom: '12px',
-          }} />
-          <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#525252', letterSpacing: '0.15em', textTransform: 'uppercase' }}>Loading_Model...</p>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(14,14,18,0.85)",
+            zIndex: 50,
+          }}
+        >
+          <div
+            style={{
+              width: "24px",
+              height: "24px",
+              border: "2px solid rgba(255,255,255,0.1)",
+              borderTopColor: "white",
+              borderRadius: "50%",
+              animation: "spin 0.8s linear infinite",
+              marginBottom: "12px",
+            }}
+          />
+          <p
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "10px",
+              color: "#525252",
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+            }}
+          >
+            Loading_Model...
+          </p>
           <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
         </div>
       )}
 
       {/* Error overlay */}
       {loadError && (
-        <div style={{
-          position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(14,14,18,0.85)',
-          zIndex: 50,
-        }}>
-          <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '11px', color: '#ffb4ab' }}>⚠ {loadError}</p>
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(14,14,18,0.85)",
+            zIndex: 50,
+          }}
+        >
+          <p
+            style={{
+              fontFamily: "'JetBrains Mono', monospace",
+              fontSize: "11px",
+              color: "#ffb4ab",
+            }}
+          >
+            ⚠ {loadError}
+          </p>
         </div>
       )}
 
       {/* Active tool hint */}
       {!loading && (
-        <div style={{
-          position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)',
-          background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(255,255,255,0.08)', borderRadius: '20px',
-          padding: '6px 16px', pointerEvents: 'none',
-          fontFamily: "'JetBrains Mono', monospace", fontSize: '10px',
-          color: '#a3a3a3', letterSpacing: '0.06em', whiteSpace: 'nowrap',
-          zIndex: 10,
-        }}>
-          {state.activeTool === 'select' && 'SELECT — click mesh  ·  Scroll: zoom  ·  Right-drag: pan'}
-          {state.activeTool === 'tag' && 'TAG — click any surface to place label'}
-          {state.activeTool === 'measure' && (state.measurePointA ? 'Release to save dimension' : 'Drag to measure distance')}
-          {state.activeTool === 'paint' && 'PAINT — click mesh to apply colour'}
+        <div
+          style={{
+            position: "absolute",
+            bottom: "12px",
+            left: "50%",
+            transform: "translateX(-50%)",
+            background: "rgba(0,0,0,0.6)",
+            backdropFilter: "blur(8px)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: "20px",
+            padding: "6px 16px",
+            pointerEvents: "none",
+            fontFamily: "'JetBrains Mono', monospace",
+            fontSize: "10px",
+            color: "#a3a3a3",
+            letterSpacing: "0.06em",
+            whiteSpace: "nowrap",
+            zIndex: 10,
+          }}
+        >
+          {state.activeTool === "select" &&
+            "SELECT — click mesh  ·  Scroll: zoom  ·  Right-drag: pan"}
+          {state.activeTool === "tag" &&
+            "TAG — click any surface to place label"}
+          {state.activeTool === "measure" &&
+            (state.measurePointA
+              ? "Release to save dimension"
+              : "Drag to measure distance")}
+          {state.activeTool === "paint" && "PAINT — click mesh to apply colour"}
         </div>
       )}
 
@@ -592,7 +685,7 @@ export default function EditorCanvas({ modelUrl }) {
         const mid = new THREE.Vector3(
           (m.pointA[0] + m.pointB[0]) / 2,
           (m.pointA[1] + m.pointB[1]) / 2,
-          (m.pointA[2] + m.pointB[2]) / 2
+          (m.pointA[2] + m.pointB[2]) / 2,
         );
         const proj = mid.clone().project(cameraRef.current);
         const rect = containerRef.current.getBoundingClientRect();
@@ -604,10 +697,17 @@ export default function EditorCanvas({ modelUrl }) {
             key={m.id}
             id={`dim-label-${m.id}`}
             className="tag-badge"
-            style={{ position: 'absolute', left: x, top: y, pointerEvents: 'none', zIndex: 5, '--tag-colour': '#ffff00' }}
+            style={{
+              position: "absolute",
+              left: x,
+              top: y,
+              pointerEvents: "none",
+              zIndex: 5,
+              "--tag-colour": "#ffff00",
+            }}
           >
-            <div className="tag-dot" style={{ background: '#ffff00' }} />
-            <div className="tag-pill" style={{ background: '#ffff00' }}>
+            <div className="tag-dot" style={{ background: "#ffff00" }} />
+            <div className="tag-pill" style={{ background: "#ffff00" }}>
               <span className="tag-pill-text">{m.label}</span>
             </div>
           </div>

@@ -7,12 +7,12 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 const STATUS_COLORS = {
-  authorized: "bg-yellow-100 text-yellow-700",
-  captured: "bg-green-100 text-green-700",
-  pending: "bg-gray-100 text-gray-600",
-  refunded: "bg-blue-100 text-blue-700",
-  partially_refunded: "bg-cyan-100 text-cyan-700",
-  failed: "bg-red-100 text-red-700",
+  authorized: "bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20",
+  captured: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
+  pending: "bg-white/[0.04] text-white/50 border border-white/10",
+  refunded: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
+  partially_refunded: "bg-cyan-500/10 text-cyan-300 border border-cyan-500/20",
+  failed: "bg-red-500/10 text-red-300 border border-red-500/20",
 };
 
 export default function CustomerPaymentsPage() {
@@ -63,146 +63,192 @@ export default function CustomerPaymentsPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex h-screen bg-[#f8f7f6]">
-        <main className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
-        </main>
+      <div className="flex min-h-screen items-center justify-center bg-[#050507]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
+          <p className="text-sm text-white/45">Loading payments...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-[#f8f7f6]">
-      <main className="flex-1 overflow-y-auto">
-        <header className="sticky top-0 z-10 flex items-center h-16 px-10 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-          <span className="text-lg font-bold text-gray-900">
-            Payments & Transactions
-          </span>
-        </header>
+    <div className="min-h-screen bg-[#050507] text-white">
+      <main className="mx-auto max-w-5xl px-4 py-7 sm:px-6 space-y-7">
+        <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0c0c11] p-6 sm:p-7">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.13),transparent_32%),radial-gradient(circle_at_left,rgba(235,151,40,0.12),transparent_28%)] pointer-events-none" />
 
-        <div className="p-8 max-w-4xl mx-auto space-y-6">
-          {/* Summary cards */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-              <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-1">
-                Total Spent
-              </p>
-              <p className="text-2xl font-extrabold text-gray-900">
-                ${totalSpent.toLocaleString()}
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {orders.filter((o) => o.paymentStatus === "captured").length}{" "}
-                completed payments
-              </p>
-            </div>
-            <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-              <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-1">
-                Total Refunded
-              </p>
-              <p className="text-2xl font-extrabold text-blue-600">
-                ${totalRefunded.toLocaleString()}
-              </p>
-              <p className="text-xs text-gray-400 mt-0.5">
-                {
-                  orders.filter((o) =>
-                    ["refunded", "partially_refunded"].includes(
-                      o.paymentStatus,
-                    ),
-                  ).length
-                }{" "}
-                refunds processed
-              </p>
-            </div>
+          <div className="relative">
+            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#eb9728]">
+              Customer Billing
+            </p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight">
+              Payments & Transactions
+            </h1>
+            <p className="mt-2 text-sm text-white/50">
+              Review completed payments, authorizations, refunds, and
+              order-linked transaction records.
+            </p>
           </div>
+        </section>
 
-          {/* Filter */}
-          <div className="flex gap-2 flex-wrap">
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <SummaryCard
+            label="Total Spent"
+            value={`$${totalSpent.toLocaleString()}`}
+            sub={`${orders.filter((o) => o.paymentStatus === "captured").length} completed payments`}
+            icon="payments"
+            accent
+          />
+
+          <SummaryCard
+            label="Total Refunded"
+            value={`$${totalRefunded.toLocaleString()}`}
+            sub={`${
+              orders.filter((o) =>
+                ["refunded", "partially_refunded"].includes(o.paymentStatus),
+              ).length
+            } refunds processed`}
+            icon="currency_exchange"
+          />
+        </section>
+
+        <section className="rounded-[24px] border border-white/8 bg-[#0c0c11] p-4">
+          <div className="flex flex-wrap gap-2">
             {["all", "authorized", "captured", "refunded", "pending"].map(
               (f) => (
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
+                  className={`rounded-xl border px-4 py-2 text-xs font-bold capitalize transition-all ${
                     filter === f
-                      ? "bg-[#eb9728] text-white"
-                      : "bg-white border border-gray-200 text-gray-600 hover:border-[#eb9728]"
+                      ? "border-[#eb9728] bg-[#eb9728] text-white"
+                      : "border-white/10 bg-white/[0.03] text-white/60 hover:border-[#eb9728]/45 hover:text-white"
                   }`}
                 >
-                  {f}
+                  {f.replace("_", " ")}
                 </button>
               ),
             )}
           </div>
+        </section>
 
-          {/* Transaction list */}
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            {filtered.length === 0 ? (
-              <div className="text-center py-16 text-gray-400">
-                <span className="material-symbols-outlined text-4xl block mb-2">
+        <section className="overflow-hidden rounded-[24px] border border-white/8 bg-[#0c0c11]">
+          {filtered.length === 0 ? (
+            <div className="px-6 py-16 text-center">
+              <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-[#eb9728]/20 bg-[#eb9728]/10 text-[#eb9728]">
+                <span className="material-symbols-outlined text-5xl">
                   receipt_long
                 </span>
-                <p className="text-sm">No transactions found.</p>
               </div>
-            ) : (
-              <div className="divide-y divide-gray-50">
-                {filtered.map((order) => (
-                  <Link key={order._id} href={`/customer/orders/${order._id}`}>
-                    <div className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors">
-                      {/* Icon */}
-                      <div
-                        className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${
-                          order.paymentStatus === "captured"
-                            ? "bg-green-100 text-green-600"
-                            : order.paymentStatus === "refunded"
-                              ? "bg-blue-100 text-blue-600"
-                              : order.paymentStatus === "authorized"
-                                ? "bg-yellow-100 text-yellow-600"
-                                : "bg-gray-100 text-gray-500"
+              <p className="text-lg font-black text-white">
+                No transactions found
+              </p>
+              <p className="mt-2 text-sm text-white/45">
+                Try changing the payment filter or check again later.
+              </p>
+            </div>
+          ) : (
+            <div className="divide-y divide-white/6">
+              {filtered.map((order) => (
+                <Link key={order._id} href={`/customer/orders/${order._id}`}>
+                  <div className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/[0.035]">
+                    <div
+                      className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl border ${
+                        order.paymentStatus === "captured"
+                          ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-300"
+                          : order.paymentStatus === "refunded" ||
+                              order.paymentStatus === "partially_refunded"
+                            ? "border-blue-500/20 bg-blue-500/10 text-blue-300"
+                            : order.paymentStatus === "authorized"
+                              ? "border-[#eb9728]/20 bg-[#eb9728]/10 text-[#eb9728]"
+                              : order.paymentStatus === "failed"
+                                ? "border-red-500/20 bg-red-500/10 text-red-300"
+                                : "border-white/10 bg-white/[0.04] text-white/45"
+                      }`}
+                    >
+                      <span className="material-symbols-outlined text-lg">
+                        {order.paymentStatus === "refunded" ||
+                        order.paymentStatus === "partially_refunded"
+                          ? "currency_exchange"
+                          : order.paymentStatus === "captured"
+                            ? "check_circle"
+                            : order.paymentStatus === "failed"
+                              ? "error"
+                              : "payments"}
+                      </span>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-bold text-white group-hover:text-[#eb9728]">
+                        {order.productDetails?.name || "Order"}
+                      </p>
+                      <p className="mt-0.5 text-xs text-white/40">
+                        {order.orderNumber} ·{" "}
+                        {new Date(order.createdAt).toLocaleDateString()}
+                      </p>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <p className="font-black text-white">
+                        ${order.totalPrice?.toLocaleString()}
+                      </p>
+                      <span
+                        className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                          STATUS_COLORS[order.paymentStatus] ||
+                          "bg-white/[0.04] text-white/50 border border-white/10"
                         }`}
                       >
-                        <span className="material-symbols-outlined text-lg">
-                          {order.paymentStatus === "refunded"
-                            ? "currency_exchange"
-                            : order.paymentStatus === "captured"
-                              ? "check_circle"
-                              : "payments"}
-                        </span>
-                      </div>
-
-                      {/* Info */}
-                      <div className="flex-1 min-w-0">
-                        <p className="font-semibold text-gray-900 text-sm truncate">
-                          {order.productDetails?.name || "Order"}
-                        </p>
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {order.orderNumber} ·{" "}
-                          {new Date(order.createdAt).toLocaleDateString()}
-                        </p>
-                      </div>
-
-                      {/* Status + amount */}
-                      <div className="text-right shrink-0">
-                        <p className="font-bold text-gray-900">
-                          ${order.totalPrice?.toLocaleString()}
-                        </p>
-                        <span
-                          className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[order.paymentStatus] || "bg-gray-100 text-gray-500"}`}
-                        >
-                          {order.paymentStatus?.replace("_", " ")}
-                        </span>
-                      </div>
+                        {order.paymentStatus?.replace("_", " ")}
+                      </span>
                     </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          )}
+        </section>
 
-          <p className="text-xs text-gray-400 text-center">
-            Payment processing powered by Stripe. All amounts in USD.
-          </p>
-        </div>
+        <p className="text-center text-xs text-white/35">
+          Payment processing powered by Stripe. All amounts in USD.
+        </p>
       </main>
+    </div>
+  );
+}
+
+function SummaryCard({ label, value, sub, icon, accent = false }) {
+  return (
+    <div
+      className={`rounded-[24px] border bg-[#0c0c11] p-5 ${
+        accent ? "border-[#eb9728]/25" : "border-white/8"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <p className="text-[11px] font-bold uppercase tracking-[0.22em] text-white/35">
+            {label}
+          </p>
+          <p
+            className={`mt-2 text-3xl font-black ${
+              accent ? "text-[#eb9728]" : "text-white"
+            }`}
+          >
+            {value}
+          </p>
+          <p className="mt-1 text-xs text-white/35">{sub}</p>
+        </div>
+
+        <div
+          className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl border ${
+            accent
+              ? "border-[#eb9728]/20 bg-[#eb9728]/10 text-[#eb9728]"
+              : "border-blue-500/20 bg-blue-500/10 text-blue-300"
+          }`}
+        >
+          <span className="material-symbols-outlined text-2xl">{icon}</span>
+        </div>
+      </div>
     </div>
   );
 }

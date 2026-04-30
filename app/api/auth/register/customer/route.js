@@ -40,6 +40,17 @@ export async function POST(request) {
 
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
+      // Check if user exists via OAuth only
+      if (existingUser.authMethod === "oauth" && !existingUser.password) {
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "This email is already registered via Google. Please sign in with Google instead.",
+          },
+          { status: 409 },
+        );
+      }
       return NextResponse.json(
         { success: false, message: "Email already registered" },
         { status: 409 },
@@ -51,6 +62,7 @@ export async function POST(request) {
       name,
       email: normalizedEmail,
       password,
+      authMethod: "credentials",
       phone,
       location: location || {},
       isActive: true,

@@ -10,6 +10,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Files with encoding or other issues:
+    "merge_temp_bids.js",
   ]),
   {
     rules: {

@@ -26,9 +26,8 @@ export default function CustomerMessagesPage() {
     async (page = 1, { keepInitial = false } = {}) => {
       const requestSeq = ++requestSeqRef.current;
 
-      if (abortRef.current) {
-        abortRef.current.abort();
-      }
+      if (abortRef.current) abortRef.current.abort();
+
       const controller = new AbortController();
       abortRef.current = controller;
 
@@ -48,11 +47,10 @@ export default function CustomerMessagesPage() {
           cache: "no-store",
           signal: controller.signal,
         });
+
         const data = await res.json();
 
-        if (requestSeq !== requestSeqRef.current) {
-          return;
-        }
+        if (requestSeq !== requestSeqRef.current) return;
 
         if (data.success) {
           setThreads(data.threads || []);
@@ -65,9 +63,7 @@ export default function CustomerMessagesPage() {
       } finally {
         if (requestSeq === requestSeqRef.current) {
           setIsFetching(false);
-          if (!keepInitial) {
-            setInitialLoading(false);
-          }
+          if (!keepInitial) setInitialLoading(false);
         }
       }
     },
@@ -84,6 +80,7 @@ export default function CustomerMessagesPage() {
       router.push("/auth/login");
       return;
     }
+
     if (status === "authenticated") {
       if (session.user.role !== "customer") {
         router.push("/auth/login");
@@ -95,19 +92,19 @@ export default function CustomerMessagesPage() {
 
   useEffect(() => {
     return () => {
-      if (abortRef.current) {
-        abortRef.current.abort();
-      }
+      if (abortRef.current) abortRef.current.abort();
     };
   }, []);
 
   const STATUS_COLORS = {
-    accepted: "bg-blue-100 text-blue-700",
-    in_production: "bg-purple-100 text-purple-700",
-    shipped: "bg-indigo-100 text-indigo-700",
-    completed: "bg-green-100 text-green-700",
-    cancelled: "bg-red-100 text-red-700",
-    disputed: "bg-orange-100 text-orange-700",
+    accepted: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
+    in_production:
+      "bg-purple-500/10 text-purple-300 border border-purple-500/20",
+    shipped: "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20",
+    completed:
+      "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
+    cancelled: "bg-red-500/10 text-red-300 border border-red-500/20",
+    disputed: "bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20",
   };
 
   const hasActiveFilters =
@@ -115,33 +112,53 @@ export default function CustomerMessagesPage() {
 
   if (status === "loading" || initialLoading) {
     return (
-      <div className="flex h-screen bg-[#f8f7f6]">
-        <main className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
-        </main>
+      <div className="flex min-h-screen items-center justify-center bg-[#050507]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
+          <p className="text-sm text-white/45">Loading messages...</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-[#f8f7f6]">
-      <main className="flex-1 overflow-y-auto">
-        <header className="sticky top-0 z-10 flex items-center h-16 px-10 bg-white/80 backdrop-blur-sm border-b border-gray-200 gap-4">
-          <span className="text-lg font-bold text-gray-900">Messages</span>
-          {isFetching && (
-            <span className="text-xs text-gray-400">Updating...</span>
-          )}
-          {unreadThreads > 0 && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-[#eb9728]/10 text-[#eb9728] text-xs font-semibold">
-              {unreadThreads} unread
-            </span>
-          )}
-        </header>
+    <div className="min-h-screen bg-[#050507] text-white">
+      <main className="mx-auto max-w-5xl px-4 py-7 sm:px-6 space-y-6">
+        <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0c0c11] p-6 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.35)]">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.14),transparent_32%),radial-gradient(circle_at_left,rgba(235,151,40,0.12),transparent_28%)] pointer-events-none" />
 
-        <div className="p-8 max-w-2xl mx-auto">
-          {/* Search */}
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#eb9728]">
+                Customer Inbox
+              </p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight text-white">
+                Messages
+              </h1>
+              <p className="mt-2 text-sm text-white/50">
+                Conversations linked with your orders and manufacturers.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              {isFetching && (
+                <span className="text-xs font-semibold text-white/35">
+                  Updating...
+                </span>
+              )}
+
+              {unreadThreads > 0 && (
+                <span className="rounded-full border border-[#eb9728]/20 bg-[#eb9728]/10 px-3 py-1 text-xs font-bold text-[#eb9728]">
+                  {unreadThreads} unread
+                </span>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[24px] border border-white/8 bg-[#0c0c11] p-4 sm:p-5">
           <div className="relative mb-3">
-            <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/35 text-lg">
               search
             </span>
             <input
@@ -149,15 +166,15 @@ export default function CustomerMessagesPage() {
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               placeholder="Search by order, manufacturer, or product..."
-              className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:border-[#eb9728]"
+              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] py-3.5 pl-11 pr-4 text-sm text-white placeholder:text-white/30 focus:border-[#eb9728] focus:outline-none"
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-4">
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:border-[#eb9728]"
+              className="rounded-xl border border-white/10 bg-[#101017] px-3 py-3 text-sm text-white/80 focus:border-[#eb9728] focus:outline-none"
             >
               <option value="all">All statuses</option>
               <option value="accepted">Accepted</option>
@@ -171,14 +188,14 @@ export default function CustomerMessagesPage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
-              className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:border-[#eb9728]"
+              className="rounded-xl border border-white/10 bg-[#101017] px-3 py-3 text-sm text-white/80 focus:border-[#eb9728] focus:outline-none"
             >
               <option value="latest">Latest first</option>
               <option value="oldest">Oldest first</option>
               <option value="unread">Unread first</option>
             </select>
 
-            <label className="flex items-center justify-center gap-2 px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer select-none">
+            <label className="flex cursor-pointer select-none items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-sm text-white/70 hover:bg-white/[0.05]">
               <input
                 type="checkbox"
                 checked={unreadOnly}
@@ -197,132 +214,146 @@ export default function CustomerMessagesPage() {
                 setUnreadOnly(false);
               }}
               disabled={!hasActiveFilters && sortBy === "latest"}
-              className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white disabled:opacity-50"
+              className="rounded-xl border border-white/10 bg-white/[0.03] px-3 py-3 text-sm font-semibold text-white/65 hover:border-[#eb9728]/50 hover:text-white disabled:cursor-not-allowed disabled:opacity-40"
             >
               Clear filters
             </button>
           </div>
+        </section>
 
-          <p className="text-xs text-gray-500 mb-4">
+        <div className="flex items-center justify-between gap-4">
+          <p className="text-sm text-white/45">
             {pagination.total || 0} conversation
             {(pagination.total || 0) === 1 ? "" : "s"} found
           </p>
+        </div>
 
-          {/* Info note */}
-          <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-4 flex gap-2">
-            <span className="material-symbols-outlined text-blue-500 text-base shrink-0 mt-0.5">
-              info
-            </span>
-            <p className="text-xs text-blue-700">
-              Messages are tied to individual orders. Click an order below to
-              open the chat with that manufacturer.
-            </p>
-          </div>
+        <section className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4 flex gap-3">
+          <span className="material-symbols-outlined text-blue-300 text-lg shrink-0 mt-0.5">
+            info
+          </span>
+          <p className="text-xs leading-5 text-blue-200/80">
+            Messages are tied to individual orders. Click an order below to open
+            the chat with that manufacturer.
+          </p>
+        </section>
 
-          {threads.length === 0 ? (
-            <div className="text-center py-20">
-              <span className="material-symbols-outlined text-5xl text-gray-300 block mb-3">
+        {threads.length === 0 ? (
+          <section className="rounded-[28px] border border-white/8 bg-[#0c0c11] px-6 py-16 text-center">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-[#eb9728]/20 bg-[#eb9728]/10 text-[#eb9728]">
+              <span className="material-symbols-outlined text-5xl">
                 chat_bubble
               </span>
-              <p className="text-gray-600 font-semibold mb-1">
-                {hasActiveFilters
-                  ? "No conversations match these filters"
-                  : "No conversations yet"}
-              </p>
-              <p className="text-sm text-gray-400 mb-6">
-                {hasActiveFilters
-                  ? "Try clearing filters or adjusting your search terms."
-                  : "Once a manufacturer accepts your order, you can chat with them here."}
-              </p>
-              <Link
-                href="/customer/orders"
-                className="inline-block px-5 py-2.5 bg-[#eb9728] text-white font-semibold rounded-xl text-sm hover:bg-[#eb9728]/90"
-              >
-                View Orders
-              </Link>
             </div>
-          ) : (
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-              <div className="divide-y divide-gray-50">
-                {threads.map((thread) => (
-                  <Link
-                    key={thread.conversationId}
-                    href={`/customer/orders/${thread.orderId}`}
-                  >
-                    <div className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
-                      {/* Manufacturer avatar */}
-                      <div className="w-11 h-11 rounded-full bg-blue-100 flex items-center justify-center font-bold text-blue-700 text-base shrink-0">
-                        {(thread.counterpart?.name || "M").charAt(0)}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <p className="font-semibold text-gray-900 text-sm truncate">
-                            {thread.counterpart?.name}
-                          </p>
-                          <span
-                            className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${STATUS_COLORS[thread.orderStatus] || "bg-gray-100 text-gray-500"}`}
-                          >
-                            {thread.orderStatus?.replace(/_/g, " ")}
-                          </span>
-                          {thread.unreadCount > 0 && (
-                            <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-[#eb9728] text-white shrink-0">
-                              {thread.unreadCount > 9
-                                ? "9+"
-                                : thread.unreadCount}
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-xs text-gray-500 truncate">
-                          {thread.productName || "Custom Order"} ·{" "}
-                          {thread.orderNumber}
-                        </p>
-                        <p className="text-xs text-gray-400 truncate mt-0.5">
-                          {thread.lastMessage?.text || "No messages yet"}
-                        </p>
-                      </div>
-                      <div className="text-right shrink-0">
-                        <p className="text-xs text-gray-400">
-                          {new Date(
-                            thread.lastMessage?.sentAt || thread.updatedAt,
-                          ).toLocaleDateString()}
-                        </p>
-                        <span className="material-symbols-outlined text-gray-300 text-base mt-1 block">
-                          chevron_right
-                        </span>
-                      </div>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {pagination.pages > 1 && (
-            <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
-              <span>
-                Page {pagination.page} of {pagination.pages}
-              </span>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => fetchInbox(pagination.page - 1)}
-                  disabled={pagination.page <= 1 || isFetching}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white disabled:opacity-50"
+            <p className="mb-1 text-lg font-bold text-white">
+              {hasActiveFilters
+                ? "No conversations match these filters"
+                : "No conversations yet"}
+            </p>
+
+            <p className="mb-6 text-sm text-white/45">
+              {hasActiveFilters
+                ? "Try clearing filters or adjusting your search terms."
+                : "Once a manufacturer accepts your order, you can chat with them here."}
+            </p>
+
+            <Link
+              href="/customer/orders"
+              className="inline-flex rounded-xl bg-[#eb9728] px-5 py-2.5 text-sm font-bold text-white hover:bg-amber-500"
+            >
+              View Orders
+            </Link>
+          </section>
+        ) : (
+          <section className="overflow-hidden rounded-[24px] border border-white/8 bg-[#0c0c11]">
+            <div className="divide-y divide-white/6">
+              {threads.map((thread) => (
+                <Link
+                  key={thread.conversationId}
+                  href={`/customer/orders/${thread.orderId}`}
                 >
-                  Prev
-                </button>
-                <button
-                  type="button"
-                  onClick={() => fetchInbox(pagination.page + 1)}
-                  disabled={pagination.page >= pagination.pages || isFetching}
-                  className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white disabled:opacity-50"
-                >
-                  Next
-                </button>
-              </div>
+                  <div className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/[0.035]">
+                    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#eb9728]/20 bg-[#eb9728]/10 text-base font-black text-[#eb9728]">
+                      {(thread.counterpart?.name || "M").charAt(0)}
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-1 flex items-center gap-2">
+                        <p className="truncate text-sm font-bold text-white group-hover:text-[#eb9728] transition-colors">
+                          {thread.counterpart?.name}
+                        </p>
+
+                        <span
+                          className={`shrink-0 rounded-full px-2 py-0.5 text-[10px] font-bold ${
+                            STATUS_COLORS[thread.orderStatus] ||
+                            "bg-white/[0.05] text-white/50 border border-white/8"
+                          }`}
+                        >
+                          {thread.orderStatus?.replace(/_/g, " ")}
+                        </span>
+
+                        {thread.unreadCount > 0 && (
+                          <span className="shrink-0 rounded-full bg-[#eb9728] px-2 py-0.5 text-[10px] font-bold text-white">
+                            {thread.unreadCount > 9 ? "9+" : thread.unreadCount}
+                          </span>
+                        )}
+                      </div>
+
+                      <p className="truncate text-xs text-white/45">
+                        {thread.productName || "Custom Order"} ·{" "}
+                        {thread.orderNumber}
+                      </p>
+
+                      <p className="mt-0.5 truncate text-xs text-white/35">
+                        {thread.lastMessage?.text || "No messages yet"}
+                      </p>
+                    </div>
+
+                    <div className="shrink-0 text-right">
+                      <p className="text-xs text-white/35">
+                        {new Date(
+                          thread.lastMessage?.sentAt || thread.updatedAt,
+                        ).toLocaleDateString()}
+                      </p>
+                      <span className="material-symbols-outlined mt-1 block text-base text-white/25 group-hover:text-[#eb9728]">
+                        chevron_right
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
             </div>
-          )}
-        </div>
+          </section>
+        )}
+
+        {pagination.pages > 1 && (
+          <div className="flex items-center justify-between text-sm text-white/45">
+            <span>
+              Page {pagination.page} of {pagination.pages}
+            </span>
+
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => fetchInbox(pagination.page - 1)}
+                disabled={pagination.page <= 1 || isFetching}
+                className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-white/70 hover:border-[#eb9728]/40 disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                Prev
+              </button>
+
+              <button
+                type="button"
+                onClick={() => fetchInbox(pagination.page + 1)}
+                disabled={pagination.page >= pagination.pages || isFetching}
+                className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-white/70 hover:border-[#eb9728]/40 disabled:cursor-not-allowed disabled:opacity-35"
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );

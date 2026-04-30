@@ -1,4 +1,4 @@
-// app/customer/explore/page.js
+// // app/customer/explore/page.js
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchWithCache } from "@/lib/clientCache";
+import { useWishlist } from "@/lib/hooks/useWishlist";
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
@@ -34,8 +35,10 @@ export default function CustomerExplorePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  // Use SWR hook for wishlist
+  const { wishlistSet, toggleWishlist } = useWishlist();
+
   const [products, setProducts] = useState([]);
-  const [wishlistProductIds, setWishlistProductIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
   const [meta, setMeta] = useState({
@@ -43,7 +46,6 @@ export default function CustomerExplorePage() {
     priceRange: { min: 0, max: 10000 },
   });
 
-  // Filters
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [category, setCategory] = useState("");
@@ -63,13 +65,11 @@ export default function CustomerExplorePage() {
     }
   }, [status, session, router]);
 
-  // Debounce search
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(search), 400);
     return () => clearTimeout(t);
   }, [search]);
 
-  // Reset page on filter change
   useEffect(() => {
     setPage(1);
   }, [debouncedSearch, category, sort, priceMin, priceMax]);
@@ -83,11 +83,11 @@ export default function CustomerExplorePage() {
       if (priceMin) params.set("minPrice", priceMin);
       if (priceMax) params.set("maxPrice", priceMax);
 
-      // 3-min TTL — each unique filter combination is its own cache key.
       const data = await fetchWithCache(
         `/api/products/public?${params}`,
         3 * 60 * 1000,
       );
+
       if (data.success) {
         setProducts(data.products);
         setPagination(data.pagination);
@@ -100,236 +100,231 @@ export default function CustomerExplorePage() {
     }
   }, [debouncedSearch, category, sort, priceMin, priceMax, page]);
 
-  const fetchWishlist = useCallback(async () => {
-    try {
-      const response = await fetch("/api/users/wishlist", {
-        cache: "no-store",
-      });
-      if (!response.ok) return;
-      const data = await response.json();
-      const ids = (data?.wishlist || [])
-        .filter((item) => item.itemType === "product" && item._id)
-        .map((item) => item._id.toString());
-      setWishlistProductIds(new Set(ids));
-    } catch (_) {}
-  }, []);
-
   const handleToggleWishlist = useCallback(
     async (productId) => {
       const id = productId?.toString();
       if (!id) return;
-
-      const isCurrentlyWishlisted = wishlistProductIds.has(id);
-
-      setWishlistProductIds((prev) => {
-        const next = new Set(prev);
-        if (isCurrentlyWishlisted) {
-          next.delete(id);
-        } else {
-          next.add(id);
-        }
-        return next;
-      });
-
-      try {
-        const response = await fetch("/api/users/wishlist", {
-          method: isCurrentlyWishlisted ? "DELETE" : "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ itemId: id, itemType: "product" }),
-        });
-
-        if (!response.ok && response.status !== 409) {
-          throw new Error("Wishlist update failed");
-        }
-      } catch (_) {
-        setWishlistProductIds((prev) => {
-          const next = new Set(prev);
-          if (isCurrentlyWishlisted) {
-            next.add(id);
-          } else {
-            next.delete(id);
-          }
-          return next;
-        });
-      }
+      await toggleWishlist(id, "product");
     },
-    [wishlistProductIds],
+    [toggleWishlist],
   );
 
   useEffect(() => {
     if (status === "authenticated") {
       fetchProducts();
-      fetchWishlist();
     }
-  }, [fetchProducts, fetchWishlist, status]);
+  }, [fetchProducts, status]);
 
   if (status === "loading") {
     return (
-      <div className="flex h-screen bg-[#f8f7f6]">
-        <main className="flex-1 flex items-center justify-center">
-          <p className="text-gray-400">Loading...</p>
-        </main>
+      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
+          <p className="text-sm text-white/45">Loading marketplace...</p>
+        </div>
       </div>
     );
   }
 
   if (status === "unauthenticated") return null;
 
+  const hasActiveFilters = category || priceMin || priceMax;
+
   return (
-    <div className="min-h-screen bg-[#f8f7f6]">
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Search + filter bar */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-6">
-          <div className="flex-1 flex items-center bg-white border border-gray-200 rounded-xl px-4 gap-2 shadow-sm">
-            <span className="material-symbols-outlined text-gray-400">
-              search
-            </span>
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search products by name, description, or tag..."
-              className="flex-1 py-3 text-sm focus:outline-none bg-transparent"
-            />
-            {search && (
-              <button
-                onClick={() => setSearch("")}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="bg-white border border-gray-200 rounded-xl px-4 py-3 text-sm shadow-sm focus:outline-none focus:border-[#eb9728]"
-          >
-            {SORT_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>
-                {o.label}
-              </option>
-            ))}
-          </select>
-          <button
-            onClick={() => setShowFilters((s) => !s)}
-            className={`flex items-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border shadow-sm transition-colors ${
-              showFilters
-                ? "bg-[#eb9728] text-white border-[#eb9728]"
-                : "bg-white text-gray-700 border-gray-200 hover:border-[#eb9728]"
-            }`}
-          >
-            <span className="material-symbols-outlined text-base">tune</span>
-            Filters
-            {(category || priceMin || priceMax) && (
-              <span className="w-2 h-2 rounded-full bg-white inline-block" />
-            )}
-          </button>
-        </div>
+    <div className="min-h-screen bg-[#050507] text-white">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-7 space-y-7">
+        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[#0c0c11] p-6 sm:p-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.16),transparent_34%),radial-gradient(circle_at_left,rgba(235,151,40,0.13),transparent_30%)] pointer-events-none" />
 
-        {/* Expanded filters */}
-        {showFilters && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 mb-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
-                  Category
-                </label>
-                <select
-                  value={category}
-                  onChange={(e) => setCategory(e.target.value)}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#eb9728]"
-                >
-                  <option value="">All Categories</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
-                  Min Price ($)
-                </label>
-                <input
-                  type="number"
-                  value={priceMin}
-                  onChange={(e) => setPriceMin(e.target.value)}
-                  placeholder={`e.g. ${meta.priceRange.min}`}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#eb9728]"
-                  min={0}
-                />
-              </div>
-              <div>
-                <label className="block text-xs font-semibold text-gray-500 uppercase mb-2">
-                  Max Price ($)
-                </label>
-                <input
-                  type="number"
-                  value={priceMax}
-                  onChange={(e) => setPriceMax(e.target.value)}
-                  placeholder={`e.g. ${meta.priceRange.max}`}
-                  className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-[#eb9728]"
-                  min={0}
-                />
-              </div>
+          <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-end">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#eb9728]">
+                Product Marketplace
+              </p>
+              <h1 className="mt-3 text-3xl sm:text-4xl font-black tracking-tight">
+                Explore Products
+              </h1>
+              <p className="mt-3 text-sm sm:text-base text-white/55 max-w-2xl leading-7">
+                Search ready-to-source manufacturing products, compare
+                suppliers, and shortlist items for your next production request.
+              </p>
             </div>
-            {(category || priceMin || priceMax) && (
-              <button
-                onClick={() => {
-                  setCategory("");
-                  setPriceMin("");
-                  setPriceMax("");
-                }}
-                className="mt-3 text-xs text-red-500 hover:text-red-600 font-medium"
-              >
-                Clear all filters
-              </button>
-            )}
-          </div>
-        )}
 
-        {/* Result count */}
-        <div className="flex items-center justify-between mb-4">
-          <p className="text-sm text-gray-500">
+            <div className="rounded-2xl border border-white/8 bg-white/[0.03] px-5 py-4 min-w-[190px]">
+              <p className="text-[11px] uppercase tracking-[0.22em] text-white/35 font-bold">
+                Results
+              </p>
+              <p className="mt-1 text-3xl font-black text-[#eb9728]">
+                {loading ? "..." : pagination.total}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <section className="rounded-[26px] border border-white/8 bg-[#0c0c11] p-4 sm:p-5">
+          <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px_auto] gap-3">
+            <div className="flex items-center rounded-2xl border border-white/10 bg-white/[0.03] px-4 gap-3">
+              <span className="material-symbols-outlined text-white/35">
+                search
+              </span>
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Search products by name, description, or tag..."
+                className="flex-1 py-3.5 text-sm text-white placeholder:text-white/30 focus:outline-none bg-transparent"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="text-white/35 hover:text-white transition-colors"
+                  type="button"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="rounded-2xl border border-white/10 bg-[#101017] px-4 py-3.5 text-sm text-white/80 focus:outline-none focus:border-[#eb9728]"
+            >
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
+            </select>
+
+            <button
+              onClick={() => setShowFilters((s) => !s)}
+              className={`flex items-center justify-center gap-2 px-5 py-3.5 rounded-2xl text-sm font-bold border transition-all ${
+                showFilters
+                  ? "bg-[#eb9728] text-white border-[#eb9728]"
+                  : "bg-white/[0.03] text-white/75 border-white/10 hover:bg-white/[0.06] hover:text-white"
+              }`}
+              type="button"
+            >
+              <span className="material-symbols-outlined text-base">tune</span>
+              Filters
+              {hasActiveFilters && (
+                <span className="h-2 w-2 rounded-full bg-purple-400" />
+              )}
+            </button>
+          </div>
+
+          {showFilters && (
+            <div className="mt-4 rounded-[22px] border border-white/8 bg-white/[0.02] p-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-[11px] font-bold text-white/35 uppercase tracking-[0.2em] mb-2">
+                    Category
+                  </label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full rounded-xl border border-white/10 bg-[#101017] px-3 py-3 text-sm text-white/80 focus:outline-none focus:border-[#eb9728]"
+                  >
+                    <option value="">All Categories</option>
+                    {CATEGORIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-white/35 uppercase tracking-[0.2em] mb-2">
+                    Min Price ($)
+                  </label>
+                  <input
+                    type="number"
+                    value={priceMin}
+                    onChange={(e) => setPriceMin(e.target.value)}
+                    placeholder={`e.g. ${meta.priceRange.min}`}
+                    className="w-full rounded-xl border border-white/10 bg-[#101017] px-3 py-3 text-sm text-white/80 placeholder:text-white/25 focus:outline-none focus:border-[#eb9728]"
+                    min={0}
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-white/35 uppercase tracking-[0.2em] mb-2">
+                    Max Price ($)
+                  </label>
+                  <input
+                    type="number"
+                    value={priceMax}
+                    onChange={(e) => setPriceMax(e.target.value)}
+                    placeholder={`e.g. ${meta.priceRange.max}`}
+                    className="w-full rounded-xl border border-white/10 bg-[#101017] px-3 py-3 text-sm text-white/80 placeholder:text-white/25 focus:outline-none focus:border-[#eb9728]"
+                    min={0}
+                  />
+                </div>
+              </div>
+
+              {hasActiveFilters && (
+                <button
+                  onClick={() => {
+                    setCategory("");
+                    setPriceMin("");
+                    setPriceMax("");
+                  }}
+                  className="mt-4 text-xs font-bold text-red-300 hover:text-red-200 transition-colors"
+                  type="button"
+                >
+                  Clear all filters
+                </button>
+              )}
+            </div>
+          )}
+        </section>
+
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <p className="text-sm text-white/45">
             {loading
               ? "Loading..."
               : `${pagination.total} product${pagination.total !== 1 ? "s" : ""} found`}
           </p>
+
           {debouncedSearch && (
-            <p className="text-sm text-gray-500">
-              Results for <strong>&quot;{debouncedSearch}&quot;</strong>
+            <p className="text-sm text-white/45">
+              Results for{" "}
+              <strong className="text-white">
+                &quot;{debouncedSearch}&quot;
+              </strong>
             </p>
           )}
         </div>
 
-        {/* Product grid */}
         {loading ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-white rounded-xl border border-gray-200 overflow-hidden animate-pulse"
+                className="rounded-[24px] border border-white/8 bg-[#0c0c11] overflow-hidden animate-pulse"
               >
-                <div className="h-48 bg-gray-100" />
-                <div className="p-4 space-y-2">
-                  <div className="h-4 bg-gray-100 rounded w-3/4" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
-                  <div className="h-4 bg-gray-100 rounded w-1/3" />
+                <div className="h-52 bg-white/[0.04]" />
+                <div className="p-5 space-y-3">
+                  <div className="h-4 bg-white/[0.06] rounded w-3/4" />
+                  <div className="h-3 bg-white/[0.06] rounded w-1/2" />
+                  <div className="h-4 bg-white/[0.06] rounded w-1/3" />
                 </div>
               </div>
             ))}
           </div>
         ) : products.length === 0 ? (
-          <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
-            <span className="material-symbols-outlined text-5xl text-gray-300 mb-3 block">
-              category
-            </span>
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+          <div className="rounded-[28px] border border-white/8 bg-[#0c0c11] p-12 text-center">
+            <div className="mx-auto h-20 w-20 rounded-3xl border border-[#eb9728]/20 bg-[#eb9728]/10 text-[#eb9728] flex items-center justify-center">
+              <span className="material-symbols-outlined text-5xl">
+                category
+              </span>
+            </div>
+            <h3 className="mt-6 text-2xl font-bold text-white">
               No products found
             </h3>
-            <p className="text-gray-500 text-sm mb-4">
+            <p className="text-white/50 text-sm mt-2 mb-6">
               {search
                 ? `No results for "${search}"`
                 : "No products available with the selected filters."}
@@ -341,7 +336,8 @@ export default function CustomerExplorePage() {
                 setPriceMin("");
                 setPriceMax("");
               }}
-              className="px-4 py-2 bg-[#eb9728] text-white rounded-lg text-sm font-medium hover:bg-[#eb9728]/90"
+              className="px-5 py-2.5 bg-[#eb9728] text-white rounded-xl text-sm font-bold hover:bg-amber-500 transition-colors"
+              type="button"
             >
               Clear Filters
             </button>
@@ -352,23 +348,24 @@ export default function CustomerExplorePage() {
               <ProductCard
                 key={product._id}
                 product={product}
-                isWishlisted={wishlistProductIds.has(product._id?.toString())}
+                isWishlisted={wishlistSet.has(product._id?.toString())}
                 onToggleWishlist={handleToggleWishlist}
               />
             ))}
           </div>
         )}
 
-        {/* Pagination */}
         {pagination.pages > 1 && !loading && (
-          <div className="flex justify-center gap-2 mt-10">
+          <div className="flex flex-wrap justify-center gap-2 pt-4">
             <button
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="px-4 py-2 rounded-lg text-sm border border-gray-200 bg-white disabled:opacity-40 hover:border-[#eb9728]"
+              className="px-4 py-2 rounded-xl text-sm border border-white/10 bg-white/[0.03] text-white/70 disabled:opacity-35 hover:border-[#eb9728]/40 transition-all"
+              type="button"
             >
               ← Prev
             </button>
+
             {Array.from(
               { length: Math.min(pagination.pages, 7) },
               (_, i) => i + 1,
@@ -376,19 +373,22 @@ export default function CustomerExplorePage() {
               <button
                 key={p}
                 onClick={() => setPage(p)}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                className={`px-4 py-2 rounded-xl text-sm font-bold transition-colors ${
                   p === page
                     ? "bg-[#eb9728] text-white border border-[#eb9728]"
-                    : "bg-white border border-gray-200 text-gray-700 hover:border-[#eb9728]"
+                    : "bg-white/[0.03] border border-white/10 text-white/70 hover:border-[#eb9728]/40"
                 }`}
+                type="button"
               >
                 {p}
               </button>
             ))}
+
             <button
               onClick={() => setPage((p) => Math.min(pagination.pages, p + 1))}
               disabled={page === pagination.pages}
-              className="px-4 py-2 rounded-lg text-sm border border-gray-200 bg-white disabled:opacity-40 hover:border-[#eb9728]"
+              className="px-4 py-2 rounded-xl text-sm border border-white/10 bg-white/[0.03] text-white/70 disabled:opacity-35 hover:border-[#eb9728]/40 transition-all"
+              type="button"
             >
               Next →
             </button>
@@ -399,42 +399,42 @@ export default function CustomerExplorePage() {
   );
 }
 
-// ── ProductCard ───────────────────────────────────────────────────────────────
-
 function ProductCard({ product, isWishlisted, onToggleWishlist }) {
   const primaryImage =
     product.images?.find((i) => i.isPrimary) || product.images?.[0];
 
   return (
     <Link href={`/customer/products/${product._id}`}>
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md hover:border-[#eb9728]/40 transition-all group overflow-hidden cursor-pointer">
-        {/* Image */}
-        <div className="relative h-48 bg-gray-100 overflow-hidden">
+      <div className="group h-full overflow-hidden rounded-[24px] border border-white/8 bg-[#0c0c11] hover:border-[#eb9728]/25 transition-all cursor-pointer">
+        <div className="relative h-52 bg-white/[0.04] overflow-hidden">
           {primaryImage?.url ? (
             <Image
               src={primaryImage.url}
               alt={product.name}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
               sizes="(max-width: 768px) 100vw, (max-width: 1200px) 25vw, 20vw"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center">
-              <span className="material-symbols-outlined text-4xl text-gray-300">
+              <span className="material-symbols-outlined text-5xl text-white/15">
                 inventory_2
               </span>
             </div>
           )}
-          {/* Category badge */}
-          <span className="absolute top-2 left-2 px-2 py-0.5 bg-white/90 rounded-full text-xs font-medium text-gray-600">
+
+          <div className="absolute inset-0 bg-gradient-to-t from-[#050507]/55 via-transparent to-transparent" />
+
+          <span className="absolute top-3 left-3 px-2.5 py-1 bg-[#050507]/70 border border-white/10 backdrop-blur-md rounded-full text-[11px] font-bold text-white/75">
             {product.category}
           </span>
           {/* 3D badge */}
           {product.model3D?.url && (
-            <span className="absolute bottom-2 left-2 px-1.5 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded tracking-wide">
+            <span className="absolute bottom-3 left-3 px-1.5 py-0.5 bg-[#050507]/80 border border-white/10 backdrop-blur-md text-white text-[10px] font-bold rounded tracking-wide">
               3D
             </span>
           )}
+
           <button
             type="button"
             onClick={(e) => {
@@ -442,10 +442,10 @@ function ProductCard({ product, isWishlisted, onToggleWishlist }) {
               e.stopPropagation();
               onToggleWishlist?.(product._id?.toString());
             }}
-            className={`absolute top-2 right-2 inline-flex items-center justify-center w-8 h-8 rounded-full border backdrop-blur-sm transition-colors ${
+            className={`absolute top-3 right-3 inline-flex items-center justify-center w-9 h-9 rounded-full border backdrop-blur-md transition-colors ${
               isWishlisted
-                ? "text-[#eb9728] bg-white/90 border-[#eb9728]/40"
-                : "text-gray-500 bg-white/80 border-gray-200 hover:text-[#eb9728] hover:border-[#eb9728]/40"
+                ? "text-[#eb9728] bg-[#050507]/80 border-[#eb9728]/40"
+                : "text-white/65 bg-[#050507]/65 border-white/10 hover:text-[#eb9728] hover:border-[#eb9728]/40"
             }`}
             title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             aria-label={
@@ -458,33 +458,33 @@ function ProductCard({ product, isWishlisted, onToggleWishlist }) {
           </button>
         </div>
 
-        {/* Info */}
-        <div className="p-4">
-          <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2 group-hover:text-[#eb9728] transition-colors">
+        <div className="p-5">
+          <h3 className="font-bold text-white text-sm mb-3 line-clamp-2 group-hover:text-[#eb9728] transition-colors min-h-[40px]">
             {product.name}
           </h3>
 
-          {/* Manufacturer */}
-          <div className="flex items-center gap-1.5 mb-2">
+          <div className="flex items-center gap-2 mb-4">
             {product.manufacturerId?.businessLogo ? (
               <Image
                 src={product.manufacturerId.businessLogo}
                 alt=""
-                width={16}
-                height={16}
+                width={20}
+                height={20}
                 className="rounded-full object-cover"
               />
             ) : (
-              <div className="w-4 h-4 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 text-xs font-bold">
+              <div className="w-5 h-5 rounded-full bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-300 text-xs font-bold">
                 {(product.manufacturerId?.businessName || "M").charAt(0)}
               </div>
             )}
-            <p className="text-xs text-gray-500 truncate">
+
+            <p className="text-xs text-white/45 truncate">
               {product.manufacturerId?.businessName ||
                 product.manufacturerId?.name}
             </p>
+
             {product.manufacturerId?.verificationStatus === "verified" && (
-              <span className="text-blue-500" title="Verified">
+              <span className="text-purple-400" title="Verified">
                 <span className="material-symbols-outlined text-xs">
                   verified
                 </span>
@@ -492,36 +492,36 @@ function ProductCard({ product, isWishlisted, onToggleWishlist }) {
             )}
           </div>
 
-          {/* Price + MOQ */}
-          <div className="flex items-center justify-between mt-2">
+          <div className="flex items-end justify-between gap-3">
             <div>
-              <span className="text-lg font-bold text-[#eb9728]">
+              <span className="text-xl font-black text-[#eb9728]">
                 ${product.price?.toLocaleString()}
               </span>
-              <span className="text-xs text-gray-400 ml-1">/ unit</span>
+              <span className="text-xs text-white/35 ml-1">/ unit</span>
             </div>
-            <span className="text-xs text-gray-500 bg-gray-50 px-2 py-0.5 rounded-full border border-gray-100">
+
+            <span className="text-[11px] text-white/55 bg-white/[0.04] px-2.5 py-1 rounded-full border border-white/8">
               MOQ: {product.moq}
             </span>
           </div>
 
-          {/* Rating + lead time */}
-          <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-50">
+          <div className="flex items-center justify-between mt-4 pt-4 border-t border-white/8">
             {product.averageRating > 0 ? (
               <div className="flex items-center gap-1">
                 <span className="text-[#eb9728] text-xs">★</span>
-                <span className="text-xs font-medium text-gray-700">
+                <span className="text-xs font-bold text-white/75">
                   {product.averageRating.toFixed(1)}
                 </span>
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-white/35">
                   ({product.totalReviews})
                 </span>
               </div>
             ) : (
-              <span className="text-xs text-gray-400">No reviews yet</span>
+              <span className="text-xs text-white/35">No reviews yet</span>
             )}
+
             {product.leadTime && (
-              <span className="text-xs text-gray-400">
+              <span className="text-xs text-white/35">
                 {product.leadTime}d lead
               </span>
             )}
@@ -531,5 +531,3 @@ function ProductCard({ product, isWishlisted, onToggleWishlist }) {
     </Link>
   );
 }
-
-// ── Sidebar ───────────────────────────────────────────────────────────────────

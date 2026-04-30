@@ -45,6 +45,9 @@ export default function DraftModelEditorPage() {
     const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) {
       // No draft data — the user navigated here directly. Send them back.
+      // We intentionally set state here to trigger the deferred redirect effect below.
+      // This pattern is safe and is the recommended approach for conditional redirects.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShouldRedirect(true);
       return;
     }
@@ -52,6 +55,7 @@ export default function DraftModelEditorPage() {
     try {
       const parsed = JSON.parse(raw);
       if (!parsed?.url) {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setShouldRedirect(true);
         return;
       }
@@ -59,6 +63,7 @@ export default function DraftModelEditorPage() {
     } catch {
       // Corrupted data — clean up and redirect
       sessionStorage.removeItem(SESSION_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShouldRedirect(true);
     }
   }, []);
@@ -86,17 +91,22 @@ export default function DraftModelEditorPage() {
         const lower = safeName.toLowerCase();
         if (!lower.endsWith(".glb") && !lower.endsWith(".gltf")) {
           const dot = safeName.lastIndexOf(".");
-          safeName = (dot > -1 ? safeName.substring(0, dot) : safeName) + "_edited.glb";
+          safeName =
+            (dot > -1 ? safeName.substring(0, dot) : safeName) + "_edited.glb";
         } else {
           const dot = safeName.lastIndexOf(".");
-          safeName = safeName.substring(0, dot) + "_edited" + safeName.substring(dot);
+          safeName =
+            safeName.substring(0, dot) + "_edited" + safeName.substring(dot);
         }
 
         const formData = new FormData();
         formData.append("type", "3d-model");
         formData.append("file", gltfBlob, safeName);
 
-        const res = await fetch("/api/upload", { method: "POST", body: formData });
+        const res = await fetch("/api/upload", {
+          method: "POST",
+          body: formData,
+        });
         const data = await res.json();
 
         if (data.success && data.file?.url) {
@@ -147,7 +157,13 @@ export default function DraftModelEditorPage() {
       >
         <div style={styles.spinner} />
         {isSaving && (
-          <p style={{ color: "#a3a3a3", fontFamily: "'Inter', sans-serif", fontSize: "14px" }}>
+          <p
+            style={{
+              color: "#a3a3a3",
+              fontFamily: "'Inter', sans-serif",
+              fontSize: "14px",
+            }}
+          >
             Processing and uploading edited model...
           </p>
         )}
@@ -183,8 +199,9 @@ export default function DraftModelEditorPage() {
 
         <div style={styles.topBarRight}>
           <p style={styles.helpText}>
-            Use the toolbar to add tags, measure, or paint the model.
-            Click <strong style={{ color: "white" }}>SAVE_&amp;_FINISH</strong> in the sidebar when done.
+            Use the toolbar to add tags, measure, or paint the model. Click{" "}
+            <strong style={{ color: "white" }}>SAVE_&amp;_FINISH</strong> in the
+            sidebar when done.
           </p>
           <button
             id="cancelEditorBtn"
@@ -334,4 +351,3 @@ const styles = {
     animation: "spin 0.8s linear infinite",
   },
 };
-

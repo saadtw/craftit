@@ -6,14 +6,14 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
-// Status helpers (mirrors orders page)
 const STATUS_COLORS = {
-  pending_acceptance: "bg-yellow-100 text-yellow-700",
-  accepted: "bg-blue-100 text-blue-700",
-  in_production: "bg-purple-100 text-purple-700",
-  completed: "bg-green-100 text-green-700",
-  cancelled: "bg-red-100 text-red-600",
-  disputed: "bg-orange-100 text-orange-700",
+  pending_acceptance:
+    "bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20",
+  accepted: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
+  in_production: "bg-purple-500/10 text-purple-300 border border-purple-500/20",
+  completed: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
+  cancelled: "bg-red-500/10 text-red-300 border border-red-500/20",
+  disputed: "bg-orange-500/10 text-orange-300 border border-orange-500/20",
 };
 
 const STATUS_LABELS = {
@@ -25,54 +25,68 @@ const STATUS_LABELS = {
   disputed: "Disputed",
 };
 
-function StatCard({ icon, label, value, sub, accent = false }) {
+function StatCard({ icon, label, value, accent = false }) {
   return (
     <div
-      className={`bg-white rounded-2xl p-5 shadow-sm border flex items-center gap-4 ${accent ? "border-[#eb9728]/30" : "border-gray-100"}`}
+      className={`relative flex flex-col items-center justify-center gap-3 rounded-2xl p-5 border transition-all hover:scale-[1.03] ${
+        accent
+          ? "bg-gradient-to-br from-[#eb9728]/15 to-[#eb9728]/5 border-[#eb9728]/40"
+          : "bg-[#0c0c11] border-white/8 hover:border-white/15"
+      }`}
     >
+      {/* Circle Icon */}
       <div
-        className={`w-12 h-12 rounded-xl flex items-center justify-center shrink-0 ${accent ? "bg-[#eb9728]/10 text-[#eb9728]" : "bg-gray-100 text-gray-500"}`}
+        className={`h-14 w-14 rounded-full flex items-center justify-center border-[3px] transition-all ${
+          accent
+            ? "border-[#eb9728] bg-[#eb9728]/15 text-[#eb9728] shadow-[0_0_18px_rgba(235,151,40,0.3)]"
+            : "border-white/20 bg-white/[0.04] text-white/50 hover:border-white/35"
+        }`}
       >
         <span className="material-symbols-outlined text-2xl">{icon}</span>
       </div>
-      <div>
-        <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
-          {label}
-        </p>
-        <p
-          className={`text-2xl font-extrabold mt-0.5 ${accent ? "text-[#eb9728]" : "text-gray-900"}`}
-        >
-          {value}
-        </p>
-        {sub && <p className="text-xs text-gray-400 mt-0.5">{sub}</p>}
-      </div>
+
+      {/* Value */}
+      <p
+        className={`text-2xl font-black tabular-nums ${accent ? "text-[#eb9728]" : "text-white"}`}
+      >
+        {value}
+      </p>
+
+      {/* Label */}
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35 text-center leading-tight">
+        {label}
+      </p>
     </div>
   );
 }
 
-function ActionCard({ href, icon, iconBg, label, desc }) {
+function ActionCard({ href, icon, label, desc, accent }) {
   return (
-    <Link href={href}>
-      <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:border-[#eb9728]/40 hover:shadow-md transition-all duration-200 cursor-pointer group">
-        <div className="flex items-center gap-4">
-          <div
-            className={`w-11 h-11 rounded-xl flex items-center justify-center shrink-0 ${iconBg}`}
-          >
-            <span className="material-symbols-outlined text-xl">{icon}</span>
-          </div>
-          <div>
-            <p className="font-semibold text-gray-900 text-sm group-hover:text-[#eb9728] transition-colors">
-              {label}
-            </p>
-            <p className="text-xs text-gray-500 mt-0.5">{desc}</p>
-          </div>
+    <Link
+      href={href}
+      className="group rounded-[20px] border border-white/8 bg-[#0c0c11] p-4 hover:border-[#eb9728]/25 hover:bg-[#101017] transition-all"
+    >
+      <div className="flex items-center gap-3">
+        <div
+          className={`h-10 w-10 rounded-xl flex items-center justify-center border ${
+            accent
+              ? "bg-[#eb9728]/10 text-[#eb9728] border-[#eb9728]/20"
+              : "bg-purple-500/10 text-purple-300 border-purple-500/20"
+          }`}
+        >
+          <span className="material-symbols-outlined text-xl">{icon}</span>
+        </div>
+        <div className="min-w-0">
+          <p className="text-sm font-bold text-white group-hover:text-[#eb9728] transition-colors">
+            {label}
+          </p>
+          <p className="text-xs text-white/40 truncate">{desc}</p>
         </div>
       </div>
     </Link>
   );
 }
 
-// app/customer/dashboard/page.js
 export default function CustomerDashboard() {
   const router = useRouter();
   const { data: session, status } = useSession();
@@ -144,10 +158,11 @@ export default function CustomerDashboard() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex h-screen bg-[#f8f7f6]">
-        <main className="flex-1 flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-[#eb9728] rounded-full animate-spin" />
-        </main>
+      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
+          <p className="text-sm text-white/45">Loading dashboard...</p>
+        </div>
       </div>
     );
   }
@@ -160,349 +175,280 @@ export default function CustomerDashboard() {
       .join("")
       .slice(0, 2)
       .toUpperCase() || "U";
+
   const hour = new Date().getHours();
   const greeting =
     hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 
   return (
-    <div className="flex h-screen bg-[#f8f7f6]">
-      <main className="flex-1 overflow-y-auto">
-        {/* ── Header ── */}
-        <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-8 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-          <h1 className="text-lg font-bold text-gray-900">Dashboard</h1>
-          <div className="flex items-center gap-4">
-            <Link
-              href="/customer/settings"
-              className="relative text-gray-500 hover:text-[#eb9728] transition-colors"
-              title="Settings"
-            >
-              <span className="material-symbols-outlined">settings</span>
-            </Link>
-            <Link
-              href="/customer/settings"
-              className="w-9 h-9 bg-[#eb9728] rounded-full flex items-center justify-center text-white font-bold text-sm hover:opacity-90 transition-opacity"
-            >
-              {initials}
-            </Link>
-          </div>
-        </header>
+    <div className="min-h-screen bg-[#050507] text-white">
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-7 space-y-7">
+        <section className="relative overflow-hidden rounded-[30px] border border-white/10 bg-[#0c0c11] p-6 sm:p-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.16),transparent_34%),radial-gradient(circle_at_left,rgba(235,151,40,0.13),transparent_30%)] pointer-events-none" />
 
-        <div className="p-8 max-w-7xl mx-auto space-y-8">
-          {/* ── Welcome banner ── */}
-          <div className="bg-linear-to-br from-gray-900 to-gray-800 rounded-2xl p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+          <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-center">
             <div>
-              <p className="text-gray-400 text-sm">{greeting},</p>
-              <h2 className="text-2xl font-extrabold text-white mt-0.5">
-                {firstName} 👋
-              </h2>
-              <p className="text-gray-400 text-sm mt-1">
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#eb9728]">
+                Customer Dashboard
+              </p>
+              <h1 className="mt-3 text-3xl sm:text-4xl font-black tracking-tight">
+                {greeting}, {firstName}
+              </h1>
+              <p className="mt-3 text-sm sm:text-base text-white/55 max-w-2xl leading-7">
                 {stats.activeOrders > 0
                   ? `You have ${stats.activeOrders} active order${stats.activeOrders > 1 ? "s" : ""} in progress.`
                   : "Ready to start a new manufacturing project?"}
               </p>
             </div>
-            <Link
-              href="/custom-orders/new"
-              className="shrink-0 flex items-center gap-2 px-5 py-2.5 bg-[#eb9728] hover:bg-amber-600 text-white rounded-xl text-sm font-bold transition-colors shadow-sm"
-            >
-              <span className="material-symbols-outlined text-base">add</span>
-              New Custom Order
-            </Link>
-          </div>
 
-          {/* ── Stats row ── */}
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
-            <StatCard
-              icon="receipt_long"
-              label="Total Orders"
-              value={stats.totalOrders}
-            />
-            <StatCard
-              icon="pending_actions"
-              label="Active Orders"
-              value={stats.activeOrders}
-              accent
-            />
-            <StatCard
-              icon="check_circle"
-              label="Completed"
-              value={stats.completedOrders}
-            />
-            <StatCard
-              icon="gavel"
-              label="Open RFQs"
-              value={stats.pendingRFQs}
-            />
-            <StatCard
-              icon="report"
-              label="Disputes"
-              value={stats.disputedOrders}
-            />
-            <StatCard
-              icon="payments"
-              label="Total Spend"
-              value={`$${stats.totalSpend >= 1000 ? (stats.totalSpend / 1000).toFixed(1) + "k" : stats.totalSpend.toFixed(0)}`}
-            />
+            <div className="flex flex-wrap lg:flex-col gap-3 lg:min-w-[220px]">
+              <Link
+                href="/custom-orders/new"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#eb9728] px-5 py-3 text-sm font-bold text-white hover:bg-amber-500 transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg">add</span>
+                New Custom Order
+              </Link>
+              <Link
+                href="/customer/custom-orders"
+                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] px-5 py-3 text-sm font-semibold text-white/75 hover:bg-white/[0.06] hover:text-white transition-all"
+              >
+                View Custom Orders
+              </Link>
+            </div>
           </div>
+        </section>
 
-          {/* ── Quick actions ── */}
-          <div>
-            <h2 className="text-base font-bold text-gray-900 mb-4">
+        <section className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+          <StatCard
+            icon="receipt_long"
+            label="Total Orders"
+            value={stats.totalOrders}
+          />
+          <StatCard
+            icon="pending_actions"
+            label="Active"
+            value={stats.activeOrders}
+            accent
+          />
+          <StatCard
+            icon="check_circle"
+            label="Completed"
+            value={stats.completedOrders}
+          />
+          <StatCard icon="gavel" label="Open RFQs" value={stats.pendingRFQs} />
+          <StatCard
+            icon="report"
+            label="Disputes"
+            value={stats.disputedOrders}
+          />
+          <StatCard
+            icon="payments"
+            label="Spend"
+            value={`$${stats.totalSpend >= 1000 ? (stats.totalSpend / 1000).toFixed(1) + "k" : stats.totalSpend.toFixed(0)}`}
+          />
+        </section>
+
+        <section>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold text-white">
               Workspace Shortcuts
             </h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <ActionCard
-                href="/custom-orders/new"
-                icon="add_circle"
-                iconBg="bg-amber-100 text-amber-600"
-                label="Custom Order"
-                desc="Start a manufacturing request"
-              />
-              <ActionCard
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+            <ActionCard
+              href="/custom-orders/new"
+              icon="add_circle"
+              label="Custom Order"
+              desc="Start a manufacturing request"
+              accent
+            />
+            <ActionCard
+              href="/customer/orders"
+              icon="receipt_long"
+              label="My Orders"
+              desc="Track statuses and delivery"
+            />
+            <ActionCard
+              href="/customer/wishlist"
+              icon="favorite"
+              label="Wishlist"
+              desc="Saved products and suppliers"
+            />
+            <ActionCard
+              href="/customer/settings"
+              icon="settings"
+              label="Settings"
+              desc="Profile and security"
+            />
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 lg:grid-cols-[1.6fr_0.9fr] gap-6">
+          <div className="rounded-[26px] border border-white/8 bg-[#0c0c11] overflow-hidden">
+            <div className="px-6 py-5 border-b border-white/8 flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-white">Recent Orders</h2>
+                <p className="text-xs text-white/35 mt-1">
+                  Latest manufacturing activity
+                </p>
+              </div>
+              <Link
                 href="/customer/orders"
-                icon="receipt_long"
-                iconBg="bg-blue-100 text-blue-600"
-                label="My Orders"
-                desc="Track statuses and delivery"
-              />
-              <ActionCard
-                href="/customer/wishlist"
-                icon="favorite"
-                iconBg="bg-rose-100 text-rose-600"
-                label="Wishlist"
-                desc="Saved products and suppliers"
-              />
-              <ActionCard
-                href="/customer/settings"
-                icon="settings"
-                iconBg="bg-gray-100 text-gray-700"
-                label="Settings"
-                desc="Profile, security, preferences"
-              />
+                className="text-xs font-semibold text-[#eb9728] hover:text-amber-400"
+              >
+                View all →
+              </Link>
             </div>
+
+            {recentOrders.length === 0 ? (
+              <div className="py-16 text-center">
+                <span className="material-symbols-outlined text-5xl text-white/15 block mb-3">
+                  receipt_long
+                </span>
+                <p className="text-sm text-white/45">No orders yet.</p>
+                <Link
+                  href="/custom-orders/new"
+                  className="inline-block mt-3 text-xs font-semibold text-[#eb9728] hover:text-amber-400"
+                >
+                  Create your first request →
+                </Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-white/6">
+                {recentOrders.slice(0, 5).map((order) => (
+                  <Link key={order._id} href={`/customer/orders/${order._id}`}>
+                    <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 px-6 py-4 hover:bg-white/[0.03] transition-colors group">
+                      <div className="h-11 w-11 rounded-2xl bg-white/[0.04] border border-white/8 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-white/35">
+                          inventory_2
+                        </span>
+                      </div>
+
+                      <div className="min-w-0">
+                        <p className="text-sm font-bold text-white truncate group-hover:text-[#eb9728]">
+                          {order.productDetails?.name ||
+                            order.productId?.name ||
+                            "Custom Order"}
+                        </p>
+                        <p className="text-xs text-white/35 mt-1 truncate">
+                          {order.orderNumber} ·{" "}
+                          {order.manufacturerId?.businessName || "Manufacturer"}
+                        </p>
+                      </div>
+
+                      <div className="text-right">
+                        <span
+                          className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-bold ${
+                            STATUS_COLORS[order.status] ||
+                            "bg-white/[0.05] text-white/55 border border-white/8"
+                          }`}
+                        >
+                          {STATUS_LABELS[order.status] || order.status}
+                        </span>
+                        <p className="mt-1 text-xs font-bold text-white/75">
+                          ${order.totalPrice?.toLocaleString() || "—"}
+                        </p>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
-          {/* ── Main grid ── */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Recent orders — spans 2 cols */}
-            <div className="lg:col-span-2">
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="text-base font-bold text-gray-900">
-                    Recent Orders
-                  </h2>
-                  <Link
-                    href="/customer/orders"
-                    className="text-xs font-semibold text-[#eb9728] hover:underline"
-                  >
-                    View all →
-                  </Link>
-                </div>
-                {recentOrders.length === 0 ? (
-                  <div className="py-14 text-center">
-                    <span className="material-symbols-outlined text-4xl text-gray-200 block mb-2">
-                      receipt_long
-                    </span>
-                    <p className="text-sm text-gray-400">No orders yet.</p>
-                    <Link
-                      href="/custom-orders/new"
-                      className="inline-block mt-3 text-xs font-semibold text-[#eb9728] hover:underline"
-                    >
-                      Create your first request →
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-50">
-                    {recentOrders.slice(0, 5).map((order) => (
-                      <Link
-                        key={order._id}
-                        href={`/customer/orders/${order._id}`}
-                      >
-                        <div className="flex items-center gap-4 px-6 py-4 hover:bg-gray-50 transition-colors group">
-                          <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
-                            <span className="material-symbols-outlined text-gray-400 text-lg">
-                              inventory_2
-                            </span>
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-sm text-gray-900 truncate group-hover:text-[#eb9728] transition-colors">
-                              {order.productDetails?.name ||
-                                order.productId?.name ||
-                                "Custom Order"}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              {order.orderNumber} ·{" "}
-                              {order.manufacturerId?.businessName ||
-                                "Manufacturer"}
-                            </p>
-                          </div>
-                          <div className="flex flex-col items-end gap-1 shrink-0">
-                            <span
-                              className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${STATUS_COLORS[order.status] || "bg-gray-100 text-gray-600"}`}
-                            >
-                              {STATUS_LABELS[order.status] || order.status}
-                            </span>
-                            <span className="text-xs font-bold text-gray-700">
-                              ${order.totalPrice?.toLocaleString() || "—"}
-                            </span>
-                          </div>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
+          <aside className="space-y-6">
+            <div className="rounded-[26px] border border-white/8 bg-[#0c0c11] overflow-hidden">
+              <div className="px-5 py-4 border-b border-white/8 flex items-center justify-between">
+                <h2 className="text-sm font-bold text-white">My RFQs</h2>
+                <Link
+                  href="/customer/rfqs"
+                  className="text-xs font-semibold text-[#eb9728]"
+                >
+                  View all →
+                </Link>
               </div>
-            </div>
 
-            {/* Right column */}
-            <div className="space-y-5">
-              {/* Active RFQs */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-gray-900">My RFQs</h2>
-                  <Link
-                    href="/customer/rfqs"
-                    className="text-xs font-semibold text-[#eb9728] hover:underline"
-                  >
-                    View all →
-                  </Link>
+              {recentRFQs.length === 0 ? (
+                <div className="py-10 text-center">
+                  <span className="material-symbols-outlined text-4xl text-white/15 block mb-2">
+                    gavel
+                  </span>
+                  <p className="text-xs text-white/40">No RFQs yet.</p>
                 </div>
-                {recentRFQs.length === 0 ? (
-                  <div className="py-8 text-center">
-                    <span className="material-symbols-outlined text-3xl text-gray-200 block mb-1">
-                      gavel
-                    </span>
-                    <p className="text-xs text-gray-400">No RFQs yet.</p>
-                  </div>
-                ) : (
-                  <div className="divide-y divide-gray-50">
-                    {recentRFQs.map((rfq) => (
-                      <Link key={rfq._id} href={`/customer/rfqs/${rfq._id}`}>
-                        <div className="flex items-center gap-3 px-5 py-3.5 hover:bg-gray-50 transition-colors group">
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-gray-900 truncate group-hover:text-[#eb9728] transition-colors">
-                              {rfq.title || "RFQ"}
-                            </p>
-                            <p className="text-xs text-gray-400 mt-0.5">
-                              {rfq.bids?.length || 0} bid
-                              {(rfq.bids?.length || 0) !== 1 ? "s" : ""}{" "}
-                              received
-                            </p>
-                          </div>
-                          <span
-                            className={`shrink-0 px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                              rfq.status === "open" || rfq.status === "bidding"
-                                ? "bg-green-100 text-green-700"
-                                : rfq.status === "awarded"
-                                  ? "bg-blue-100 text-blue-700"
-                                  : "bg-gray-100 text-gray-500"
-                            }`}
-                          >
+              ) : (
+                <div className="divide-y divide-white/6">
+                  {recentRFQs.map((rfq) => (
+                    <Link key={rfq._id} href={`/customer/rfqs/${rfq._id}`}>
+                      <div className="px-5 py-4 hover:bg-white/[0.03] group">
+                        <p className="text-sm font-bold text-white truncate group-hover:text-[#eb9728]">
+                          {rfq.title || "RFQ"}
+                        </p>
+                        <div className="mt-2 flex items-center justify-between gap-3">
+                          <p className="text-xs text-white/35">
+                            {rfq.bids?.length || 0} bid
+                            {(rfq.bids?.length || 0) !== 1 ? "s" : ""} received
+                          </p>
+                          <span className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2 py-0.5 text-[10px] font-bold text-purple-300">
                             {rfq.status}
                           </span>
                         </div>
-                      </Link>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Workspace links */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-                  <h2 className="text-sm font-bold text-gray-900">
-                    Workspace Links
-                  </h2>
-                </div>
-                <div className="divide-y divide-gray-50">
-                  {[
-                    {
-                      href: "/customer/custom-orders",
-                      icon: "inventory_2",
-                      label: "My Custom Orders",
-                    },
-                    {
-                      href: "/customer/payments",
-                      icon: "payments",
-                      label: "Billing & Payments",
-                    },
-                    {
-                      href: "/customer/messages",
-                      icon: "mail",
-                      label: "Messages",
-                    },
-                    {
-                      href: "/customer/notifications",
-                      icon: "notifications",
-                      label: "Notifications",
-                    },
-                  ].map((item) => (
-                    <Link key={item.href} href={item.href}>
-                      <div className="px-5 py-3.5 hover:bg-gray-50 transition-colors flex items-center gap-3">
-                        <span className="material-symbols-outlined text-gray-400 text-lg">
-                          {item.icon}
-                        </span>
-                        <p className="text-sm font-semibold text-gray-800">
-                          {item.label}
-                        </p>
                       </div>
                     </Link>
                   ))}
                 </div>
+              )}
+            </div>
+
+            <div className="rounded-[26px] border border-white/8 bg-[#0c0c11] p-5">
+              <h2 className="text-sm font-bold text-white mb-4">Account</h2>
+              <div className="flex items-center gap-3 pb-4 border-b border-white/8">
+                <div className="h-11 w-11 rounded-full bg-[#eb9728] flex items-center justify-center text-sm font-bold text-white">
+                  {initials}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-bold text-white truncate">
+                    {session?.user?.name}
+                  </p>
+                  <p className="text-xs text-white/35 truncate">
+                    {session?.user?.email}
+                  </p>
+                </div>
               </div>
 
-              {/* Account summary */}
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-                <h2 className="text-sm font-bold text-gray-900 mb-4">
-                  Account
-                </h2>
-                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-gray-100">
-                  <div className="w-11 h-11 rounded-full bg-[#eb9728] flex items-center justify-center text-white font-bold text-base shrink-0">
-                    {initials}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-bold text-gray-900 truncate">
-                      {session?.user?.name}
-                    </p>
-                    <p className="text-xs text-gray-400 truncate">
-                      {session?.user?.email}
-                    </p>
-                  </div>
-                </div>
-                <div className="space-y-1">
-                  {[
-                    {
-                      href: "/customer/settings",
-                      icon: "manage_accounts",
-                      label: "Edit Profile",
-                    },
-                    {
-                      href: "/customer/settings?tab=security",
-                      icon: "lock",
-                      label: "Change Password",
-                    },
-                    {
-                      href: "/customer/orders",
-                      icon: "receipt_long",
-                      label: "Order History",
-                    },
-                  ].map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="flex items-center gap-3 px-2 py-2 rounded-lg text-sm text-gray-600 hover:bg-[#eb9728]/10 hover:text-[#eb9728] transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-base">
-                        {item.icon}
-                      </span>
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
+              <div className="mt-4 space-y-1">
+                {[
+                  {
+                    href: "/customer/settings",
+                    icon: "manage_accounts",
+                    label: "Edit Profile",
+                  },
+                  {
+                    href: "/customer/settings?tab=security",
+                    icon: "lock",
+                    label: "Change Password",
+                  },
+                  {
+                    href: "/customer/orders",
+                    icon: "receipt_long",
+                    label: "Order History",
+                  },
+                ].map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm text-white/65 hover:bg-white/[0.04] hover:text-[#eb9728] transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-base">
+                      {item.icon}
+                    </span>
+                    {item.label}
+                  </Link>
+                ))}
               </div>
             </div>
-          </div>
-        </div>
+          </aside>
+        </section>
       </main>
     </div>
   );
