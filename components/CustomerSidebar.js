@@ -3,9 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect, useContext } from "react";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 import Image from "next/image";
-import LogoutButton from "@/components/LogoutButton";
 import CustomerLayoutContext from "@/app/customer/CustomerLayoutContext";
 
 import HomeIcon from "@/assets/home.png";
@@ -19,6 +18,7 @@ import SupportIcon from "@/assets/support.png";
 import PaymentsIcon from "@/assets/payments.png";
 import NotificationIcon from "@/assets/notification.png";
 import SettingsIcon from "@/assets/settings.png";
+import LogoutIcon from "@/assets/logout.png";
 
 export default function CustomerSidebar({ active, session }) {
   const renderedByCustomerLayout = useContext(CustomerLayoutContext);
@@ -26,6 +26,12 @@ export default function CustomerSidebar({ active, session }) {
   const { data: clientSession } = useSession();
   const activeSession = session || clientSession;
   const [unreadNotifs, setUnreadNotifs] = useState(0);
+  const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await signOut({ callbackUrl: "/auth/login" });
+  };
 
   useEffect(() => {
     if (renderedByCustomerLayout || !activeSession?.user?.id) return;
@@ -40,12 +46,7 @@ export default function CustomerSidebar({ active, session }) {
   if (renderedByCustomerLayout) return null;
 
   const navItems = [
-    {
-      href: "/customer",
-      icon: HomeIcon,
-      label: "Home",
-      key: "home",
-    },
+    { href: "/customer", icon: HomeIcon, label: "Home", key: "home" },
     {
       href: "/customer/dashboard",
       icon: DashboardIcon,
@@ -64,12 +65,7 @@ export default function CustomerSidebar({ active, session }) {
       label: "Custom",
       key: "custom-orders",
     },
-    {
-      href: "/customer/rfqs",
-      icon: RFQIcon,
-      label: "RFQs",
-      key: "rfqs",
-    },
+    { href: "/customer/rfqs", icon: RFQIcon, label: "RFQs", key: "rfqs" },
     {
       href: "/customer/wishlist",
       icon: WishlistIcon,
@@ -107,6 +103,12 @@ export default function CustomerSidebar({ active, session }) {
       label: "Settings",
       key: "settings",
     },
+    {
+      icon: LogoutIcon,
+      label: "Logout",
+      key: "logout",
+      isLogout: true,
+    },
   ];
 
   const isActive = (item) => {
@@ -117,11 +119,36 @@ export default function CustomerSidebar({ active, session }) {
   };
 
   return (
-    <aside className="w-24 shrink-0 border-r border-white/10 bg-[#050507] text-white flex flex-col h-screen sticky top-0 overflow-hidden">
-      <div className="flex flex-col py-4 overflow-y-auto flex-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+    <aside className="w-24 shrink-0 border-r border-white/10 bg-[#050507] text-white flex flex-col h-screen sticky top-0">
+      {/* SECTION 1: SCROLLABLE NAVIGATION */}
+      <nav className="flex-1 min-h-0 overflow-y-auto py-4 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
         {navItems.map((item) => {
-          const activeItem = isActive(item);
+          // Handle logout button with same styling as other nav items
+          if (item.isLogout) {
+            return (
+              <button
+                key={item.key}
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="group flex flex-col items-center gap-1.5 px-2 py-3 w-full border-l-2 border-l-transparent hover:border-l-white/40 transition-all disabled:opacity-50"
+              >
+                <div className="relative">
+                  <Image
+                    src={item.icon}
+                    alt={item.label}
+                    width={30}
+                    height={30}
+                  />
+                </div>
+                <span className="text-[15px] font-semibold text-center leading-tight text-white/70 group-hover:text-white">
+                  {loggingOut ? "..." : item.label}
+                </span>
+              </button>
+            );
+          }
 
+          // Regular navigation links
+          const activeItem = isActive(item);
           return (
             <Link
               key={item.key}
@@ -136,19 +163,18 @@ export default function CustomerSidebar({ active, session }) {
                 <Image
                   src={item.icon}
                   alt={item.label}
-                  width={22}
-                  height={22}
-                  className="transition-all"
+                  width={30}
+                  height={30}
                 />
                 {item.badge && (
                   <span className="absolute -top-1 -right-1 min-w-[14px] h-[14px] px-[3px] bg-[#eb9728] text-white text-[8px] font-bold rounded-full flex items-center justify-center">
-                    {item.badge > 9 ? "9+" : item.badge}
+                    {item.badge}
                   </span>
                 )}
               </div>
-
+              {/* FIXED THE SYNTAX ERROR BELOW */}
               <span
-                className={`text-[11px] font-semibold text-center leading-tight transition-colors ${
+                className={`text-[15px] font-semibold text-center leading-tight ${
                   activeItem ? "text-[#eb9728]" : "text-white/70"
                 }`}
               >
@@ -157,9 +183,7 @@ export default function CustomerSidebar({ active, session }) {
             </Link>
           );
         })}
-
-        <LogoutButton />
-      </div>
+      </nav>
     </aside>
   );
 }

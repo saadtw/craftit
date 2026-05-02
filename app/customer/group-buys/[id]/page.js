@@ -360,9 +360,9 @@ export default function GroupBuyDetailPage() {
           <div className="space-y-6">
             <div className="overflow-hidden rounded-[30px] border border-white/10 bg-[#0c0c11]">
               <div className="relative h-[320px] sm:h-[420px]">
-                {groupBuy.productId?.images?.[0] ? (
+                {groupBuy.productId?.images?.[0]?.url ? (
                   <Image
-                    src={groupBuy.productId.images[0]}
+                    src={groupBuy.productId.images[0].url}
                     alt={groupBuy.productId.name}
                     fill
                     sizes="(max-width: 1024px) 100vw, 66vw"

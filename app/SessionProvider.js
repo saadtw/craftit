@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   SessionProvider as NextAuthSessionProvider,
   signOut,
   useSession,
 } from "next-auth/react";
+import { useInactivityTimeout } from "@/lib/hooks/useInactivityTimeout";
+import { InactivityWarningModal } from "@/components/InactivityWarningModal";
 
 /**
  * Force a full page reload on browser Back/Forward navigation.
@@ -58,6 +60,38 @@ function BfcacheBuster() {
 
 function SessionGuards() {
   const { data: session, status } = useSession();
+  const [showInactivityWarning, setShowInactivityWarning] = useState(false);
+  const [inactivityWarningTimeLeft, setInactivityWarningTimeLeft] =
+    useState(600); // 10 minutes warning before logout
+
+  // Constants for inactivity timeout (in minutes)
+  const INACTIVITY_WARNING_MINUTES = 55; // Show warning after 55 minutes of inactivity
+  const ABSOLUTE_TIMEOUT_MINUTES = 60; // Auto logout after 60 minutes
+
+  const handleInactivityWarning = () => {
+    setShowInactivityWarning(true);
+    setInactivityWarningTimeLeft(
+      (ABSOLUTE_TIMEOUT_MINUTES - INACTIVITY_WARNING_MINUTES) * 60,
+    );
+  };
+
+  const handleInactivityLogout = () => {
+    setShowInactivityWarning(false);
+    signOut({ callbackUrl: "/auth/login" });
+  };
+
+  const handleExtendSession = () => {
+    setShowInactivityWarning(false);
+    // The hook will automatically reset the timers on next user activity
+  };
+
+  // Track inactivity
+  useInactivityTimeout({
+    inactivityMinutes: INACTIVITY_WARNING_MINUTES,
+    absoluteTimeoutMinutes: ABSOLUTE_TIMEOUT_MINUTES,
+    onWarning: handleInactivityWarning,
+    onLogout: handleInactivityLogout,
+  });
 
   useEffect(() => {
     if (status !== "authenticated") return;
@@ -88,7 +122,15 @@ function SessionGuards() {
     return () => source.close();
   }, [status, session?.user?.id]);
 
-  return null;
+  return (
+    <>
+      <InactivityWarningModal
+        isOpen={showInactivityWarning}
+        onExtend={handleExtendSession}
+        remainingSeconds={inactivityWarningTimeLeft}
+      />
+    </>
+  );
 }
 
 export default function SessionProvider({ children, session }) {

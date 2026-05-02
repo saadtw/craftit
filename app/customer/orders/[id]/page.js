@@ -1292,35 +1292,37 @@ export default function CustomerOrderDetailPage() {
 //                 )}
 //               </div>
 
-              {orderModel3D?.url && (
-                <div className="rounded-[24px] border border-white/8 bg-[#0c0c11] p-6 sm:p-8">
-                  <h2 className="text-lg font-black text-white flex items-center gap-2 mb-5">
-                    <span className="px-1.5 py-0.5 bg-[#eb9728] text-white text-xs rounded font-medium">
-                      3D
-                    </span>
-                    3D Model
-                  </h2>
-                  <Editor3DWrapper
-                    modelUrl={orderModel3D.url}
-                    initialAnnotations={orderModel3D.annotations}
-                    initialCameraState={orderModel3D.cameraState}
-                    readOnly={true}
-                  />
-                  <div className="mt-4 flex items-center justify-between gap-3 p-4 bg-white/[0.03] rounded-xl border border-white/8">
-                    <p className="text-sm text-white/60 truncate">
-                      {orderModel3D.filename || "Attached 3D model"}
-                    </p>
-                    <a
-                      href={orderModel3D.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-[#eb9728]/10 text-[#eb9728] rounded-xl text-xs font-bold hover:bg-[#eb9728]/20 transition-colors"
-                    >
-                      Download
-                    </a>
-                  </div>
-                </div>
-              )}
+{
+  orderModel3D?.url && (
+    <div className="rounded-[24px] border border-white/8 bg-[#0c0c11] p-6 sm:p-8">
+      <h2 className="text-lg font-black text-white flex items-center gap-2 mb-5">
+        <span className="px-1.5 py-0.5 bg-[#eb9728] text-white text-xs rounded font-medium">
+          3D
+        </span>
+        3D Model
+      </h2>
+      <Editor3DWrapper
+        modelUrl={orderModel3D.url}
+        initialAnnotations={orderModel3D.annotations}
+        initialCameraState={orderModel3D.cameraState}
+        readOnly={true}
+      />
+      <div className="mt-4 flex items-center justify-between gap-3 p-4 bg-white/[0.03] rounded-xl border border-white/8">
+        <p className="text-sm text-white/60 truncate">
+          {orderModel3D.filename || "Attached 3D model"}
+        </p>
+        <a
+          href={orderModel3D.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-4 py-2 bg-[#eb9728]/10 text-[#eb9728] rounded-xl text-xs font-bold hover:bg-[#eb9728]/20 transition-colors"
+        >
+          Download
+        </a>
+      </div>
+    </div>
+  );
+}
 
 //               {/* Production Pipeline */}
 //               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
