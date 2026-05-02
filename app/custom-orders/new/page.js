@@ -1,5 +1,6 @@
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -341,7 +342,7 @@ function NewCustomOrderContent() {
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-          <p className="text-sm text-white/40">Loading...</p>
+          <GlobalLoader text="Loading..." />
         </div>
       </div>
     );
@@ -386,9 +387,7 @@ function NewCustomOrderContent() {
         {sourceContext.isLoading && (
           <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-blue-500/20 bg-blue-500/8">
             <div className="h-4 w-4 rounded-full border-2 border-blue-400/30 border-t-blue-400 animate-spin shrink-0" />
-            <p className="text-sm text-blue-400">
-              Loading product/manufacturer details...
-            </p>
+            <GlobalLoader text="Loading product/manufacturer details..." />
           </div>
         )}
 
@@ -866,7 +865,7 @@ export default function NewCustomOrder() {
         <div className="min-h-screen bg-[#050507] flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-            <p className="text-sm text-white/40">Loading...</p>
+            <GlobalLoader text="Loading..." />
           </div>
         </div>
       }
@@ -1235,7 +1234,7 @@ export default function NewCustomOrder() {
 //     }
 //   };
 
-//   if (status === "loading") return <div>Loading...</div>;
+//   if (status === "loading") return <GlobalLoader fullScreen text="Loading..." />;
 
 //   if (status === "unauthenticated") {
 //     router.push("/auth/login");

@@ -1,6 +1,7 @@
 // app/customer/orders/[id]/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -157,7 +158,7 @@ function CustomerOrderDetailPageContent() {
       <div className="flex min-h-screen items-center justify-center bg-[#050507]">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
-          <p className="text-sm text-white/45">Loading order...</p>
+          <GlobalLoader text="Loading order..." />
         </div>
       </div>
     );
@@ -1106,7 +1107,7 @@ export default function CustomerOrderDetailPage() {
 //     return (
 //       <div className="flex h-screen bg-[#f8f7f6]">
 //         <main className="flex-1 flex items-center justify-center">
-//           <p className="text-gray-500">Loading order...</p>
+//           <GlobalLoader text="Loading order..." />
 //         </main>
 //       </div>
 //     );

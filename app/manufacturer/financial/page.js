@@ -1,6 +1,7 @@
 // app/manufacturer/financial/page.js
 "use client";
 
+import GlobalNoResults from "@/components/ui/GlobalNoResults";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -186,7 +187,7 @@ export default function ManufacturerFinancialPage() {
               <span className="material-symbols-outlined text-4xl block mb-2">
                 payments
               </span>
-              <p className="text-sm">No transactions found.</p>
+              <GlobalNoResults text="No transactions found" />
             </div>
           ) : (
             <div className="overflow-x-auto">

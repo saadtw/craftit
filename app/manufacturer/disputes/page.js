@@ -1,6 +1,7 @@
 // app/manufacturer/disputes/page.js
 "use client";
 
+import GlobalNoResults from "@/components/ui/GlobalNoResults";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -115,7 +116,7 @@ export default function ManufacturerDisputesPage() {
             <span className="material-symbols-outlined text-5xl text-gray-200 block mb-3">
               balance
             </span>
-            <p className="text-gray-600 font-semibold">No disputes found</p>
+            <GlobalNoResults text="No disputes found" />
             <p className="text-sm text-gray-400 mt-1">
               {filter === "all"
                 ? "No disputes have been filed on your orders."

@@ -1,6 +1,7 @@
 // app/manufacturer/products/page.js
 "use client";
 
+import GlobalNoResults from "@/components/ui/GlobalNoResults";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -499,7 +500,7 @@ export default function ManufacturerProductsPage() {
                 d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
               />
             </svg>
-            <p className="text-slate-500 font-medium">No products found</p>
+            <GlobalNoResults text="No products found" />
             <p className="text-slate-400 text-sm mt-1">
               {debouncedSearch
                 ? "Try a different search term"

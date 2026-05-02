@@ -1,6 +1,8 @@
 // app/customer/orders/page.js
 "use client";
 
+import GlobalNoResults from "@/components/ui/GlobalNoResults";
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -93,7 +95,7 @@ export default function CustomerOrdersPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#050507]">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
-          <p className="text-sm text-white/45">Loading orders...</p>
+          <GlobalLoader text="Loading orders..." />
         </div>
       </div>
     );
@@ -232,15 +234,7 @@ export default function CustomerOrdersPage() {
 
         {filteredOrders.length === 0 ? (
           <section className="rounded-[28px] border border-white/8 bg-[#0c0c11] p-12 text-center">
-            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-[#eb9728]/20 bg-[#eb9728]/10 text-[#eb9728]">
-              <span className="material-symbols-outlined text-5xl">
-                inventory_2
-              </span>
-            </div>
-
-            <h3 className="mb-2 text-xl font-black text-white">
-              No orders found
-            </h3>
+            <GlobalNoResults text="No orders found" />
             <p className="mb-6 text-sm text-white/45">
               {activeFilter === "all"
                 ? "You haven't placed any orders yet."

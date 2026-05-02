@@ -2,6 +2,7 @@
 // app/customer/group-buys/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -236,7 +237,7 @@ export default function CustomerGroupBuysPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#050507]">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
-          <p className="text-sm text-white/45">Loading group buys...</p>
+          <GlobalLoader text="Loading group buys..." />
         </div>
       </div>
     );

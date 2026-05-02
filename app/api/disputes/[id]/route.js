@@ -10,6 +10,7 @@ import { resolveRequestSession } from "@/lib/requestAuth";
 // GET /api/disputes/[id] - get dispute details (only accessible to involved parties and admins)
 export async function GET(request, { params }) {
   try {
+    const { id } = await params;
     const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -17,7 +18,7 @@ export async function GET(request, { params }) {
 
     await connectDB();
 
-    const dispute = await Dispute.findById(params.id)
+    const dispute = await Dispute.findById(id)
       .populate("orderId")
       .populate("customerId", "name email profilePicture")
       .populate("manufacturerId", "businessName email businessLogo")
@@ -49,6 +50,7 @@ export async function GET(request, { params }) {
 // PATCH /api/disputes/[id]  — manufacturer response OR admin resolution
 export async function PATCH(request, { params }) {
   try {
+    const { id } = await params;
     const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -56,7 +58,7 @@ export async function PATCH(request, { params }) {
 
     await connectDB();
 
-    const dispute = await Dispute.findById(params.id);
+    const dispute = await Dispute.findById(id);
     if (!dispute) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }

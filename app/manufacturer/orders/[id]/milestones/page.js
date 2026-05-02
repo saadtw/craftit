@@ -1,6 +1,7 @@
 // app/manufacturer/orders/[id]/milestones/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -117,7 +118,7 @@ export default function MilestonesManagementPage() {
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
-        <p className="text-gray-600">Loading milestones...</p>
+        <GlobalLoader text="Loading milestones..." />
       </div>
     );
   }

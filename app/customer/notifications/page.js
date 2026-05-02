@@ -1,6 +1,8 @@
 // app/customer/notifications/page.js
 "use client";
 
+import GlobalNoResults from "@/components/ui/GlobalNoResults";
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -112,7 +114,7 @@ export default function CustomerNotificationsPage() {
       <div className="flex min-h-screen items-center justify-center bg-[#050507]">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
-          <p className="text-sm text-white/45">Loading notifications...</p>
+          <GlobalLoader text="Loading notifications..." />
         </div>
       </div>
     );
@@ -176,7 +178,7 @@ export default function CustomerNotificationsPage() {
                 notifications
               </span>
             </div>
-            <p className="text-lg font-bold text-white">No notifications yet</p>
+            <GlobalNoResults text="No notifications yet" />
             <p className="mt-2 text-sm text-white/45">
               You&apos;ll see order updates, messages, and more here.
             </p>

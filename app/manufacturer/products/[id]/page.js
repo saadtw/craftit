@@ -1,6 +1,7 @@
 // app/manufacturer/products/[id]/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
@@ -585,7 +586,7 @@ export default function ProductDetailPage() {
               </div>
 
               {qaLoading ? (
-                <p className="text-sm text-slate-400">Loading questions...</p>
+                <GlobalLoader text="Loading questions..." />
               ) : visibleQaItems.length === 0 ? (
                 <p className="text-sm text-slate-500">
                   {qaItems.length === 0

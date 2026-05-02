@@ -1,6 +1,7 @@
 // app/manufacturer/notifications/page.js
 "use client";
 
+import GlobalNoResults from "@/components/ui/GlobalNoResults";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -147,7 +148,7 @@ export default function ManufacturerNotificationsPage() {
             <span className="material-symbols-outlined text-5xl text-gray-200 block mb-3">
               notifications
             </span>
-            <p className="text-gray-500 font-medium">No notifications yet</p>
+            <GlobalNoResults text="No notifications yet" />
           </div>
         ) : (
           <div className="space-y-6">

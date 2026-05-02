@@ -1,6 +1,7 @@
 // app/custom-orders/[id]/create-rfq/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -214,7 +215,7 @@ export default function CreateRFQ() {
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-          <p className="text-sm text-white/40">Loading...</p>
+          <GlobalLoader text="Loading..." />
         </div>
       </div>
     );
@@ -470,9 +471,7 @@ export default function CreateRFQ() {
                   {manufacturersLoading ? (
                     <div className="flex items-center justify-center py-8 gap-2">
                       <div className="h-5 w-5 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-                      <p className="text-sm text-white/30">
-                        Loading manufacturers...
-                      </p>
+                      <GlobalLoader text="Loading manufacturers..." />
                     </div>
                   ) : availableManufacturers.length === 0 ? (
                     <div className="py-10 text-center">
@@ -810,7 +809,7 @@ export default function CreateRFQ() {
 //     }
 //   };
 
-//   if (status === "loading" || loading) return <div>Loading...</div>;
+//   if (status === "loading" || loading) return <GlobalLoader fullScreen text="Loading..." />;
 
 //   if (status === "unauthenticated") {
 //     router.push("/auth/login");

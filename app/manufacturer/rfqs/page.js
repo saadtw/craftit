@@ -1,6 +1,7 @@
 // app/manufacturer/rfqs/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -77,7 +78,7 @@ export default function ManufacturerRFQsPage() {
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
-        <div className="text-xl text-gray-600">Loading...</div>
+        <GlobalLoader text="Loading..." />
       </div>
     );
   }
@@ -367,7 +368,7 @@ export default function ManufacturerRFQsPage() {
 
               {loading ? (
                 <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                  <div className="text-gray-600">Loading RFQs...</div>
+                  <GlobalLoader text="Loading RFQs..." />
                 </div>
               ) : rfqs.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-sm p-8 text-center">

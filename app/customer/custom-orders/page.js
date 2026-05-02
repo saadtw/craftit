@@ -1,6 +1,7 @@
 // app/customer/custom-orders/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -52,9 +53,7 @@ export default function CustomOrdersListPage() {
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="w-10 h-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-          <p className="text-sm text-white/50 tracking-wide">
-            Loading custom orders...
-          </p>
+          <GlobalLoader text="Loading custom orders..." />
         </div>
       </div>
     );

@@ -1,6 +1,8 @@
 // app/manufacturer/bids/page.js
 "use client";
 
+import GlobalNoResults from "@/components/ui/GlobalNoResults";
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -124,7 +126,7 @@ export default function ManufacturerBidsPage() {
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
-        <div className="text-xl text-gray-600">Loading...</div>
+        <GlobalLoader text="Loading..." />
       </div>
     );
   }
@@ -348,7 +350,7 @@ export default function ManufacturerBidsPage() {
             <div className="space-y-4">
               {bids.length === 0 ? (
                 <div className="bg-white rounded-xl shadow-sm p-8 text-center">
-                  <p className="text-gray-500">No bids found</p>
+                  <GlobalNoResults text="No bids found" />
                 </div>
               ) : (
                 bids.map((bid) => (

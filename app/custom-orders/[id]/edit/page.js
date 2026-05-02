@@ -1,6 +1,7 @@
 // app/custom-orders/[id]/edit/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -206,7 +207,7 @@ export default function EditCustomOrder() {
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-          <p className="text-sm text-white/40">Loading order...</p>
+          <GlobalLoader text="Loading order..." />
         </div>
       </div>
     );
@@ -711,7 +712,7 @@ export default function EditCustomOrder() {
 //   };
 
 //   if (status === "loading" || initialLoading)
-//     return <div className="p-6">Loading...</div>;
+//     return <GlobalLoader fullScreen text="Loading..." />;
 
 //   if (status === "unauthenticated") {
 //     router.push("/auth/login");

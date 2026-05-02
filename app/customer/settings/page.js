@@ -1,6 +1,7 @@
 // app/customer/settings/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -485,8 +486,7 @@ function SecurityTab({ user }) {
               } ${twoFactorLoading || twoFactorSaving ? "opacity-50 cursor-not-allowed" : ""}`}
             >
               {twoFactorLoading
-                ? "Loading..."
-                : twoFactorSaving
+                ? <GlobalLoader text="Loading..." /> : twoFactorSaving
                   ? "Saving..."
                   : twoFactorEnabled
                     ? "Disable 2FA"
@@ -699,7 +699,7 @@ function CustomerSettingsPageContent() {
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-          <p className="text-sm text-white/40">Loading settings...</p>
+          <GlobalLoader text="Loading settings..." />
         </div>
       </div>
     );
@@ -797,7 +797,7 @@ export default function CustomerSettingsPage() {
         <div className="min-h-screen bg-[#050507] flex items-center justify-center">
           <div className="flex flex-col items-center gap-4">
             <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-            <p className="text-sm text-white/40">Loading...</p>
+            <GlobalLoader text="Loading..." />
           </div>
         </div>
       }
