@@ -1,4 +1,4 @@
-// app/customer/group-buys/[id]/page.js
+
 // app/customer/group-buys/[id]/page.js
 "use client";
 

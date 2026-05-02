@@ -373,7 +373,7 @@ export default function CustomerHomePage() {
           href="/customer/group-buys"
           linkLabel="View All"
         >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {activeGroupBuys.slice(0, 4).map((groupBuy) => {
               const quantity = groupBuy.currentQuantity || 0;
               const nextTier = groupBuy.tiers?.find(
@@ -386,61 +386,101 @@ export default function CustomerHomePage() {
               return (
                 <div
                   key={groupBuy._id}
-                  className="rounded-[22px] border border-white/8 bg-[#0c0c11] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+                  className="overflow-hidden group rounded-[22px] border border-white/8 bg-[#0c0c11] shadow-[0_10px_30px_rgba(0,0,0,0.25)] hover:border-purple-390 hover:border-1 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all flex flex-col"
                 >
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <p className="text-base font-bold text-white line-clamp-1">
-                        {groupBuy.title ||
-                          groupBuy.productId?.name ||
-                          "Group Buy"}
-                      </p>
-                      <p className="text-xs text-white/45 mt-1 line-clamp-1">
-                        {groupBuy.manufacturerId?.businessName ||
-                          groupBuy.manufacturerId?.name ||
-                          "Manufacturer"}
-                      </p>
+                  <div className="relative h-40 w-full bg-white/4 overflow-hidden">
+                    {groupBuy.productId?.images?.[0]?.url ? (
+                      <Image
+                        src={groupBuy.productId.images[0].url}
+                        alt={groupBuy.title || groupBuy.productId.name || "Group Buy"}
+                        fill
+                        sizes="(max-width: 768px) 100vw, 50vw"
+                        className="object-cover transition-transform duration-500 group-hover:scale-120"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="material-symbols-outlined text-4xl text-white/15">
+                          inventory_2
+                        </span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#050507]/60 via-transparent to-transparent" />
+                    <div className="absolute right-3 top-3">
+                      <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-500 border border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.6)] backdrop-blur-md">
+                        {daysLeft(groupBuy.endDate)} days  left
+                      </span>
                     </div>
-                    <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-emerald-500/12 text-emerald-300 border border-emerald-500/15">
-                      {daysLeft(groupBuy.endDate)}d left
-                    </span>
                   </div>
 
-                  <div className="mt-4 h-2 rounded-full bg-white/5 overflow-hidden">
-                    <div
-                      className="h-full rounded-full bg-[#eb9728]"
-                      style={{
-                        width: `${Math.min(
-                          100,
-                          ((groupBuy.currentParticipantCount || 0) / 50) * 100,
-                        )}%`,
-                      }}
-                    />
+                  <div className="p-5 flex flex-col flex-grow">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-base font-bold text-white line-clamp-1 group-hover:text-[#eb9728] transition-colors">
+                          {groupBuy.title ||
+                            groupBuy.productId?.name ||
+                            "Group Buy"}
+                        </p>
+                        <div className="flex items-center gap-1.5 mt-1.5">
+                          <div className="w-5 h-5 rounded-full overflow-hidden bg-gradient-to-br from-[#eb9728] to-purple-500 flex items-center justify-center shrink-0 ring-1 ring-white/10">
+                            {groupBuy.manufacturerId?.businessLogo ? (
+                              <Image 
+                                src={groupBuy.manufacturerId.businessLogo} 
+                                alt="" 
+                                width={20} 
+                                height={20} 
+                                className="object-cover w-full h-full" 
+                              />
+                            ) : (
+                              <span className="text-[9px] font-black text-white">
+                                {(groupBuy.manufacturerId?.businessName || groupBuy.manufacturerId?.name || "M").charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-xs text-white/45 line-clamp-1">
+                            {groupBuy.manufacturerId?.businessName ||
+                                groupBuy.manufacturerId?.name ||
+                                "Manufacturer"}
+                          </p>
+                        </div>
+                      </div>
+                        </div>
+
+                    <div className="mt-4 h-2 rounded-full bg-white/5 overflow-hidden">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-[#eb9728] via-purple-500 to-amber-400"
+                        style={{
+                          width: `${Math.min(
+                            100,
+                            ((groupBuy.currentParticipantCount || 0) / 50) * 100,
+                          )}%`,
+                        }}
+                      />
+                    </div>
+
+                    <div className="mt-4 text-xs text-white/45 flex items-center justify-between">
+                      <span>
+                        {groupBuy.currentParticipantCount || 0} participants
+                      </span>
+                      <span className="font-bold text-[#eb9728] text-sm">
+                        {currency(
+                          groupBuy.currentDiscountedPrice ?? groupBuy.basePrice,
+                        )}
+                      </span>
+                    </div>
+
+                    <p className="mt-2 text-xs text-white/50">
+                      {unitsToNextTier > 0
+                        ? `${unitsToNextTier} more units to unlock next tier`
+                        : "Top tier unlocked"}
+                    </p>
+
+                    <Link
+                      href={`/customer/group-buys/${groupBuy._id}`}
+                      className="mt-4 inline-flex items-center justify-center px-5 py-2 rounded-xl text-xs font-bold bg-[#eb9728] text-white hover:bg-amber-500 transition-all hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(235,151,40,0.2)] w-fit"
+                    >
+                      Open Group Buy
+                    </Link>
                   </div>
-
-                  <div className="mt-4 text-xs text-white/45 flex items-center justify-between">
-                    <span>
-                      {groupBuy.currentParticipantCount || 0} participants
-                    </span>
-                    <span className="font-bold text-[#eb9728]">
-                      {currency(
-                        groupBuy.currentDiscountedPrice ?? groupBuy.basePrice,
-                      )}
-                    </span>
-                  </div>
-
-                  <p className="mt-2 text-xs text-white/50">
-                    {unitsToNextTier > 0
-                      ? `${unitsToNextTier} more units to unlock next tier`
-                      : "Top tier unlocked"}
-                  </p>
-
-                  <Link
-                    href={`/customer/group-buys/${groupBuy._id}`}
-                    className="mt-4 inline-flex px-3.5 py-2 rounded-xl text-xs font-bold bg-[#eb9728]/10 border border-[#eb9728]/20 text-[#eb9728] hover:bg-[#eb9728]/15 transition-all"
-                  >
-                    Open Group Buy
-                  </Link>
                 </div>
               );
             })}
@@ -460,31 +500,142 @@ export default function CustomerHomePage() {
             {featuredManufacturers.slice(0, 4).map((mfr) => (
               <div
                 key={mfr._id}
-                className="rounded-[22px] border border-white/8 bg-[#0c0c11] p-5 shadow-[0_10px_30px_rgba(0,0,0,0.25)]"
+                className="group rounded-[22px] border border-white/8 bg-[#0c0c11] shadow-[0_10px_30px_rgba(0,0,0,0.25)] hover:border-purple-390 hover:border-1 hover:shadow-[0_0_20px_rgba(168,85,247,0.5)] transition-all flex flex-col overflow-hidden"
               >
-                <div className="w-12 h-12 rounded-2xl bg-[#eb9728]/10 border border-[#eb9728]/20 text-[#eb9728] flex items-center justify-center font-bold">
-                  {(mfr.businessName || mfr.name || "M")
-                    .charAt(0)
-                    .toUpperCase()}
+                {/* BANNER */}
+                <div className="relative h-20 bg-[#0c0c11] flex-shrink-0">
+                  <div className="absolute inset-0 overflow-hidden">
+                    {mfr.businessBanner ? (
+                      <Image
+                        src={mfr.businessBanner}
+                        alt=""
+                        fill
+                        sizes="(max-width: 768px) 100vw, 25vw"
+                        className="object-cover opacity-80 transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 bg-gradient-to-br from-[#eb9728]/60 via-purple-600/60 to-amber-400/40">
+                        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.4),transparent_60%)]" />
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-[#0c0c11]/80 via-transparent to-transparent" />
+                  </div>
+
+                  {/* AVATAR overlapping banner */}
+                  <div className="absolute -bottom-6 left-4 w-12 h-12 rounded-2xl overflow-hidden ring-2 ring-[#0c0c11] shadow-[0_4px_15px_rgba(0,0,0,0.4)] z-10">
+                    {mfr.businessLogo ? (
+                      <Image
+                        src={mfr.businessLogo}
+                        alt={mfr.businessName || mfr.name}
+                        fill
+                        sizes="48px"
+                        className="object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full bg-gradient-to-br from-[#eb9728] to-purple-500 text-white flex items-center justify-center text-lg font-black">
+                        {(mfr.businessName || mfr.name || "M").charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* VERIFIED badge on banner */}
+                  {mfr.isVerified && (
+                    <div className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/25 backdrop-blur-sm z-10">
+                      <span className="material-symbols-outlined text-[11px]">verified</span>
+                      Verified
+                    </div>
+                  )}
                 </div>
-                <h3 className="mt-4 text-sm font-bold text-white line-clamp-1">
-                  {mfr.businessName || mfr.name}
-                </h3>
-                <p className="mt-1 text-xs text-white/55 line-clamp-1">
-                  {mfr.manufacturingCapabilities?.[0]?.replace(/_/g, " ") ||
-                    "General Manufacturing"}
-                </p>
-                <p className="mt-1 text-xs text-white/35 line-clamp-1">
-                  {mfr.businessAddress?.country ||
-                    mfr.location?.country ||
-                    "Global"}
-                </p>
-                <Link
-                  href={`/manufacturers/${mfr._id}`}
-                  className="mt-4 inline-flex px-3.5 py-2 rounded-xl text-xs font-bold bg-white/[0.04] border border-white/10 text-white/75 hover:bg-white/[0.06] hover:text-white transition-all"
-                >
-                  View Profile
-                </Link>
+
+                {/* BODY */}
+                <div className="px-4 pt-8 pb-4 flex flex-col flex-grow">
+
+                  {/* NAME + LOCATION + BOOKMARK ROW */}
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-black text-white line-clamp-1 group-hover:text-[#eb9728] transition-colors">
+                        {mfr.businessName || mfr.name}
+                      </h3>
+                      <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/40">
+                        <span className="material-symbols-outlined text-[12px]">location_on</span>
+                        <span className="line-clamp-1">
+                          {mfr.businessAddress?.city
+                            ? `${mfr.businessAddress.city}, ${mfr.businessAddress.country || ""}`
+                            : mfr.businessAddress?.country || mfr.location?.country || "Global"}
+                        </span>
+                      </div>
+                    </div>
+                    {/* BOOKMARK ICON */}
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        toggleWishlist(mfr._id, "manufacturer");
+                      }}
+                      className={`shrink-0 flex items-center justify-center w-7 h-7 rounded-full border transition-all ${
+                        wishlistSet.has(mfr._id)
+                          ? "border-[#eb9728]/30 bg-[#eb9728]/10 text-[#eb9728]"
+                          : "border-white/10 bg-white/[0.03] text-white/40 hover:text-[#eb9728] hover:border-[#eb9728]/30"
+                      }`}
+                      title={wishlistSet.has(mfr._id) ? "Remove from wishlist" : "Save manufacturer"}
+                    >
+                      <span className="material-symbols-outlined text-[15px]">
+                        {wishlistSet.has(mfr._id) ? "bookmark_added" : "bookmark"}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* CAPABILITY TAGS */}
+                  {mfr.manufacturingCapabilities?.length > 0 && (
+                    <div className="mt-3 flex flex-nowrap items-center gap-1.5 overflow-hidden">
+                      {mfr.manufacturingCapabilities.slice(0, 2).map((cap, i) => (
+                        <span
+                          key={i}
+                          className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 whitespace-nowrap"
+                        >
+                          {cap.replace(/_/g, " ")}
+                        </span>
+                      ))}
+                      {mfr.manufacturingCapabilities.length > 2 && (
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 flex-shrink-0">
+                          +{mfr.manufacturingCapabilities.length - 2}
+                        </span>
+                      )}
+                    </div>
+                  )}
+
+                  {/* STATS ROW */}
+                  <div className="mt-4 grid grid-cols-2 gap-2">
+                    <div className="rounded-xl bg-white/[0.03] border border-white/8 px-3 py-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="material-symbols-outlined text-[13px] text-[#eb9728]">star</span>
+                        <span className="text-sm font-black text-white">
+                          {(mfr.stats?.averageRating ?? 0) > 0
+                            ? mfr.stats.averageRating.toFixed(1)
+                            : "—"}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-white/35 mt-0.5">Rating</p>
+                    </div>
+                    <div className="rounded-xl bg-white/[0.03] border border-white/8 px-3 py-2 text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        <span className="material-symbols-outlined text-[13px] text-purple-400">package_2</span>
+                        <span className="text-sm font-black text-white">
+                          {mfr.stats?.completedOrders ?? mfr.stats?.totalOrders ?? "—"}
+                        </span>
+                      </div>
+                      <p className="text-[10px] text-white/35 mt-0.5">Orders</p>
+                    </div>
+                  </div>
+
+                  {/* VIEW PROFILE */}
+                  <Link
+                    href={`/manufacturers/${mfr._id}`}
+                    className="mt-4 w-full flex items-center justify-center px-4 py-2.5 rounded-xl text-xs font-bold bg-[#eb9728] text-white hover:bg-amber-500 transition-all hover:scale-105 active:scale-95 shadow-[0_4px_15px_rgba(235,151,40,0.2)]"
+                  >
+                    View Profile
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
@@ -575,9 +726,11 @@ function ProductGridCard({ product, isWishlisted, onToggleWishlist }) {
 
       {/* CONTENT */}
       <div className="flex flex-col flex-grow">
-        <p className="text-[10px] uppercase tracking-[0.22em] text-white/30">
-          {product.category || "General"}
-        </p>
+        <div className="flex items-center">
+          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 w-fit inline-block">
+            {product.category || "General"}
+          </span>
+        </div>
 
         <h3 className="text-base font-bold text-white mt-1 line-clamp-1 group-hover:text-[#eb9728] transition-colors">
           {product.name}
