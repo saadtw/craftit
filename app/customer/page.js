@@ -69,7 +69,7 @@ export default function CustomerHomePage() {
         const storageKey = "craftit_recently_viewed_products";
         const parsedIds = JSON.parse(localStorage.getItem(storageKey) || "[]");
         recentIds = Array.isArray(parsedIds)
-          ? parsedIds.filter((pId) => typeof pId === "string").slice(0, 3)
+          ? parsedIds.filter((pId) => typeof pId === "string").slice(0, 8)
           : [];
       }
 
@@ -129,7 +129,7 @@ export default function CustomerHomePage() {
 
     if (status === "unauthenticated") {
       console.log("Unauthenticated, redirecting to login");
-      router.push("/auth/login");
+      router.replace("/auth/login");
       return;
     }
 
@@ -140,7 +140,7 @@ export default function CustomerHomePage() {
           "Not a customer, redirecting to login. Role:",
           session?.user?.role,
         );
-        router.push("/auth/login");
+        router.replace("/auth/login");
         return;
       }
       console.log("Customer role confirmed, fetching home data");
@@ -162,6 +162,10 @@ export default function CustomerHomePage() {
     [toggleWishlist],
   );
 
+  if (status === "unauthenticated" || session?.user?.role !== "customer") {
+    return null;
+  }
+
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
@@ -173,10 +177,6 @@ export default function CustomerHomePage() {
         </div>
       </div>
     );
-  }
-
-  if (status === "unauthenticated" || session?.user?.role !== "customer") {
-    return null;
   }
 
   return (

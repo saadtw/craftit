@@ -31,25 +31,25 @@ const HOW_IT_WORKS_STEPS = [
     step: "01",
     img: uploadIcon,
     title: "Upload",
-    desc: "Submit your 3D models and detailed project specifications securely.",
+    desc: "Upload your model and add the specifications you need. Share your project details securely with ease.",
   },
   {
     step: "02",
     img: previewIcon,
     title: "Preview",
-    desc: "Visualize your design and get instant, data-driven price quotes.",
+    desc: "View your model instantly and annotate parts as required. Get a clear visualization before moving forward.",
   },
   {
     step: "03",
     img: matchIcon,
     title: "Match",
-    desc: "Our AI connects you with perfectly matched, vetted manufacturers.",
+    desc: "Receive competitive RFQ bids tailored to your product. Our system finds the best manufacturers for your needs.",
   },
   {
     step: "04",
     img: manufactureIcon,
     title: "Manufacture",
-    desc: "Your parts are produced, quality-checked, and shipped to you.",
+    desc: "Your parts are produced with precision and quality checks. Finally, they’re shipped directly to your doorstep.",
   },
 ];
 
@@ -57,31 +57,31 @@ const CAPABILITY_CARDS = [
   {
     title: "3D Preview",
     img: preview3D,
-    desc: "High-fidelity CAD rendering with precision tolerance checks.",
+    desc: "Interactive 3D model viewing directly in your browser for better visualization.",
     text: "3D",
   },
   {
     title: "Smart Match",
     img: smartMatch,
-    desc: "AI-driven matchmaking for cost, quality, and location.",
+    desc: "Easily browse and connect with verified manufacturers that fit your exact requirements.",
     text: "MATCH",
   },
   {
     title: "Custom Orders",
     img: orderIcon,
-    desc: "Tailor-made solutions for complex engineering specs.",
+    desc: "Request tailor-made manufacturing solutions for your unique product specifications.",
     text: "ORDER",
   },
   {
     title: "RFQ & Bidding",
     img: bidIcon,
-    desc: "Get market-best rates via competitive bidding.",
+    desc: "Submit your project details and receive competitive bids from multiple manufacturers.",
     text: "BID",
   },
   {
     title: "Group Buy",
     img: groupBuyIcon,
-    desc: "Pool orders to unlock massive economies of scale.",
+    desc: "Join community group buys to pool orders and unlock significant volume discounts.",
     text: "GROUP",
   },
 ];
@@ -142,7 +142,7 @@ export default function LandingPage() {
         const section = document.querySelector(href);
         if (!section) return;
 
-        const headerOffset = 100;
+        const headerOffset = 50;
         const targetTop =
           section.getBoundingClientRect().top + window.scrollY - headerOffset;
 
@@ -212,7 +212,7 @@ export default function LandingPage() {
     if (hash) {
       const section = document.querySelector(hash);
       if (section) {
-        const headerOffset = 100;
+        const headerOffset = 50;
         const targetTop =
           section.getBoundingClientRect().top + window.scrollY - headerOffset;
         window.scrollTo({ top: targetTop, behavior: "auto" });
@@ -381,7 +381,7 @@ export default function LandingPage() {
 
         <section
           id="how-it-works"
-          className="relative w-full min-h-screen flex items-center justify-center bg-[#0B011D] overflow-hidden py-12"
+          className="relative w-full py-16 flex flex-col items-center bg-[#0B011D] overflow-hidden"
         >
           <div className="container mx-auto max-w-5xl px-6 relative z-10">
             <div className="text-center mb-16">
@@ -432,11 +432,11 @@ export default function LandingPage() {
 
         <section
           id="capabilities"
-          className="relative w-full h-screen flex flex-col items-center bg-[#0B011D] overflow-hidden"
+          className="relative w-full py-16 flex flex-col items-center bg-[#0B011D] overflow-hidden"
         >
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[300px] w-[800px] rounded-full bg-purple-600/10 blur-[120px] pointer-events-none" />
 
-          <div className="container mx-auto flex h-full max-w-380 flex-col px-6 pt-24">
+          <div className="container mx-auto flex max-w-[90rem] flex-col px-6">
             <div className="text-center mb-12 animate-fade-in">
               <h2 className="text-4xl font-black text-white lg:text-5xl tracking-tight">
                 Next-Gen{" "}
@@ -454,7 +454,7 @@ export default function LandingPage() {
               {CAPABILITY_CARDS.map((card) => (
                 <div
                   key={card.title}
-                  className="group relative flex h-full min-h-[310px] flex-col items-center overflow-hidden rounded-[40px] border border-white/5 bg-white/3 p-8 text-center shadow-2xl backdrop-blur-md transition-all duration-500 hover:-translate-y-3 hover:border-purple-500/40 hover:bg-white/8"
+                  className="group relative flex h-full min-h-[250px] flex-col items-center overflow-hidden rounded-[30px] border border-white/5 bg-white/3 p-6 text-center shadow-2xl backdrop-blur-md transition-all duration-500 hover:-translate-y-3 hover:border-purple-500/40 hover:bg-white/8"
                 >
                   <div className="relative z-10 mb-6 flex h-20 w-20 items-center justify-center rounded-3xl border border-white/10 bg-linear-to-br from-white/10 to-transparent shadow-inner transition-all duration-500 group-hover:scale-110 group-hover:border-purple-500/50">
                     <Image
@@ -490,11 +490,11 @@ export default function LandingPage() {
 
         <section
           id="testimonials"
-          className="relative w-full h-screen flex flex-col items-center bg-[#0B011D] overflow-hidden"
+          className="relative w-full py-16 flex flex-col items-center bg-[#0B011D] overflow-hidden"
         >
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-[400px] w-[800px] rounded-full bg-purple-600/5 blur-[120px] pointer-events-none" />
 
-          <div className="container mx-auto max-w-6xl px-6 flex flex-col pt-32 h-full">
+          <div className="container mx-auto max-w-6xl px-6 flex flex-col">
             <div className="text-center mb-12 animate-fade-in">
               <h2 className="text-4xl font-black text-white lg:text-5xl tracking-tight">
                 Success Stories
@@ -504,13 +504,13 @@ export default function LandingPage() {
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 pb-12">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pb-6">
               {TESTIMONIALS.map((t) => (
                 <div
                   key={t.name}
-                  className="group relative flex h-full min-h-[300px] flex-col rounded-[35px] border border-white/10 bg-white/5 p-8 shadow-xl backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:bg-white/8"
+                  className="group relative flex h-full min-h-[250px] flex-col rounded-[30px] border border-white/10 bg-white/5 p-6 shadow-xl backdrop-blur-sm transition-all duration-300 hover:-translate-y-2 hover:bg-white/8"
                 >
-                  <div className="mb-6 flex items-center gap-4">
+                  <div className="mb-4 flex items-center gap-4">
                     <div className="flex h-14 w-14 items-center justify-center rounded-full border border-white/10 bg-linear-to-br from-purple-500/20 to-indigo-500/20 shadow-inner transition-transform group-hover:scale-110">
                       <span className="text-xl font-bold text-white/40">
                         {t.initial}
@@ -518,7 +518,7 @@ export default function LandingPage() {
                     </div>
                   </div>
 
-                  <p className="mb-8 grow text-sm leading-relaxed text-slate-300">
+                  <p className="mb-6 grow text-sm leading-relaxed text-slate-300">
                     &quot;{t.quote}&quot;
                   </p>
 
