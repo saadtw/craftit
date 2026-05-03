@@ -1,14 +1,6 @@
 import { NextResponse } from "next/server";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { authOptions } from "@/lib/auth";
 import { resolveRequestSession } from "@/lib/requestAuth";
-import { exec } from "child_process";
-import { promisify } from "util";
-import fs from "fs/promises";
-import path from "path";
-import os from "os";
-
-const execPromise = promisify(exec);
 
 const s3Client = new S3Client({
   region: process.env.AWS_REGION,
@@ -21,14 +13,10 @@ const s3Client = new S3Client({
 // App Router configuration to bypass timeout constraints on Vercel/serverless environments
 export const maxDuration = 300; // 5 minutes
 
-// Note: In Next.js App Router, 'export const config = { api: { bodyParser: false } }' is not used. 
-// Route Handlers (app/**/route.js) do not automatically parse the body, so they natively support streaming large files.
-// Ensure your next.config.js does not have any conflicting bodySizeLimit constraints if you are using Server Actions alongside this.
-
 const FILE_TYPES = {
   "3d-model": {
     extensions: [".stl", ".obj", ".gltf", ".glb"],
-    maxSize: 100 * 1024 * 1024, // Increased to 100MB
+    maxSize: 100 * 1024 * 1024, // 100MB
     folder: "3d-models",
   },
   image: {
@@ -46,12 +34,12 @@ const FILE_TYPES = {
 // POST /api/upload
 export async function POST(request) {
   try {
-    // We immediately consume the request stream as formData to prevent Next.js from throwing size limits
+    // Consume the request stream as formData immediately
     const formData = await request.formData();
     const file = formData.get("file");
     const fileType = formData.get("type"); // '3d-model' or 'image' or 'document'
-    
-    // Requirement: Add a console.log at the very beginning to verify request
+
+    // Log incoming request
     if (file) {
       console.log(`Incoming request: ${file.name} - ${file.size} bytes`);
     } else {
@@ -85,17 +73,14 @@ export async function POST(request) {
 
     // Check file extension
     const fileName = file.name.toLowerCase();
-    const isValidExt = fileConfig.extensions.some((ext) =>
-      fileName.endsWith(ext),
-    );
+    const ext = fileName.substring(fileName.lastIndexOf("."));
+    const isValidExt = fileConfig.extensions.some((e) => fileName.endsWith(e));
 
     if (!isValidExt) {
       return NextResponse.json(
         {
           success: false,
-          error: `Invalid file extension. Allowed: ${fileConfig.extensions.join(
-            ", ",
-          )}`,
+          error: `Invalid file extension. Allowed: ${fileConfig.extensions.join(", ")}`,
         },
         { status: 400 },
       );
@@ -106,8 +91,7 @@ export async function POST(request) {
       return NextResponse.json(
         {
           success: false,
-          error: `File too large. Max size: ${fileConfig.maxSize / 1024 / 1024
-            }MB`,
+          error: `File too large. Max size: ${fileConfig.maxSize / 1024 / 1024}MB`,
         },
         { status: 400 },
       );
@@ -119,69 +103,68 @@ export async function POST(request) {
     let uploadContentType = file.type;
     let finalFileName = file.name;
 
-    let tempInputPath = null;
-    let tempOutputPath = null;
-
+    // ── 3D Model Processing ─────────────────────────────────────────────────
     if (fileType === "3d-model") {
-      const ext = path.extname(fileName).toLowerCase();
       const isWebReady = (ext === ".glb" || ext === ".gltf");
-      const isUnderLimit = file.size < 25165824; // 24MB limit (25,165,824 bytes)
+      const isUnderLimit = file.size < 25165824; // 24MB (25,165,824 bytes)
 
       if (isWebReady && isUnderLimit) {
-        // Branch A (Fast-Track)
-        console.log("[FAST-TRACK] Skipping converter for web-ready asset under 25MB");
+        // Branch A (Fast-Track): Small web-ready files skip the optimizer entirely
+        console.log("[FAST-TRACK] Skipping optimizer for web-ready asset under 25MB");
         if (!uploadContentType) {
           uploadContentType = "model/gltf-binary";
         }
       } else {
-        // Branch B (Pipeline)
-        console.log("[PIPELINE] Sending to Python for optimization/conversion");
+        // Branch B (Pipeline): Send to the FastAPI optimizer microservice
+        console.log("[PIPELINE] Sending to optimizer microservice for processing");
+
+        const optimizerUrl = process.env.OPTIMIZER_URL || "http://localhost:5000";
+
         try {
-          const tempDir = os.tmpdir();
-          const timestampStr = Date.now().toString();
-          tempInputPath = path.join(tempDir, `input-${timestampStr}${ext}`);
-          tempOutputPath = path.join(tempDir, `output-${timestampStr}.glb`);
-
-          // Write the incoming Next.js File arrayBuffer to the inputFilePath on disk
-          await fs.writeFile(tempInputPath, buffer);
-
-          // Execute the Python script
-          const pythonScriptPath = path.join(process.cwd(), "python-converters", "converter.py");
-          const { stdout, stderr } = await execPromise(
-            `python "${pythonScriptPath}" "${tempInputPath}" "${tempOutputPath}"`
+          // Build a new FormData to forward the file to the optimizer
+          const optimizerForm = new FormData();
+          optimizerForm.append(
+            "file",
+            new Blob([buffer], { type: file.type || "application/octet-stream" }),
+            file.name,
           );
 
-          if (stderr && stderr.includes("FATAL:")) {
-            throw new Error(`Conversion failed: ${stderr}`);
+          const optimizerRes = await fetch(`${optimizerUrl}/optimize`, {
+            method: "POST",
+            body: optimizerForm,
+          });
+
+          if (!optimizerRes.ok) {
+            const errorText = await optimizerRes.text();
+            throw new Error(`Optimizer responded with ${optimizerRes.status}: ${errorText}`);
           }
 
-          // Read the newly created .glb file
-          buffer = await fs.readFile(tempOutputPath);
+          // Read the optimized binary back into a Node buffer
+          const optimizedArrayBuffer = await optimizerRes.arrayBuffer();
+          buffer = Buffer.from(optimizedArrayBuffer);
           uploadContentType = "model/gltf-binary";
 
-          // Change the S3 key/filename to reflect the new .glb extension
+          // Change filename to reflect the .glb output
           finalFileName = file.name.replace(new RegExp(`\\${ext}$`, "i"), ".glb");
+
+          const jobId = optimizerRes.headers.get("X-Optimizer-Job-Id") || "unknown";
+          const processingTime = optimizerRes.headers.get("X-Processing-Time-Seconds") || "?";
+          console.log(
+            `[PIPELINE] Optimizer job ${jobId} completed in ${processingTime}s. ` +
+            `Output size: ${(buffer.length / 1024 / 1024).toFixed(2)} MB`,
+          );
         } catch (convErr) {
-          console.error("3D Conversion error:", convErr);
-          throw new Error("Failed to convert 3D model: " + convErr.message);
-        } finally {
-          // Cleanup
-          if (tempInputPath) {
-            await fs.unlink(tempInputPath).catch(() => { });
-          }
-          if (tempOutputPath) {
-            await fs.unlink(tempOutputPath).catch(() => { });
-          }
+          console.error("3D Optimization error:", convErr);
+          throw new Error("Failed to optimize 3D model: " + convErr.message);
         }
       }
     }
 
-    // Generate unique filename
+    // ── S3 Upload ───────────────────────────────────────────────────────────
     const timestamp = Date.now();
     const sanitizedName = finalFileName.replace(/\s+/g, "-");
     const uniqueFileName = `${fileConfig.folder}/${timestamp}-${sanitizedName}`;
 
-    // Upload to S3
     const command = new PutObjectCommand({
       Bucket: process.env.AWS_BUCKET_NAME,
       Key: uniqueFileName,
