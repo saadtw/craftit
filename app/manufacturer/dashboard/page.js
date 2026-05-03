@@ -4,6 +4,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import Link from "next/link";
 import Image from "next/image";
 import Lottie from "lottie-react";
@@ -190,11 +191,7 @@ export default function ManufacturerDashboard() {
   }, [status, session, router, fetchDashboardData]);
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050507]">
-        <div className="w-8 h-8 border-2 border-white/20 border-t-[#eb9728] rounded-full animate-spin" />
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading your dashboard..." />;
   }
 
   const displayName = userData?.businessName || session?.user?.name || "Manufacturer";

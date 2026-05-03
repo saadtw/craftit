@@ -1,6 +1,7 @@
 // app/manufacturer/financial/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import GlobalNoResults from "@/components/ui/GlobalNoResults";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -83,11 +84,7 @@ export default function ManufacturerFinancialPage() {
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
-        <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading financials..." />;
   }
 
   const PageContent = (

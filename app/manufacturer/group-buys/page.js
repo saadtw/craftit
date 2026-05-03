@@ -1,11 +1,23 @@
 // app/manufacturer/group-buys/page.js
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import GlobalLoader from "@/components/ui/GlobalLoader";
+
+import Lottie from "lottie-react";
+import NotFoundAnimation from "@/assets/NotFound.json";
+
+import TimerIcon from "@/assets/timer.png";
+
+import ActiveCampaignIcon from "@/assets/ActiveCampaign.png";
+import TotalUsersIcon from "@/assets/TotalUsers.png";
+import RevenueIcon from "@/assets/revenue.png";
+import OrdersIcon from "@/assets/orders.png";
+import PaymentsIcon from "@/assets/payments.png";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
@@ -17,11 +29,11 @@ const STATUS_TABS = [
 ];
 
 const STATUS_STYLES = {
-  active: "bg-emerald-100 text-emerald-700",
-  scheduled: "bg-blue-100 text-blue-700",
-  paused: "bg-amber-100 text-amber-700",
-  completed: "bg-slate-100 text-slate-600",
-  cancelled: "bg-red-100 text-red-600",
+  active: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+  scheduled: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+  paused: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+  completed: "bg-white/5 text-white/40 border border-white/10",
+  cancelled: "bg-red-500/10 text-red-400 border border-red-500/20",
 };
 
 function TimeRemaining({ endDate }) {
@@ -58,6 +70,8 @@ export default function ManufacturerGroupBuysPage() {
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sort, setSort] = useState("newest");
+  const [sortOpen, setSortOpen] = useState(false);
+  const sortRef = useRef(null);
   const [page, setPage] = useState(1);
   const [actionLoading, setActionLoading] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
@@ -69,6 +83,16 @@ export default function ManufacturerGroupBuysPage() {
     }, 400);
     return () => clearTimeout(t);
   }, [search]);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (sortRef.current && !sortRef.current.contains(e.target)) {
+        setSortOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/login");
@@ -156,76 +180,101 @@ export default function ManufacturerGroupBuysPage() {
   };
 
   if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <GlobalLoader fullScreen text="SYNCING CAMPAIGN HUB..." />;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold text-slate-900">Group Buys</h1>
+    <div className="min-h-screen bg-[#050507] text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-20 space-y-10">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div className="space-y-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#eb9728]">
+              Campaign Management
+            </p>
+            <h1 className="text-4xl font-black tracking-tight">
+              <span className="bg-gradient-to-r from-purple-500 via-orange-500 to-[#eb9728] bg-clip-text text-transparent">
+                Group Buy Hub
+              </span>
+            </h1>
+            <p className="text-sm text-white/35 font-medium">
+              Oversee high-volume bulk campaigns and participant milestones.
+            </p>
           </div>
           <Link
             href="/manufacturer/group-buys/new"
-            className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+            className="px-6 py-3 bg-gradient-to-r from-purple-600/70 to-indigo-600/70 border border-purple-500/20 text-white/80 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:from-purple-600/90 hover:to-indigo-600/90 hover:text-white hover:border-purple-500/40 transition-all flex items-center justify-center gap-2"
           >
-            <svg
-              className="w-4 h-4"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
-            Create Campaign
+            <span className="material-symbols-outlined text-sm">rocket_launch</span>
+            Launch New Campaign
           </Link>
         </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-3 gap-3">
-          {[
-            {
-              label: "Active Campaigns",
-              value: stats.active,
-              color: "text-emerald-600",
-            },
-            {
-              label: "Total Participants",
-              value: stats.totalParticipants,
-              color: "text-slate-900",
-            },
-            {
-              label: "Revenue Potential",
-              value: `$${stats.totalRevenuePotential.toLocaleString()}`,
-              color: "text-slate-900",
-            },
-          ].map((s) => (
-            <div
-              key={s.label}
-              className="bg-white rounded-xl border border-slate-200 p-4"
-            >
-              <p className="text-xs text-slate-500 mb-1">{s.label}</p>
-              <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="bg-gradient-to-br from-purple-600 via-orange-500 to-[#eb9728] p-[1px] rounded-[20px]">
+            <div className="bg-[#0c0c11] rounded-[19px] p-5 h-full">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                  <Image src={ActiveCampaignIcon} alt="" width={26} height={26} />
+                </div>
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40">
+                  Active Campaigns
+                </p>
+              </div>
+              <p className="text-2xl font-black text-white tracking-tighter">
+                {stats.active}
+              </p>
+              <p className="text-[10px] text-white/20 mt-1.5 font-medium uppercase tracking-wider">
+                Currently Live
+              </p>
             </div>
-          ))}
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-600 via-orange-500 to-[#eb9728] p-[1px] rounded-[20px]">
+            <div className="bg-[#0c0c11] rounded-[19px] p-5 h-full">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                  <Image src={TotalUsersIcon} alt="" width={26} height={26} />
+                </div>
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-[#eb9728]">
+                  Total Participants
+                </p>
+              </div>
+              <p className="text-2xl font-black text-[#eb9728] tracking-tighter">
+                {stats.totalParticipants.toLocaleString()}
+              </p>
+              <p className="text-[10px] text-[#eb9728]/40 mt-1.5 font-medium uppercase tracking-wider">
+                Across all campaigns
+              </p>
+            </div>
+          </div>
+
+          <div className="bg-gradient-to-br from-purple-600 via-orange-500 to-[#eb9728] p-[1px] rounded-[20px]">
+            <div className="bg-[#0c0c11] rounded-[19px] p-5 h-full">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
+                  <Image src={RevenueIcon} alt="" width={26} height={26} />
+                </div>
+                <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40">
+                  Revenue Potential
+                </p>
+              </div>
+              <p className="text-2xl font-black text-white tracking-tighter">
+                ${stats.totalRevenuePotential.toLocaleString()}
+              </p>
+              <p className="text-[10px] text-white/20 mt-1.5 font-medium uppercase tracking-wider">
+                Targeted yield
+              </p>
+            </div>
+          </div>
         </div>
 
+
         {/* Filters */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4">
-          <div className="flex gap-1 flex-wrap">
+        <div className="bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3 flex items-center gap-4 flex-wrap relative z-20">
+          {/* Status Tabs */}
+          <div className="flex gap-1 flex-wrap shrink-0">
             {STATUS_TABS.map((tab) => (
               <button
                 key={tab.key}
@@ -234,90 +283,104 @@ export default function ManufacturerGroupBuysPage() {
                   setPage(1);
                   setLoading(true);
                 }}
-                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
+                className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${
                   activeTab === tab.key
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-500 hover:bg-slate-100"
+                    ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-[0_0_12px_rgba(124,58,237,0.25)]"
+                    : "text-white/30 hover:text-white hover:bg-white/5"
                 }`}
               >
                 {tab.label}
               </button>
             ))}
           </div>
-          <div className="flex gap-3">
-            <div className="relative flex-1">
-              <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                />
-              </svg>
-              <input
-                type="text"
-                placeholder="Search campaigns..."
-                value={search}
-                onChange={(e) => {
-                  setSearch(e.target.value);
-                  setLoading(true);
-                }}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
-              />
-            </div>
-            <select
-              value={sort}
+
+          {/* Divider */}
+          <div className="h-6 w-px bg-white/10 hidden sm:block" />
+
+          {/* Search */}
+          <div className="relative flex-1 min-w-[180px] group">
+            <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-white/20 text-lg group-focus-within:text-purple-500 transition-colors">
+              search
+            </span>
+            <input
+              type="text"
+              placeholder="Search campaigns..."
+              value={search}
               onChange={(e) => {
-                setSort(e.target.value);
-                setPage(1);
+                setSearch(e.target.value);
                 setLoading(true);
               }}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+              className="w-full bg-transparent text-white placeholder:text-white/15 pl-9 pr-3 py-1.5 text-sm focus:outline-none transition-all"
+            />
+          </div>
+
+          {/* Sort — custom dropdown */}
+          <div className="relative shrink-0" ref={sortRef}>
+            <button
+              onClick={() => setSortOpen((o) => !o)}
+              className="flex items-center gap-2 bg-white/5 border border-purple-500/20 text-white/70 rounded-xl pl-4 pr-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:border-purple-500/40 hover:text-white transition-all"
             >
-              <option value="newest">Newest First</option>
-              <option value="ending_soon">Ending Soon</option>
-              <option value="participants">Most Participants</option>
-            </select>
+              <span>{{ newest: "Newest", ending_soon: "Ending Soon", participants: "Most Participants" }[sort]}</span>
+              <span className={`material-symbols-outlined text-sm transition-transform duration-200 ${sortOpen ? "rotate-180" : ""}`}>expand_more</span>
+            </button>
+            {sortOpen && (
+              <div className="absolute right-0 top-full mt-2 z-50 bg-[#0f0f14] border border-purple-500/20 rounded-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] min-w-[160px]">
+                {[
+                  { value: "newest", label: "Newest" },
+                  { value: "ending_soon", label: "Ending Soon" },
+                  { value: "participants", label: "Most Participants" },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => {
+                      setSort(opt.value);
+                      setPage(1);
+                      setLoading(true);
+                      setSortOpen(false);
+                    }}
+                    className={`w-full text-left px-5 py-3 text-[9px] font-black uppercase tracking-widest transition-all ${
+                      sort === opt.value
+                        ? "bg-purple-600/20 text-purple-300"
+                        : "text-white/40 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 
         {/* List */}
         {loading ? (
-          <div className="space-y-3">
+          <div className="space-y-6">
             {Array.from({ length: 4 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-white rounded-xl border border-slate-200 p-5 animate-pulse"
-              >
-                <div className="flex gap-4">
-                  <div className="w-20 h-20 bg-slate-100 rounded-lg" />
-                  <div className="flex-1 space-y-2">
-                    <div className="h-4 bg-slate-100 rounded w-1/3" />
-                    <div className="h-3 bg-slate-100 rounded w-1/2" />
-                  </div>
-                </div>
-              </div>
+                className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-6 animate-pulse h-40"
+              />
             ))}
           </div>
         ) : groupBuys.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 py-20 text-center">
-            <p className="text-slate-500 font-medium">
-              No group buy campaigns found
+          <div className="py-20 text-center px-8 flex flex-col items-center">
+            <div className="w-48 h-48">
+              <Lottie animationData={NotFoundAnimation} loop={true} autoplay={true} />
+            </div>
+            <h3 className="text-2xl font-black text-white mb-2 -mt-4">No campaigns found</h3>
+            <p className="text-white/20 text-sm max-w-xs mx-auto mb-8 uppercase font-bold tracking-widest">
+              Create your first group buy campaign to start accepting bulk orders.
             </p>
             <Link
               href="/manufacturer/group-buys/new"
-              className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors"
+              className="px-6 py-3 bg-gradient-to-r from-purple-600/70 to-indigo-600/70 border border-purple-500/20 text-white/80 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:from-purple-600/90 hover:to-indigo-600/90 hover:text-white hover:border-purple-500/40 transition-all flex items-center gap-2"
             >
-              Create Your First Campaign
+              <span className="material-symbols-outlined text-sm">rocket_launch</span>
+              Launch New Campaign
             </Link>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-6">
             {groupBuys.map((gb) => (
               <GroupBuyCard
                 key={gb._id}
@@ -329,15 +392,15 @@ export default function ManufacturerGroupBuysPage() {
             ))}
 
             {pagination.pages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-2">
+              <div className="flex items-center justify-center gap-4 pt-8">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50"
+                  className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/40 disabled:opacity-20 hover:bg-white/10 hover:text-white transition-all"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-slate-500">
+                <span className="text-[10px] font-black text-white/20 uppercase tracking-widest">
                   Page {page} of {pagination.pages}
                 </span>
                 <button
@@ -345,7 +408,7 @@ export default function ManufacturerGroupBuysPage() {
                     setPage((p) => Math.min(pagination.pages, p + 1))
                   }
                   disabled={page === pagination.pages}
-                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50"
+                  className="px-6 py-3 bg-white/5 border border-white/10 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white/40 disabled:opacity-20 hover:bg-white/10 hover:text-white transition-all"
                 >
                   Next
                 </button>
@@ -366,7 +429,6 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
   const highestTier = gb.tiers?.[gb.tiers.length - 1];
   const tier1 = gb.tiers?.[0];
 
-  // Progress toward first tier
   const progress = tier1
     ? Math.min(100, Math.round((gb.currentQuantity / tier1.minQuantity) * 100))
     : 0;
@@ -375,10 +437,10 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
     (gb.currentQuantity || 0) * (gb.currentDiscountedPrice || gb.basePrice);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 hover:border-slate-300 hover:shadow-sm transition-all">
-      <div className="flex gap-4">
+    <div className="bg-white/[0.03] border border-purple-500/20 rounded-[2rem] p-4 hover:border-purple-500/40 transition-all group relative overflow-hidden">
+      <div className="flex flex-col md:flex-row gap-4 relative z-10">
         {/* Product Image */}
-        <div className="w-20 h-20 bg-slate-100 rounded-lg overflow-hidden shrink-0 relative">
+        <div className="w-20 h-20 bg-white/5 border border-white/10 rounded-2xl overflow-hidden shrink-0 relative">
           {primaryImage ? (
             <Image
               src={primaryImage}
@@ -388,24 +450,12 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
               sizes="80px"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center">
-              <svg
-                className="w-8 h-8 text-slate-300"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-                />
-              </svg>
+            <div className="w-full h-full flex items-center justify-center opacity-20">
+              <span className="material-symbols-outlined text-3xl">inventory_2</span>
             </div>
           )}
           {has3DModel && (
-            <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-slate-900/85 text-white text-[10px] font-semibold">
+            <span className="absolute top-1.5 right-1.5 px-1.5 py-0.5 rounded-full bg-purple-600 text-white text-[7px] font-black tracking-widest shadow-lg">
               3D
             </span>
           )}
@@ -413,122 +463,148 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
+          <div className="flex items-start justify-between gap-4">
             <div>
               <Link
                 href={`/manufacturer/group-buys/${gb._id}`}
-                className="font-semibold text-slate-900 hover:text-slate-600 transition-colors line-clamp-1"
+                className="text-lg font-black text-white hover:text-purple-400 transition-colors tracking-tight line-clamp-1"
               >
                 {gb.title}
               </Link>
-              <p className="text-xs text-slate-500 mt-0.5">
-                {product?.name} · {product?.category}
-              </p>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[10px] font-black text-[#eb9728] uppercase tracking-widest">
+                  {product?.name}
+                </span>
+                <div className="w-1 h-1 rounded-full bg-white/20" />
+                <span className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
+                  {product?.category}
+                </span>
+              </div>
             </div>
             <span
-              className={`shrink-0 px-2 py-0.5 text-xs font-medium rounded-full ${STATUS_STYLES[gb.status]}`}
+              className={`shrink-0 px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full ${STATUS_STYLES[gb.status]}`}
             >
-              {gb.status}
+              {gb.status.replace(/_/g, " ")}
             </span>
           </div>
 
-          {/* Tier Progress */}
-          <div className="mt-3">
-            <div className="flex items-center justify-between text-xs text-slate-500 mb-1">
-              <span>
-                {gb.currentQuantity} / {tier1?.minQuantity || "—"} units for
-                Tier 1
+          {/* Progress Section */}
+          <div className="mt-4 bg-white/5 border border-white/5 rounded-xl p-3">
+            <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest mb-2">
+              <span className="text-white/40">
+                Tier 1: <span className="text-white">{gb.currentQuantity}</span> / <span className="text-white/20">{tier1?.minQuantity || "—"}</span> units
               </span>
-              <span>{progress}%</span>
+              <span className="text-purple-400">{progress}%</span>
             </div>
-            <div className="h-1.5 bg-slate-100 rounded-full overflow-hidden">
+            <div className="h-1.5 bg-white/5 rounded-full overflow-hidden">
               <div
-                className="h-full bg-slate-900 rounded-full transition-all"
+                className="h-full bg-gradient-to-r from-purple-600 to-indigo-500 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(147,51,234,0.3)]"
                 style={{ width: `${progress}%` }}
               />
             </div>
           </div>
 
           {/* Stats Row */}
-          <div className="flex items-center gap-4 mt-3 text-xs text-slate-500 flex-wrap">
-            <span>👥 {gb.currentParticipantCount} participants</span>
-            <span>📦 {gb.currentQuantity} units</span>
-            <span className="text-emerald-600 font-medium">
-              💰 ${revenuePotential.toLocaleString()} potential
-            </span>
-            {highestTier && (
-              <span>🏷 Up to {highestTier.discountPercent}% off</span>
-            )}
+          <div className="flex items-center gap-4 mt-4 flex-wrap">
+            <div className="flex items-center gap-3">
+              <Image src={TotalUsersIcon} alt="" width={30} height={30} className="shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Participants</span>
+                <span className="text-xs font-black text-white">{gb.currentParticipantCount}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Image src={OrdersIcon} alt="" width={30} height={30} className="shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Units Sold</span>
+                <span className="text-xs font-black text-white">{gb.currentQuantity}</span>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <Image src={RevenueIcon} alt="" width={30} height={30} className="shrink-0" />
+              <div className="flex flex-col">
+                <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Potential Revenue</span>
+                <span className="text-xs font-black text-emerald-400">${revenuePotential.toLocaleString()}</span>
+              </div>
+            </div>
             {["active", "paused"].includes(gb.status) && (
-              <span className="text-amber-600">
-                ⏱ <TimeRemaining endDate={gb.endDate} /> left
-              </span>
+              <div className="flex items-center gap-3">
+                <Image src={TimerIcon} alt="" width={30} height={30} className="shrink-0 animate-pulse" />
+                <div className="flex flex-col">
+                  <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Time Left</span>
+                  <span className="text-xs font-black text-orange-400">
+                    <TimeRemaining endDate={gb.endDate} />
+                  </span>
+                </div>
+              </div>
             )}
+            {/* View Full Report — right corner */}
+            <Link
+              href={`/manufacturer/group-buys/${gb._id}`}
+              className="ml-auto px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-white/50 hover:bg-white/10 hover:text-white transition-all flex items-center gap-1.5"
+            >
+              <span className="material-symbols-outlined text-sm">open_in_new</span>
+              View Report
+            </Link>
           </div>
         </div>
       </div>
 
       {/* Actions */}
-      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-slate-100">
-        <Link
-          href={`/manufacturer/group-buys/${gb._id}`}
-          className="px-3 py-1.5 text-xs text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-        >
-          View Details
-        </Link>
-        {["scheduled", "active", "paused"].includes(gb.status) && (
-          <Link
-            href={`/manufacturer/group-buys/${gb._id}/edit`}
-            className="px-3 py-1.5 text-xs text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
-          >
-            Edit
-          </Link>
-        )}
-        {gb.status === "active" && (
-          <button
-            onClick={() => onAction(gb._id, "pause")}
-            disabled={actionLoading === gb._id + "pause"}
-            className="px-3 py-1.5 text-xs text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50"
-          >
-            Pause
-          </button>
-        )}
-        {gb.status === "paused" && (
-          <>
-            <button
-              onClick={() => onAction(gb._id, "resume")}
-              disabled={actionLoading === gb._id + "resume"}
-              className="px-3 py-1.5 text-xs text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition-colors disabled:opacity-50"
+      {(["scheduled", "active", "paused"].includes(gb.status)) && (
+        <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5 relative z-10">
+          {["scheduled", "active", "paused"].includes(gb.status) && (
+            <Link
+              href={`/manufacturer/group-buys/${gb._id}/edit`}
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-white/60 hover:bg-white/10 hover:text-white transition-all"
             >
-              Resume
+              Edit
+            </Link>
+          )}
+          {gb.status === "active" && (
+            <button
+              onClick={() => onAction(gb._id, "pause")}
+              disabled={actionLoading === gb._id + "pause"}
+              className="px-4 py-2 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-amber-400 hover:bg-amber-500/20 transition-all disabled:opacity-50"
+            >
+              Pause
             </button>
+          )}
+          {gb.status === "paused" && (
+            <>
+              <button
+                onClick={() => onAction(gb._id, "resume")}
+                disabled={actionLoading === gb._id + "resume"}
+                className="px-4 py-2 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-50"
+              >
+                Resume
+              </button>
+              <button
+                onClick={() => onAction(gb._id, "end_early")}
+                disabled={actionLoading === gb._id + "end_early"}
+                className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-white/40 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
+              >
+                End Early
+              </button>
+            </>
+          )}
+          {gb.status === "active" && (
             <button
               onClick={() => onAction(gb._id, "end_early")}
               disabled={actionLoading === gb._id + "end_early"}
-              className="px-3 py-1.5 text-xs text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
+              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-white/40 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
             >
               End Early
             </button>
-          </>
-        )}
-        {gb.status === "active" && (
-          <button
-            onClick={() => onAction(gb._id, "end_early")}
-            disabled={actionLoading === gb._id + "end_early"}
-            className="px-3 py-1.5 text-xs text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
-          >
-            End Early
-          </button>
-        )}
-        {["active", "scheduled", "paused"].includes(gb.status) && (
+          )}
           <button
             onClick={() => onCancel(gb._id)}
-            className="ml-auto px-3 py-1.5 text-xs text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+            className="ml-auto px-4 py-2 bg-red-500/10 border border-red-500/20 rounded-xl text-[9px] font-black uppercase tracking-widest text-red-400 hover:bg-red-500/20 transition-all"
           >
             Cancel
           </button>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

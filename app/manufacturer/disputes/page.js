@@ -1,6 +1,7 @@
 // app/manufacturer/disputes/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import GlobalNoResults from "@/components/ui/GlobalNoResults";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -8,11 +9,11 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 const STATUS_COLORS = {
-  open: "bg-orange-100 text-orange-700",
-  manufacturer_responded: "bg-blue-100 text-blue-700",
-  under_review: "bg-purple-100 text-purple-700",
-  resolved: "bg-green-100 text-green-700",
-  closed: "bg-gray-100 text-gray-500",
+  open: "bg-orange-500/10 text-orange-400 border border-orange-500/20",
+  manufacturer_responded: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+  under_review: "bg-purple-500/10 text-purple-400 border border-purple-500/20",
+  resolved: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+  closed: "bg-white/5 text-white/40 border border-white/10",
 };
 
 const ISSUE_LABELS = {
@@ -66,119 +67,130 @@ export default function ManufacturerDisputesPage() {
   ).length;
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin" />
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading disputes..." />;
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-blue-50 to-white">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-4xl">
-        <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-[#050507] text-white">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-12">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-8">
           <div>
-            <h1 className="text-2xl font-extrabold text-blue-900">Disputes</h1>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#eb9728] mb-1">
+              Resolution Center
+            </p>
+            <h1 className="text-4xl font-black tracking-tight">
+              <span className="bg-gradient-to-r from-purple-500 via-orange-500 to-[#eb9728] bg-clip-text text-transparent inline-block">
+                Disputes
+              </span>
+            </h1>
             {openCount > 0 && (
-              <p className="text-sm text-orange-600 font-medium mt-0.5">
-                {openCount} open dispute{openCount > 1 ? "s" : ""} requiring
-                attention
-              </p>
+              <div className="flex items-center gap-2 mt-2">
+                <div className="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse" />
+                <p className="text-[11px] font-bold text-orange-400 uppercase tracking-widest">
+                  {openCount} Case{openCount > 1 ? "s" : ""} Requiring Attention
+                </p>
+              </div>
             )}
           </div>
-        </div>
 
-        {/* Filters */}
-        <div className="flex gap-2 flex-wrap mb-5">
-          {[
-            "all",
-            "open",
-            "manufacturer_responded",
-            "under_review",
-            "resolved",
-          ].map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-colors ${
-                filter === f
-                  ? "bg-blue-900 text-white"
-                  : "bg-white border border-gray-200 text-gray-600 hover:border-blue-900"
-              }`}
-            >
-              {f.replace(/_/g, " ")}
-            </button>
-          ))}
+          {/* Filters */}
+          <div className="flex gap-2 flex-wrap bg-white/[0.03] border border-white/10 p-1.5 rounded-2xl">
+            {[
+              "all",
+              "open",
+              "manufacturer_responded",
+              "under_review",
+              "resolved",
+            ].map((f) => (
+              <button
+                key={f}
+                onClick={() => setFilter(f)}
+                className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                  filter === f
+                    ? "bg-gradient-to-r from-purple-600 to-blue-600 text-white shadow-[0_0_15px_rgba(124,58,237,0.3)]"
+                    : "text-white/40 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {f.replace(/_/g, " ")}
+              </button>
+            ))}
+          </div>
         </div>
 
         {filtered.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm text-center py-20">
-            <span className="material-symbols-outlined text-5xl text-gray-200 block mb-3">
-              balance
-            </span>
+          <div className="bg-white/[0.03] rounded-3xl border-2 border-purple-500/30 text-center py-24 px-8">
             <GlobalNoResults text="No disputes found" />
-            <p className="text-sm text-gray-400 mt-1">
+            <p className="text-sm text-white/20 mt-2 max-w-xs mx-auto">
               {filter === "all"
-                ? "No disputes have been filed on your orders."
-                : `No disputes with status "${filter.replace(/_/g, " ")}".`}
+                ? "Excellent! No disputes have been filed on your orders."
+                : `You don't have any cases with the status "${filter.replace(/_/g, " ")}".`}
             </p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 gap-4">
             {filtered.map((dispute) => (
               <Link
                 key={dispute._id}
                 href={`/manufacturer/disputes/${dispute._id}`}
+                className="group"
               >
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 hover:border-orange-300 hover:shadow-md transition-all">
-                  <div className="flex items-start justify-between gap-4">
+                <div className="bg-white/[0.03] rounded-3xl border-2 border-purple-500/30 p-6 hover:bg-white/[0.07] hover:border-purple-500/50 transition-all relative overflow-hidden">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1.5">
+                      <div className="flex items-center gap-3 mb-3">
                         <span
-                          className={`text-xs font-bold px-2 py-0.5 rounded-full ${STATUS_COLORS[dispute.status] || "bg-gray-100 text-gray-500"}`}
+                          className={`text-[9px] font-black uppercase tracking-widest px-2.5 py-1 rounded-full ${STATUS_COLORS[dispute.status] || "bg-white/5 text-white/40"}`}
                         >
                           {dispute.status.replace(/_/g, " ")}
                         </span>
-                        <span className="text-xs text-gray-400 font-mono">
-                          {dispute.disputeNumber}
+                        <span className="text-[10px] font-bold text-white/20 uppercase tracking-tighter">
+                          Case: {dispute.disputeNumber}
                         </span>
                       </div>
-                      <p className="font-semibold text-gray-900 mb-0.5">
+                      
+                      <h3 className="text-xl font-bold text-white mb-1 group-hover:text-[#eb9728] transition-colors">
                         {ISSUE_LABELS[dispute.issueType] || dispute.issueType}
-                      </p>
-                      <p className="text-sm text-gray-500 line-clamp-2">
+                      </h3>
+                      
+                      <p className="text-sm text-white/40 line-clamp-1 mb-4">
                         {dispute.description}
                       </p>
-                      <div className="flex items-center gap-4 mt-2 text-xs text-gray-400">
-                        <span>
-                          Order:{" "}
-                          <span className="font-mono font-semibold text-gray-600">
-                            {dispute.orderId?.orderNumber}
-                          </span>
-                        </span>
-                        <span>
-                          Customer:{" "}
-                          <span className="font-semibold text-gray-600">
-                            {dispute.customerId?.name}
-                          </span>
-                        </span>
-                        <span>
-                          Filed:{" "}
-                          {new Date(dispute.createdAt).toLocaleDateString()}
-                        </span>
+
+                      <div className="flex flex-wrap items-center gap-y-3 gap-x-6">
+                        <div className="flex flex-col">
+                          <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Order</span>
+                          <span className="text-sm font-bold text-white/70">{dispute.orderId?.orderNumber}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Customer</span>
+                          <span className="text-sm font-bold text-white/70">{dispute.customerId?.name}</span>
+                        </div>
+                        <div className="flex flex-col">
+                          <span className="text-[9px] font-bold text-white/20 uppercase tracking-widest">Date Filed</span>
+                          <span className="text-sm font-bold text-white/70">{new Date(dispute.createdAt).toLocaleDateString()}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-bold text-gray-900">
-                        ${dispute.orderId?.totalPrice?.toLocaleString()}
-                      </p>
-                      {dispute.status === "open" && (
-                        <p className="text-xs text-orange-600 font-semibold mt-1">
-                          Response needed
+
+                    <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-2 border-t md:border-t-0 md:border-l border-white/5 pt-4 md:pt-0 md:pl-8 shrink-0">
+                      <div>
+                        <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest text-right">Amount</p>
+                        <p className="text-2xl font-black text-[#eb9728]">
+                          ${dispute.orderId?.totalPrice?.toLocaleString()}
                         </p>
+                      </div>
+                      {dispute.status === "open" && (
+                        <div className="px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-lg">
+                          <p className="text-[9px] font-black text-orange-400 uppercase tracking-widest">
+                            Action Needed
+                          </p>
+                        </div>
                       )}
                     </div>
                   </div>
+                  
+                  {/* Subtle hover indicator */}
+                  <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500/0 group-hover:bg-purple-500/50 transition-all" />
                 </div>
               </Link>
             ))}

@@ -1,17 +1,18 @@
 // app/manufacturer/disputes/[id]/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 const STATUS_COLORS = {
-  open: "bg-orange-100 text-orange-700",
-  manufacturer_responded: "bg-blue-100 text-blue-700",
-  under_review: "bg-purple-100 text-purple-700",
-  resolved: "bg-green-100 text-green-700",
-  closed: "bg-gray-100 text-gray-500",
+  open: "bg-orange-500/10 text-orange-400 border border-orange-500/20",
+  manufacturer_responded: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+  under_review: "bg-purple-500/10 text-purple-400 border border-purple-500/20",
+  resolved: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+  closed: "bg-white/5 text-white/40 border border-white/10",
 };
 
 const RESOLUTION_LABELS = {
@@ -90,11 +91,7 @@ export default function ManufacturerDisputeDetailPage() {
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin" />
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading dispute details..." />;
   }
 
   if (!dispute) return null;
@@ -103,72 +100,84 @@ export default function ManufacturerDisputeDetailPage() {
   const isResolved = ["resolved", "closed"].includes(dispute.status);
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-3xl">
-        {/* Header */}
+    <div className="min-h-screen bg-[#050507] text-white">
+      <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-4 pb-12">
+        {/* Header / Breadcrumbs */}
         <div className="flex items-center gap-3 mb-6">
           <Link
             href="/manufacturer/disputes"
-            className="text-sm text-gray-500 hover:text-orange-500"
+            className="flex items-center gap-4 group"
           >
-            ← Disputes
+            <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white shadow-[0_0_20px_rgba(168,85,247,0.4)] group-hover:scale-110 transition-all">
+              <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+            </div>
+            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/40 group-hover:text-white transition-colors pt-0.5">
+              Back to Disputes
+            </span>
           </Link>
-          <span className="text-gray-300">|</span>
-          <span className="text-sm font-mono font-bold text-gray-700">
-            {dispute.disputeNumber}
-          </span>
-          <span
-            className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${STATUS_COLORS[dispute.status] || "bg-gray-100 text-gray-500"}`}
-          >
-            {dispute.status.replace(/_/g, " ")}
-          </span>
+          
+          <div className="flex items-center gap-3 ml-auto">
+            <span className="text-xs font-black text-white/40 uppercase tracking-tighter">
+              CASE: {dispute.disputeNumber}
+            </span>
+            <span
+              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${STATUS_COLORS[dispute.status] || "bg-white/5 text-white/40"}`}
+            >
+              {dispute.status.replace(/_/g, " ")}
+            </span>
+          </div>
         </div>
 
-        <div className="space-y-5">
+        <div className="grid grid-cols-1 gap-6">
           {/* Customer complaint */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-            <h2 className="text-base font-bold text-blue-900 mb-4">
-              Customer Complaint
-            </h2>
-            <div className="space-y-3 text-sm">
-              <div className="flex gap-4">
-                <div className="flex-1">
-                  <p className="text-xs text-gray-400 mb-1">Issue type</p>
-                  <p className="font-semibold text-gray-900 capitalize">
+          <div className="bg-white/[0.03] rounded-3xl border-2 border-purple-500/30 overflow-hidden">
+            <div className="px-6 py-4 border-b border-white/5 bg-white/[0.02]">
+              <h2 className="text-sm font-black uppercase tracking-widest text-[#eb9728]">
+                Customer Complaint
+              </h2>
+            </div>
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <div>
+                  <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-1.5">Issue type</p>
+                  <p className="text-base font-bold text-white capitalize">
                     {dispute.issueType?.replace(/_/g, " ")}
                   </p>
                 </div>
-                <div className="flex-1">
-                  <p className="text-xs text-gray-400 mb-1">
+                <div>
+                  <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-1.5">
                     Desired resolution
                   </p>
-                  <p className="font-semibold text-gray-900 capitalize">
+                  <p className="text-base font-bold text-white capitalize">
                     {dispute.desiredResolution?.replace(/_/g, " ")}
                   </p>
                 </div>
               </div>
+              
               <div>
-                <p className="text-xs text-gray-400 mb-1">
-                  Customer&apos;s description
+                <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-2">
+                  Customer Description
                 </p>
-                <p className="text-gray-700 bg-orange-50 rounded-xl p-3 border border-orange-100">
-                  {dispute.description}
-                </p>
+                <div className="bg-white/[0.03] rounded-2xl p-5 border border-white/5 text-sm text-white/70 leading-relaxed italic">
+                  &quot;{dispute.description}&quot;
+                </div>
               </div>
+
               {dispute.customerEvidence?.length > 0 && (
                 <div>
-                  <p className="text-xs text-gray-400 mb-1">
-                    Evidence provided
+                  <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-3">
+                    Evidence Files
                   </p>
-                  <div className="flex gap-2 flex-wrap">
+                  <div className="flex gap-3 flex-wrap">
                     {dispute.customerEvidence.map((url, i) => (
                       <a
                         key={i}
                         href={url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-blue-600 text-xs underline hover:text-blue-800"
+                        className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/10 rounded-xl text-[10px] font-bold uppercase tracking-widest text-blue-400 hover:bg-blue-500/10 transition-all"
                       >
+                        <span className="material-symbols-outlined text-sm">attachment</span>
                         File {i + 1}
                       </a>
                     ))}
@@ -179,117 +188,154 @@ export default function ManufacturerDisputeDetailPage() {
           </div>
 
           {/* Order reference */}
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
-            <h2 className="text-base font-bold text-blue-900 mb-3">
-              Linked Order
-            </h2>
-            <div className="flex items-center justify-between">
+          <div className="bg-white/[0.03] rounded-3xl border-2 border-purple-500/30 p-6 flex flex-col sm:flex-row items-center justify-between gap-6">
+            <div className="flex items-center gap-5">
+              <div className="h-12 w-12 rounded-2xl bg-[#eb9728]/10 border border-[#eb9728]/20 flex items-center justify-center">
+                <span className="material-symbols-outlined text-[#eb9728]">shopping_cart</span>
+              </div>
               <div>
-                <p className="font-mono font-semibold text-gray-900">
+                <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">Linked Order</p>
+                <p className="text-lg font-black text-white">
                   {dispute.orderId?.orderNumber}
                 </p>
-                <p className="text-sm text-gray-500 mt-0.5">
+                <p className="text-xs text-white/40">
                   Customer: {dispute.customerId?.name}
                 </p>
               </div>
-              <div className="text-right">
-                <p className="font-bold text-orange-500">
-                  ${dispute.orderId?.totalPrice?.toLocaleString()}
-                </p>
-                <Link
-                  href={`/manufacturer/orders/${dispute.orderId?._id}`}
-                  className="text-xs text-blue-600 hover:underline"
-                >
-                  View Order →
-                </Link>
-              </div>
+            </div>
+            <div className="flex flex-col items-end gap-2">
+              <p className="text-2xl font-black text-[#eb9728]">
+                ${dispute.orderId?.totalPrice?.toLocaleString()}
+              </p>
+              <Link
+                href={`/manufacturer/orders/${dispute.orderId?._id}`}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-white/[0.05] border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/70 hover:bg-[#eb9728]/10 hover:border-[#eb9728]/30 hover:text-[#eb9728] hover:shadow-[0_0_15px_rgba(235,151,40,0.15)] transition-all"
+              >
+                View Full Order Detail
+                <span className="material-symbols-outlined text-sm">arrow_forward</span>
+              </Link>
             </div>
           </div>
 
           {/* Your response */}
           {!isResolved && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h2 className="text-base font-bold text-blue-900 mb-4">
-                {hasResponded
-                  ? "Your Response (Submitted)"
-                  : "Submit Your Response"}
-              </h2>
+            <div className="bg-white/[0.03] rounded-3xl border-2 border-purple-500/30 overflow-hidden">
+              <div className="px-6 py-4 border-b border-white/5 bg-white/[0.02]">
+                <h2 className="text-sm font-black uppercase tracking-widest text-purple-400">
+                  {hasResponded ? "Your Response (Submitted)" : "Manufacturer Response"}
+                </h2>
+              </div>
 
-              {hasResponded ? (
-                <div>
-                  <p className="text-gray-700 bg-blue-50 rounded-xl p-3 border border-blue-100 text-sm">
-                    {dispute.manufacturerResponse.comment}
-                  </p>
-                  <p className="text-xs text-gray-400 mt-2">
-                    Responded on{" "}
-                    {new Date(
-                      dispute.manufacturerResponse.respondedAt,
-                    ).toLocaleDateString()}
-                  </p>
-                  <p className="text-xs text-blue-600 mt-2 font-medium">
-                    Admin is reviewing this dispute. You will be notified of the
-                    resolution.
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  <p className="text-sm text-gray-600">
-                    Please provide your side of the situation. Admin will review
-                    both sides and make a final decision. You have{" "}
-                    <span className="font-semibold text-orange-600">
-                      48 hours
-                    </span>{" "}
-                    to respond.
-                  </p>
-                  <textarea
-                    value={responseForm.comment}
-                    onChange={(e) =>
-                      setResponseForm({ comment: e.target.value })
-                    }
-                    rows={5}
-                    placeholder="Explain what happened from your perspective. Include any relevant details about the order, delivery, and communication with the customer..."
-                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm resize-none focus:outline-none focus:border-orange-400"
-                  />
-                  {error && <p className="text-sm text-red-600">{error}</p>}
-                  <button
-                    onClick={submitResponse}
-                    disabled={submitting}
-                    className="w-full py-3 bg-blue-900 text-white font-bold rounded-xl hover:bg-blue-800 disabled:opacity-50 text-sm"
-                  >
-                    {submitting ? "Submitting..." : "Submit Response"}
-                  </button>
-                </div>
-              )}
+              <div className="p-6">
+                {hasResponded ? (
+                  <div className="space-y-4">
+                    <div className="bg-blue-500/5 rounded-2xl p-5 border border-blue-500/20 text-sm text-white/70 leading-relaxed">
+                      {dispute.manufacturerResponse.comment}
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
+                        Submitted on {new Date(dispute.manufacturerResponse.respondedAt).toLocaleDateString()}
+                      </p>
+                      <div className="flex items-center gap-2 text-blue-400">
+                        <span className="material-symbols-outlined text-sm animate-pulse">visibility</span>
+                        <p className="text-[10px] font-bold uppercase tracking-widest">
+                          Awaiting Admin Review
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-5">
+                    <div className="p-4 bg-orange-500/5 border border-orange-500/10 rounded-2xl">
+                      <p className="text-sm text-white/60 leading-relaxed">
+                        Please provide your detailed perspective on this situation. An admin will review both parties&apos; input within <span className="font-bold text-[#eb9728]">48 hours</span> to make a final decision.
+                      </p>
+                    </div>
+                    
+                    <div className="relative group">
+                      <textarea
+                        value={responseForm.comment}
+                        onChange={(e) => setResponseForm({ comment: e.target.value })}
+                        rows={6}
+                        placeholder="Explain what happened from your perspective. Include any relevant details about production, delivery, and previous communication..."
+                        className="w-full bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-purple-500/50 focus:bg-white/[0.05] transition-all resize-none"
+                      />
+                      <div className="absolute bottom-4 right-4 text-[9px] font-bold text-white/20 uppercase">
+                        {responseForm.comment.length} / 20 min
+                      </div>
+                    </div>
+
+                    {error && (
+                      <div className="flex items-center gap-2 text-red-400 bg-red-400/5 p-3 rounded-xl border border-red-400/10">
+                        <span className="material-symbols-outlined text-sm">error</span>
+                        <p className="text-xs font-bold">{error}</p>
+                      </div>
+                    )}
+
+                    <button
+                      onClick={submitResponse}
+                      disabled={submitting}
+                      className="w-full py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-2xl hover:shadow-[0_0_20px_rgba(124,58,237,0.3)] hover:scale-[1.01] transition-all disabled:opacity-50"
+                    >
+                      {submitting ? "Processing Submission..." : "Submit Case Response"}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
           )}
 
           {/* Resolution */}
           {isResolved && dispute.resolution && (
             <div
-              className={`rounded-2xl border p-6 ${dispute.resolution === "refund_customer" ? "bg-red-50 border-red-100" : dispute.resolution === "side_with_manufacturer" ? "bg-green-50 border-green-100" : "bg-blue-50 border-blue-100"}`}
+              className={`rounded-3xl border-2 p-8 ${
+                dispute.resolution === "refund_customer" 
+                  ? "bg-red-500/5 border-red-500/20" 
+                  : dispute.resolution === "side_with_manufacturer" 
+                    ? "bg-emerald-500/5 border-emerald-500/20" 
+                    : "bg-blue-500/5 border-blue-500/20"
+              }`}
             >
-              <h2 className="text-base font-bold text-gray-900 mb-3">
-                Resolution
-              </h2>
-              <p className="font-semibold text-gray-900 mb-2">
+              <div className="flex items-center gap-3 mb-4">
+                <span className="material-symbols-outlined text-2xl">
+                  {dispute.resolution === "refund_customer" ? "error" : "verified"}
+                </span>
+                <h2 className="text-xl font-black uppercase tracking-widest">
+                  Final Resolution
+                </h2>
+              </div>
+              
+              <p className="text-lg font-bold mb-3">
                 {RESOLUTION_LABELS[dispute.resolution]}
               </p>
+              
               {dispute.resolutionMessage && (
-                <p className="text-sm text-gray-700">
+                <div className="bg-white/[0.03] p-5 rounded-2xl border border-white/5 text-sm text-white/60 leading-relaxed mb-4">
                   {dispute.resolutionMessage}
-                </p>
+                </div>
               )}
-              {dispute.resolutionAmount && (
-                <p className="text-sm text-gray-600 mt-1">
-                  Amount:{" "}
-                  <span className="font-bold">
-                    ${dispute.resolutionAmount.toLocaleString()}
-                  </span>
-                </p>
-              )}
-              <p className="text-xs text-gray-400 mt-2">
-                Resolved on {new Date(dispute.resolvedAt).toLocaleDateString()}
-              </p>
+              
+              <div className="flex flex-wrap items-center justify-between gap-4 mt-6 pt-6 border-t border-white/5">
+                <div className="flex items-center gap-8">
+                  {dispute.resolutionAmount && (
+                    <div>
+                      <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-1">Adjustment Amount</p>
+                      <p className="text-xl font-black text-white">
+                        ${dispute.resolutionAmount.toLocaleString()}
+                      </p>
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-1">Resolved On</p>
+                    <p className="text-xl font-black text-white/70">
+                      {new Date(dispute.resolvedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="px-4 py-2 bg-white/5 rounded-full border border-white/10 text-[10px] font-bold uppercase tracking-widest">
+                  Case Closed
+                </div>
+              </div>
             </div>
           )}
         </div>

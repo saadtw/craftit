@@ -2,7 +2,8 @@
 "use client";
 
 import GlobalNoResults from "@/components/ui/GlobalNoResults";
-import { useState, useEffect, useCallback } from "react";
+import GlobalLoader from "@/components/ui/GlobalLoader";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -39,10 +40,10 @@ const CATEGORIES = [
 ];
 
 const STATUS_STYLES = {
-  active: "bg-emerald-100 text-emerald-700",
-  draft: "bg-slate-100 text-slate-600",
-  out_of_stock: "bg-amber-100 text-amber-700",
-  archived: "bg-red-100 text-red-600",
+  active: "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400",
+  draft: "bg-white/5 border border-white/10 text-white/40",
+  out_of_stock: "bg-amber-500/10 border border-amber-500/20 text-amber-400",
+  archived: "bg-red-500/10 border border-red-500/20 text-red-400",
 };
 
 export default function ManufacturerProductsPage() {
@@ -242,27 +243,23 @@ export default function ManufacturerProductsPage() {
   };
 
   if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <GlobalLoader fullScreen text="SYNCHRONIZING CATALOG..." />;
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-[#050507] text-white">
       {/* Header */}
-      <div className="bg-white border-b border-slate-200">
+      <div className="bg-white/[0.02] border-b border-white/5 backdrop-blur-md">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <h1 className="text-xl font-semibold text-slate-900 tracking-tight">
+            <h1 className="text-2xl font-black tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-400 to-indigo-400">
               Product Catalog
             </h1>
           </div>
           <div className="flex items-center gap-2">
             <button
               onClick={exportCSV}
-              className="px-3 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-1.5"
+              className="px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white/40 border border-white/10 rounded-lg hover:bg-white/5 transition-colors flex items-center gap-1.5"
             >
               <svg
                 className="w-4 h-4"
@@ -281,7 +278,7 @@ export default function ManufacturerProductsPage() {
             </button>
             <Link
               href="/manufacturer/products/new"
-              className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors flex items-center gap-1.5"
+              className="px-4 py-2 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-lg shadow-[0_0_15px_rgba(147,51,234,0.3)] hover:scale-105 transition-all flex items-center gap-1.5"
             >
               <svg
                 className="w-4 h-4"
@@ -305,65 +302,45 @@ export default function ManufacturerProductsPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
         {/* Stats Bar */}
         {stats && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             {[
               {
                 label: "Total Products",
                 value: stats.total,
-                color: "text-slate-900",
+                color: "text-white",
               },
               {
                 label: "Active",
                 value: stats.active,
-                color: "text-emerald-600",
+                color: "text-emerald-400",
               },
-              { label: "Drafts", value: stats.draft, color: "text-slate-500" },
+              { label: "Drafts", value: stats.draft, color: "text-white/40" },
               {
                 label: "Out of Stock",
                 value: stats.out_of_stock,
-                color: "text-amber-600",
+                color: "text-amber-400",
               },
             ].map((s) => (
               <div
                 key={s.label}
-                className="bg-white rounded-xl border border-slate-200 p-4"
+                className="relative p-[2px] rounded-2xl bg-gradient-to-br from-[#eb9728] via-purple-600 to-indigo-500 group transition-all duration-500 hover:scale-[1.02]"
               >
-                <p className="text-xs text-slate-500 mb-1">{s.label}</p>
-                <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
+                <div className="bg-[#0a0a0c] rounded-[14px] p-3.5 h-full flex flex-col items-center justify-center text-center backdrop-blur-xl">
+                  <p className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30 mb-1.5">{s.label}</p>
+                  <p className={`text-2xl font-black ${s.color} tracking-tighter`}>{s.value}</p>
+                </div>
               </div>
             ))}
           </div>
         )}
 
-        {/* Filters Row */}
-        <div className="bg-white rounded-xl border border-slate-200 p-4 space-y-4">
-          {/* Status Tabs */}
-          <div className="flex gap-1 flex-wrap">
-            {STATUS_TABS.map((tab) => (
-              <button
-                key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
-                className={`px-3 py-1.5 text-sm rounded-lg font-medium transition-colors ${
-                  activeTab === tab.key
-                    ? "bg-slate-900 text-white"
-                    : "text-slate-500 hover:bg-slate-100"
-                }`}
-              >
-                {tab.label}
-                {stats && tab.key !== "all" && stats[tab.key] !== undefined && (
-                  <span className="ml-1.5 text-xs opacity-70">
-                    {tab.key === "archived" ? stats.archived : stats[tab.key]}
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-
-          {/* Search + Sort + Category */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
+        {/* Filters Section - Standalone Elements */}
+        <div className="space-y-6 relative z-40">
+          {/* Search + Dropdowns Row */}
+          <div className="flex flex-col lg:flex-row gap-4 items-center">
+            <div className="relative flex-1 w-full group">
               <svg
-                className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/20 group-focus-within:text-purple-400 transition-colors"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -377,42 +354,56 @@ export default function ManufacturerProductsPage() {
               </svg>
               <input
                 type="text"
-                placeholder="Search products..."
+                placeholder="Search by product name, category or ID..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900"
+                className="w-full pl-12 pr-6 py-3 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/20 text-sm tracking-wide transition-all"
               />
             </div>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
-            >
-              <option value="">All Categories</option>
-              {CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
-            >
-              {SORT_OPTIONS.map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+            <div className="flex flex-wrap sm:flex-nowrap gap-3 w-full lg:w-auto">
+              <CustomDropdown
+                value={category}
+                onChange={setCategory}
+                options={[{ value: "", label: "All Categories" }, ...CATEGORIES.map(c => ({ value: c, label: c }))]}
+                placeholder="Category"
+              />
+              <CustomDropdown
+                value={sort}
+                onChange={setSort}
+                options={SORT_OPTIONS}
+                placeholder="Sort By"
+              />
+            </div>
+          </div>
+
+          {/* Status Tabs Navigation - Standalone Card */}
+          <div className="bg-white/[0.02] border border-white/5 rounded-full p-1.5 flex items-center gap-2 overflow-x-auto no-scrollbar backdrop-blur-md">
+            {STATUS_TABS.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`flex-1 px-4 py-2.5 text-[9px] font-black uppercase tracking-[0.2em] rounded-full transition-all flex-shrink-0 ${
+                  activeTab === tab.key
+                    ? "bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.4)]"
+                    : "text-white/30 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                {tab.label}
+                {stats && tab.key !== "all" && stats[tab.key] !== undefined && (
+                  <span className="ml-1 opacity-40">({tab.key === "archived" ? stats.archived : stats[tab.key]})</span>
+                )}
+                {tab.key === "all" && pagination.total > 0 && (
+                  <span className="ml-1 opacity-40">({pagination.total})</span>
+                )}
+              </button>
+            ))}
           </div>
         </div>
 
         {/* Bulk Action Bar */}
         {selected.length > 0 && (
-          <div className="bg-slate-900 text-white rounded-xl px-4 py-3 flex items-center justify-between animate-in slide-in-from-bottom-2">
-            <span className="text-sm font-medium">
+          <div className="bg-purple-600 text-white rounded-2xl px-6 py-3 flex items-center justify-between animate-in slide-in-from-bottom-2 shadow-[0_0_25px_rgba(147,51,234,0.3)]">
+            <span className="text-[10px] font-black uppercase tracking-widest">
               {selected.length} product(s) selected
             </span>
             <div className="flex items-center gap-2">
@@ -425,7 +416,7 @@ export default function ManufacturerProductsPage() {
                 {
                   action: "draft",
                   label: "Set Draft",
-                  style: "bg-slate-600 hover:bg-slate-500",
+                  style: "bg-white/10 hover:bg-white/20",
                 },
                 {
                   action: "out_of_stock",
@@ -442,14 +433,14 @@ export default function ManufacturerProductsPage() {
                   key={a.action}
                   onClick={() => handleBulkAction(a.action)}
                   disabled={bulkLoading}
-                  className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${a.style} disabled:opacity-50`}
+                  className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${a.style} disabled:opacity-50`}
                 >
                   {a.label}
                 </button>
               ))}
               <button
                 onClick={() => setSelected([])}
-                className="p-1.5 hover:bg-slate-700 rounded-lg transition-colors"
+                className="p-1.5 hover:bg-black/20 rounded-lg transition-colors"
               >
                 <svg
                   className="w-4 h-4"
@@ -475,33 +466,20 @@ export default function ManufacturerProductsPage() {
             {Array.from({ length: 8 }).map((_, i) => (
               <div
                 key={i}
-                className="bg-white rounded-xl border border-slate-200 overflow-hidden animate-pulse"
+                className="bg-white/[0.03] rounded-2xl border-2 border-purple-500/20 overflow-hidden animate-pulse"
               >
-                <div className="h-44 bg-slate-100" />
+                <div className="h-44 bg-white/5" />
                 <div className="p-4 space-y-2">
-                  <div className="h-4 bg-slate-100 rounded w-3/4" />
-                  <div className="h-3 bg-slate-100 rounded w-1/2" />
+                  <div className="h-4 bg-white/5 rounded w-3/4" />
+                  <div className="h-3 bg-white/5 rounded w-1/2" />
                 </div>
               </div>
             ))}
           </div>
         ) : products.length === 0 ? (
-          <div className="bg-white rounded-xl border border-slate-200 py-20 text-center">
-            <svg
-              className="w-12 h-12 text-slate-300 mx-auto mb-3"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={1.5}
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-              />
-            </svg>
+          <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/40 py-20 text-center backdrop-blur-md">
             <GlobalNoResults text="No products found" />
-            <p className="text-slate-400 text-sm mt-1">
+            <p className="text-white/20 text-sm mt-1">
               {debouncedSearch
                 ? "Try a different search term"
                 : "Add your first product to get started"}
@@ -509,7 +487,7 @@ export default function ManufacturerProductsPage() {
             {!debouncedSearch && (
               <Link
                 href="/manufacturer/products/new"
-                className="inline-flex items-center gap-1.5 mt-4 px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors"
+                className="inline-flex items-center gap-1.5 mt-6 px-6 py-2 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_15px_rgba(147,51,234,0.3)] hover:scale-105 transition-all"
               >
                 <svg
                   className="w-4 h-4"
@@ -531,17 +509,17 @@ export default function ManufacturerProductsPage() {
         ) : (
           <>
             {/* Select All */}
-            <div className="flex items-center gap-2 text-sm text-slate-500">
+            <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-white/30">
               <input
                 type="checkbox"
                 checked={
                   selected.length === products.length && products.length > 0
                 }
                 onChange={toggleSelectAll}
-                className="rounded border-slate-300"
+                className="rounded border-white/20 bg-white/5"
               />
               <span>Select all on this page</span>
-              <span className="ml-auto">{pagination.total} product(s)</span>
+              <span className="ml-auto">{pagination.total} product(s) available</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -560,15 +538,15 @@ export default function ManufacturerProductsPage() {
 
             {/* Pagination */}
             {pagination.pages > 1 && (
-              <div className="flex items-center justify-center gap-2 pt-2">
+              <div className="flex items-center justify-center gap-2 pt-4">
                 <button
                   onClick={() => setPage((p) => Math.max(1, p - 1))}
                   disabled={page === 1}
-                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 text-[10px] font-black uppercase tracking-widest border border-white/10 rounded-xl disabled:opacity-20 hover:bg-white/5 transition-all"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-slate-500">
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/30 px-4">
                   Page {page} of {pagination.pages}
                 </span>
                 <button
@@ -576,7 +554,7 @@ export default function ManufacturerProductsPage() {
                     setPage((p) => Math.min(pagination.pages, p + 1))
                   }
                   disabled={page === pagination.pages}
-                  className="px-3 py-2 text-sm border border-slate-200 rounded-lg disabled:opacity-40 hover:bg-slate-50 transition-colors"
+                  className="px-4 py-2 text-[10px] font-black uppercase tracking-widest border border-white/10 rounded-xl disabled:opacity-20 hover:bg-white/5 transition-all"
                 >
                   Next
                 </button>
@@ -615,33 +593,33 @@ function ProductCard({
 
   return (
     <div
-      className={`bg-white rounded-xl border transition-all overflow-hidden group ${
+      className={`bg-white/[0.03] rounded-2xl border-2 transition-all overflow-hidden group backdrop-blur-md h-full flex flex-col ${
         selected
-          ? "border-slate-900 ring-2 ring-slate-900 ring-opacity-20"
-          : "border-slate-200 hover:border-slate-300 hover:shadow-sm"
+          ? "border-purple-500 shadow-[0_0_20px_rgba(147,51,234,0.2)]"
+          : "border-purple-500/40 hover:border-purple-500/60"
       }`}
     >
       {/* Image */}
-      <div className="relative h-44 bg-slate-100 overflow-hidden">
+      <div className="relative h-44 bg-black/40 overflow-hidden">
         <input
           type="checkbox"
           checked={selected}
           onChange={onSelect}
           onClick={(e) => e.stopPropagation()}
-          className="absolute top-3 left-3 z-10 rounded border-slate-300 w-4 h-4"
+          className="absolute top-3 left-3 z-10 rounded border-white/20 bg-white/5 w-4 h-4 cursor-pointer"
         />
         {primaryImage ? (
           <Image
             src={primaryImage}
             alt={product.name}
             fill
-            className="object-cover group-hover:scale-105 transition-transform duration-300"
+            className="object-cover group-hover:scale-110 transition-transform duration-700"
             sizes="(max-width: 768px) 100vw, 25vw"
           />
         ) : (
-          <div className="w-full h-full flex items-center justify-center">
+          <div className="w-full h-full flex items-center justify-center bg-white/[0.02]">
             <svg
-              className="w-10 h-10 text-slate-300"
+              className="w-10 h-10 text-white/5"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -657,50 +635,50 @@ function ProductCard({
         )}
         {/* Status badge */}
         <span
-          className={`absolute top-3 right-3 px-2 py-0.5 text-xs font-medium rounded-full ${STATUS_STYLES[product.status]}`}
+          className={`absolute top-3 right-3 px-2.5 py-1 text-[9px] font-black uppercase tracking-widest rounded-full backdrop-blur-md ${STATUS_STYLES[product.status]}`}
         >
           {product.status.replace("_", " ")}
         </span>
         {product.model3D?.url && (
-          <span className="absolute bottom-2 right-2 px-1.5 py-0.5 bg-slate-800 text-white text-xs rounded font-medium">
-            3D
+          <span className="absolute bottom-2 right-2 px-2 py-0.5 bg-blue-600 text-white text-[9px] font-black uppercase tracking-widest rounded shadow-lg">
+            3D READY
           </span>
         )}
       </div>
 
       {/* Info */}
-      <div className="p-4">
-        <h3 className="font-semibold text-slate-900 text-sm leading-snug line-clamp-1">
+      <div className="p-4 flex-1 flex flex-col">
+        <h3 className="font-black text-white text-sm leading-snug line-clamp-1 uppercase tracking-tight">
           {product.name}
         </h3>
-        <p className="text-xs text-slate-400 mt-0.5">{product.category}</p>
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20 mt-1">{product.category}</p>
 
-        <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center justify-between mt-4">
           <div>
-            <p className="text-base font-bold text-slate-900">
+            <p className="text-xl font-black text-white tracking-tighter">
               ${product.price?.toLocaleString()}
             </p>
-            <p className="text-xs text-slate-400">MOQ: {product.moq}</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-white/30">MOQ: {product.moq}</p>
           </div>
           <div className="text-right">
-            <p className="text-xs text-slate-400">{product.views} views</p>
-            <p className="text-xs text-slate-400">
+            <p className="text-[9px] font-black uppercase tracking-widest text-white/20">{product.views} views</p>
+            <p className="text-[9px] font-black uppercase tracking-widest text-white/20">
               {product.totalOrders} orders
             </p>
           </div>
         </div>
 
         {/* Actions */}
-        <div className="flex items-center gap-1.5 mt-3 pt-3 border-t border-slate-100">
+        <div className="flex items-center gap-1.5 mt-auto pt-4">
           <a
             href={`/manufacturer/products/${product._id}`}
-            className="flex-1 text-center px-2 py-1.5 text-xs text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+            className="flex-1 text-center px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/40 border border-white/5 rounded-lg hover:bg-white/5 hover:text-white transition-all"
           >
             View
           </a>
           <a
             href={`/manufacturer/products/${product._id}/edit`}
-            className="flex-1 text-center px-2 py-1.5 text-xs text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+            className="flex-1 text-center px-2 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/40 border border-white/5 rounded-lg hover:bg-white/5 hover:text-white transition-all"
           >
             Edit
           </a>
@@ -713,7 +691,7 @@ function ProductCard({
                 )
               }
               disabled={statusLoading}
-              className="flex-1 text-center px-2 py-1.5 text-xs bg-slate-900 text-white rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50"
+              className="flex-1 text-center px-2 py-1.5 text-[9px] font-black uppercase tracking-widest bg-purple-600 text-white rounded-lg shadow-[0_0_10px_rgba(147,51,234,0.2)] hover:scale-105 transition-all disabled:opacity-50"
             >
               {statusLoading
                 ? "..."
@@ -722,7 +700,7 @@ function ProductCard({
           )}
           <button
             onClick={() => onDelete(product._id, product.status)}
-            className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            className="p-1.5 text-white/20 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-all"
             title={
               product.status === "archived" ? "Delete permanently" : "Archive"
             }
@@ -737,12 +715,75 @@ function ProductCard({
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1-1v3M4 7h16"
               />
             </svg>
           </button>
         </div>
       </div>
+    </div>
+  );
+}
+function CustomDropdown({ value, options, onChange, placeholder }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const selectedOption = options.find(opt => opt.value === value) || options[0];
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full sm:w-48 px-4 py-2 text-[10px] font-black uppercase tracking-widest bg-white/5 border border-white/10 rounded-xl hover:bg-white/[0.08] transition-all text-white group"
+      >
+        <span className="truncate">{selectedOption?.label || placeholder}</span>
+        <svg
+          className={`w-4 h-4 text-white/20 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-[100] mt-2 w-full sm:w-56 bg-[#0B011D] border-2 border-purple-500/30 rounded-2xl shadow-2xl py-2 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="max-h-[200px] overflow-y-auto custom-scrollbar">
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full text-left px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-between ${
+                  value === opt.value
+                    ? "bg-purple-600 text-white"
+                    : "text-white/40 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <span>{opt.label}</span>
+                {value === opt.value && (
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

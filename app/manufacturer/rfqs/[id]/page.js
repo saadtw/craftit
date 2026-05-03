@@ -9,6 +9,11 @@ import Link from "next/link";
 import Image from "next/image";
 import Editor3DWrapper from "../../../../modules/components/Editor3DWrapper";
 
+const STATUS_STYLES = {
+  active: "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400",
+  closed: "bg-red-500/10 border border-red-500/20 text-red-400",
+};
+
 export default function ManufacturerRFQDetails() {
   const params = useParams();
   const router = useRouter();
@@ -22,18 +27,14 @@ export default function ManufacturerRFQDetails() {
     try {
       const response = await fetch(`/api/rfqs/${params.id}`);
       const data = await response.json();
-
       if (data.success && data.rfq) {
         setRfq(data.rfq);
         if (data.bids && data.bids.length > 0) {
           setMyBid(data.bids[0]);
         }
-      } else {
-        alert("Error loading RFQ: " + (data.error || "Unknown error"));
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Error loading RFQ");
     } finally {
       setLoading(false);
     }
@@ -49,44 +50,14 @@ export default function ManufacturerRFQDetails() {
     const now = new Date();
     const end = new Date(endDate);
     const diff = end - now;
-
     if (diff <= 0) return "Expired";
-
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-
     return `${days}d ${hours}h`;
   };
 
-  if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
-        <GlobalLoader text="Loading..." />
-      </div>
-    );
-  }
-
-  if (status === "unauthenticated") {
-    router.push("/auth/login");
-    return null;
-  }
-
-  if (session?.user?.role !== "manufacturer") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-red-600">
-          Access Denied. Manufacturers only.
-        </div>
-      </div>
-    );
-  }
-
-  if (!rfq) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-gray-600">RFQ not found</div>
-      </div>
-    );
+  if (status === "loading" || loading || !rfq) {
+    return <GlobalLoader fullScreen text="LOADING INQUIRY..." />;
   }
 
   const isActive = rfq.status === "active";
@@ -94,214 +65,120 @@ export default function ManufacturerRFQDetails() {
   const model3D = rfq?.customOrderId?.model3D;
 
   return (
-    <>
-      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-        {/* Header */}
-        <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-          <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex justify-between items-center">
-            <div className="flex items-center gap-8">
-              <Link
-                href="/manufacturer/dashboard"
-                className="flex items-center gap-2"
-              >
-                <span className="text-3xl">🔧</span>
-                <h2 className="text-xl font-bold text-blue-900">Craftit</h2>
-              </Link>
-              <button
-                onClick={() => router.back()}
-                className="text-gray-500 hover:text-gray-700"
-              >
-                ← Back
-              </button>
-            </div>
-            <div className="flex items-center gap-4">
-              <button className="p-2 rounded-full hover:bg-gray-100">🔔</button>
-              <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
-                {session.user.name?.charAt(0) || "M"}
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-6xl">
-          {/* Breadcrumbs */}
-          <div className="flex items-center gap-2 mb-6 text-sm">
-            <Link
-              href="/manufacturer/rfqs"
-              className="text-gray-500 hover:text-gray-700"
+    <div className="min-h-screen bg-[#050507] text-white">
+      {/* Header Info */}
+      <div className="bg-[#050507]/80 border-b border-white/5 z-50 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex items-center justify-between">
+          <div className="flex items-center gap-5">
+            <button
+              onClick={() => router.back()}
+              className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all"
             >
-              Auctions
-            </Link>
-            <span className="text-gray-500">/</span>
-            <span className="text-gray-900 font-medium">
-              {rfq.customOrderId?.title || "RFQ Details"}
-            </span>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <div>
+              <div className="flex items-center gap-3">
+                <h1 className="text-xl font-black tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-400 to-indigo-400">
+                  {rfq.customOrderId?.title || "RFQ INQUIRY"}
+                </h1>
+                <span className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border ${STATUS_STYLES[rfq.status] || STATUS_STYLES.active}`}>
+                  {rfq.status === "active" ? "Live Auction" : "Closed Loop"}
+                </span>
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mt-1">Inquiry ID: {rfq.rfqNumber}</p>
+            </div>
           </div>
 
-          {/* Header with Image */}
-          <div className="bg-white rounded-lg shadow-sm p-6 flex items-start justify-between gap-6 mb-6">
-            <div>
-              <p className="text-sm text-gray-500">Project Overview</p>
-              <h1 className="text-2xl font-bold text-blue-900 mt-1">
-                {rfq.customOrderId?.title || "RFQ Details"}
-              </h1>
-              <p className="text-sm text-green-600 mt-1">
-                {rfq.status === "active" ? "Auction Active" : "Auction Closed"}
-              </p>
-            </div>
-            {rfq.customOrderId?.images?.[0]?.url && (
-              <Image
-                src={rfq.customOrderId.images[0].url}
-                alt="Project"
-                width={192}
-                height={128}
-                className="object-cover rounded-lg shadow-md shrink-0"
-              />
+          <div className="flex items-center gap-3">
+            {isActive && !hasBid && (
+              <Link
+                href={`/manufacturer/rfqs/${params.id}/bid`}
+                className="px-6 py-2.5 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-purple-500 shadow-[0_0_20px_rgba(147,51,234,0.3)] transition-all"
+              >
+                Submit Proposal
+              </Link>
+            )}
+            {hasBid && (
+              <Link
+                href={`/bids/${myBid._id}`}
+                className="px-6 py-2.5 bg-white text-[#050507] text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-white/90 transition-all shadow-xl"
+              >
+                View Transmitted Bid
+              </Link>
             )}
           </div>
+        </div>
+      </div>
 
-          {/* Time & Stats Cards */}
-          <div className="grid grid-cols-3 gap-4 mb-6">
-            <div className="bg-blue-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600">Time Remaining</p>
-              <p className="text-xl font-bold text-blue-800">
-                {getTimeRemaining(rfq.endDate)}
-              </p>
-            </div>
-            <div className="bg-purple-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600">Total Bids</p>
-              <p className="text-xl font-bold text-purple-800">
-                {rfq.bidsCount || 0}
-              </p>
-            </div>
-            <div className="bg-green-50 p-4 rounded-lg">
-              <p className="text-sm text-gray-600">Minimum Bid</p>
-              <p className="text-xl font-bold text-green-800">
-                ${rfq.minBidThreshold || 0}
-              </p>
-            </div>
-          </div>
-
-          {/* My Bid Status */}
-          {hasBid && (
-            <div className="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-6">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="font-semibold text-gray-900">
-                    You have already placed a bid on this RFQ
-                  </p>
-                  <p className="text-sm text-gray-700 mt-1">
-                    Bid Amount: ${myBid.amount} | Timeline: {myBid.timeline}{" "}
-                    days
-                  </p>
-                  <span
-                    className={`inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold ${
-                      myBid.status === "accepted"
-                        ? "bg-green-100 text-green-800"
-                        : myBid.status === "under_consideration"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
-                    }`}
-                  >
-                    {myBid.status === "under_consideration" ? "PENDING" : myBid.status.toUpperCase().replace("_", " ")}
-                  </span>
-                </div>
-                <Link
-                  href={`/bids/${myBid._id}`}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold"
-                >
-                  View/Update Bid
-                </Link>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
+        
+        {/* Core Stats Bento */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+          {[
+            { label: "Temporal Limit", value: getTimeRemaining(rfq.endDate), icon: "⏳", color: "from-blue-500/20" },
+            { label: "Market Interest", value: `${rfq.bidsCount || 0} Proposals`, icon: "📦", color: "from-purple-500/20" },
+            { label: "Reserve Threshold", value: `$${rfq.minBidThreshold || 0}`, icon: "💎", color: "from-emerald-500/20" },
+          ].map((stat, i) => (
+            <div key={i} className={`bg-gradient-to-br ${stat.color} to-transparent rounded-[2rem] border-2 border-white/5 p-8 backdrop-blur-xl group hover:border-white/10 transition-all`}>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">{stat.label}</p>
+              <div className="flex items-center justify-between">
+                <span className="text-3xl font-black tracking-tighter text-white">{stat.value}</span>
+                <span className="text-2xl opacity-20 group-hover:opacity-100 transition-opacity duration-500">{stat.icon}</span>
               </div>
             </div>
-          )}
+          ))}
+        </div>
 
-          {/* Project Details */}
-          <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
-            <h2 className="text-xl font-bold text-blue-900 mb-4">
-              Project Details
-            </h2>
-            <div className="space-y-3">
-              <div>
-                <label className="font-semibold text-gray-700">
-                  Description:
-                </label>
-                <p className="text-gray-900 mt-1 whitespace-pre-wrap">
-                  {rfq.customOrderId?.description || "No description"}
-                </p>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          
+          {/* Detail Streams */}
+          <div className="lg:col-span-8 space-y-8">
+            
+            {/* Project Narrative Card */}
+            <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-10 shadow-xl">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-6">Technical Scope</h3>
+              <p className="text-lg font-medium text-white/70 leading-relaxed whitespace-pre-wrap mb-10">
+                {rfq.customOrderId?.description || "No narrative provided."}
+              </p>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 py-10 border-t border-white/5">
+                {[
+                  { label: "Required Volume", value: `${rfq.customOrderId?.quantity || "N/A"} Units` },
+                  { label: "Assigned Budget", value: rfq.customOrderId?.budget ? `$${rfq.customOrderId.budget.toLocaleString()}` : "Confidential" },
+                  { label: "Material Constraints", value: rfq.customOrderId?.materialPreferences?.join(", ") || "Open Specification" },
+                  { label: "Temporal Deadline", value: rfq.customOrderId?.deadline ? new Date(rfq.customOrderId.deadline).toLocaleDateString() : "Flexible" },
+                  { label: "Spectral Data", value: rfq.customOrderId?.colorSpecifications?.join(", ") || "N/A" },
+                ].map((item, i) => (
+                  <div key={i} className="flex justify-between items-center group">
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/20 group-hover:text-white/40 transition-colors">{item.label}</span>
+                    <span className="text-[11px] font-black uppercase tracking-widest text-white/80">{item.value}</span>
+                  </div>
+                ))}
               </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="font-semibold text-gray-700">
-                    Quantity:
-                  </label>
-                  <p className="text-gray-900">
-                    {rfq.customOrderId?.quantity || "N/A"}
-                  </p>
-                </div>
-                {rfq.customOrderId?.budget && (
-                  <div>
-                    <label className="font-semibold text-gray-700">
-                      Budget:
-                    </label>
-                    <p className="text-gray-900">${rfq.customOrderId.budget}</p>
-                  </div>
-                )}
-              </div>
-
-              {rfq.customOrderId?.materialPreferences &&
-                rfq.customOrderId.materialPreferences.length > 0 && (
-                  <div>
-                    <label className="font-semibold text-gray-700">
-                      Material Preferences:
-                    </label>
-                    <p className="text-gray-900">
-                      {rfq.customOrderId.materialPreferences.join(", ")}
-                    </p>
-                  </div>
-                )}
-
-              {rfq.customOrderId?.colorSpecifications &&
-                rfq.customOrderId.colorSpecifications.length > 0 && (
-                  <div>
-                    <label className="font-semibold text-gray-700">
-                      Color Specifications:
-                    </label>
-                    <p className="text-gray-900">
-                      {rfq.customOrderId.colorSpecifications.join(", ")}
-                    </p>
-                  </div>
-                )}
-
-              {rfq.customOrderId?.deadline && (
-                <div>
-                  <label className="font-semibold text-gray-700">
-                    Deadline:
-                  </label>
-                  <p className="text-gray-900">
-                    {new Date(rfq.customOrderId.deadline).toLocaleDateString()}
-                  </p>
-                </div>
-              )}
 
               {rfq.customOrderId?.specialRequirements && (
-                <div>
-                  <label className="font-semibold text-gray-700">
-                    Special Requirements:
-                  </label>
-                  <p className="text-gray-900 whitespace-pre-wrap">
-                    {rfq.customOrderId.specialRequirements}
-                  </p>
+                <div className="mt-8 p-6 bg-white/5 rounded-2xl border border-white/10">
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Extended Protocols</p>
+                  <p className="text-sm font-medium text-white/60 leading-relaxed italic">"{rfq.customOrderId.specialRequirements}"</p>
                 </div>
               )}
             </div>
 
-            {/* 3D Model Viewer */}
+            {/* Asset Engine Viewer */}
             {model3D?.url && (
-              <div className="mt-6">
-                <h3 className="font-bold text-gray-900 mb-2">3D Model</h3>
-                <div className="w-full rounded-lg overflow-hidden">
+              <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-10 shadow-xl overflow-hidden">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-600/10 flex items-center justify-center text-purple-400 border border-purple-500/20">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" strokeWidth={2} /></svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-white">Integrated Asset Engine</h3>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">Real-time Inspection Protocol</p>
+                  </div>
+                </div>
+                <div className="rounded-[2rem] overflow-hidden border-2 border-white/5 bg-black/40">
                   <Editor3DWrapper
                     modelUrl={model3D.url}
                     initialAnnotations={model3D.annotations || []}
@@ -312,90 +189,43 @@ export default function ManufacturerRFQDetails() {
                 </div>
               </div>
             )}
+          </div>
 
-            {/* Images */}
-            {rfq.customOrderId?.images &&
-              rfq.customOrderId.images.length > 0 && (
-                <div className="mt-6">
-                  <h3 className="font-bold text-gray-900 mb-2">Images</h3>
-                  <div className="grid grid-cols-3 gap-4">
-                    {rfq.customOrderId.images.map((img, idx) => (
-                      <div
-                        key={idx}
-                        className="relative h-48 rounded-lg overflow-hidden"
-                      >
-                        <Image
-                          src={img.url}
-                          alt={`Image ${idx + 1}`}
-                          fill
-                          className="object-cover"
-                          sizes="33vw"
-                        />
-                      </div>
-                    ))}
-                  </div>
+          {/* Asset Sidebar */}
+          <div className="lg:col-span-4 space-y-8">
+            {/* Visual Documentation */}
+            {rfq.customOrderId?.images && rfq.customOrderId.images.length > 0 && (
+              <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-8 shadow-xl">
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-8">Visual Archives</h3>
+                <div className="grid grid-cols-1 gap-6">
+                  {rfq.customOrderId.images.map((img, idx) => (
+                    <div key={idx} className="relative aspect-video rounded-3xl overflow-hidden border-2 border-white/5 hover:border-purple-500/40 transition-all group">
+                      <Image src={img.url} alt="" fill className="object-cover group-hover:scale-110 transition-transform duration-700" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+                    </div>
+                  ))}
                 </div>
-              )}
-          </div>
-
-          {/* Action Buttons */}
-          <div className="flex gap-4">
-            <button
-              onClick={() => router.push("/manufacturer/rfqs")}
-              className="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 font-semibold"
-            >
-              Back to RFQs
-            </button>
-
-            {isActive && !hasBid && (
-              <Link
-                href={`/manufacturer/rfqs/${params.id}/bid`}
-                className="flex-1 px-6 py-3 bg-orange-500 text-white rounded-lg hover:bg-orange-600 text-center font-semibold"
-              >
-                Place Bid
-              </Link>
+              </div>
             )}
 
-            {hasBid && (
-              <Link
-                href={`/bids/${myBid._id}`}
-                className="flex-1 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-center font-semibold"
-              >
-                View My Bid
-              </Link>
-            )}
-          </div>
-        </main>
-
-        {/* Footer */}
-        <footer className="mt-16 border-t border-gray-200 bg-white/50 py-6">
-          <div className="container mx-auto px-4 text-center">
-            <div className="flex justify-center gap-6 mb-4">
-              <a
-                href="#"
-                className="text-gray-600 hover:text-orange-500 text-sm"
-              >
-                Help
-              </a>
-              <a
-                href="#"
-                className="text-gray-600 hover:text-orange-500 text-sm"
-              >
-                Terms
-              </a>
-              <a
-                href="#"
-                className="text-gray-600 hover:text-orange-500 text-sm"
-              >
-                Support
-              </a>
+            {/* Support Protocols */}
+            <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-8 shadow-xl">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-6">Operational Support</h3>
+              <div className="space-y-4">
+                {["Knowledge Base", "Inquiry Support", "Terms of Engagement"].map((item) => (
+                  <button key={item} className="w-full text-left p-5 bg-white/5 rounded-2xl border border-white/5 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white hover:bg-white/10 transition-all">{item}</button>
+                ))}
+              </div>
             </div>
-            <p className="text-sm text-gray-500">
-              © 2024 Craftit. All rights reserved.
-            </p>
           </div>
-        </footer>
-      </div>
-    </>
+        </div>
+      </main>
+
+      <footer className="mt-20 border-t border-white/5 bg-white/[0.02] py-12 backdrop-blur-xl">
+        <div className="max-w-7xl mx-auto px-4 flex flex-col items-center">
+          <p className="text-[9px] font-black uppercase tracking-widest text-white/10">© 2024 Craftit Core Services • Advanced Procurement Engine</p>
+        </div>
+      </footer>
+    </div>
   );
 }

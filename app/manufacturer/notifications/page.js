@@ -1,6 +1,7 @@
 // app/manufacturer/notifications/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import GlobalNoResults from "@/components/ui/GlobalNoResults";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -96,15 +97,40 @@ export default function ManufacturerNotificationsPage() {
 
   const handleClick = async (notif) => {
     if (!notif.isRead) await markRead(notif._id);
-    if (notif.link) router.push(notif.link);
+    
+    let targetLink = notif.link;
+
+    // Repair logic for broken legacy/seed links
+    if (!targetLink || targetLink === "/dashboard" || targetLink === "/chat" || targetLink.includes("/customer/") || targetLink.includes("/manufacturer/bids/") || !targetLink.startsWith("/")) {
+      if (notif.relatedType === "order" && notif.relatedId) {
+        targetLink = `/manufacturer/orders/${notif.relatedId}`;
+      } else if (notif.relatedType === "dispute" && notif.relatedId) {
+        targetLink = `/manufacturer/disputes/${notif.relatedId}`;
+      } else if (notif.relatedType === "rfq" && notif.relatedId) {
+        targetLink = `/manufacturer/rfqs/${notif.relatedId}`;
+      } else if (notif.relatedType === "bid" || targetLink?.includes("/bids/")) {
+        targetLink = `/manufacturer/bids`; // No detail page exists for bids
+      } else if (notif.type === "new_message" && notif.relatedId) {
+        targetLink = `/manufacturer/orders/${notif.relatedId}`; // Order chats use order ID
+      } else {
+        // Default fallbacks
+        if (notif.type?.includes("order")) targetLink = "/manufacturer/orders";
+        else if (notif.type?.includes("bid") || notif.type?.includes("rfq")) targetLink = "/manufacturer/rfqs";
+        else if (notif.type?.includes("dispute")) targetLink = "/manufacturer/disputes";
+        else targetLink = "/manufacturer/dashboard";
+      }
+    }
+
+    // Final sanity check: ensure leading slash
+    if (targetLink && !targetLink.startsWith("/")) {
+      targetLink = "/" + targetLink;
+    }
+
+    if (targetLink) router.push(targetLink);
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
-        <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading notifications..." />;
   }
 
   const groupedByDate = notifications.reduce((acc, n) => {

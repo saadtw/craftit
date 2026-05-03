@@ -202,10 +202,10 @@ export const notify = {
       userId: manufacturerId,
       type: "bid_rejected",
       title: "Bid not selected",
-      message: `Your bid for "${rfqTitle}" was not selected.`,
+      message: `Your bid for "${rfqTitle}" was not accepted.`,
       link: `/manufacturer/bids`,
       relatedType: "bid",
-      relatedId: bidId,
+      relatedId: bidId.toString(),
     }),
 
   bidUpdated: (customerId, rfqId, bidId, manufacturerName) =>
@@ -220,7 +220,7 @@ export const notify = {
     }),
 
   // Messages
-  newMessage: (recipientId, conversationId, senderName, contextType) =>
+  newMessage: (recipientId, conversationId, senderName, contextType, isCustomer = true) =>
     createNotification({
       userId: recipientId,
       type: "new_message",
@@ -228,8 +228,12 @@ export const notify = {
       message: `${senderName} sent you a message.`,
       link:
         contextType === "bid"
-          ? `/bids/${conversationId}`
-          : `/customer/orders/${conversationId}`,
+          ? isCustomer
+            ? `/customer/rfqs` // Fallback to list since we don't have rfqId here easily
+            : `/manufacturer/bids`
+          : isCustomer
+            ? `/customer/orders/${conversationId}`
+            : `/manufacturer/orders/${conversationId}`,
       relatedType: contextType === "bid" ? "bid" : "order",
       relatedId: conversationId,
     }),

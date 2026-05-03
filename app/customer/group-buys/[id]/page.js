@@ -286,14 +286,7 @@ export default function GroupBuyDetailPage() {
   }, [session, status, router]);
 
   if (status === "loading" || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050507]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
-          <GlobalLoader text="Loading group buy..." />
-        </div>
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading group buy..." />;
   }
 
   if (!session) {

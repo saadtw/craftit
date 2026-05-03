@@ -695,14 +695,7 @@ function CustomerSettingsPageContent() {
   }, [status, session, router, fetchUser]);
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-          <GlobalLoader text="Loading settings..." />
-        </div>
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading settings..." />;
   }
 
   const tabs = [
@@ -794,12 +787,7 @@ export default function CustomerSettingsPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#050507] flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-            <GlobalLoader text="Loading..." />
-          </div>
-        </div>
+        <GlobalLoader fullScreen text="Loading ..." />
       }
     >
       <CustomerSettingsPageContent />

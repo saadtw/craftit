@@ -14,7 +14,7 @@ import RFQIcon from "@/assets/RFQ.png";
 import BidsIcon from "@/assets/bid.png";
 import GroupBuyIcon from "@/assets/groupbuy.png";
 import PaymentsIcon from "@/assets/payments.png";
-import AnalyticsIcon from "@/assets/ActivityLog.png";
+import AnalyticsIcon from "@/assets/analytics.png";
 import DisputesIcon from "@/assets/disputes.png";
 import NotificationIcon from "@/assets/notification.png";
 import SettingsIcon from "@/assets/settings.png";

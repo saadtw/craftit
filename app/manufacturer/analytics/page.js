@@ -1,6 +1,7 @@
 // app/manufacturer/analytics/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -145,11 +146,7 @@ export default function ManufacturerAnalyticsPage() {
   }, [status, session, router, fetchAnalytics]);
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#050507]">
-        <div className="w-8 h-8 border-2 border-white/20 border-t-[#eb9728] rounded-full animate-spin" />
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading analytics..." />;
   }
 
   if (!data) return null;

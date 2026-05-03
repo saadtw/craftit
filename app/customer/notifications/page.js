@@ -106,18 +106,32 @@ export default function CustomerNotificationsPage() {
 
   const handleClick = async (notif) => {
     if (!notif.isRead) await markRead(notif._id);
-    if (notif.link) router.push(notif.link);
+    
+    let targetLink = notif.link;
+
+    // Repair logic for broken legacy/seed links
+    if (!targetLink || targetLink === "/dashboard" || targetLink === "/chat" || targetLink.includes("/manufacturer/")) {
+      if (notif.relatedType === "order" && notif.relatedId) {
+        targetLink = `/customer/orders/${notif.relatedId}`;
+      } else if (notif.relatedType === "dispute" && notif.relatedId) {
+        targetLink = `/customer/orders`; // or specific dispute if exists
+      } else if (notif.relatedType === "rfq" && notif.relatedId) {
+        targetLink = `/customer/rfqs`;
+      } else if (notif.type === "new_message" && notif.relatedId) {
+        targetLink = `/customer/orders/${notif.relatedId}`;
+      } else {
+        // Default fallbacks
+        if (notif.type.includes("order")) targetLink = "/customer/orders";
+        else if (notif.type.includes("bid") || notif.type.includes("rfq")) targetLink = "/customer/rfqs";
+        else targetLink = "/customer/dashboard";
+      }
+    }
+
+    if (targetLink) router.push(targetLink);
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050507]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
-          <GlobalLoader text="Loading notifications..." />
-        </div>
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading notifications..." />;
   }
 
   const groupedByDate = notifications.reduce((acc, n) => {

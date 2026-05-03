@@ -380,16 +380,17 @@ export default function ManufacturerBidsPage() {
                         </Link>
                         {bid?.status === "under_consideration" && (
                           <Link
-                            href={`/bids/${bid?._id}`}
-                            className="px-4 py-2 bg-gradient-to-r from-[#eb9728] to-orange-600 text-white font-black uppercase text-[10px] tracking-widest rounded-lg hover:shadow-[0_0_15px_rgba(235,151,40,0.4)] hover:scale-[1.02] transition-all"
+                            href={`/bids/${bid?._id}#chat`}
+                            className="px-4 py-2 bg-gradient-to-r from-[#eb9728] to-orange-600 text-white font-black uppercase text-[10px] tracking-widest rounded-lg hover:shadow-[0_0_15px_rgba(235,151,40,0.4)] hover:scale-[1.02] transition-all flex items-center gap-2"
                           >
-                            Respond to Counter
+                            <Image src={messageIcon} alt="Chat" width={14} height={14} className="brightness-200" />
+                            Chat
                           </Link>
                         )}
                         {bid?.status === "pending" && (
                           <Link
                             href={`/bids/${bid?._id}#chat`}
-                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black uppercase text-[10px] tracking-widest rounded-lg hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:scale-[1.02] transition-all flex items-center gap-2"
+                            className="px-4 py-2 bg-gradient-to-r from-[#eb9728] to-orange-600 text-white font-black uppercase text-[10px] tracking-widest rounded-lg hover:shadow-[0_0_15px_rgba(235,151,40,0.4)] hover:scale-[1.02] transition-all flex items-center gap-2"
                           >
                             <Image src={messageIcon} alt="Chat" width={14} height={14} className="brightness-200" />
                             Chat
