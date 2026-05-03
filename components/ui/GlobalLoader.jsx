@@ -8,17 +8,21 @@ import { cn } from "@/lib/utils";
 const Lottie = dynamic(() => import("lottie-react"), { ssr: false });
 
 export default function GlobalLoader({ 
-  text = "Loading...", 
+  text = "LOADING...", 
   fullScreen = false,
   className 
 }) {
   const content = (
-    <div className={cn("flex flex-col items-center justify-center gap-5", className)}>
-      <div className="w-48 h-48 drop-shadow-[0_0_25px_rgba(235,151,40,0.6)] brightness-150 contrast-125">
-        <Lottie animationData={LoadingAnimationData} loop={true} />
+    <div className={cn("flex flex-col items-center justify-center gap-6", className)}>
+      <div className="w-56 h-56 relative">
+        {/* Subtle glow background */}
+        <div className="absolute inset-0 bg-[#eb9728]/10 blur-[60px] rounded-full animate-pulse" />
+        <div className="relative drop-shadow-[0_0_30px_rgba(235,151,40,0.4)] brightness-125">
+          <Lottie animationData={LoadingAnimationData} loop={true} />
+        </div>
       </div>
       {text && (
-        <p className="text-xs font-black text-slate-300 uppercase tracking-[0.3em] animate-pulse">
+        <p className="text-[10px] font-black text-white/40 uppercase tracking-[0.5em] animate-pulse">
           {text}
         </p>
       )}
@@ -27,15 +31,15 @@ export default function GlobalLoader({
 
   if (fullScreen) {
     return (
-      <div className="min-h-screen w-full flex items-center justify-center bg-transparent">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-[#050507] transition-all duration-500">
         {content}
       </div>
     );
   }
 
-  // Fallback for smaller/inline loading states
+  // Inline fallback
   return (
-    <div className="w-full py-16 flex items-center justify-center bg-transparent">
+    <div className="w-full py-24 flex items-center justify-center bg-transparent">
       {content}
     </div>
   );

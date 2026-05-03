@@ -7,6 +7,15 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import messageIcon from "@/assets/message.png";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ManufacturerBidsPage() {
   const { data: session, status } = useSession();
@@ -21,13 +30,17 @@ export default function ManufacturerBidsPage() {
     dateFrom: "",
     dateTo: "",
   });
+  const [localFilters, setLocalFilters] = useState({ ...filters });
   const [sortBy, setSortBy] = useState("newest");
   const [refreshKey, setRefreshKey] = useState(0);
 
   const fetchBids = () => {
     setLoading(true);
+    setFilters({ ...localFilters }); // Apply the local filters
     setRefreshKey((k) => k + 1);
   };
+
+  const hasChanges = JSON.stringify(filters) !== JSON.stringify(localFilters);
   const [stats, setStats] = useState({
     totalBids: 0,
     acceptanceRate: 0,
@@ -110,25 +123,21 @@ export default function ManufacturerBidsPage() {
   const getStatusColor = (status) => {
     switch (status) {
       case "accepted":
-        return "bg-green-100 text-green-800";
+        return "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20";
       case "pending":
       case "under_consideration":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-amber-500/10 text-amber-500 border border-amber-500/20";
       case "rejected":
-        return "bg-red-100 text-red-800";
+        return "bg-red-500/10 text-red-500 border border-red-500/20";
       case "withdrawn":
-        return "bg-gray-100 text-gray-800";
+        return "bg-white/5 text-white/40 border border-white/10";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-white/5 text-white/40 border border-white/10";
     }
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
-        <GlobalLoader text="Loading..." />
-      </div>
-    );
+    return <GlobalLoader text="LOADING BIDS..." fullScreen={true} />;
   }
 
   if (status === "unauthenticated") {
@@ -138,8 +147,8 @@ export default function ManufacturerBidsPage() {
 
   if (session?.user?.role !== "manufacturer") {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
-        <div className="text-xl text-red-600">
+      <div className="min-h-screen flex items-center justify-center bg-[#050507]">
+        <div className="text-xl text-red-500 font-bold">
           Access Denied. Manufacturers only.
         </div>
       </div>
@@ -147,339 +156,243 @@ export default function ManufacturerBidsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8">
-        {/* Breadcrumbs */}
-        <div className="flex items-center gap-2 mb-4 text-sm">
-          <Link
-            href="/manufacturer/dashboard"
-            className="text-gray-500 hover:text-gray-700"
-          >
-            Dashboard
-          </Link>
-          <span className="text-gray-500">/</span>
-          <span className="text-gray-900 font-medium">My Bids</span>
-        </div>
+    <div className="min-h-screen bg-[#050507] text-white">
+      <main className="container mx-auto px-4 sm:px-6 lg:px-10 pt-0 pb-8">
+        <div className="flex flex-col lg:flex-row gap-8 items-start">
+          {/* Filters Sidebar - Now with independent scroll if content exceeds screen height */}
+          <aside className="lg:w-72 shrink-0 sticky top-2 lg:top-4 h-fit max-h-[calc(100vh-60px)] overflow-y-auto no-scrollbar pb-10 space-y-5">
+            {/* Page Title - Now part of sticky sidebar */}
+            <h1 className="text-4xl font-black bg-gradient-to-r from-[#eb9728] via-purple-500 via-indigo-500 to-emerald-400 bg-clip-text text-transparent mb-1">
+              My Bids
+            </h1>
 
-        {/* Page Title */}
-        <h1 className="text-4xl font-black text-blue-900 mb-8">My Bids</h1>
+            {/* Sort Dropdown - Moved here to declutter main layout */}
+            <div className="mb-6">
+              <Select value={sortBy} onValueChange={(val) => { setLoading(true); setSortBy(val); }}>
+                <SelectTrigger className="w-full bg-white/5 border-white/10 text-white rounded-xl px-4 h-12 hover:border-purple-500/50 hover:bg-purple-500/5 transition-all shadow-sm">
+                  <SelectValue placeholder="Sort by" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#0B011D] border-purple-500/30 text-white">
+                  <SelectItem value="newest" className="focus:bg-purple-500 focus:text-white transition-colors cursor-pointer">Sort by: Newest</SelectItem>
+                  <SelectItem value="oldest" className="focus:bg-purple-500 focus:text-white transition-colors cursor-pointer">Sort by: Oldest</SelectItem>
+                  <SelectItem value="highest_bid" className="focus:bg-purple-500 focus:text-white transition-colors cursor-pointer">Sort by: Highest Bid</SelectItem>
+                  <SelectItem value="lowest_bid" className="focus:bg-purple-500 focus:text-white transition-colors cursor-pointer">Sort by: Lowest Bid</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
 
-        <div className="flex flex-col lg:flex-row gap-8">
-          {/* Filters Sidebar */}
-          <aside className="lg:w-64 shrink-0">
-            <div className="sticky top-24 space-y-6">
-              {/* Filter Bids */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <h3 className="text-lg font-bold text-blue-900 mb-4">
-                  Filter Bids
-                </h3>
+            <div className="bg-white/[0.03] rounded-xl border-2 border-purple-500/30 p-5 shadow-sm">
+              <h3 className="text-lg font-bold text-white mb-5">
+                Filter Bids
+              </h3>
 
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Status
-                    </label>
-                    <div className="space-y-2">
-                      <label className="flex items-center gap-2">
+              <div className="space-y-5">
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-widest text-white/40 mb-3">
+                    Status
+                  </label>
+                  <div className="space-y-3">
+                    {["pending", "accepted", "rejected", "withdrawn"].map((s) => (
+                      <label key={s} className="flex items-center gap-3 cursor-pointer group">
                         <input
                           type="checkbox"
-                          checked={filters.pending}
+                          checked={localFilters[s]}
                           onChange={(e) => {
-                            setLoading(true);
-                            setFilters({
-                              ...filters,
-                              pending: e.target.checked,
+                            setLocalFilters({
+                              ...localFilters,
+                              [s]: e.target.checked,
                             });
                           }}
-                          className="rounded text-orange-500 focus:ring-orange-500"
+                          className="w-4 h-4 rounded bg-white/5 border-white/10 text-[#eb9728] focus:ring-[#eb9728]"
                         />
-                        <span className="text-sm text-gray-600">Pending</span>
+                        <span className="text-sm text-white/60 group-hover:text-purple-400 transition-colors capitalize">
+                          {s === "pending" ? "Pending / Consideration" : s}
+                        </span>
                       </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={filters.accepted}
-                          onChange={(e) => {
-                            setLoading(true);
-                            setFilters({
-                              ...filters,
-                              accepted: e.target.checked,
-                            });
-                          }}
-                          className="rounded text-orange-500 focus:ring-orange-500"
-                        />
-                        <span className="text-sm text-gray-600">Accepted</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={filters.rejected}
-                          onChange={(e) => {
-                            setLoading(true);
-                            setFilters({
-                              ...filters,
-                              rejected: e.target.checked,
-                            });
-                          }}
-                          className="rounded text-orange-500 focus:ring-orange-500"
-                        />
-                        <span className="text-sm text-gray-600">Rejected</span>
-                      </label>
-                      <label className="flex items-center gap-2">
-                        <input
-                          type="checkbox"
-                          checked={filters.withdrawn}
-                          onChange={(e) => {
-                            setLoading(true);
-                            setFilters({
-                              ...filters,
-                              withdrawn: e.target.checked,
-                            });
-                          }}
-                          className="rounded text-orange-500 focus:ring-orange-500"
-                        />
-                        <span className="text-sm text-gray-600">Withdrawn</span>
-                      </label>
-                    </div>
+                    ))}
                   </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Date Range
-                    </label>
-                    <input
-                      type="date"
-                      value={filters.dateFrom}
-                      onChange={(e) => {
-                        setLoading(true);
-                        setFilters({ ...filters, dateFrom: e.target.value });
-                      }}
-                      className="w-full rounded-lg border-gray-300 text-sm mb-2"
-                    />
-                    <input
-                      type="date"
-                      value={filters.dateTo}
-                      onChange={(e) => {
-                        setLoading(true);
-                        setFilters({ ...filters, dateTo: e.target.value });
-                      }}
-                      className="w-full rounded-lg border-gray-300 text-sm"
-                    />
-                  </div>
-
-                  <button
-                    onClick={fetchBids}
-                    className="w-full px-4 py-2 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600"
-                  >
-                    Apply Filters
-                  </button>
                 </div>
+
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-widest text-white/40 mb-3">
+                    Date Range
+                  </label>
+                  <div className="space-y-2">
+                    <input
+                      type="date"
+                      value={localFilters.dateFrom}
+                      onChange={(e) => {
+                        setLocalFilters({ ...localFilters, dateFrom: e.target.value });
+                      }}
+                      className="w-full bg-white/5 border-white/10 rounded-lg text-sm text-white focus:border-[#eb9728] focus:ring-[#eb9728] [color-scheme:dark]"
+                    />
+                    <input
+                      type="date"
+                      value={localFilters.dateTo}
+                      onChange={(e) => {
+                        setLocalFilters({ ...localFilters, dateTo: e.target.value });
+                      }}
+                      className="w-full bg-white/5 border-white/10 rounded-lg text-sm text-white focus:border-[#eb9728] focus:ring-[#eb9728] [color-scheme:dark]"
+                    />
+                  </div>
+                </div>
+
+                <button
+                  onClick={fetchBids}
+                  disabled={!hasChanges}
+                  className={`w-full px-4 py-2.5 font-black uppercase text-[11px] tracking-widest rounded-lg transition-all ${
+                    hasChanges 
+                      ? "bg-gradient-to-r from-[#eb9728] to-orange-600 text-white hover:shadow-[0_0_15px_rgba(235,151,40,0.4)] hover:scale-[1.01]" 
+                      : "bg-white/5 text-white/20 cursor-not-allowed border border-white/10"
+                  }`}
+                >
+                  Apply Filters
+                </button>
               </div>
+            </div>
 
-              {/* Saved RFQs */}
-              <div className="bg-white rounded-xl border border-gray-200 p-4">
-                <h3 className="text-lg font-bold text-blue-900 mb-3">
-                  Saved RFQs
-                </h3>
-                <div className="space-y-2">
-                  <a
-                    href="#"
-                    className="text-sm text-orange-500 hover:underline block"
+            <div className="bg-white/[0.03] rounded-xl border-2 border-purple-500/30 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-white">Saved RFQs</h3>
+                <span className="text-[10px] font-black text-[#eb9728] uppercase tracking-widest">2 items</span>
+              </div>
+              <div className="space-y-3">
+                {[
+                  { name: "High-Tolerance Gear Assembly", id: "RFQ-9921" },
+                  { name: "Aerospace Bracket Prototypes", id: "RFQ-4402" }
+                ].map((rfq, idx) => (
+                  <a 
+                    key={idx}
+                    href="#" 
+                    className="flex flex-col p-3 rounded-lg bg-white/5 border border-white/5 hover:border-purple-500/30 hover:bg-purple-500/10 transition-all group"
                   >
-                    High-Tolerance Gear Assembly
+                    <span className="text-sm text-white/80 group-hover:text-[#eb9728] font-bold transition-colors line-clamp-1">
+                      {rfq.name}
+                    </span>
+                    <span className="text-[10px] text-white/20 font-black uppercase tracking-tighter mt-1 group-hover:text-white/40">
+                      ID: {rfq.id}
+                    </span>
                   </a>
-                  <a
-                    href="#"
-                    className="text-sm text-orange-500 hover:underline block"
-                  >
-                    Aerospace Bracket Prototypes
-                  </a>
-                </div>
+                ))}
               </div>
             </div>
           </aside>
 
           {/* Main Content */}
-          <div className="flex-1">
-            {/* Stats Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <p className="text-gray-600 text-base font-medium mb-1">
-                  Total Bids Placed
-                </p>
-                <p className="text-3xl font-bold text-blue-900">
-                  {stats.totalBids}
-                </p>
+          <div className="flex-1 pt-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-8">
+              <div className="bg-white/[0.03] rounded-xl border-2 border-purple-500/30 p-6 shadow-sm">
+                <p className="text-white/40 text-sm font-bold uppercase tracking-widest mb-1">Total Bids Placed</p>
+                <p className="text-3xl font-black text-white">{stats.totalBids}</p>
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <p className="text-gray-600 text-base font-medium mb-1">
-                  Acceptance Rate
-                </p>
-                <p className="text-3xl font-bold text-blue-900">
-                  {stats.acceptanceRate}%
-                </p>
+              <div className="bg-white/[0.03] rounded-xl border-2 border-purple-500/30 p-6 shadow-sm">
+                <p className="text-white/40 text-sm font-bold uppercase tracking-widest mb-1">Acceptance Rate</p>
+                <p className="text-3xl font-black text-white">{stats.acceptanceRate}%</p>
               </div>
-              <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
-                <p className="text-gray-600 text-base font-medium mb-1">
-                  Avg Response Time
-                </p>
-                <p className="text-3xl font-bold text-blue-900">
-                  {stats.avgResponseTime} days
-                </p>
+              <div className="bg-white/[0.03] rounded-xl border-2 border-purple-500/30 p-6 shadow-sm">
+                <p className="text-white/40 text-sm font-bold uppercase tracking-widest mb-1">Avg Response Time</p>
+                <p className="text-3xl font-black text-white">{stats.avgResponseTime} days</p>
               </div>
             </div>
 
-            {/* Sort Dropdown */}
-            <div className="flex justify-end mb-4">
-              <select
-                value={sortBy}
-                onChange={(e) => {
-                  setLoading(true);
-                  setSortBy(e.target.value);
-                }}
-                className="rounded-lg border-gray-300 text-sm focus:border-orange-500 focus:ring-orange-500"
-              >
-                <option value="newest">Sort by: Newest</option>
-                <option value="oldest">Sort by: Oldest</option>
-                <option value="highest_bid">Sort by: Highest Bid</option>
-                <option value="lowest_bid">Sort by: Lowest Bid</option>
-              </select>
-            </div>
 
-            {/* Bids List */}
-            <div className="space-y-4">
+            <div className="space-y-5">
               {bids.length === 0 ? (
-                <div className="bg-white rounded-xl shadow-sm p-8 text-center">
+                <div className="bg-white/[0.03] border-2 border-purple-500/30 rounded-xl shadow-sm p-12 text-center">
                   <GlobalNoResults text="No bids found" />
                 </div>
               ) : (
                 bids.map((bid) => (
-                  <div
-                    key={bid._id}
-                    className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-lg transition p-4"
-                  >
-                    {bid.rfqId?.customOrderId?.model3D?.url && (
-                      <div className="mb-3">
-                        <span className="inline-flex items-center px-2 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-semibold border border-blue-200">
+                  <div key={bid?._id} className="bg-white/[0.03] rounded-xl border-2 border-purple-500/30 shadow-sm hover:bg-purple-500/10 hover:border-purple-500/50 transition-all p-5 group">
+                    {bid?.rfqId?.customOrderId?.model3D?.url && (
+                      <div className="mb-4">
+                        <span className="inline-flex items-center px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-black uppercase tracking-widest border border-blue-500/20 shadow-[0_0_10px_rgba(59,130,246,0.15)]">
                           3D Model Available
                         </span>
                       </div>
                     )}
-                    <div className="flex flex-col md:flex-row gap-4">
-                      {bid.rfqId?.customOrderId?.images?.[0]?.url && (
-                        <div
-                          className="w-full md:w-32 h-32 bg-gray-100 rounded-lg bg-cover bg-center"
-                          style={{
-                            backgroundImage: `url(${bid.rfqId.customOrderId.images[0].url})`,
-                          }}
-                        />
+                    <div className="flex flex-col md:flex-row gap-6">
+                      {bid?.rfqId?.customOrderId?.images?.[0]?.url && (
+                        <div className="w-full md:w-36 h-36 relative overflow-hidden rounded-xl border border-white/10 shadow-lg shrink-0 bg-gray-900">
+                          <Image
+                            src={bid.rfqId.customOrderId.images[0].url}
+                            alt="Bid Part"
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
                       )}
 
-                      <div className="flex-1">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h4 className="text-lg font-bold text-blue-900">
-                              {bid.rfqId?.customOrderId?.title || "RFQ"}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-start mb-3 gap-4">
+                          <div className="min-w-0">
+                            <h4 className="text-xl font-bold text-white truncate group-hover:text-[#eb9728] transition-colors">
+                              {bid?.rfqId?.customOrderId?.title || "RFQ"}
                             </h4>
-                            <p className="text-xs text-gray-500">
-                              RFQ ID: {bid.rfqId?.rfqNumber}
+                            <p className="text-xs text-white/30 font-bold uppercase tracking-tighter mt-1">
+                              RFQ ID: {bid?.rfqId?.rfqNumber}
                             </p>
                           </div>
-                          <span
-                            className={`px-2.5 py-0.5 rounded-full text-sm font-semibold ${getStatusColor(
-                              bid.status,
-                            )}`}
-                          >
-                            {bid.status.replace("_", " ").toUpperCase()}
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest whitespace-nowrap shadow-sm ${getStatusColor(bid?.status)}`}>
+                            {bid?.status === "under_consideration" ? "PENDING" : (bid?.status?.replace("_", " ").toUpperCase() || "PENDING")}
                           </span>
                         </div>
 
-                        <p className="text-sm text-gray-600 mb-3">
-                          {bid.rfqId?.customOrderId?.description ||
-                            "No description"}
+                        <p className="text-sm text-white/50 mb-5 line-clamp-2 leading-relaxed">
+                          {bid?.rfqId?.customOrderId?.description || "No description"}
                         </p>
 
-                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mb-3">
-                          <div>
-                            <span className="text-gray-500 font-medium">
-                              Quantity:{" "}
-                            </span>
-                            <strong className="text-gray-800">
-                              {bid.rfqId?.customOrderId?.quantity || "N/A"}{" "}
-                              units
-                            </strong>
+                        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm mb-1">
+                          <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-white/5 border border-white/5 group-hover:border-purple-500/20 transition-all">
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">Quantity</span>
+                            <strong className="text-white font-black text-base">{bid?.rfqId?.customOrderId?.quantity || "N/A"} <span className="text-[10px] font-medium text-white/40">pcs</span></strong>
                           </div>
-                          {bid.rfqId?.customOrderId
-                            ?.materialPreferences?.[0] && (
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Material:{" "}
-                              </span>
-                              <strong className="text-gray-800">
-                                {bid.rfqId.customOrderId.materialPreferences[0]}
-                              </strong>
+                          {bid?.rfqId?.customOrderId?.materialPreferences?.[0] && (
+                            <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-white/5 border border-white/5 group-hover:border-purple-500/20 transition-all">
+                              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">Material</span>
+                              <strong className="text-white font-black text-base truncate">{bid.rfqId.customOrderId.materialPreferences[0]}</strong>
                             </div>
                           )}
-                          {bid.rfqId?.customOrderId?.deadline && (
-                            <div>
-                              <span className="text-gray-500 font-medium">
-                                Deadline:{" "}
-                              </span>
-                              <strong className="text-gray-800">
-                                {new Date(
-                                  bid.rfqId.customOrderId.deadline,
-                                ).toLocaleDateString()}
-                              </strong>
+                          {bid?.rfqId?.customOrderId?.deadline && (
+                            <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-white/5 border border-white/5 group-hover:border-purple-500/20 transition-all">
+                              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">Deadline</span>
+                              <strong className="text-white font-black text-base">{new Date(bid.rfqId.customOrderId.deadline).toLocaleDateString()}</strong>
                             </div>
                           )}
-                          <div>
-                            <span className="text-gray-500 font-medium">
-                              Your Bid:{" "}
-                            </span>
-                            <strong className="text-orange-500">
-                              ${bid.amount.toLocaleString()}
-                            </strong>
+                          <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-[#eb9728]/10 border border-[#eb9728]/20 group-hover:border-[#eb9728]/40 transition-all shadow-[0_0_20px_rgba(235,151,40,0.05)]">
+                            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#eb9728]">Your Bid</span>
+                            <strong className="text-white font-black text-lg">${bid?.amount?.toLocaleString()}</strong>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    <div className="border-t border-gray-200 pt-3 flex flex-wrap items-center justify-between gap-3 mt-3">
-                      <div className="text-sm text-gray-500">
-                        Bid Placed:{" "}
-                        {new Date(
-                          bid.submittedAt || bid.createdAt,
-                        ).toLocaleDateString()}
-                        {bid.status === "under_consideration" && (
-                          <>
-                            <span className="mx-2">|</span>
-                            <strong className="text-orange-500">
-                              Counter Offer Received
-                            </strong>
-                          </>
+                    <div className="border-t border-white/5 pt-4 flex flex-wrap items-center justify-between gap-4 mt-5">
+                      <div className="text-xs text-white/30 font-medium">
+                        Bid Placed: <span className="text-white/60 font-bold">{new Date(bid?.submittedAt || bid?.createdAt).toLocaleDateString()}</span>
+                        {bid?.status === "under_consideration" && (
+                          <><span className="mx-3 text-white/10">|</span><strong className="text-amber-500 uppercase tracking-widest text-[10px] font-black animate-pulse">Counter Offer Received</strong></>
                         )}
                       </div>
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/bids/${bid._id}`}
-                          className="px-4 py-2 bg-gray-100 text-gray-800 font-bold rounded-lg hover:bg-gray-200 text-sm"
-                        >
+                      <div className="flex gap-3">
+                        <Link href={`/bids/${bid?._id}`} className="px-4 py-2 bg-white/10 text-white/80 font-black uppercase text-[10px] tracking-widest rounded-lg hover:bg-white/20 hover:text-white transition-all border border-white/20">
                           View Details
                         </Link>
-                        {bid.status === "under_consideration" && (
+                        {bid?.status === "under_consideration" && (
                           <Link
-                            href={`/bids/${bid._id}`}
-                            className="px-4 py-2 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 text-sm"
+                            href={`/bids/${bid?._id}`}
+                            className="px-4 py-2 bg-gradient-to-r from-[#eb9728] to-orange-600 text-white font-black uppercase text-[10px] tracking-widest rounded-lg hover:shadow-[0_0_15px_rgba(235,151,40,0.4)] hover:scale-[1.02] transition-all"
                           >
                             Respond to Counter
                           </Link>
                         )}
-                        {bid.status === "pending" && (
+                        {bid?.status === "pending" && (
                           <Link
-                            href={`/bids/${bid._id}`}
-                            className="px-4 py-2 bg-blue-500 text-white font-bold rounded-lg hover:bg-blue-600 text-sm"
+                            href={`/bids/${bid?._id}#chat`}
+                            className="px-4 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-black uppercase text-[10px] tracking-widest rounded-lg hover:shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:scale-[1.02] transition-all flex items-center gap-2"
                           >
-                            💬 Chat
+                            <Image src={messageIcon} alt="Chat" width={14} height={14} className="brightness-200" />
+                            Chat
                           </Link>
                         )}
                       </div>
@@ -492,23 +405,14 @@ export default function ManufacturerBidsPage() {
         </div>
       </main>
 
-      {/* Footer */}
-      <footer className="mt-16 border-t border-gray-200 bg-white/50 py-6">
+      <footer className="mt-16 border-t border-white/5 bg-black/20 backdrop-blur-sm py-8">
         <div className="container mx-auto px-4 text-center">
-          <div className="flex justify-center gap-6 mb-4">
-            <a href="#" className="text-gray-600 hover:text-orange-500 text-sm">
-              Help
-            </a>
-            <a href="#" className="text-gray-600 hover:text-orange-500 text-sm">
-              Terms & Conditions
-            </a>
-            <a href="#" className="text-gray-600 hover:text-orange-500 text-sm">
-              Contact Support
-            </a>
+          <div className="flex justify-center gap-8 mb-6">
+            <a href="#" className="text-white/40 hover:text-[#eb9728] text-xs font-bold uppercase tracking-widest transition-colors">Help</a>
+            <a href="#" className="text-white/40 hover:text-[#eb9728] text-xs font-bold uppercase tracking-widest transition-colors">Terms & Conditions</a>
+            <a href="#" className="text-white/40 hover:text-[#eb9728] text-xs font-bold uppercase tracking-widest transition-colors">Contact Support</a>
           </div>
-          <p className="text-sm text-gray-500">
-            © 2024 Craftit, Inc. All rights reserved.
-          </p>
+          <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.4em]">© {new Date().getFullYear()} CRAFTIT GLOBAL · ALL RIGHTS RESERVED</p>
         </div>
       </footer>
     </div>

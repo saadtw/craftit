@@ -462,7 +462,7 @@ export default function CustomerRFQDetails() {
                               <span
                                 className={`inline-flex px-2.5 py-1 rounded-full border text-[10px] font-bold ${bidStatus.class}`}
                               >
-                                {bid.status.replace("_", " ").toUpperCase()}
+                                {bid.status === "under_consideration" ? "PENDING" : bid.status.replace("_", " ").toUpperCase()}
                               </span>
                             </div>
                           </div>

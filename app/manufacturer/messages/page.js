@@ -102,183 +102,286 @@ export default function ManufacturerMessagesPage() {
   }, []);
 
   const STATUS_COLORS = {
-    accepted: "bg-blue-100 text-blue-700",
-    in_production: "bg-purple-100 text-purple-700",
-    shipped: "bg-indigo-100 text-indigo-700",
-    completed: "bg-green-100 text-green-700",
-    disputed: "bg-orange-100 text-orange-700",
+    accepted: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+    in_production: "bg-purple-500/10 border-purple-500/20 text-purple-400",
+    shipped: "bg-indigo-500/10 border-indigo-500/20 text-indigo-400",
+    completed: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+    disputed: "bg-orange-500/10 border-orange-500/20 text-orange-400",
   };
 
   const hasActiveFilters =
     Boolean(searchQuery) || statusFilter !== "all" || unreadOnly;
 
+  // ─── Custom Dropdown Component ───────────────────────────────────────────
+  function CustomSelect({ value, onChange, options, label }) {
+    const [isOpen, setIsOpen] = useState(false);
+    const containerRef = useRef(null);
+
+    useEffect(() => {
+      const handleClickOutside = (e) => {
+        if (containerRef.current && !containerRef.current.contains(e.target)) {
+          setIsOpen(false);
+        }
+      };
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }, []);
+
+    const selectedOption = options.find((o) => o.value === value) || options[0];
+
+    return (
+      <div className="relative" ref={containerRef}>
+        <button
+          type="button"
+          onClick={() => setIsOpen(!isOpen)}
+          className="w-full px-4 py-3 bg-white/[0.03] border border-white/10 rounded-2xl text-sm text-white/70 flex items-center justify-between hover:bg-white/[0.06] transition-all"
+        >
+          <span className="truncate">{selectedOption.label}</span>
+          <span className={`material-symbols-outlined text-white/20 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}>
+            expand_more
+          </span>
+        </button>
+
+        {isOpen && (
+          <div className="absolute z-50 mt-2 w-full bg-[#0c0c11] border border-white/10 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+            <div className="max-h-60 overflow-y-auto py-2">
+              {options.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => {
+                    onChange(opt.value);
+                    setIsOpen(false);
+                  }}
+                  className={`w-full px-4 py-2.5 text-left text-sm transition-colors ${
+                    value === opt.value
+                      ? "bg-gradient-to-r from-purple-600/20 to-[#eb9728]/20 text-[#eb9728] font-bold"
+                      : "text-white/60 hover:bg-white/5 hover:text-white"
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
   if (status === "loading" || initialLoading) {
     return (
-      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin" />
+      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
+        <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-3xl">
-        <div className="flex items-center justify-between mb-6">
+    <div className="min-h-screen bg-[#050507] text-white">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-12">
+        <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-2xl font-extrabold text-blue-900">Messages</h1>
-            <p className="text-sm text-gray-500 mt-0.5">
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#eb9728] mb-1">
+              Communication Hub
+            </p>
+            <h1 className="text-3xl font-black tracking-tight">
+              <span className="bg-gradient-to-r from-purple-500 via-orange-500 to-[#eb9728] bg-clip-text text-transparent inline-block">
+                Messages
+              </span>
+            </h1>
+            <p className="text-sm text-white/35 mt-1">
               Chat with customers about their orders
             </p>
           </div>
-          {isFetching && (
-            <span className="text-xs text-gray-400">Updating...</span>
-          )}
-          {unreadThreads > 0 && (
-            <span className="inline-flex items-center px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-xs font-semibold">
-              {unreadThreads} unread
+          <div className="flex flex-col items-end gap-2">
+            {isFetching && (
+              <span className="text-[10px] font-bold uppercase tracking-widest text-white/20 animate-pulse">
+                Syncing...
+              </span>
+            )}
+            {unreadThreads > 0 && (
+              <span className="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold uppercase tracking-wider">
+                {unreadThreads} unread
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="bg-white/[0.03] border-2 border-purple-500/30 rounded-2xl p-4 mb-8">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Search - Main Column */}
+            <div className="flex-1 relative group">
+              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-[#eb9728] transition-colors text-xl">
+                search
+              </span>
+              <input
+                type="text"
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                placeholder="Search orders, customers, or messages..."
+                className="w-full pl-12 pr-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white placeholder:text-white/20 focus:outline-none focus:border-[#eb9728]/40 focus:bg-white/[0.05] transition-all"
+              />
+            </div>
+
+            {/* Filters - Action Row */}
+            <div className="flex flex-wrap sm:flex-nowrap items-center gap-3">
+              <div className="w-full sm:w-48">
+                <CustomSelect
+                  value={statusFilter}
+                  onChange={setStatusFilter}
+                  options={[
+                    { value: "all", label: "All Statuses" },
+                    { value: "accepted", label: "Accepted" },
+                    { value: "in_production", label: "In Production" },
+                    { value: "shipped", label: "Shipped" },
+                    { value: "completed", label: "Completed" },
+                    { value: "disputed", label: "Disputed" },
+                  ]}
+                />
+              </div>
+
+              <div className="w-full sm:w-44">
+                <CustomSelect
+                  value={sortBy}
+                  onChange={setSortBy}
+                  options={[
+                    { value: "latest", label: "Latest" },
+                    { value: "oldest", label: "Oldest" },
+                    { value: "unread", label: "Unread First" },
+                  ]}
+                />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <label className="flex items-center gap-3 px-4 py-3 bg-white/[0.03] border border-white/10 rounded-xl text-sm text-white/50 cursor-pointer hover:bg-white/[0.06] transition-all select-none group h-[46px]">
+                  <div className="relative flex items-center justify-center">
+                    <input
+                      type="checkbox"
+                      checked={unreadOnly}
+                      onChange={(e) => setUnreadOnly(e.target.checked)}
+                      className="peer sr-only"
+                    />
+                    <div className="w-4 h-4 border border-white/20 rounded bg-white/5 peer-checked:bg-[#eb9728] peer-checked:border-[#eb9728] transition-all flex items-center justify-center">
+                      <span className="material-symbols-outlined text-white text-[10px] font-black scale-0 peer-checked:scale-100 transition-transform">
+                        check
+                      </span>
+                    </div>
+                  </div>
+                  <span className="font-bold text-[10px] uppercase tracking-wider group-hover:text-white/80 transition-colors whitespace-nowrap">Unread</span>
+                </label>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSearchInput("");
+                    setStatusFilter("all");
+                    setSortBy("latest");
+                    setUnreadOnly(false);
+                  }}
+                  disabled={!hasActiveFilters && sortBy === "latest"}
+                  className="w-12 h-[46px] flex items-center justify-center bg-white/[0.03] border border-white/10 rounded-xl text-white/20 hover:text-red-400 hover:bg-red-500/10 hover:border-red-500/20 disabled:opacity-0 transition-all"
+                  title="Clear Filters"
+                >
+                  <span className="material-symbols-outlined text-xl">filter_alt_off</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/[0.03] border-2 border-purple-500/30 rounded-2xl p-4 mb-8 flex gap-4">
+          <div className="h-9 w-9 rounded-xl bg-purple-500/10 flex items-center justify-center shrink-0">
+            <span className="material-symbols-outlined text-purple-400 text-lg">
+              info
             </span>
-          )}
+          </div>
+          <div className="text-xs text-white/50 leading-relaxed py-0.5">
+            <p className="font-bold text-white/80 mb-0.5">Streamlined Support</p>
+            <p>
+              Each order has its own chat thread. Open an order to message the
+              customer directly and manage all related discussions in one place.
+            </p>
+          </div>
         </div>
 
-        <div className="relative mb-4">
-          <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-lg">
-            search
-          </span>
-          <input
-            type="text"
-            value={searchInput}
-            onChange={(e) => setSearchInput(e.target.value)}
-            placeholder="Search by order, customer, or product..."
-            className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:border-orange-400"
-          />
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2 mb-4">
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:border-orange-400"
-          >
-            <option value="all">All statuses</option>
-            <option value="accepted">Accepted</option>
-            <option value="in_production">In production</option>
-            <option value="shipped">Shipped</option>
-            <option value="completed">Completed</option>
-            <option value="disputed">Disputed</option>
-            <option value="cancelled">Cancelled</option>
-          </select>
-
-          <select
-            value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
-            className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white focus:outline-none focus:border-orange-400"
-          >
-            <option value="latest">Latest first</option>
-            <option value="oldest">Oldest first</option>
-            <option value="unread">Unread first</option>
-          </select>
-
-          <label className="flex items-center justify-center gap-2 px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white cursor-pointer select-none">
-            <input
-              type="checkbox"
-              checked={unreadOnly}
-              onChange={(e) => setUnreadOnly(e.target.checked)}
-              className="accent-orange-500"
-            />
-            Unread only
-          </label>
-
-          <button
-            type="button"
-            onClick={() => {
-              setSearchInput("");
-              setStatusFilter("all");
-              setSortBy("latest");
-              setUnreadOnly(false);
-            }}
-            disabled={!hasActiveFilters && sortBy === "latest"}
-            className="px-3 py-2.5 border border-gray-200 rounded-xl text-sm bg-white disabled:opacity-50"
-          >
-            Clear filters
-          </button>
-        </div>
-
-        <p className="text-xs text-gray-500 mb-4">
-          {pagination.total || 0} conversation
-          {(pagination.total || 0) === 1 ? "" : "s"} found
-        </p>
-
-        <div className="bg-blue-50 border border-blue-100 rounded-xl p-3 mb-4 flex gap-2">
-          <span className="material-symbols-outlined text-blue-500 text-base shrink-0 mt-0.5">
-            info
-          </span>
-          <p className="text-xs text-blue-700">
-            Each order has its own chat thread. Open an order to message the
-            customer directly.
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/20">
+            {pagination.total || 0} conversation
+            {(pagination.total || 0) === 1 ? "" : "s"} found
           </p>
         </div>
 
         {threads.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm text-center py-20">
-            <span className="material-symbols-outlined text-5xl text-gray-200 block mb-3">
-              chat_bubble
-            </span>
-            <p className="text-gray-600 font-semibold mb-1">
+          <div className="bg-white/[0.02] rounded-3xl border border-white/8 text-center py-24 px-8">
+            <div className="h-20 w-20 rounded-3xl bg-white/[0.03] border border-white/5 flex items-center justify-center mx-auto mb-6">
+              <span className="material-symbols-outlined text-5xl text-white/10">
+                chat_bubble
+              </span>
+            </div>
+            <p className="text-white font-bold mb-2 text-lg">
               {hasActiveFilters
-                ? "No conversations match these filters"
-                : "No active conversations"}
+                ? "No matching conversations"
+                : "No conversations yet"}
             </p>
-            <p className="text-sm text-gray-400">
+            <p className="text-sm text-white/30 max-w-xs mx-auto leading-relaxed">
               {hasActiveFilters
-                ? "Try clearing filters or using broader search terms."
-                : "Accept orders to start chatting with customers."}
+                ? "Try clearing your filters or using different search terms."
+                : "Accepted orders will appear here as soon as customers start a discussion."}
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-            <div className="divide-y divide-gray-50">
+          <div className="bg-white/[0.03] border-2 border-purple-500/30 rounded-3xl overflow-hidden">
+            <div className="divide-y divide-white/5">
               {threads.map((thread) => (
                 <Link
                   key={thread.conversationId}
-                  href={`/manufacturer/orders/${thread.orderId}`}
+                  href={`/manufacturer/orders/${thread.orderId}#chat`}
                 >
-                  <div className="flex items-center gap-4 px-5 py-4 hover:bg-gray-50 transition-colors">
-                    <div className="w-11 h-11 rounded-full bg-amber-100 flex items-center justify-center font-bold text-amber-600 text-base shrink-0">
+                  <div className="flex items-center gap-5 px-6 py-6 hover:bg-white/[0.07] transition-all group relative border-l-4 border-l-transparent hover:border-l-purple-500/50">
+                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-[#eb9728]/20 border border-white/10 flex items-center justify-center font-black text-[#eb9728] text-lg shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform">
                       {(thread.counterpart?.name || "C").charAt(0)}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="font-semibold text-gray-900 text-sm truncate">
+                      <div className="flex items-center gap-3 mb-1">
+                        <p className="font-bold text-white text-base truncate group-hover:text-[#eb9728] transition-colors">
                           {thread.counterpart?.name || "Customer"}
                         </p>
                         <span
-                          className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full shrink-0 ${STATUS_COLORS[thread.orderStatus] || "bg-gray-100 text-gray-500"}`}
+                          className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full border ${STATUS_COLORS[thread.orderStatus] || "bg-white/5 border-white/10 text-white/40"}`}
                         >
                           {thread.orderStatus?.replace(/_/g, " ")}
                         </span>
                         {thread.unreadCount > 0 && (
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-orange-500 text-white shrink-0">
+                          <span className="h-5 min-w-5 px-1.5 flex items-center justify-center rounded-full bg-orange-600 text-white text-[10px] font-black shadow-[0_0_10px_rgba(234,88,12,0.4)]">
                             {thread.unreadCount > 9 ? "9+" : thread.unreadCount}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-500 truncate">
-                        {thread.productName || "Custom Order"} ·{" "}
-                        {thread.orderNumber}
-                      </p>
-                      <p className="text-xs text-gray-400 truncate mt-0.5">
+                      <div className="flex items-center gap-2 text-xs font-medium mb-1.5">
+                        <span className="text-white/40 truncate">
+                          {thread.productName || "Custom Order"}
+                        </span>
+                        <span className="w-1 h-1 rounded-full bg-white/10" />
+                        <span className="text-white/20 font-mono">
+                          {thread.orderNumber}
+                        </span>
+                      </div>
+                      <p className="text-sm text-white/50 truncate leading-relaxed">
                         {thread.lastMessage?.text || "No messages yet"}
                       </p>
                     </div>
                     <div className="text-right shrink-0">
-                      <p className="text-xs text-gray-400">
+                      <p className="text-[10px] font-bold text-white/20 uppercase tracking-tighter">
                         {new Date(
                           thread.lastMessage?.sentAt || thread.updatedAt,
                         ).toLocaleDateString()}
                       </p>
-                      <span className="material-symbols-outlined text-gray-300 text-base mt-1 block">
-                        chevron_right
-                      </span>
+                      <div className="mt-3 text-white/10 group-hover:text-[#eb9728] group-hover:translate-x-1 transition-all">
+                        <span className="material-symbols-outlined">
+                          chevron_right
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </Link>
@@ -288,16 +391,16 @@ export default function ManufacturerMessagesPage() {
         )}
 
         {pagination.pages > 1 && (
-          <div className="flex items-center justify-between mt-4 text-sm text-gray-500">
-            <span>
-              Page {pagination.page} of {pagination.pages}
+          <div className="flex items-center justify-between mt-8 px-2">
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-white/20">
+              Page {pagination.page} / {pagination.pages}
             </span>
-            <div className="flex gap-2">
+            <div className="flex gap-3">
               <button
                 type="button"
                 onClick={() => fetchInbox(pagination.page - 1)}
                 disabled={pagination.page <= 1 || isFetching}
-                className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white disabled:opacity-50"
+                className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.03] text-[11px] font-bold uppercase tracking-widest text-white/60 hover:text-white disabled:opacity-20 transition-all"
               >
                 Prev
               </button>
@@ -305,7 +408,7 @@ export default function ManufacturerMessagesPage() {
                 type="button"
                 onClick={() => fetchInbox(pagination.page + 1)}
                 disabled={pagination.page >= pagination.pages || isFetching}
-                className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white disabled:opacity-50"
+                className="px-4 py-2 rounded-xl border border-white/10 bg-white/[0.03] text-[11px] font-bold uppercase tracking-widest text-white/60 hover:text-white disabled:opacity-20 transition-all"
               >
                 Next
               </button>

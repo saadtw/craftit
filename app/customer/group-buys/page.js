@@ -232,6 +232,12 @@ export default function CustomerGroupBuysPage() {
     fetchGroupBuys(1);
   }, [fetchGroupBuys]);
 
+  useEffect(() => {
+    if (status !== "loading" && !session) {
+      router.replace("/auth/login");
+    }
+  }, [session, status, router]);
+
   if (status === "loading") {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#050507]">
@@ -244,7 +250,6 @@ export default function CustomerGroupBuysPage() {
   }
 
   if (!session) {
-    router.replace("/auth/login");
     return null;
   }
 

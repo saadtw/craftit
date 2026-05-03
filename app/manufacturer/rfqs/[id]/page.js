@@ -203,7 +203,7 @@ export default function ManufacturerRFQDetails() {
                           : "bg-gray-100 text-gray-800"
                     }`}
                   >
-                    {myBid.status.toUpperCase().replace("_", " ")}
+                    {myBid.status === "under_consideration" ? "PENDING" : myBid.status.toUpperCase().replace("_", " ")}
                   </span>
                 </div>
                 <Link

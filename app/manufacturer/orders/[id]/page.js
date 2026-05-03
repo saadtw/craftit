@@ -83,6 +83,21 @@ export default function ManufacturerOrderDetailPage() {
     }
   }, [status, session, router, fetchOrder]);
 
+  // Scroll to chat if hash exists
+  useEffect(() => {
+    if (!loading && order && typeof window !== "undefined") {
+      const hash = window.location.hash;
+      if (hash === "#chat") {
+        setTimeout(() => {
+          const element = document.getElementById("chat");
+          if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "start" });
+          }
+        }, 100);
+      }
+    }
+  }, [loading, order]);
+
   const updateStatus = async (newStatus, extra = {}) => {
     setActionLoading(true);
     try {
@@ -796,7 +811,7 @@ export default function ManufacturerOrderDetailPage() {
 
         {/* Chat */}
         {order.status !== "cancelled" && (
-          <div className="mt-6">
+          <div className="mt-6" id="chat">
             <h2 className="text-base font-bold text-blue-900 mb-3">
               Chat with Customer
             </h2>
