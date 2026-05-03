@@ -18,20 +18,27 @@ const s3Client = new S3Client({
   },
 });
 
+// App Router configuration to bypass timeout constraints on Vercel/serverless environments
+export const maxDuration = 300; // 5 minutes
+
+// Note: In Next.js App Router, 'export const config = { api: { bodyParser: false } }' is not used. 
+// Route Handlers (app/**/route.js) do not automatically parse the body, so they natively support streaming large files.
+// Ensure your next.config.js does not have any conflicting bodySizeLimit constraints if you are using Server Actions alongside this.
+
 const FILE_TYPES = {
   "3d-model": {
     extensions: [".stl", ".obj", ".gltf", ".glb"],
-    maxSize: 50 * 1024 * 1024, // 50MB
+    maxSize: 100 * 1024 * 1024, // Increased to 100MB
     folder: "3d-models",
   },
   image: {
     extensions: [".jpg", ".jpeg", ".png", ".webp"],
-    maxSize: 5 * 1024 * 1024, // 5MB
+    maxSize: 10 * 1024 * 1024, // 10MB
     folder: "images",
   },
   document: {
     extensions: [".pdf", ".doc", ".docx"],
-    maxSize: 10 * 1024 * 1024, // 10MB
+    maxSize: 20 * 1024 * 1024, // 20MB
     folder: "documents",
   },
 };
@@ -39,6 +46,18 @@ const FILE_TYPES = {
 // POST /api/upload
 export async function POST(request) {
   try {
+    // We immediately consume the request stream as formData to prevent Next.js from throwing size limits
+    const formData = await request.formData();
+    const file = formData.get("file");
+    const fileType = formData.get("type"); // '3d-model' or 'image' or 'document'
+    
+    // Requirement: Add a console.log at the very beginning to verify request
+    if (file) {
+      console.log(`Incoming request: ${file.name} - ${file.size} bytes`);
+    } else {
+      console.log(`Incoming request: No file attached`);
+    }
+
     // Check authentication
     const session = await resolveRequestSession(request);
     if (!session) {
@@ -47,10 +66,6 @@ export async function POST(request) {
         { status: 401 },
       );
     }
-
-    const formData = await request.formData();
-    const file = formData.get("file");
-    const fileType = formData.get("type"); // '3d-model' or 'image' or 'document'
 
     if (!file) {
       return NextResponse.json(
@@ -109,7 +124,18 @@ export async function POST(request) {
 
     if (fileType === "3d-model") {
       const ext = path.extname(fileName).toLowerCase();
-      if (ext !== ".glb" && ext !== ".gltf") {
+      const isWebReady = (ext === ".glb" || ext === ".gltf");
+      const isUnderLimit = file.size < 25165824; // 24MB limit (25,165,824 bytes)
+
+      if (isWebReady && isUnderLimit) {
+        // Branch A (Fast-Track)
+        console.log("[FAST-TRACK] Skipping converter for web-ready asset under 25MB");
+        if (!uploadContentType) {
+          uploadContentType = "model/gltf-binary";
+        }
+      } else {
+        // Branch B (Pipeline)
+        console.log("[PIPELINE] Sending to Python for optimization/conversion");
         try {
           const tempDir = os.tmpdir();
           const timestampStr = Date.now().toString();
@@ -146,10 +172,6 @@ export async function POST(request) {
           if (tempOutputPath) {
             await fs.unlink(tempOutputPath).catch(() => { });
           }
-        }
-      } else {
-        if (!uploadContentType) {
-          uploadContentType = "model/gltf-binary";
         }
       }
     }

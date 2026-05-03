@@ -269,10 +269,13 @@ function NewCustomOrderContent() {
     }
   };
 
-  const handleEditorSave = async (gltfBlob, annotations, cameraState) => {
+  const handleEditorSave = async (gltfBlob, annotations, cameraState, snapshotBlob) => {
     setUploading(true);
     try {
-      const file = new File([gltfBlob], 'annotated-model.glb', { type: 'model/gltf-binary' });
+      const timestamp = Date.now();
+
+      // 1. Upload the edited model to S3
+      const file = new File([gltfBlob], `model_${timestamp}.glb`, { type: 'model/gltf-binary' });
       const formData = new FormData();
       formData.append("file", file);
       formData.append("type", "3d-model");
@@ -283,18 +286,41 @@ function NewCustomOrderContent() {
       });
       const data = await response.json();
 
-      if (data.success) {
-        setModel3D({
-          url: data.file.url,
-          filename: file.name,
-          fileSize: file.size,
-          annotations: annotations,
-          cameraState: cameraState
-        });
-        setIsEditorOpen(false);
-      } else {
+      if (!data.success) {
         alert("Save failed: " + data.error);
+        return;
       }
+
+      // 2. Upload the snapshot image (if captured)
+      let snapshotUrl = null;
+      if (snapshotBlob) {
+        const snapshotFile = new File([snapshotBlob], `snapshot_${timestamp}.png`, {
+          type: "image/png",
+        });
+        const snapFormData = new FormData();
+        snapFormData.append("file", snapshotFile);
+        snapFormData.append("type", "image");
+
+        const snapRes = await fetch("/api/upload", { method: "POST", body: snapFormData });
+        const snapData = await snapRes.json();
+
+        if (snapData.success) {
+          snapshotUrl = snapData.file.url;
+        } else {
+          console.warn("[new-custom-order] Snapshot upload failed:", snapData.error);
+        }
+      }
+
+      // 3. Update local state (no DB record yet — will be submitted with the form)
+      setModel3D({
+        url: data.file.url,
+        filename: file.name,
+        fileSize: file.size,
+        thumbnailUrl: snapshotUrl,
+        annotations,
+        cameraState,
+      });
+      setIsEditorOpen(false);
     } catch (error) {
       alert("Save error: " + error.message);
     } finally {

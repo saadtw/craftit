@@ -1,17 +1,20 @@
-// app/api/models/update/route.js
 import { NextResponse } from "next/server";
 import { resolveRequestSession } from "@/lib/requestAuth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import CustomOrder from "@/models/CustomOrder";
+import { S3Client, DeleteObjectCommand } from "@aws-sdk/client-s3";
+
+// Initialize S3 Client for deletion logic
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
 // ── Resource config map ─────────────────────────────────────────────────────
-// Each entry declares:
-//   model       - the Mongoose model to query
-//   ownerField  - the field on the document that holds the owner's user ID
-//
-// Only resources that actually contain a model3D sub-document in their
-// Mongoose schema are listed here. (Order does not have model3D.)
 const RESOURCE_CONFIG = {
   product: {
     model: Product,
@@ -49,7 +52,7 @@ export async function PATCH(request) {
       );
     }
 
-    const { resourceId, resourceType, annotations, cameraState, dimensions } =
+    const { resourceId, resourceType, annotations, cameraState, dimensions, newModelUrl, newThumbnailUrl, newFileSize } =
       body;
 
     if (!resourceId || typeof resourceId !== "string") {
@@ -94,7 +97,6 @@ export async function PATCH(request) {
     }
 
     // ── 5. Ownership check ──────────────────────────────────────────────────
-    // Admins bypass ownership checks so they can manage any resource.
     const isAdmin = session.user.role === "admin";
     const ownerId = doc[config.ownerField]?.toString();
 
@@ -109,13 +111,9 @@ export async function PATCH(request) {
     }
 
     // ── 6. Build the update payload ─────────────────────────────────────────
-    // We only update sub-fields that were explicitly included in the request
-    // body. Omitting a field (undefined) does NOT overwrite it to null —
-    // this prevents accidental erasure of fields the frontend didn't touch.
     const updateFields = {};
 
     if (Array.isArray(annotations)) {
-      // Sanitise each annotation: keep only known safe fields
       updateFields["model3D.annotations"] = annotations.map((a) => ({
         id: String(a.id ?? ""),
         text: String(a.text ?? ""),
@@ -159,23 +157,58 @@ export async function PATCH(request) {
       };
     }
 
+    if (newModelUrl) updateFields["model3D.url"] = newModelUrl;
+    if (newThumbnailUrl) updateFields["model3D.thumbnailUrl"] = newThumbnailUrl;
+    if (newFileSize) updateFields["model3D.fileSize"] = newFileSize;
+
     if (Object.keys(updateFields).length === 0) {
       return NextResponse.json(
         {
           success: false,
           error:
-            "No valid fields to update. Provide at least one of: annotations, cameraState, dimensions",
+            "No valid fields to update.",
         },
         { status: 400 }
       );
     }
 
-    // ── 7. Persist ──────────────────────────────────────────────────────────
+    // ── 7. Persist and Atomic Delete ──────────────────────────────────────────
+    // Safety check: preserve the original URL. We only delete it IF the MongoDB update succeeds.
+    const oldModelUrl = doc.model3D?.url;
+    
+    // 1. Update the document first.
     await config.model.findByIdAndUpdate(
       resourceId,
       { $set: updateFields },
-      { runValidators: false } // sub-doc validators would fail on partial update
+      { runValidators: false }
     );
+
+    // 2. If MongoDB update was successful, delete old S3 objects that were replaced.
+    // This prevents broken links if the update fails — we only delete AFTER a successful DB write.
+    const s3Prefix = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/`;
+
+    const keysToDelete = [];
+
+    if (newModelUrl && oldModelUrl && oldModelUrl !== newModelUrl && oldModelUrl.startsWith(s3Prefix)) {
+      keysToDelete.push(decodeURIComponent(oldModelUrl.replace(s3Prefix, "")));
+    }
+
+    const oldThumbnailUrl = doc.model3D?.thumbnailUrl;
+    if (newThumbnailUrl && oldThumbnailUrl && oldThumbnailUrl !== newThumbnailUrl && oldThumbnailUrl.startsWith(s3Prefix)) {
+      keysToDelete.push(decodeURIComponent(oldThumbnailUrl.replace(s3Prefix, "")));
+    }
+
+    for (const oldKey of keysToDelete) {
+      try {
+        await s3Client.send(new DeleteObjectCommand({
+          Bucket: process.env.AWS_BUCKET_NAME,
+          Key: oldKey,
+        }));
+        console.log(`[S3 Cleanup] Successfully deleted old S3 object: ${oldKey}`);
+      } catch (s3Error) {
+        console.warn(`[S3 Orphan Warning] DB updated, but failed to delete: ${oldKey}`, s3Error);
+      }
+    }
 
     // ── 8. Success ──────────────────────────────────────────────────────────
     return NextResponse.json(

@@ -126,37 +126,81 @@ export default function EditCustomOrder() {
     }
   };
 
-  const handleEditorSave = async (gltfBlob, annotations, cameraState) => {
+  const handleEditorSave = async (gltfBlob, annotations, cameraState, snapshotBlob) => {
     setUploading(true);
     try {
-      const file = new File([gltfBlob], "annotated-model.glb", {
+      const timestamp = Date.now();
+
+      // 1. Upload the new edited model to S3
+      const modelFile = new File([gltfBlob], `model_${timestamp}.glb`, {
         type: "model/gltf-binary",
       });
-      const uploadData = new FormData();
-      uploadData.append("file", file);
-      uploadData.append("type", "3d-model");
+      const modelFormData = new FormData();
+      modelFormData.append("file", modelFile);
+      modelFormData.append("type", "3d-model");
 
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: uploadData,
-      });
-      const data = await response.json();
+      const modelRes = await fetch("/api/upload", { method: "POST", body: modelFormData });
+      const modelData = await modelRes.json();
 
-      if (data.success) {
-        const nextModel = {
-          url: data.file.url,
-          filename: file.name,
-          fileSize: file.size,
+      if (!modelData.success) {
+        alert("Save failed: " + (modelData.error || "Upload error"));
+        return;
+      }
+
+      // 2. Upload the snapshot image to S3 (if captured)
+      let snapshotUrl = null;
+      if (snapshotBlob) {
+        const snapshotFile = new File([snapshotBlob], `snapshot_${timestamp}.png`, {
+          type: "image/png",
+        });
+        const snapFormData = new FormData();
+        snapFormData.append("file", snapshotFile);
+        snapFormData.append("type", "image");
+
+        const snapRes = await fetch("/api/upload", { method: "POST", body: snapFormData });
+        const snapData = await snapRes.json();
+
+        if (snapData.success) {
+          snapshotUrl = snapData.file.url;
+        } else {
+          console.warn("[custom-order-editor] Snapshot upload failed:", snapData.error);
+        }
+      }
+
+      // 3. Atomic Update: swap URLs in DB + delete old S3 objects
+      const updateRes = await fetch("/api/models/update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resourceId: params.id,
+          resourceType: "customOrder",
+          newModelUrl: modelData.file.url,
+          newThumbnailUrl: snapshotUrl || undefined,
+          newFileSize: gltfBlob.size,
           annotations,
           cameraState,
-        };
-        setModel3D(nextModel);
-        setBaseModelUrl(nextModel.url);
-        setIsEditorOpen(false);
-      } else {
-        alert("Save failed: " + data.error);
+        }),
+      });
+      const updateData = await updateRes.json();
+
+      if (!updateData.success) {
+        console.error("[custom-order-editor] DB update failed:", updateData.error);
       }
+
+      // 4. Update local state
+      const nextModel = {
+        url: modelData.file.url,
+        filename: modelFile.name,
+        fileSize: gltfBlob.size,
+        thumbnailUrl: snapshotUrl || model3D?.thumbnailUrl,
+        annotations,
+        cameraState,
+      };
+      setModel3D(nextModel);
+      setBaseModelUrl(nextModel.url);
+      setIsEditorOpen(false);
     } catch (error) {
+      console.error("[custom-order-editor] Save error:", error);
       alert("Save error: " + error.message);
     } finally {
       setUploading(false);
