@@ -62,7 +62,7 @@ export async function GET(request) {
 
     const baseQuery = {
       participants: session.user.id,
-      contextType: "order",
+      contextType: { $in: ["order", "bid"] },
       isActive: true,
     };
 
@@ -79,31 +79,103 @@ export async function GET(request) {
       .lean();
 
     const orderIds = conversations
+      .filter((c) => c.contextType === "order")
       .map((c) => c.contextId)
-      .filter(Boolean)
-      .map((id) => id.toString());
+      .filter(Boolean);
 
-    const orders = await Order.find({ _id: { $in: orderIds } })
-      .select(
-        "orderNumber status productDetails customerId manufacturerId createdAt updatedAt",
-      )
-      .populate("customerId", "name")
-      .populate("manufacturerId", "name businessName")
-      .lean();
+    const bidIds = conversations
+      .filter((c) => c.contextType === "bid")
+      .map((c) => c.contextId)
+      .filter(Boolean);
+
+    const [orders, bids] = await Promise.all([
+      Order.find({ _id: { $in: orderIds } })
+        .select(
+          "orderNumber status productDetails customerId manufacturerId createdAt updatedAt",
+        )
+        .populate("customerId", "name")
+        .populate("manufacturerId", "name businessName")
+        .lean(),
+      (async () => {
+        const Bid = (await import("@/models/Bid")).default;
+        return Bid.find({ _id: { $in: bidIds } })
+          .populate("rfqId", "rfqNumber customerId customOrderId")
+          .populate("manufacturerId", "name businessName")
+          .lean();
+      })(),
+    ]);
 
     const orderById = new Map(orders.map((o) => [o._id.toString(), o]));
+    const bidById = new Map(bids.map((b) => [b._id.toString(), b]));
+
+    // We need to populate customOrderId for bids to get product names
+    const customOrderIds = bids
+      .map((b) => b.rfqId?.customOrderId)
+      .filter(Boolean);
+    const CustomOrder = (await import("@/models/CustomOrder")).default;
+    const customOrders = await CustomOrder.find({
+      _id: { $in: customOrderIds },
+    })
+      .select("title")
+      .lean();
+    const customOrderById = new Map(
+      customOrders.map((co) => [co._id.toString(), co]),
+    );
 
     let threads = conversations
       .map((conversation) => {
-        const order = orderById.get(String(conversation.contextId));
-        if (!order) return null;
+        let threadInfo = null;
 
-        const counterpart =
-          session.user.role === "customer"
-            ? order.manufacturerId
-            : session.user.role === "manufacturer"
-              ? order.customerId
-              : order.manufacturerId;
+        if (conversation.contextType === "order") {
+          const order = orderById.get(String(conversation.contextId));
+          if (!order) return null;
+
+          const counterpart =
+            session.user.role === "customer"
+              ? order.manufacturerId
+              : order.customerId;
+
+          threadInfo = {
+            conversationId: conversation._id,
+            contextType: "order",
+            orderId: order._id,
+            orderNumber: order.orderNumber,
+            orderStatus: order.status,
+            productName: order.productDetails?.name || "Custom Order",
+            counterpart: {
+              id: counterpart?._id,
+              name: counterpart?.businessName || counterpart?.name || "User",
+            },
+          };
+        } else if (conversation.contextType === "bid") {
+          const bid = bidById.get(String(conversation.contextId));
+          if (!bid) return null;
+
+          const customerId = bid.rfqId?.customerId;
+          const manufacturerId = bid.manufacturerId;
+
+          const counterpart =
+            session.user.role === "customer" ? manufacturerId : customerId;
+
+          // For bid context, we get the product name from the associated CustomOrder
+          const co = customOrderById.get(String(bid.rfqId?.customOrderId));
+
+          threadInfo = {
+            conversationId: conversation._id,
+            contextType: "bid",
+            orderId: bid._id, // Using as reference for UI linking
+            orderNumber: bid.rfqId?.rfqNumber || "BID",
+            orderStatus: bid.status === "under_consideration" ? "pending" : bid.status,
+            productName: co?.title || "RFQ Proposal",
+            counterpart: {
+              id: counterpart?._id || counterpart,
+              // Note: Counterpart might not be fully populated if it's just an ID
+              name: counterpart?.businessName || counterpart?.name || "Customer",
+            },
+          };
+        }
+
+        if (!threadInfo) return null;
 
         const unreadCount = getUnreadCount(
           conversation.unreadCounts,
@@ -111,16 +183,7 @@ export async function GET(request) {
         );
 
         return {
-          conversationId: conversation._id,
-          contextType: "order",
-          orderId: order._id,
-          orderNumber: order.orderNumber,
-          orderStatus: order.status,
-          productName: order.productDetails?.name || "Custom Order",
-          counterpart: {
-            id: counterpart?._id,
-            name: counterpart?.businessName || counterpart?.name || "User",
-          },
+          ...threadInfo,
           unreadCount,
           lastMessage: {
             text: conversation.lastMessage?.text || "",
@@ -128,14 +191,12 @@ export async function GET(request) {
             sentAt:
               conversation.lastMessage?.sentAt ||
               conversation.updatedAt ||
-              order.updatedAt ||
-              order.createdAt,
+              conversation.createdAt,
           },
           updatedAt:
             conversation.lastMessage?.sentAt ||
             conversation.updatedAt ||
-            order.updatedAt ||
-            order.createdAt,
+            conversation.createdAt,
         };
       })
       .filter(Boolean);

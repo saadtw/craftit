@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/CrafitLogo";
 import Typewriter from "typewriter-effect";
 import heroImage from "@/assets/heroSectionImage.png";
@@ -186,19 +186,23 @@ export default function LandingPage() {
     });
   }, []);
 
+  const searchParams = useSearchParams();
+
   // Redirect if already logged in
   useEffect(() => {
+    if (searchParams.get("noRedirect") === "true") return;
+
     if (status === "authenticated" && session?.user) {
       const role = session.user.role;
       if (role === "customer") {
-        router.push("/customer");
+        router.replace("/customer");
       } else if (role === "manufacturer") {
-        router.push("/manufacturer/dashboard");
+        router.replace("/manufacturer/dashboard");
       } else if (role === "admin") {
-        router.push("/admin/dashboard");
+        router.replace("/admin/dashboard");
       }
     }
-  }, [status, session, router]);
+  }, [status, session, router, searchParams]);
 
   useEffect(() => {
     const prevScrollRestoration =

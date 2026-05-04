@@ -135,7 +135,22 @@ export default function ManufacturerNavbar() {
                   <div className="px-5 py-3 border-b border-white/5 mb-2">
                     <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-1">Authenticated As</p>
                     <p className="text-sm font-bold text-white truncate">{displayName}</p>
-                    <p className="text-[10px] font-medium text-[#eb9728] mt-1">Verified Manufacturer</p>
+                    {session?.user?.verificationStatus === "verified" ? (
+                      <p className="text-[10px] font-medium text-[#eb9728] mt-1 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#eb9728] animate-pulse" />
+                        Verified Manufacturer
+                      </p>
+                    ) : session?.user?.verificationStatus === "suspended" ? (
+                      <p className="text-[10px] font-medium text-red-500 mt-1 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                        Account Suspended
+                      </p>
+                    ) : (
+                      <p className="text-[10px] font-medium text-slate-400 mt-1 flex items-center gap-1">
+                        <span className="w-1.5 h-1.5 rounded-full bg-slate-500" />
+                        Awaiting Verification
+                      </p>
+                    )}
                   </div>
 
                   {[

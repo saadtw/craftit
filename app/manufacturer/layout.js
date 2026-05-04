@@ -7,7 +7,7 @@ export default function ManufacturerLayout({ children }) {
       <ManufacturerNavbar />
       <div className="flex min-h-0 flex-1 overflow-hidden">
         <ManufacturerSidebar />
-        <div className="min-h-0 flex-1 min-w-0 overflow-y-auto bg-[#050507]">
+        <div className="min-h-0 flex-1 min-w-0 overflow-y-auto bg-[#050507] scrollbar-hide">
           {children}
         </div>
       </div>

@@ -169,3 +169,75 @@ export async function DELETE(request, context) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 }
+
+// PATCH /api/group-buys/[id]/join - Customer updates their quantity
+export async function PATCH(request, context) {
+  const { id } = await context.params;
+
+  try {
+    const session = await resolveRequestSession(request);
+    if (!session || session.user.role !== "customer") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    await connectDB();
+
+    const { quantity } = await request.json();
+    if (!quantity || quantity < 1) {
+      return NextResponse.json(
+        { error: "Quantity must be at least 1" },
+        { status: 400 },
+      );
+    }
+
+    const groupBuy = await GroupBuy.findById(id);
+    if (!groupBuy) {
+      return NextResponse.json(
+        { error: "Group buy not found" },
+        { status: 404 },
+      );
+    }
+
+    if (groupBuy.status !== "active") {
+      return NextResponse.json(
+        { error: "Campaign is no longer active" },
+        { status: 400 },
+      );
+    }
+
+    const participant = groupBuy.participants.find(
+      (p) => p.customerId.toString() === session.user.id,
+    );
+
+    if (!participant) {
+      return NextResponse.json(
+        { error: "You are not a participant" },
+        { status: 404 },
+      );
+    }
+
+    // Update quantity
+    participant.quantity = quantity;
+
+    // Recalculate everything
+    groupBuy.recalculate();
+    
+    // Update unitPrice for this participant based on the new global state
+    // (In a real scenario, this might depend on when they locked in, 
+    // but here we sync it with current tier)
+    participant.unitPrice = groupBuy.currentDiscountedPrice || groupBuy.basePrice;
+    participant.totalPrice = participant.unitPrice * quantity;
+
+    await groupBuy.save();
+
+    return NextResponse.json({
+      success: true,
+      message: "Quantity updated successfully",
+      newQuantity: quantity,
+      unitPrice: participant.unitPrice,
+      totalPrice: participant.totalPrice,
+    });
+  } catch (error) {
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}

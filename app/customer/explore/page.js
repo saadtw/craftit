@@ -276,10 +276,10 @@ export default function CustomerExplorePage() {
         </section>
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-          <p className="text-sm text-white/45">
+          <div className="text-sm text-white/45">
             {loading
               ? <GlobalLoader text="Loading..." /> : `${pagination.total} product${pagination.total !== 1 ? "s" : ""} found`}
-          </p>
+          </div>
 
           {debouncedSearch && (
             <p className="text-sm text-white/45">

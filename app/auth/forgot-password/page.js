@@ -49,7 +49,8 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#050507] flex items-center justify-center px-4 py-10 text-white">
+    <div className="min-h-screen bg-[#050507] flex items-center justify-center px-4 py-10 text-white relative">
+
       <div className="w-full max-w-md">
         {/* Card */}
         <div className="rounded-2xl border border-white/8 bg-[#0c0c11] overflow-hidden">

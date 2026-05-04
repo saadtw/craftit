@@ -20,11 +20,11 @@ export default function SignupPage() {
     if (status === "authenticated" && session?.user) {
       const role = session.user.role;
       if (role === "customer") {
-        router.push("/customer");
+        router.replace("/customer");
       } else if (role === "manufacturer") {
-        router.push("/manufacturer/dashboard");
+        router.replace("/manufacturer/dashboard");
       } else if (role === "admin") {
-        router.push("/admin/dashboard");
+        router.replace("/admin/dashboard");
       }
     }
   }, [status, session, router]);
@@ -59,21 +59,7 @@ export default function SignupPage() {
 
       <div className="absolute top-[-10%] right-[-5%] h-[400px] w-[400px] rounded-full bg-purple-600/10 blur-[100px] z-1" />
 
-      <Link
-        href="/"
-        className="absolute top-4 left-6 md:top-6 md:left-10 z-50 flex items-center gap-3 text-[10px] font-bold uppercase tracking-[0.4em] text-slate-500 hover:text-purple-400 transition-all group"
-      >
-        <div className="relative w-4 h-4 group-hover:-translate-x-1 transition-transform duration-300">
-          <Image
-            src={leftArrow}
-            alt="back"
-            fill
-            sizes="16px"
-            className="object-contain opacity-70 group-hover:opacity-100"
-          />
-        </div>
-        Back to Home
-      </Link>
+
 
       {/* MODIFIED: Added -mt-10 and changed py-12 to py-6 to lift content */}
       <div className="relative z-10 w-full max-w-4xl py-6 -mt-10">

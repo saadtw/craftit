@@ -178,12 +178,12 @@ export default function ManufacturerDashboard() {
 
   useEffect(() => {
     if (status === "unauthenticated") {
-      router.push("/auth/login");
+      router.replace("/auth/login");
       return;
     }
     if (status === "authenticated") {
       if (session.user.role !== "manufacturer") {
-        router.push("/auth/login");
+        router.replace("/auth/login");
         return;
       }
       fetchDashboardData();

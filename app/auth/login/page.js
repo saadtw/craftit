@@ -37,11 +37,11 @@ export default function LoginPage() {
 
       const role = session.user.role;
       if (role === "customer") {
-        router.push("/customer");
+        router.replace("/customer");
       } else if (role === "manufacturer") {
-        router.push("/manufacturer/dashboard");
+        router.replace("/manufacturer/dashboard");
       } else if (role === "admin") {
-        router.push("/admin/dashboard");
+        router.replace("/admin/dashboard");
       }
     }
   }, [status, session, router]);
@@ -96,18 +96,18 @@ export default function LoginPage() {
               const role = data?.user?.role || "customer";
 
               if (role === "customer") {
-                router.push("/customer");
+                router.replace("/customer");
               } else if (role === "manufacturer") {
-                router.push("/manufacturer/dashboard");
+                router.replace("/manufacturer/dashboard");
               } else if (role === "admin") {
-                router.push("/admin/dashboard");
+                router.replace("/admin/dashboard");
               } else {
-                router.push("/customer");
+                router.replace("/customer");
               }
             })
             .catch((err) => {
               console.error("Failed to fetch session:", err);
-              router.push("/customer");
+              router.replace("/customer");
             });
         }, 500);
       }
@@ -123,6 +123,16 @@ export default function LoginPage() {
     <div className="flex h-screen w-full items-center justify-center bg-[#0B011D] p-4 overflow-hidden font-sans relative">
       <div className="absolute top-[-10%] left-[-10%] h-[300px] w-[300px] rounded-full bg-purple-600/10 blur-[100px]" />
       <div className="absolute bottom-[-10%] right-[-10%] h-[300px] w-[300px] rounded-full bg-amber-600/10 blur-[100px]" />
+
+      <Link 
+        href="/?noRedirect=true" 
+        className="absolute top-4 left-4 md:top-6 md:left-6 z-50 flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.3em] text-slate-500 hover:text-purple-400 transition-all group"
+      >
+        <div className="w-6 h-6 rounded-full bg-linear-to-tr from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
+          <span className="material-symbols-outlined text-white text-[9px]">arrow_back</span>
+        </div>
+        Back to Home
+      </Link>
 
       <div className="relative flex h-[540px] w-full max-w-3xl overflow-hidden rounded-[30px] border border-purple-500/30 bg-white/2 backdrop-blur-3xl z-10 text-white shadow-[0_0_50px_rgba(168,85,247,0.15)]">
         <div className="flex w-full flex-col justify-center px-10 md:w-[60%] lg:px-14 order-1 border-r border-white/5 bg-[#0B011D]/30">

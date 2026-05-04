@@ -333,7 +333,11 @@ export default function ManufacturerMessagesPage() {
               {threads.map((thread) => (
                 <Link
                   key={thread.conversationId}
-                  href={`/manufacturer/orders/${thread.orderId}#chat`}
+                  href={
+                    thread.contextType === "bid"
+                      ? `/bids/${thread.orderId}#chat`
+                      : `/manufacturer/orders/${thread.orderId}#chat`
+                  }
                 >
                   <div className="flex items-center gap-5 px-6 py-6 hover:bg-white/[0.07] transition-all group relative border-l-4 border-l-transparent hover:border-l-purple-500/50">
                     <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-purple-500/20 to-[#eb9728]/20 border border-white/10 flex items-center justify-center font-black text-[#eb9728] text-lg shrink-0 group-hover:scale-110 group-hover:rotate-3 transition-transform">

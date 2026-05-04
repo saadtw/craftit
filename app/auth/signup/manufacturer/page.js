@@ -91,11 +91,11 @@ export default function ManufacturerSignup() {
     if (status === "authenticated" && session?.user) {
       const role = session.user.role;
       if (role === "customer") {
-        router.push("/customer");
+        router.replace("/customer");
       } else if (role === "manufacturer") {
-        router.push("/manufacturer/dashboard");
+        router.replace("/manufacturer/dashboard");
       } else if (role === "admin") {
-        router.push("/admin/dashboard");
+        router.replace("/admin/dashboard");
       }
     }
   }, [status, session, router]);
@@ -187,7 +187,7 @@ export default function ManufacturerSignup() {
           data.message ||
             "Registration successful. Verify your email before login.",
         );
-        router.push("/auth/login");
+        router.replace("/auth/login");
       } else {
         setError(data.message || "Registration failed");
       }
@@ -201,21 +201,23 @@ export default function ManufacturerSignup() {
   return (
     <div className="min-h-screen bg-[#050507] text-white selection:bg-purple-500/30 pb-20 font-sans">
       <nav className="p-8 flex items-center justify-between max-w-7xl mx-auto relative z-20">
-        <Link
-          href="/auth/signup"
-          className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-all group"
-        >
-          <div className="relative w-4 h-4 group-hover:-translate-x-1 transition-transform">
-            <Image
-              src={leftArrow}
-              alt="back"
-              fill
-              sizes="16px"
-              className="object-contain opacity-70"
-            />
-          </div>
-          Back
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link
+            href="/auth/signup"
+            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-all group"
+          >
+            <div className="relative w-4 h-4 group-hover:-translate-x-1 transition-transform">
+              <Image
+                src={leftArrow}
+                alt="back"
+                fill
+                sizes="16px"
+                className="object-contain opacity-70"
+              />
+            </div>
+            Back
+          </Link>
+        </div>
         <div className="flex items-center gap-3">
           <Logo className="h-8 w-8 text-orange-500" />
           <span className="text-2xl font-black italic tracking-tighter uppercase">
@@ -586,19 +588,19 @@ export default function ManufacturerSignup() {
 
                       <SelectContent className="bg-[#0c0c11] border-white/10 text-white shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-xl">
                         {[
-                          "Sole Proprietorship",
-                          "Partnership",
-                          "Private Limited (Pvt. Ltd.)",
-                          "Public Limited",
-                          "NGO / Non-Profit",
-                          "Other",
+                          { label: "Sole Proprietorship", value: "sole_proprietorship" },
+                          { label: "Partnership", value: "partnership" },
+                          { label: "Private Limited (Pvt. Ltd.)", value: "private_limited" },
+                          { label: "Public Limited", value: "public_limited" },
+                          { label: "NGO / Non-Profit", value: "ngo" },
+                          { label: "Other", value: "other" },
                         ].map((type) => (
                           <SelectItem
-                            key={type}
-                            value={type.toLowerCase()}
+                            key={type.value}
+                            value={type.value}
                             className="!focus:bg-purple-500/20 !focus:text-purple-300 cursor-pointer rounded-lg m-1 transition-colors font-medium"
                           >
-                            {type}
+                            {type.label}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -693,7 +695,7 @@ export default function ManufacturerSignup() {
                 <h3 className="text-sm font-black text-orange-500 uppercase tracking-widest border-l-2 border-orange-500 pl-3">
                   Manufacturing Capabilities
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {capabilityOptions.map((cap) => (
                     <label
                       key={cap}
@@ -705,7 +707,7 @@ export default function ManufacturerSignup() {
                         onCheckedChange={() => toggleCapability(cap)}
                       />
                       <span className="text-[11px] font-bold uppercase text-slate-300">
-                        {cap}
+                        {cap.replace(/_/g, " ")}
                       </span>
                     </label>
                   ))}
@@ -717,7 +719,7 @@ export default function ManufacturerSignup() {
                 <h3 className="text-sm font-black text-purple-500 uppercase tracking-widest border-l-2 border-purple-500 pl-3">
                   Available Materials
                 </h3>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {materialOptions.map((mat) => (
                     <label
                       key={mat}
@@ -729,7 +731,7 @@ export default function ManufacturerSignup() {
                         onCheckedChange={() => toggleMaterial(mat)}
                       />
                       <span className="text-[11px] font-bold uppercase text-slate-300">
-                        {mat}
+                        {mat.replace(/_/g, " ")}
                       </span>
                     </label>
                   ))}

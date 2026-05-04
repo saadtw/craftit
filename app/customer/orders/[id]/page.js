@@ -249,9 +249,7 @@ function CustomerOrderDetailPageContent() {
               </p>
             </div>
 
-            <div className="flex h-11 w-11 items-center justify-center rounded-full bg-[#eb9728] text-sm font-black text-white">
-              {session?.user?.name?.charAt(0) || "U"}
-            </div>
+
           </div>
         </section>
 

@@ -33,11 +33,11 @@ export default function CustomerSignup() {
     if (status === "authenticated" && session?.user) {
       const role = session.user.role;
       if (role === "customer") {
-        router.push("/customer");
+        router.replace("/customer");
       } else if (role === "manufacturer") {
-        router.push("/manufacturer/dashboard");
+        router.replace("/manufacturer/dashboard");
       } else if (role === "admin") {
-        router.push("/admin/dashboard");
+        router.replace("/admin/dashboard");
       }
     }
   }, [status, session, router]);
@@ -81,7 +81,7 @@ export default function CustomerSignup() {
           data.message ||
             "Registration successful. Please verify your email before login.",
         );
-        router.push("/auth/login");
+        router.replace("/auth/login");
       } else {
         setError(data.message || "Registration failed");
       }
@@ -95,21 +95,23 @@ export default function CustomerSignup() {
   return (
     <div className="min-h-screen w-full bg-[#060111] text-white font-sans relative overflow-x-hidden flex flex-col">
       <header className="relative z-50 w-full p-6 flex items-center justify-between">
-        <Link
-          href="/auth/signup"
-          className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-all group"
-        >
-          <div className="relative w-4 h-4 group-hover:-translate-x-1 transition-transform">
-            <Image
-              src={leftArrow}
-              alt="back"
-              fill
-              sizes="16px"
-              className="object-contain opacity-70"
-            />
-          </div>
-          Back
-        </Link>
+        <div className="flex items-center gap-6">
+          <Link
+            href="/auth/signup"
+            className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.3em] text-slate-500 hover:text-white transition-all group"
+          >
+            <div className="relative w-4 h-4 group-hover:-translate-x-1 transition-transform">
+              <Image
+                src={leftArrow}
+                alt="back"
+                fill
+                sizes="16px"
+                className="object-contain opacity-70"
+              />
+            </div>
+            Back
+          </Link>
+        </div>
         <div className="flex items-center gap-3">
           <Logo className="h-8 w-8" />
           <span className="text-xl font-black tracking-tighter italic uppercase">

@@ -150,20 +150,10 @@ export default function GroupBuyDetailPage() {
 
   return (
     <div className="min-h-screen bg-[#050507] text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-20">
         {/* Header Section */}
-        <div className="flex flex-col gap-8 mb-10">
-          <div className="flex items-center justify-between">
-            <Link
-              href="/manufacturer/group-buys"
-              className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all"
-            >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-sm">arrow_back</span>
-              </div>
-              Campaign Hub
-            </Link>
-
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex items-center justify-end">
             <div className="flex items-center gap-3">
               {groupBuy.status === "active" && (
                 <button
@@ -212,7 +202,7 @@ export default function GroupBuyDetailPage() {
             </div>
           </div>
 
-          <div className="flex flex-col gap-2">
+          <div className="flex flex-col gap-1">
             <div className="flex items-center gap-4">
               <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-purple-500 via-orange-500 to-[#eb9728] bg-clip-text text-transparent">
                 {groupBuy.title}

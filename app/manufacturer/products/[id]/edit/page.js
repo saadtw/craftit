@@ -871,23 +871,101 @@ const handleModelEditorSave = async (gltfBlob, annotations, cameraState, snapsho
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Unit</label>
+                      <div className="flex gap-2">
+                        {["cm", "inch", "mm"].map((u) => (
+                          <button
+                            key={u}
+                            type="button"
+                            onClick={() => setField("specifications.dimensions.unit", u)}
+                            className={`flex-1 py-3.5 text-[10px] font-black uppercase tracking-widest rounded-2xl border transition-all ${
+                              form.specifications.dimensions.unit === u
+                                ? "bg-purple-600 text-white border-purple-400"
+                                : "bg-white/5 border-white/10 text-white/40"
+                            }`}
+                          >
+                            {u}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Weight (kg)</label>
+                      <input
+                        type="number"
+                        value={form.specifications.weight}
+                        onChange={(e) => setField("specifications.weight", e.target.value)}
+                        className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white transition-all"
+                      />
+                    </div>
+                  </div>
+
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Unit</label>
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Available Colors</label>
                     <div className="flex gap-2">
-                      {["cm", "inch", "mm"].map((u) => (
-                        <button
-                          key={u}
-                          type="button"
-                          onClick={() => setField("specifications.dimensions.unit", u)}
-                          className={`flex-1 py-3.5 text-[10px] font-black uppercase tracking-widest rounded-2xl border transition-all ${
-                            form.specifications.dimensions.unit === u
-                              ? "bg-purple-600 text-white border-purple-400"
-                              : "bg-white/5 border-white/10 text-white/40"
-                          }`}
-                        >
-                          {u}
-                        </button>
-                      ))}
+                      <input
+                        type="text"
+                        value={colorInput}
+                        onChange={(e) => setColorInput(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && addColor(colorInput)}
+                        placeholder="Add color..."
+                        className="flex-1 px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => addColor(colorInput)}
+                        className="px-6 py-3.5 bg-white/5 border-2 border-white/10 text-white rounded-2xl hover:bg-white/10 text-[10px] font-black uppercase tracking-widest"
+                      >
+                        Add
+                      </button>
+                    </div>
+                    {form.specifications.color.length > 0 && (
+                      <div className="flex flex-wrap gap-2 mt-4">
+                        {form.specifications.color.map((c) => (
+                          <span key={c} className="flex items-center gap-2 px-4 py-2 bg-purple-600/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-widest rounded-xl">
+                            {c}
+                            <button onClick={() => removeColor(c)} className="hover:text-white transition-colors">✕</button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="p-8 bg-white/[0.02] border-2 border-purple-500/20 rounded-[2rem] space-y-6">
+                  <div className="flex items-center gap-3 text-white/20 mb-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4a2 2 0 012-2m16 0h-2M4 13H6" />
+                    </svg>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">Shipping Details</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Shipping Weight (kg)</label>
+                      <input
+                        type="number"
+                        value={form.shippingWeight}
+                        onChange={(e) => setField("shippingWeight", e.target.value)}
+                        className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white transition-all"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Shipping Dimensions</label>
+                      <div className="grid grid-cols-3 gap-2">
+                        {["length", "width", "height"].map((dim) => (
+                          <input
+                            key={dim}
+                            type="number"
+                            value={form.shippingDimensions[dim]}
+                            onChange={(e) => setField(`shippingDimensions.${dim}`, e.target.value)}
+                            placeholder={dim[0].toUpperCase()}
+                            className="w-full px-3 py-3.5 bg-white/[0.03] border-2 border-purple-500/10 rounded-xl text-white text-xs placeholder:text-white/5 focus:outline-none focus:border-purple-500/40 transition-all"
+                          />
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -906,7 +906,7 @@ export default function NewProductPage() {
                       <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2">
                         Shipping Dimensions
                       </label>
-                      <div className="flex gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         {["length", "width", "height"].map((dim) => (
                           <input
                             key={dim}
@@ -914,7 +914,7 @@ export default function NewProductPage() {
                             value={form.shippingDimensions[dim]}
                             onChange={(e) => setField(`shippingDimensions.${dim}`, e.target.value)}
                             placeholder={dim[0].toUpperCase()}
-                            className="flex-1 px-3 py-3.5 bg-white/[0.03] border-2 border-purple-500/10 rounded-xl text-white text-xs placeholder:text-white/5 focus:outline-none focus:border-purple-500/40 transition-all"
+                            className="w-full px-3 py-3.5 bg-white/[0.03] border-2 border-purple-500/10 rounded-xl text-white text-xs placeholder:text-white/5 focus:outline-none focus:border-purple-500/40 transition-all"
                           />
                         ))}
                       </div>

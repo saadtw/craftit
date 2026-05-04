@@ -187,6 +187,7 @@ export default function GroupBuyDetailPage() {
   const [cancelling, setCancelling] = useState(false);
   const [quantity, setQuantity] = useState(1);
   const [showJoinModal, setShowJoinModal] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
@@ -225,7 +226,7 @@ export default function GroupBuyDetailPage() {
 
     try {
       const res = await fetch(`/api/group-buys/${id}/join`, {
-        method: "POST",
+        method: isEditing ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ quantity }),
       });
@@ -234,12 +235,15 @@ export default function GroupBuyDetailPage() {
 
       if (res.ok && data.success) {
         setSuccess(
-          `You've successfully joined! Your spot is reserved for ${quantity} unit${quantity > 1 ? "s" : ""}.`,
+          isEditing
+            ? `Quantity updated to ${quantity} unit${quantity > 1 ? "s" : ""}.`
+            : `You've successfully joined! Your spot is reserved for ${quantity} unit${quantity > 1 ? "s" : ""}.`,
         );
         setShowJoinModal(false);
+        setIsEditing(false);
         fetchGroupBuy();
       } else {
-        setError(data.error || "Failed to join group buy.");
+        setError(data.error || "Failed to process request.");
       }
     } catch {
       setError("Something went wrong. Please try again.");
@@ -534,37 +538,57 @@ export default function GroupBuyDetailPage() {
               </div>
 
               {hasJoined && myParticipation && (
-                <div className="mb-5 rounded-2xl border border-[#eb9728]/20 bg-[#eb9728]/10 p-4">
-                  <p className="mb-3 text-xs font-bold text-[#eb9728]">
+                <div className="mb-5 rounded-2xl border border-[#eb9728]/20 bg-[#eb9728]/10 p-4 shadow-[0_0_15px_rgba(235,151,40,0.05)]">
+                  <p className="mb-3 text-[10px] font-black text-[#eb9728] uppercase tracking-widest">
                     You are participating
                   </p>
-                  <div className="space-y-2 text-xs text-white/60">
+                  <div className="space-y-2.5 text-xs text-white/60">
                     <div className="flex justify-between">
-                      <span>Your quantity:</span>
-                      <span className="font-bold text-white">
+                      <span className="font-medium">Your quantity:</span>
+                      <span className="font-black text-white">
                         {myParticipation.quantity} units
                       </span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Locked price:</span>
-                      <span className="font-bold text-white">
+                      <span className="font-medium">Locked price:</span>
+                      <span className="font-black text-white">
                         ${myParticipation.unitPrice?.toFixed(2)}/unit
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Your total:</span>
-                      <span className="font-bold text-white">
+                    <div className="flex justify-between border-t border-[#eb9728]/10 pt-2.5">
+                      <span className="font-medium text-[#eb9728]/70">Your total:</span>
+                      <span className="font-black text-[#eb9728]">
                         ${myParticipation.totalPrice?.toFixed(2)}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span>Joined:</span>
+                    <div className="flex justify-between text-[10px] opacity-40">
+                      <span>Joined on:</span>
                       <span>
                         {new Date(
                           myParticipation.joinedAt,
                         ).toLocaleDateString()}
                       </span>
                     </div>
+                  </div>
+
+                  <div className="mt-4 flex gap-2">
+                    <button
+                      onClick={() => {
+                        setQuantity(myParticipation.quantity);
+                        setIsEditing(true);
+                        setShowJoinModal(true);
+                      }}
+                      className="flex-1 rounded-xl bg-[#eb9728]/10 border border-[#eb9728]/30 py-2.5 text-[9px] font-black uppercase tracking-[0.1em] text-[#eb9728] hover:bg-[#eb9728]/20 transition-all"
+                    >
+                      Edit Order
+                    </button>
+                    <button
+                      onClick={handleCancel}
+                      disabled={cancelling}
+                      className="flex-1 rounded-xl bg-red-500/10 border border-red-500/20 py-2.5 text-[9px] font-black uppercase tracking-[0.1em] text-red-400 hover:bg-red-500/20 transition-all disabled:opacity-50"
+                    >
+                      {cancelling ? "..." : "Cancel"}
+                    </button>
                   </div>
                 </div>
               )}
@@ -588,13 +612,11 @@ export default function GroupBuyDetailPage() {
                       </p>
                     </div>
                   ) : hasJoined ? (
-                    <button
-                      onClick={handleCancel}
-                      disabled={cancelling}
-                      className="w-full rounded-xl border border-red-500/25 bg-red-500/10 py-3 text-sm font-bold text-red-300 transition-colors hover:bg-red-500/15 disabled:opacity-50"
-                    >
-                      {cancelling ? "Cancelling…" : "Cancel My Participation"}
-                    </button>
+                    <div className="rounded-2xl border border-[#eb9728]/20 bg-[#eb9728]/5 p-4 text-center">
+                      <p className="text-[10px] font-bold text-[#eb9728] uppercase tracking-widest">
+                        You have joined this campaign
+                      </p>
+                    </div>
                   ) : (
                     <button
                       onClick={() => setShowJoinModal(true)}
@@ -631,7 +653,9 @@ export default function GroupBuyDetailPage() {
       {showJoinModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-sm">
           <div className="w-full max-w-md rounded-[28px] border border-white/10 bg-[#0c0c11] p-6 shadow-2xl">
-            <h2 className="text-xl font-black text-white">Join Group Buy</h2>
+            <h2 className="text-xl font-black text-white">
+              {isEditing ? "Update Quantity" : "Join Group Buy"}
+            </h2>
             <p className="mt-1 mb-5 text-sm text-white/45">{groupBuy.title}</p>
 
             <div className="mb-5">
@@ -641,16 +665,23 @@ export default function GroupBuyDetailPage() {
               <div className="flex items-center gap-3">
                 <button
                   onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-xl font-bold text-white/65 hover:text-white"
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-xl font-bold text-white/65 hover:text-white transition-all hover:bg-white/5 active:scale-95"
                 >
                   −
                 </button>
-                <span className="min-w-10 text-center text-2xl font-black text-white">
-                  {quantity}
-                </span>
+                <input
+                  type="number"
+                  min="1"
+                  value={quantity}
+                  onChange={(e) => {
+                    const val = parseInt(e.target.value);
+                    if (!isNaN(val)) setQuantity(Math.max(1, val));
+                  }}
+                  className="w-20 bg-transparent text-center text-2xl font-black text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                />
                 <button
                   onClick={() => setQuantity((q) => q + 1)}
-                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-xl font-bold text-white/65 hover:text-white"
+                  className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-xl font-bold text-white/65 hover:text-white transition-all hover:bg-white/5 active:scale-95"
                 >
                   +
                 </button>
@@ -696,6 +727,7 @@ export default function GroupBuyDetailPage() {
               <button
                 onClick={() => {
                   setShowJoinModal(false);
+                  setIsEditing(false);
                   setError("");
                 }}
                 className="flex-1 rounded-xl border border-white/10 bg-white/[0.03] py-3 text-sm font-semibold text-white/65 hover:bg-white/[0.06] hover:text-white"
@@ -707,7 +739,7 @@ export default function GroupBuyDetailPage() {
                 disabled={joining}
                 className="flex-1 rounded-xl bg-[#eb9728] py-3 text-sm font-bold text-white hover:bg-amber-500 disabled:opacity-60"
               >
-                {joining ? "Joining…" : "Confirm & Join"}
+                {joining ? (isEditing ? "Updating…" : "Joining…") : (isEditing ? "Confirm Update" : "Confirm & Join")}
               </button>
             </div>
           </div>

@@ -1,7 +1,7 @@
 // app/manufacturer/orders/[id]/page.js
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { 
   HiOutlineCube, 
@@ -909,168 +909,56 @@ export default function ManufacturerOrderDetailPage() {
       {/* Ship Modal */}
       {showShipModal && (
         <Modal title="Mark as Shipped" onClose={() => setShowShipModal(false)}>
-          <p className="text-sm text-gray-600 mb-4">
-            Enter the shipping details. The customer will be notified and given
-            a tracking link.
-          </p>
-          <div className="space-y-3 mb-4">
+          <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Carrier *
-              </label>
-              <select
-                value={shipForm.shippingMethod}
-                onChange={(e) =>
-                  setShipForm((p) => ({ ...p, shippingMethod: e.target.value }))
-                }
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
-              >
-                <option value="">Select carrier...</option>
-                {CARRIER_NAMES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Carrier *</label>
+              <CustomDropdown value={shipForm.shippingMethod} onChange={(val) => setShipForm(p => ({ ...p, shippingMethod: val }))} options={[{ value: "", label: "Select carrier..." }, ...CARRIER_NAMES.map(c => ({ value: c, label: c }))]} placeholder="Select carrier..." />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tracking Number *
-              </label>
-              <input
-                type="text"
-                value={shipForm.trackingNumber}
-                onChange={(e) =>
-                  setShipForm((p) => ({ ...p, trackingNumber: e.target.value }))
-                }
-                placeholder="e.g. 1Z999AA10123456784"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Estimated Delivery Date (optional)
-              </label>
-              <input
-                type="date"
-                value={shipForm.estimatedDeliveryDate}
-                onChange={(e) =>
-                  setShipForm((p) => ({
-                    ...p,
-                    estimatedDeliveryDate: e.target.value,
-                  }))
-                }
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
-              />
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Tracking Number *</label>
+              <input type="text" value={shipForm.trackingNumber} onChange={(e) => setShipForm((p) => ({ ...p, trackingNumber: e.target.value }))} placeholder="e.g. 1Z999AA10123456784" className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10" />
             </div>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={markAsShipped}
-              disabled={actionLoading}
-              className="flex-1 py-2 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-            >
-              {actionLoading ? "Marking..." : "Confirm Shipped"}
+          <div className="flex gap-3 mt-8">
+            <button onClick={markAsShipped} disabled={actionLoading} className="flex-1 py-4 bg-indigo-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-500 disabled:opacity-50 transition-all">
+              {actionLoading ? "Processing..." : "Ship Order"}
             </button>
-            <button
-              onClick={() => setShowShipModal(false)}
-              className="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200"
-            >
-              Cancel
-            </button>
+            <button onClick={() => setShowShipModal(false)} className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all">Cancel</button>
           </div>
         </Modal>
       )}
 
       {/* Complete Modal */}
       {showCompleteModal && (
-        <Modal
-          title="Mark as Completed"
-          onClose={() => setShowCompleteModal(false)}
-        >
-          <p className="text-sm text-gray-600 mb-4">
-            Confirm that order <strong>{order.orderNumber}</strong> has been
-            fully delivered. Payment will be released.
-          </p>
+        <Modal title="Mark as Completed" onClose={() => setShowCompleteModal(false)}>
+          <p className="text-[12px] text-white/60 mb-8 leading-relaxed">Confirm that order <strong>{order.orderNumber}</strong> has been delivered. Payment will be released to your account.</p>
           <div className="flex gap-3">
-            <button
-              onClick={() => updateStatus("completed")}
-              disabled={actionLoading}
-              className="flex-1 py-2 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 disabled:opacity-50"
-            >
-              {actionLoading ? "Completing..." : "Yes, Mark Completed"}
+            <button onClick={() => updateStatus("completed")} disabled={actionLoading} className="flex-1 py-4 bg-emerald-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-500 disabled:opacity-50 transition-all">
+              {actionLoading ? "Processing..." : "Complete Order"}
             </button>
-            <button
-              onClick={() => setShowCompleteModal(false)}
-              className="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200"
-            >
-              Cancel
-            </button>
+            <button onClick={() => setShowCompleteModal(false)} className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all">Cancel</button>
           </div>
         </Modal>
       )}
 
       {/* Tracking update modal */}
       {showTrackingModal && (
-        <Modal
-          title="Update Shipping Info"
-          onClose={() => setShowTrackingModal(false)}
-        >
-          <div className="space-y-3 mb-4">
+        <Modal title="Update Tracking" onClose={() => setShowTrackingModal(false)}>
+          <div className="space-y-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Carrier
-              </label>
-              <select
-                value={trackingForm.shippingMethod}
-                onChange={(e) =>
-                  setTrackingForm((p) => ({
-                    ...p,
-                    shippingMethod: e.target.value,
-                  }))
-                }
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
-              >
-                <option value="">Select carrier...</option>
-                {CARRIER_NAMES.map((c) => (
-                  <option key={c} value={c}>
-                    {c}
-                  </option>
-                ))}
-              </select>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Carrier</label>
+              <CustomDropdown value={trackingForm.shippingMethod} onChange={(val) => setTrackingForm(p => ({ ...p, shippingMethod: val }))} options={[{ value: "", label: "Select carrier..." }, ...CARRIER_NAMES.map(c => ({ value: c, label: c }))]} placeholder="Select carrier..." />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Tracking Number
-              </label>
-              <input
-                type="text"
-                value={trackingForm.trackingNumber}
-                onChange={(e) =>
-                  setTrackingForm((p) => ({
-                    ...p,
-                    trackingNumber: e.target.value,
-                  }))
-                }
-                placeholder="e.g. 1Z999AA10123456784"
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
-              />
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Tracking Number</label>
+              <input type="text" value={trackingForm.trackingNumber} onChange={(e) => setTrackingForm((p) => ({ ...p, trackingNumber: e.target.value }))} placeholder="Enter number..." className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white" />
             </div>
           </div>
-          <div className="flex gap-3">
-            <button
-              onClick={saveTrackingInfo}
-              disabled={actionLoading}
-              className="flex-1 py-2 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {actionLoading ? "Saving..." : "Save"}
+          <div className="flex gap-3 mt-8">
+            <button onClick={saveTrackingInfo} disabled={actionLoading} className="flex-1 py-4 bg-purple-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-purple-500 disabled:opacity-50 transition-all">
+              {actionLoading ? "Saving..." : "Update Info"}
             </button>
-            <button
-              onClick={() => setShowTrackingModal(false)}
-              className="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200"
-            >
-              Cancel
-            </button>
+            <button onClick={() => setShowTrackingModal(false)} className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all">Cancel</button>
           </div>
         </Modal>
       )}
@@ -1147,6 +1035,57 @@ export default function ManufacturerOrderDetailPage() {
             </button>
           </div>
         </Modal>
+      )}
+    </div>
+  );
+}
+
+function CustomDropdown({ value, options, onChange, placeholder }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const selectedOption = options.find(opt => opt.value === value);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsOpen(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  return (
+    <div className="relative w-full" ref={dropdownRef}>
+      <button
+        type="button"
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full px-5 py-3.5 text-[10px] font-black uppercase tracking-widest bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl hover:bg-white/[0.08] transition-all text-white group"
+      >
+        <span className="truncate">{selectedOption?.label || placeholder}</span>
+        <svg className={`w-4 h-4 text-white/20 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div className="absolute z-[100] w-full mt-2 bg-[#0B011D] border-2 border-purple-500/30 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+          <div className="max-h-[200px] overflow-y-auto py-2">
+            {options.map((opt) => (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => {
+                  onChange(opt.value);
+                  setIsOpen(false);
+                }}
+                className={`w-full px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-widest transition-all ${
+                  value === opt.value ? "bg-purple-600 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
       )}
     </div>
   );

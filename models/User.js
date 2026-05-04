@@ -90,40 +90,38 @@ const UserSchema = new mongoose.Schema(
 
     certifications: [String],
     minOrderQuantity: Number,
-    manufacturingCapabilities: [
-      {
-        type: String,
-        enum: [
-          "CNC_Machining",
-          "3D_Printing",
-          "Injection_Molding",
-          "Sheet_Metal",
-          "Casting",
-          "Welding",
-          "Assembly",
-          "Finishing",
-          "Prototyping",
-          "Mass_Production",
-        ],
-      },
-    ],
-    materialsAvailable: [
-      {
-        type: String,
-        enum: [
-          "Steel",
-          "Aluminum",
-          "Plastic",
-          "Copper",
-          "Brass",
-          "Wood",
-          "Carbon_Fiber",
-          "Titanium",
-          "Rubber",
-          "Glass",
-        ],
-      },
-    ],
+    manufacturingCapabilities: {
+      type: [String],
+      enum: [
+        "CNC_Machining",
+        "3D_Printing",
+        "Injection_Molding",
+        "Sheet_Metal",
+        "Casting",
+        "Welding",
+        "Assembly",
+        "Finishing",
+        "Prototyping",
+        "Mass_Production",
+      ],
+      default: [],
+    },
+    materialsAvailable: {
+      type: [String],
+      enum: [
+        "Steel",
+        "Aluminum",
+        "Plastic",
+        "Copper",
+        "Brass",
+        "Wood",
+        "Carbon_Fiber",
+        "Titanium",
+        "Rubber",
+        "Glass",
+      ],
+      default: [],
+    },
 
     // ✅ FIXED: Consolidated location field (removed duplicate)
     location: {

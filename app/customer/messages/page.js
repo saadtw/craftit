@@ -265,7 +265,11 @@ export default function CustomerMessagesPage() {
               {threads.map((thread) => (
                 <Link
                   key={thread.conversationId}
-                  href={`/customer/orders/${thread.orderId}`}
+                  href={
+                    thread.contextType === "bid"
+                      ? `/bids/${thread.orderId}#chat`
+                      : `/customer/orders/${thread.orderId}`
+                  }
                 >
                   <div className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-white/[0.035]">
                     <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#eb9728]/20 bg-[#eb9728]/10 text-base font-black text-[#eb9728]">
