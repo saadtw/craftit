@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
+import { resolveRequestSession } from "@/lib/requestAuth";
+import mongoose from "mongoose";
 
 // GET /api/group-buys/public — no auth required, active group buys only
 export async function GET(request) {
@@ -14,6 +16,10 @@ export async function GET(request) {
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 12;
     const skip = (page - 1) * limit;
+    const joined = searchParams.get("joined") === "true";
+
+    // Resolve session only when the joined filter is requested
+    const session = joined ? await resolveRequestSession(request) : null;
 
     // Auto-sync statuses before querying
     const now = new Date();
@@ -30,6 +36,13 @@ export async function GET(request) {
       status: "active",
       endDate: { $gte: now },
     };
+
+    // When joined=true, restrict to group buys where this customer is a participant
+    if (joined && session?.user?.id) {
+      query["participants.customerId"] = new mongoose.Types.ObjectId(
+        session.user.id,
+      );
+    }
 
     let sortObj = {};
     switch (sort) {

@@ -571,6 +571,8 @@ function SecurityTab({ user }) {
 
   const set = (field, val) => setForm((f) => ({ ...f, [field]: val }));
 
+  const hasLocalPassword = Boolean(user?.hasLocalPassword);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
@@ -588,7 +590,7 @@ function SecurityTab({ user }) {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          currentPassword: form.currentPassword,
+          currentPassword: hasLocalPassword ? form.currentPassword : undefined,
           newPassword: form.newPassword,
         }),
       });
@@ -608,27 +610,40 @@ function SecurityTab({ user }) {
   return (
     <div className="space-y-5">
       <Section
-        title="Change Password"
-        desc="Use a strong password with at least 8 characters."
+        title={hasLocalPassword ? "Change Password" : "Set Password"}
+        desc={
+          hasLocalPassword
+            ? "Use a strong password with at least 8 characters."
+            : "Create a password so you can sign in with your email and password instead of OAuth. You'll need at least 8 characters."
+        }
       >
         <form onSubmit={handleSubmit} className="space-y-4">
           <Alert type="error" message={error} />
           {saved && (
-            <Alert type="success" message="Password updated successfully." />
+            <Alert
+              type="success"
+              message={
+                hasLocalPassword
+                  ? "Password updated successfully."
+                  : "Password set successfully. You can now sign in with your email and password."
+              }
+            />
+          )}
+          {hasLocalPassword && (
+            <div>
+              <Label>Current Password</Label>
+              <Input
+                type="password"
+                value={form.currentPassword}
+                onChange={(e) => set("currentPassword", e.target.value)}
+                placeholder="Your current password"
+                required
+                autoComplete="current-password"
+              />
+            </div>
           )}
           <div>
-            <Label>Current Password</Label>
-            <Input
-              type="password"
-              value={form.currentPassword}
-              onChange={(e) => set("currentPassword", e.target.value)}
-              placeholder="Your current password"
-              required
-              autoComplete="current-password"
-            />
-          </div>
-          <div>
-            <Label>New Password</Label>
+            <Label>{hasLocalPassword ? "New Password" : "Password"}</Label>
             <Input
               type="password"
               value={form.newPassword}
@@ -639,7 +654,7 @@ function SecurityTab({ user }) {
             />
           </div>
           <div>
-            <Label>Confirm New Password</Label>
+            <Label>Confirm {hasLocalPassword ? "New " : ""}Password</Label>
             <Input
               type="password"
               value={form.confirmPassword}
@@ -651,7 +666,7 @@ function SecurityTab({ user }) {
           </div>
           <div className="flex justify-end">
             <SaveButton loading={loading} saved={saved}>
-              Update Password
+              {hasLocalPassword ? "Update Password" : "Set Password"}
             </SaveButton>
           </div>
         </form>

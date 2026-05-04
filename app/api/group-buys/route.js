@@ -35,6 +35,9 @@ export async function GET(request) {
       // customers/public only see active
       query.status = "active";
       query.endDate = { $gte: new Date() };
+      if (searchParams.get("joined") === "true" && session?.user?.id) {
+        query["participants.customerId"] = session.user.id;
+      }
     }
 
     // Auto-sync status for scheduled -> active

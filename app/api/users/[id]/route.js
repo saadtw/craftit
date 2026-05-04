@@ -57,7 +57,14 @@ export async function PATCH(request, { params }) {
 
     const body = await request.json();
 
-    const baseAllowed = ["name", "phone", "bio", "address"];
+    const baseAllowed = [
+      "name",
+      "phone",
+      "bio",
+      "address",
+      "profilePicture",
+      "pushToken",
+    ];
     const manufacturerAllowed = [
       "businessName",
       "businessDescription",
@@ -108,6 +115,20 @@ export async function PATCH(request, { params }) {
 
     if (update.phone !== undefined) {
       update.phone = String(update.phone).trim();
+    }
+
+    if (update.profilePicture !== undefined) {
+      // Allow null to clear the profile picture
+      update.profilePicture =
+        update.profilePicture === null
+          ? null
+          : String(update.profilePicture).trim();
+    }
+
+    if (update.pushToken !== undefined) {
+      // Allow null to unregister push notifications
+      update.pushToken =
+        update.pushToken === null ? null : String(update.pushToken).trim();
     }
 
     if (update.businessLogo !== undefined) {

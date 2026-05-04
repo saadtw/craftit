@@ -6,6 +6,7 @@ import Order from "@/models/Order";
 import "@/models/User";
 import "@/models/Product";
 import "@/models/RFQ";
+import "@/models/CustomOrder";
 import "@/models/Bid";
 import "@/models/GroupBuy";
 import { resolveRequestSession } from "@/lib/requestAuth";

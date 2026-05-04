@@ -27,7 +27,9 @@ export async function GET(request) {
 
     await connectDB();
 
-    const user = await User.findById(session.user.id).select("-password");
+    const user = await User.findById(session.user.id).select(
+      "+password -password",
+    );
 
     if (!user) {
       return NextResponse.json(
@@ -68,6 +70,8 @@ export async function GET(request) {
     }
 
     const userData = user.toObject();
+    userData.hasLocalPassword = Boolean(user.password);
+    delete userData.password;
     userData.verificationDocuments = verificationDocuments;
 
     return NextResponse.json({

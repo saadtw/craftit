@@ -2961,6 +2961,9 @@ async function createNotifications(
   fixedManufacturer,
   fixedOrders,
   fixedBids,
+  fixedRFQs,
+  fixedGroupBuys,
+  fixedDisputes,
   allOrders,
   allBids,
   allCustomers,
@@ -2995,6 +2998,28 @@ async function createNotifications(
   }
 
   // Fixed customer notifications (rich set)
+  // Each notification carries relatedType + relatedId so the mobile app
+  // can deep-link directly to the correct detail screen instead of falling
+  // back to the generic Orders tab.
+  //
+  // Index guide for fixedOrders (in push order):
+  //   [0] order1 — completed (CNC Brackets)
+  //   [1] order2 — in_production (Sheet Metal Enclosure)
+  //   [2] order3 — pending_acceptance
+  //   [3] order4 — shipped (fasteners, tracking TCS987654321)
+  //   [4] order5 — accepted
+  //   [5] order6 — in_production (Hydraulic Manifold, rfq-based)
+  //   [6] order7 — completed/partially_refunded (welded steel, has dispute)
+  //   [7] order8 — cancelled
+  //   [8] gbOrder — accepted (group buy order)
+  //
+  // fixedBids[0] = bid5a (on rfq5), fixedBids[1] = bid5b, fixedBids[2] = bid5c
+  // fixedBids[3] = bid9 (on rfq9, the active RFQ)
+  //
+  // fixedRFQs[0] = rfq5 (bid_accepted), fixedRFQs[1] = rfq9 (active)
+  // fixedGroupBuys[0] = the active fastener group buy (fixed customer is a participant)
+  // fixedDisputes[0] = dispute6, fixedDisputes[1] = dispute7 (both on order7)
+
   const fixedNotifData = [
     {
       type: "order_placed",
@@ -3002,6 +3027,8 @@ async function createNotifications(
       message:
         "Your order for CNC Precision Brackets has been placed and is awaiting manufacturer acceptance.",
       link: `/customer/orders`,
+      relatedType: "order",
+      relatedId: fixedOrders[0]?._id ?? null,
       isRead: true,
     },
     {
@@ -3010,6 +3037,8 @@ async function createNotifications(
       message:
         "TechForge Industries has accepted your order for Sheet Metal Enclosure Box. Production will begin shortly.",
       link: `/customer/orders`,
+      relatedType: "order",
+      relatedId: fixedOrders[1]?._id ?? null,
       isRead: true,
     },
     {
@@ -3018,6 +3047,8 @@ async function createNotifications(
       message:
         "Your order for Sheet Metal Enclosure Box is now in production. Expected delivery in 14 days.",
       link: `/customer/orders`,
+      relatedType: "order",
+      relatedId: fixedOrders[1]?._id ?? null,
       isRead: true,
     },
     {
@@ -3026,6 +3057,8 @@ async function createNotifications(
       message:
         "Your fastener order has been shipped via TCS Courier. Tracking: TCS987654321",
       link: `/customer/orders`,
+      relatedType: "order",
+      relatedId: fixedOrders[3]?._id ?? null,
       isRead: false,
     },
     {
@@ -3034,6 +3067,8 @@ async function createNotifications(
       message:
         "Your order for CNC Precision Brackets has been marked as delivered. Please leave a review!",
       link: `/customer/orders`,
+      relatedType: "order",
+      relatedId: fixedOrders[0]?._id ?? null,
       isRead: true,
     },
     {
@@ -3042,6 +3077,8 @@ async function createNotifications(
       message:
         "TechForge Industries has submitted a bid of PKR 87,500 on your RFQ for Injection Molded ABS Cover Panels.",
       link: `/customer/rfqs`,
+      relatedType: "bid",
+      relatedId: fixedBids[3]?._id ?? null,
       isRead: false,
     },
     {
@@ -3050,6 +3087,8 @@ async function createNotifications(
       message:
         "Your RFQ for Custom Hydraulic Manifold Block has been published. Manufacturers can now submit bids.",
       link: `/customer/rfqs`,
+      relatedType: "rfq",
+      relatedId: fixedRFQs[1]?._id ?? null,
       isRead: true,
     },
     {
@@ -3058,6 +3097,8 @@ async function createNotifications(
       message:
         "You have successfully joined the Group Buy campaign for Stainless Steel Fasteners.",
       link: `/group-buys`,
+      relatedType: "group_buy",
+      relatedId: fixedGroupBuys[0]?._id ?? null,
       isRead: true,
     },
     {
@@ -3066,6 +3107,8 @@ async function createNotifications(
       message:
         "Great news! The fastener group buy has reached Tier 2. Your price is now PKR 1,020/unit (15% off).",
       link: `/group-buys`,
+      relatedType: "group_buy",
+      relatedId: fixedGroupBuys[0]?._id ?? null,
       isRead: false,
     },
     {
@@ -3074,6 +3117,8 @@ async function createNotifications(
       message:
         "Your dispute for the welded steel frames order has been opened. Admin review is in progress.",
       link: `/customer/disputes`,
+      relatedType: "order",
+      relatedId: fixedOrders[6]?._id ?? null,
       isRead: true,
     },
     {
@@ -3082,6 +3127,8 @@ async function createNotifications(
       message:
         "Your dispute for Order #ORD-BRASS has been resolved. A partial refund of PKR 850,000 has been approved.",
       link: `/customer/disputes`,
+      relatedType: "order",
+      relatedId: fixedOrders[6]?._id ?? null,
       isRead: true,
     },
     {
@@ -3090,6 +3137,8 @@ async function createNotifications(
       message:
         "TechForge Industries has answered your question about tolerance levels on CNC Precision Bracket.",
       link: `/products`,
+      relatedType: null,
+      relatedId: null,
       isRead: false,
     },
     {
@@ -3098,6 +3147,8 @@ async function createNotifications(
       message:
         "Our support team has replied to your ticket about payment not reflecting.",
       link: `/support`,
+      relatedType: null,
+      relatedId: null,
       isRead: true,
     },
     {
@@ -3106,6 +3157,8 @@ async function createNotifications(
       message:
         "Your payment of PKR 700,000 for the CNC bracket order has been confirmed.",
       link: `/customer/orders`,
+      relatedType: "order",
+      relatedId: fixedOrders[0]?._id ?? null,
       isRead: true,
     },
     {
@@ -3114,6 +3167,8 @@ async function createNotifications(
       message:
         "Your customer account has been verified. You can now access all platform features.",
       link: `/dashboard`,
+      relatedType: null,
+      relatedId: null,
       isRead: true,
     },
   ];
@@ -3125,8 +3180,8 @@ async function createNotifications(
       n.title,
       n.message,
       n.link,
-      null,
-      null,
+      n.relatedType,
+      n.relatedId,
       n.isRead,
     );
   }
@@ -3654,6 +3709,9 @@ async function seedDatabase() {
       fixedManufacturer,
       fixedData.orders,
       fixedData.bids,
+      fixedData.rfqs,
+      fixedData.groupBuys,
+      fixedData.disputes,
       allOrders,
       allBids,
       extraCustomers,

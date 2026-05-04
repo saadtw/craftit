@@ -9,6 +9,9 @@ export default function AdminProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
+  const [user, setUser] = useState(null);
+  const [userLoading, setUserLoading] = useState(true);
+
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: "",
     newPassword: "",
@@ -25,8 +28,21 @@ export default function AdminProfilePage() {
     }
     if (status === "authenticated" && session?.user?.role !== "admin") {
       router.push("/");
+      return;
     }
-  }, [status, session, router]);
+    if (status === "authenticated" && user === null) {
+      // Fetch user profile data
+      fetch("/api/auth/me")
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.success) setUser(data.user);
+        })
+        .catch(console.error)
+        .finally(() => setUserLoading(false));
+    }
+  }, [status, session, router, user]);
+
+  const hasLocalPassword = Boolean(user?.hasLocalPassword);
 
   const handleChangePassword = async (e) => {
     e.preventDefault();
@@ -48,7 +64,9 @@ export default function AdminProfilePage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          currentPassword: passwordForm.currentPassword,
+          currentPassword: hasLocalPassword
+            ? passwordForm.currentPassword
+            : undefined,
           newPassword: passwordForm.newPassword,
         }),
       });
@@ -111,33 +129,41 @@ export default function AdminProfilePage() {
           </div>
         </div>
 
-        {/* Change Password */}
+        {/* Set/Change Password */}
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
           <h2 className="text-slate-300 font-semibold text-sm uppercase tracking-wider mb-4">
-            Change Password
+            {hasLocalPassword ? "Change Password" : "Set Password"}
           </h2>
+          <p className="text-slate-500 text-xs mb-4">
+            {hasLocalPassword
+              ? "Use a strong password with at least 8 characters."
+              : "Create a password so you can sign in with your email and password instead of OAuth. You'll need at least 8 characters."}
+          </p>
 
           <form onSubmit={handleChangePassword} className="space-y-4">
+            {hasLocalPassword && (
+              <div>
+                <label className="text-slate-400 text-sm block mb-1.5">
+                  Current Password
+                </label>
+                <input
+                  type="password"
+                  value={passwordForm.currentPassword}
+                  onChange={(e) =>
+                    setPasswordForm({
+                      ...passwordForm,
+                      currentPassword: e.target.value,
+                    })
+                  }
+                  placeholder="••••••••"
+                  className="w-full bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-600 rounded-lg px-3 py-2 text-sm focus:border-amber-600 focus:outline-none"
+                  required
+                />
+              </div>
+            )}
             <div>
               <label className="text-slate-400 text-sm block mb-1.5">
-                Current Password
-              </label>
-              <input
-                type="password"
-                value={passwordForm.currentPassword}
-                onChange={(e) =>
-                  setPasswordForm({
-                    ...passwordForm,
-                    currentPassword: e.target.value,
-                  })
-                }
-                placeholder="••••••••"
-                className="w-full bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-600 rounded-lg px-3 py-2 text-sm focus:border-amber-600 focus:outline-none"
-              />
-            </div>
-            <div>
-              <label className="text-slate-400 text-sm block mb-1.5">
-                New Password
+                {hasLocalPassword ? "New Password" : "Password"}
               </label>
               <input
                 type="password"
@@ -150,11 +176,12 @@ export default function AdminProfilePage() {
                 }
                 placeholder="••••••••"
                 className="w-full bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-600 rounded-lg px-3 py-2 text-sm focus:border-amber-600 focus:outline-none"
+                required
               />
             </div>
             <div>
               <label className="text-slate-400 text-sm block mb-1.5">
-                Confirm New Password
+                Confirm {hasLocalPassword ? "New " : ""}Password
               </label>
               <input
                 type="password"
@@ -167,6 +194,7 @@ export default function AdminProfilePage() {
                 }
                 placeholder="••••••••"
                 className="w-full bg-slate-800 border border-slate-700 text-slate-200 placeholder-slate-600 rounded-lg px-3 py-2 text-sm focus:border-amber-600 focus:outline-none"
+                required
               />
             </div>
 
@@ -186,7 +214,11 @@ export default function AdminProfilePage() {
               disabled={pwLoading}
               className="px-5 py-2.5 bg-amber-600 hover:bg-amber-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
             >
-              {pwLoading ? "Updating..." : "Update Password"}
+              {pwLoading
+                ? "Saving..."
+                : hasLocalPassword
+                  ? "Update Password"
+                  : "Set Password"}
             </button>
           </form>
         </div>

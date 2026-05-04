@@ -5,6 +5,7 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import "@/models/User";
 import "@/models/RFQ";
+import "@/models/CustomOrder";
 import "@/models/Bid";
 import "@/models/Product";
 import "@/models/GroupBuy";

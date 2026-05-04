@@ -20,11 +20,11 @@ export async function POST(request) {
 
     const { currentPassword, newPassword } = await request.json();
 
-    if (!currentPassword || !newPassword) {
+    if (!newPassword) {
       return NextResponse.json(
         {
           success: false,
-          error: "Both current and new passwords are required",
+          error: "New password is required",
         },
         { status: 400 },
       );
@@ -40,7 +40,9 @@ export async function POST(request) {
     await connectDB();
 
     // Fetch with password field explicitly selected
-    const user = await User.findById(session.user.id).select("+password");
+    const user = await User.findById(session.user.id).select(
+      "+password authMethod oauthProviders",
+    );
 
     if (!user) {
       return NextResponse.json(
@@ -49,12 +51,26 @@ export async function POST(request) {
       );
     }
 
-    const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return NextResponse.json(
-        { success: false, error: "Current password is incorrect" },
-        { status: 400 },
-      );
+    const hasLocalPassword = Boolean(user.password);
+
+    if (hasLocalPassword) {
+      if (!currentPassword) {
+        return NextResponse.json(
+          {
+            success: false,
+            error: "Current password is required to change your password",
+          },
+          { status: 400 },
+        );
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return NextResponse.json(
+          { success: false, error: "Current password is incorrect" },
+          { status: 400 },
+        );
+      }
     }
 
     // Hash and save new password
