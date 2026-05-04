@@ -22,7 +22,7 @@ function normalizeCountryCode(rawCountry) {
   return fallback.length === 2 ? fallback : "US";
 }
 
-async function getAuthorizedManufacturer(paramsPromise) {
+async function getAuthorizedManufacturer(request, paramsPromise) {
   const params = await paramsPromise;
   const session = await resolveRequestSession(request);
 
@@ -137,7 +137,7 @@ function getBaseUrl(request) {
 
 export async function GET(request, { params }) {
   try {
-    const { user, errorResponse } = await getAuthorizedManufacturer(params);
+    const { user, errorResponse } = await getAuthorizedManufacturer(request, params);
     if (errorResponse) return errorResponse;
 
     if (!user.stripeConnectAccountId) {
@@ -166,7 +166,7 @@ export async function GET(request, { params }) {
 
 export async function POST(request, { params }) {
   try {
-    const { user, errorResponse } = await getAuthorizedManufacturer(params);
+    const { user, errorResponse } = await getAuthorizedManufacturer(request, params);
     if (errorResponse) return errorResponse;
 
     const body = await request.json().catch(() => ({}));

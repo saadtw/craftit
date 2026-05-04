@@ -1,7 +1,8 @@
-// app/customer/group-buys/[id]/page.js
+
 // app/customer/group-buys/[id]/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
@@ -278,19 +279,17 @@ export default function GroupBuyDetailPage() {
     }
   };
 
+  useEffect(() => {
+    if (status !== "loading" && !session) {
+      router.replace("/auth/login");
+    }
+  }, [session, status, router]);
+
   if (status === "loading" || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050507]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
-          <p className="text-sm text-white/45">Loading group buy...</p>
-        </div>
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading group buy..." />;
   }
 
   if (!session) {
-    router.replace("/auth/login");
     return null;
   }
 
@@ -360,9 +359,9 @@ export default function GroupBuyDetailPage() {
           <div className="space-y-6">
             <div className="overflow-hidden rounded-[30px] border border-white/10 bg-[#0c0c11]">
               <div className="relative h-[320px] sm:h-[420px]">
-                {groupBuy.productId?.images?.[0] ? (
+                {groupBuy.productId?.images?.[0]?.url ? (
                   <Image
-                    src={groupBuy.productId.images[0]}
+                    src={groupBuy.productId.images[0].url}
                     alt={groupBuy.productId.name}
                     fill
                     sizes="(max-width: 1024px) 100vw, 66vw"

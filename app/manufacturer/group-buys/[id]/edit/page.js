@@ -182,8 +182,8 @@ export default function EditGroupBuyPage() {
 
   if (loading || !form) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-[#050507]">
+        <div className="w-10 h-10 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
@@ -191,166 +191,181 @@ export default function EditGroupBuyPage() {
   const hasParticipants = groupBuy.participants?.length > 0;
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-[#050507] text-white">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 pt-10 pb-20 space-y-8">
+        {/* Header Section */}
+        <div className="flex flex-col gap-8 mb-10">
+          <div className="flex items-center justify-between">
             <Link
               href={`/manufacturer/group-buys/${id}`}
-              className="text-slate-400 hover:text-slate-600 transition-colors"
+              className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-sm">arrow_back</span>
+              </div>
+              Discard Adjustments
             </Link>
-            <h1 className="text-xl font-semibold text-slate-900">
-              Edit Campaign
-            </h1>
-          </div>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="px-4 py-2 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50 flex items-center gap-2"
-          >
-            {saving && (
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-            )}
-            Save Changes
-          </button>
-        </div>
-      </div>
 
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="px-8 py-3 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center gap-2 shadow-lg shadow-purple-500/20"
+            >
+              {saving ? (
+                <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <span className="material-symbols-outlined text-sm">save</span>
+              )}
+              Save Changes
+            </button>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-purple-500 via-orange-500 to-[#eb9728] bg-clip-text text-transparent">
+              Adjust Campaign
+            </h1>
+            <p className="text-sm text-white/35 font-medium">
+              Fine-tune campaign parameters and extend active milestones
+            </p>
+          </div>
+        </div>
         {hasParticipants && (
-          <div className="p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
-            ⚠️ This campaign has {groupBuy.participants.length} participant(s).
-            Only the end date can be extended.
+          <div className="p-6 bg-amber-500/10 border border-amber-500/20 rounded-[2rem] flex items-center gap-4 shadow-lg shadow-amber-500/5">
+            <div className="w-12 h-12 rounded-2xl bg-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+              <span className="material-symbols-outlined">warning</span>
+            </div>
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-400">ACTIVE CAMPAIGN PROTECTION</p>
+              <p className="text-sm font-medium text-amber-400/80 mt-1">
+                This campaign has {groupBuy.participants.length} participant(s). Only the end date can be extended to protect existing commitments.
+              </p>
+            </div>
           </div>
         )}
 
-        {/* Campaign Details */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 space-y-4">
-          <h2 className="text-base font-semibold text-slate-900">
-            Campaign Details
+        {/* Campaign Architecture */}
+        <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 blur-[100px] pointer-events-none" />
+          <h2 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-8 flex items-center gap-2">
+            <span className="material-symbols-outlined text-sm">campaign</span>
+            Campaign Architecture
           </h2>
 
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Title
-            </label>
-            <input
-              type="text"
-              value={form.title}
-              onChange={(e) => setField("title", e.target.value)}
-              disabled={hasParticipants}
-              className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 ${hasParticipants ? "bg-slate-50 text-slate-400" : "border-slate-200"} ${errors.title ? "border-red-400" : ""}`}
-            />
-            {errors.title && (
-              <p className="text-xs text-red-500 mt-1">{errors.title}</p>
-            )}
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Description
-            </label>
-            <textarea
-              value={form.description}
-              onChange={(e) => setField("description", e.target.value)}
-              disabled={hasParticipants}
-              rows={3}
-              className={`w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 resize-none ${hasParticipants ? "bg-slate-50 text-slate-400" : ""}`}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-slate-700 mb-1.5">
-              Base Price (USD)
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-sm">
-                $
-              </span>
-              <input
-                type="number"
-                min="0"
-                step="0.01"
-                value={form.basePrice}
-                onChange={(e) => setField("basePrice", e.target.value)}
-                disabled={hasParticipants}
-                className={`w-full pl-7 pr-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 ${hasParticipants ? "bg-slate-50 text-slate-400" : "border-slate-200"} ${errors.basePrice ? "border-red-400" : ""}`}
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-8">
             <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                Start Date
+              <label className="block text-[10px] font-black text-white/20 uppercase tracking-widest mb-3 px-1">
+                Campaign Title
               </label>
               <input
-                type="datetime-local"
-                value={form.startDate}
-                onChange={(e) => setField("startDate", e.target.value)}
+                type="text"
+                value={form.title}
+                onChange={(e) => setField("title", e.target.value)}
                 disabled={hasParticipants}
-                className={`w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 ${hasParticipants ? "bg-slate-50 text-slate-400" : ""}`}
+                className={`w-full px-5 py-4 bg-white/5 border rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all ${hasParticipants ? "opacity-30 cursor-not-allowed" : "border-white/10 hover:border-white/20"} ${errors.title ? "border-red-500/50 bg-red-500/5" : ""}`}
               />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                End Date
-                {hasParticipants && (
-                  <span className="ml-1 text-xs text-amber-600">
-                    (extend only)
-                  </span>
-                )}
-              </label>
-              <input
-                type="datetime-local"
-                min={
-                  hasParticipants
-                    ? new Date(groupBuy.endDate).toISOString().slice(0, 16)
-                    : minDateTime
-                }
-                value={form.endDate}
-                onChange={(e) => setField("endDate", e.target.value)}
-                className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 ${errors.endDate ? "border-red-400" : "border-slate-200"}`}
-              />
-              {errors.endDate && (
-                <p className="text-xs text-red-500 mt-1">{errors.endDate}</p>
+              {errors.title && (
+                <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">{errors.title}</p>
               )}
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-white/20 uppercase tracking-widest mb-3 px-1">
+                Campaign Brief
+              </label>
+              <textarea
+                value={form.description}
+                onChange={(e) => setField("description", e.target.value)}
+                disabled={hasParticipants}
+                rows={4}
+                className={`w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all resize-none ${hasParticipants ? "opacity-30 cursor-not-allowed" : "hover:border-white/20"}`}
+              />
+            </div>
+
+            <div>
+              <label className="block text-[10px] font-black text-white/20 uppercase tracking-widest mb-3 px-1">
+                Base Unit Price (USD)
+              </label>
+              <div className="relative">
+                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-sm font-black">$</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={form.basePrice}
+                  onChange={(e) => setField("basePrice", e.target.value)}
+                  disabled={hasParticipants}
+                  className={`w-full pl-10 pr-5 py-4 bg-white/5 border rounded-2xl text-sm font-black focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all ${hasParticipants ? "opacity-30 cursor-not-allowed" : "border-white/10 hover:border-white/20"} ${errors.basePrice ? "border-red-500/50" : ""}`}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-[10px] font-black text-white/20 uppercase tracking-widest mb-3 px-1">
+                  Start Date
+                </label>
+                <input
+                  type="datetime-local"
+                  value={form.startDate}
+                  onChange={(e) => setField("startDate", e.target.value)}
+                  disabled={hasParticipants}
+                  className={`w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all text-white inverted-scheme-icon ${hasParticipants ? "opacity-30 cursor-not-allowed" : "hover:border-white/20"}`}
+                />
+              </div>
+              <div>
+                <label className="block text-[10px] font-black text-white/20 uppercase tracking-widest mb-3 px-1">
+                  End Date
+                  {hasParticipants && (
+                    <span className="ml-2 text-[8px] text-amber-400 font-black tracking-widest uppercase bg-amber-500/10 px-2 py-0.5 rounded-full">
+                      EXTENSION ONLY
+                    </span>
+                  )}
+                </label>
+                <input
+                  type="datetime-local"
+                  min={
+                    hasParticipants
+                      ? new Date(groupBuy.endDate).toISOString().slice(0, 16)
+                      : minDateTime
+                  }
+                  value={form.endDate}
+                  onChange={(e) => setField("endDate", e.target.value)}
+                  className={`w-full px-5 py-4 bg-white/5 border rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all text-white inverted-scheme-icon ${errors.endDate ? "border-red-500/50 bg-red-500/5" : "border-white/10 hover:border-white/20"}`}
+                />
+                {errors.endDate && (
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">{errors.endDate}</p>
+                )}
+              </div>
             </div>
           </div>
         </div>
 
-        {/* Tiers (only if no participants) */}
+        {/* Pricing Milestones (only if no participants) */}
         {!hasParticipants && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-base font-semibold text-slate-900 mb-4">
-              Pricing Tiers
+          <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] pointer-events-none" />
+            <h2 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-8 flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">stacked_bar_chart</span>
+              Pricing Milestones
             </h2>
-            <div className="space-y-3">
+            <div className="grid grid-cols-1 gap-4">
               {form.tiers.map((tier, index) => (
                 <div
                   key={index}
-                  className="p-4 bg-slate-50 rounded-xl border border-slate-200"
+                  className="p-6 bg-white/[0.02] rounded-3xl border border-white/5 hover:border-white/10 transition-all"
                 >
-                  <p className="text-sm font-semibold text-slate-700 mb-3">
-                    Tier {index + 1}
-                  </p>
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[10px] font-black text-white/40">
+                      #{index + 1}
+                    </div>
+                    <span className="text-[10px] font-black text-white uppercase tracking-widest">
+                      Tier Milestone {index + 1}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">
+                      <label className="block text-[9px] font-black text-white/20 uppercase tracking-widest mb-2 px-1">
                         Min Units
                       </label>
                       <input
@@ -360,12 +375,12 @@ export default function EditGroupBuyPage() {
                         onChange={(e) =>
                           setTierField(index, "minQuantity", e.target.value)
                         }
-                        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-black focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">
-                        Discount %
+                      <label className="block text-[9px] font-black text-white/20 uppercase tracking-widest mb-2 px-1">
+                        Discount (%)
                       </label>
                       <input
                         type="number"
@@ -376,23 +391,26 @@ export default function EditGroupBuyPage() {
                           setTierField(index, "discountPercent", e.target.value)
                         }
                         onBlur={() => autoCalcPrice(index)}
-                        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
+                        className="w-full px-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-black focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-xs text-slate-500 mb-1">
+                      <label className="block text-[9px] font-black text-white/20 uppercase tracking-widest mb-2 px-1">
                         Price ($)
                       </label>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.01"
-                        value={tier.discountedPrice}
-                        onChange={(e) =>
-                          setTierField(index, "discountedPrice", e.target.value)
-                        }
-                        className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 bg-white"
-                      />
+                      <div className="relative">
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 text-xs font-black">$</span>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={tier.discountedPrice}
+                          onChange={(e) =>
+                            setTierField(index, "discountedPrice", e.target.value)
+                          }
+                          className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-black focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -401,37 +419,40 @@ export default function EditGroupBuyPage() {
           </div>
         )}
 
-        {/* Terms */}
+        {/* Legal Terms */}
         {!hasParticipants && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-6">
-            <h2 className="text-base font-semibold text-slate-900 mb-4">
-              Terms & Conditions
+          <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8">
+            <h2 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-6 flex items-center gap-2">
+              <span className="material-symbols-outlined text-sm">gavel</span>
+              Legal Terms & Conditions
             </h2>
             <textarea
               value={form.termsAndConditions}
               onChange={(e) => setField("termsAndConditions", e.target.value)}
               rows={4}
-              className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 resize-none"
+              className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all resize-none"
             />
           </div>
         )}
 
-        <div className="flex justify-end gap-3 pb-8">
+        <div className="flex items-center justify-end gap-4 pb-20 border-t border-white/5 pt-10">
           <Link
             href={`/manufacturer/group-buys/${id}`}
-            className="px-4 py-2.5 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-white transition-colors"
+            className="px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-white/40 hover:text-white transition-all"
           >
-            Cancel
+            Discard Changes
           </Link>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="px-6 py-2.5 bg-slate-900 text-white text-sm font-medium rounded-lg hover:bg-slate-700 transition-colors disabled:opacity-50 flex items-center gap-2"
+            className="px-10 py-4 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:scale-[1.02] transition-all disabled:opacity-50 flex items-center gap-3 shadow-2xl shadow-purple-500/40"
           >
-            {saving && (
-              <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            {saving ? (
+              <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+            ) : (
+              <span className="material-symbols-outlined text-lg">save</span>
             )}
-            Save Changes
+            Apply Adjustments
           </button>
         </div>
       </div>

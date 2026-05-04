@@ -1,6 +1,7 @@
 // app/manufacturer/group-buys/[id]/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
@@ -9,11 +10,11 @@ import Image from "next/image";
 import Editor3DWrapper from "../../../../modules/components/Editor3DWrapper";
 
 const STATUS_STYLES = {
-  active: "bg-emerald-100 text-emerald-700",
-  scheduled: "bg-blue-100 text-blue-700",
-  paused: "bg-amber-100 text-amber-700",
-  completed: "bg-slate-100 text-slate-600",
-  cancelled: "bg-red-100 text-red-600",
+  active: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
+  scheduled: "bg-blue-500/10 text-blue-400 border border-blue-500/20",
+  paused: "bg-amber-500/10 text-amber-400 border border-amber-500/20",
+  completed: "bg-white/5 text-white/40 border border-white/10",
+  cancelled: "bg-red-500/10 text-red-400 border border-red-500/20",
 };
 
 function Countdown({ endDate }) {
@@ -37,7 +38,7 @@ function Countdown({ endDate }) {
     return () => clearInterval(t);
   }, [endDate]);
 
-  return <span className="font-mono font-semibold">{remaining}</span>;
+  return <span className="font-black tracking-tighter">{remaining}</span>;
 }
 
 export default function GroupBuyDetailPage() {
@@ -129,11 +130,7 @@ export default function GroupBuyDetailPage() {
   };
 
   if (loading || status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="w-8 h-8 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading campaign..." />;
   }
 
   if (!groupBuy) return null;
@@ -152,198 +149,171 @@ export default function GroupBuyDetailPage() {
   const hasProductModel3D = Boolean(product?.model3D?.url);
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      {/* Header */}
-      <div className="bg-white border-b border-slate-200 sticky top-0 z-10">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+    <div className="min-h-screen bg-[#050507] text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-10 pb-20">
+        {/* Header Section */}
+        <div className="flex flex-col gap-8 mb-10">
+          <div className="flex items-center justify-between">
             <Link
               href="/manufacturer/group-buys"
-              className="text-slate-400 hover:text-slate-600 transition-colors"
+              className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all"
             >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M15 19l-7-7 7-7"
-                />
-              </svg>
+              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
+                <span className="material-symbols-outlined text-sm">arrow_back</span>
+              </div>
+              Campaign Hub
             </Link>
-            <div className="flex items-center gap-2">
-              <h1 className="text-lg font-semibold text-slate-900 line-clamp-1">
-                {groupBuy.title}
-              </h1>
-              <span
-                className={`px-2 py-0.5 text-xs font-medium rounded-full ${STATUS_STYLES[groupBuy.status]}`}
-              >
-                {groupBuy.status}
-              </span>
-            </div>
-          </div>
 
-          <div className="flex items-center gap-2">
-            {groupBuy.status === "active" && (
-              <button
-                onClick={() => handleAction("pause")}
-                disabled={actionLoading === "pause"}
-                className="px-3 py-2 text-sm text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors disabled:opacity-50"
-              >
-                Pause
-              </button>
-            )}
-            {groupBuy.status === "paused" && (
-              <>
+            <div className="flex items-center gap-3">
+              {groupBuy.status === "active" && (
+                <button
+                  onClick={() => handleAction("pause")}
+                  disabled={actionLoading === "pause"}
+                  className="px-5 py-2.5 bg-amber-500/10 border border-amber-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-amber-400 hover:bg-amber-500/20 transition-all disabled:opacity-50"
+                >
+                  Pause Campaign
+                </button>
+              )}
+              {groupBuy.status === "paused" && (
                 <button
                   onClick={() => handleAction("resume")}
                   disabled={actionLoading === "resume"}
-                  className="px-3 py-2 text-sm text-emerald-600 border border-emerald-200 rounded-lg hover:bg-emerald-50 transition-colors disabled:opacity-50"
+                  className="px-5 py-2.5 bg-emerald-500/10 border border-emerald-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-emerald-400 hover:bg-emerald-500/20 transition-all disabled:opacity-50"
                 >
-                  Resume
+                  Resume Campaign
                 </button>
+              )}
+              {["active", "paused"].includes(groupBuy.status) && (
                 <button
                   onClick={() => handleAction("end_early")}
                   disabled={actionLoading === "end_early"}
-                  className="px-3 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
+                  className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/40 hover:bg-white/10 hover:text-white transition-all disabled:opacity-50"
                 >
                   End Early
                 </button>
-              </>
-            )}
-            {groupBuy.status === "active" && (
-              <button
-                onClick={() => handleAction("end_early")}
-                disabled={actionLoading === "end_early"}
-                className="px-3 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
-              >
-                End Early
-              </button>
-            )}
-            {["scheduled", "active", "paused"].includes(groupBuy.status) && (
-              <Link
-                href={`/manufacturer/group-buys/${id}/edit`}
-                className="px-3 py-2 text-sm text-slate-600 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-1.5"
-              >
-                <svg
-                  className="w-4 h-4"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
+              )}
+              {["scheduled", "active", "paused"].includes(groupBuy.status) && (
+                <Link
+                  href={`/manufacturer/group-buys/${id}/edit`}
+                  className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/70 hover:bg-white/10 hover:text-white transition-all flex items-center gap-2"
                 >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                  />
-                </svg>
-                Edit
-              </Link>
-            )}
-            {["active", "scheduled", "paused"].includes(groupBuy.status) && (
-              <button
-                onClick={handleCancel}
-                className="px-3 py-2 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50 transition-colors"
+                  <span className="material-symbols-outlined text-sm">edit</span>
+                  Edit Campaign
+                </Link>
+              )}
+              {["active", "scheduled", "paused"].includes(groupBuy.status) && (
+                <button
+                  onClick={handleCancel}
+                  className="px-5 py-2.5 bg-red-500/10 border border-red-500/20 rounded-xl text-[10px] font-black uppercase tracking-widest text-red-400 hover:bg-red-500/20 transition-all"
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-4">
+              <h1 className="text-4xl font-black tracking-tight bg-gradient-to-r from-purple-500 via-orange-500 to-[#eb9728] bg-clip-text text-transparent">
+                {groupBuy.title}
+              </h1>
+              <span
+                className={`px-3 py-1 text-[9px] font-black uppercase tracking-widest rounded-full ${STATUS_STYLES[groupBuy.status]}`}
               >
-                Cancel
-              </button>
-            )}
+                {groupBuy.status.replace(/_/g, " ")}
+              </span>
+            </div>
+            <p className="text-sm text-white/35 font-medium">
+              Campaign detailed performance and participant management
+            </p>
           </div>
         </div>
-      </div>
-
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Main */}
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
             {/* Product Card */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h3 className="text-sm font-semibold text-slate-900 mb-4">
-                Product
-              </h3>
-              <div className="flex gap-4">
-                <div className="w-20 h-20 bg-slate-100 rounded-xl overflow-hidden shrink-0">
-                  {primaryImage ? (
-                    <div className="relative w-full h-full">
-                      <Image
-                        src={primaryImage}
-                        alt={product?.name || ""}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <svg
-                        className="w-8 h-8 text-slate-300"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.5}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <div>
-                  <p className="font-semibold text-slate-900">
-                    {product?.name}
-                  </p>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <p className="text-xs text-slate-500">
-                      {product?.category}
-                    </p>
-                    {hasProductModel3D && (
-                      <span className="px-1.5 py-0.5 text-[10px] font-semibold rounded-full bg-slate-900 text-white">
-                        3D Model
-                      </span>
-                    )}
-                  </div>
+            <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden group">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 blur-[100px] pointer-events-none" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-[10px] font-black text-white/20 uppercase tracking-widest">
+                    Campaign Product
+                  </h3>
                   <Link
                     href={`/manufacturer/products/${product?._id}`}
-                    className="text-xs text-slate-400 underline hover:text-slate-600 mt-1 inline-block"
+                    className="text-[10px] font-black text-purple-400 uppercase tracking-widest hover:text-purple-300 transition-colors flex items-center gap-1"
                   >
-                    View product →
+                    View product <span className="material-symbols-outlined text-sm">arrow_forward</span>
                   </Link>
                 </div>
-              </div>
-              {groupBuy.description && (
-                <p className="text-sm text-slate-600 mt-4 pt-4 border-t border-slate-100">
-                  {groupBuy.description}
-                </p>
-              )}
-              {hasProductModel3D && (
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">
-                    Product 3D Preview
-                  </h4>
-                  <Editor3DWrapper
-                    modelUrl={product.model3D.url}
-                    initialAnnotations={product.model3D.annotations || []}
-                    initialCameraState={product.model3D.cameraState || null}
-                    readOnly={true}
-                    onSave={() => {}}
-                  />
+                <div className="flex flex-col md:flex-row gap-8">
+                  <div className="w-48 h-48 bg-white/5 border border-white/10 rounded-3xl overflow-hidden shrink-0 group-hover:border-white/20 transition-colors">
+                    {primaryImage ? (
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={primaryImage}
+                          alt={product?.name || ""}
+                          fill
+                          className="object-cover group-hover:scale-110 transition-transform duration-1000"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center opacity-20">
+                        <span className="material-symbols-outlined text-6xl">inventory_2</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-3xl font-black text-white tracking-tighter mb-2">
+                      {product?.name}
+                    </h2>
+                    <div className="flex items-center gap-3 mb-6">
+                      <span className="px-3 py-1 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-white/40">
+                        {product?.category}
+                      </span>
+                      {hasProductModel3D && (
+                        <span className="px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-full text-[10px] font-black uppercase tracking-widest text-purple-400">
+                          3D INTERACTIVE
+                        </span>
+                      )}
+                    </div>
+                    {groupBuy.description && (
+                      <p className="text-sm text-white/40 leading-relaxed font-medium">
+                        {groupBuy.description}
+                      </p>
+                    )}
+                  </div>
                 </div>
-              )}
+
+                {hasProductModel3D && (
+                  <div className="mt-8 pt-8 border-t border-white/5">
+                    <div className="flex items-center justify-between mb-6">
+                      <h4 className="text-[10px] font-black text-white/20 uppercase tracking-widest flex items-center gap-2">
+                        <span className="material-symbols-outlined text-sm">view_in_ar</span>
+                        Interactive 3D Preview
+                      </h4>
+                    </div>
+                    <div className="rounded-3xl overflow-hidden border border-white/10 bg-[#050507]">
+                      <Editor3DWrapper
+                        modelUrl={product.model3D.url}
+                        initialAnnotations={product.model3D.annotations || []}
+                        initialCameraState={product.model3D.cameraState || null}
+                        readOnly={true}
+                        onSave={() => {}}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Tier Progress */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h3 className="text-sm font-semibold text-slate-900 mb-4">
-                Tier Progress
+            <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] pointer-events-none" />
+              <h3 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-8">
+                Pricing Tiers & Milestones
               </h3>
-              <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 {groupBuy.tiers.map((tier, i) => {
                   const isUnlocked = groupBuy.currentTierIndex >= i;
                   const isActive = groupBuy.currentTierIndex === i;
@@ -357,45 +327,51 @@ export default function GroupBuyDetailPage() {
                   return (
                     <div
                       key={i}
-                      className={`p-4 rounded-xl border ${isActive ? "border-emerald-300 bg-emerald-50" : isUnlocked ? "border-slate-200 bg-slate-50" : "border-slate-200"}`}
+                      className={`p-6 rounded-3xl border transition-all ${
+                        isActive 
+                        ? "bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.1)]" 
+                        : isUnlocked 
+                          ? "bg-white/5 border-white/20" 
+                          : "bg-white/[0.02] border-white/5 opacity-40"
+                      }`}
                     >
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-2">
-                          <span
-                            className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isUnlocked ? "bg-emerald-500 text-white" : "bg-slate-200 text-slate-500"}`}
-                          >
-                            {isUnlocked ? "✓" : i + 1}
-                          </span>
-                          <span className="text-sm font-medium text-slate-900">
-                            Tier {i + 1}
-                          </span>
-                          {isActive && (
-                            <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-700 text-xs rounded-full font-medium">
-                              Active
-                            </span>
-                          )}
+                      <div className="flex items-center justify-between mb-6">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs ${
+                            isUnlocked ? "bg-emerald-500 text-white" : "bg-white/5 text-white/20 border border-white/10"
+                          }`}>
+                            {isUnlocked ? <span className="material-symbols-outlined text-sm">check</span> : i + 1}
+                          </div>
+                          <div>
+                            <p className="text-xs font-black text-white uppercase tracking-widest">Tier {i + 1}</p>
+                            {isActive && (
+                              <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mt-0.5">CURRENTLY ACTIVE</p>
+                            )}
+                          </div>
                         </div>
                         <div className="text-right">
-                          <p className="text-sm font-bold text-slate-900">
-                            ${tier.discountedPrice}/unit
+                          <p className="text-xl font-black text-white tracking-tighter">
+                            ${tier.discountedPrice}
                           </p>
-                          <p className="text-xs text-emerald-600">
-                            {tier.discountPercent}% off
+                          <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
+                            {tier.discountPercent}% OFF
                           </p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2 text-xs text-slate-500 mb-2">
-                        <span>Unlocks at {tier.minQuantity} total units</span>
-                        <span>·</span>
-                        <span>
-                          {groupBuy.currentQuantity} / {tier.minQuantity}
-                        </span>
-                      </div>
-                      <div className="h-2 bg-slate-200 rounded-full overflow-hidden">
-                        <div
-                          className={`h-full rounded-full transition-all ${isUnlocked ? "bg-emerald-500" : "bg-slate-400"}`}
-                          style={{ width: `${progress}%` }}
-                        />
+                      
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-[0.2em]">
+                          <span className="text-white/20">Target: {tier.minQuantity} units</span>
+                          <span className={isUnlocked ? "text-emerald-400" : "text-white/40"}>{progress}%</span>
+                        </div>
+                        <div className="h-2 bg-white/5 rounded-full overflow-hidden">
+                          <div
+                            className={`h-full rounded-full transition-all duration-1000 ${
+                              isUnlocked ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" : "bg-white/10"
+                            }`}
+                            style={{ width: `${progress}%` }}
+                          />
+                        </div>
                       </div>
                     </div>
                   );
@@ -403,166 +379,178 @@ export default function GroupBuyDetailPage() {
               </div>
 
               {nextTier && (
-                <p className="text-xs text-slate-500 mt-3 text-center">
-                  {nextTier.minQuantity - groupBuy.currentQuantity} more units
-                  needed to unlock Tier {groupBuy.currentTierIndex + 2}
-                </p>
+                <div className="mt-8 p-4 bg-white/[0.02] border border-white/5 rounded-2xl text-center">
+                  <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">
+                    <span className="text-purple-400">{nextTier.minQuantity - groupBuy.currentQuantity} MORE UNITS</span> UNTIL TIER {groupBuy.currentTierIndex + 2}
+                  </p>
+                </div>
               )}
             </div>
 
-            {/* Participants */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-sm font-semibold text-slate-900">
-                  Participants ({groupBuy.currentParticipantCount})
-                </h3>
+            {/* Participants Table */}
+            <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8">
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h3 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1">
+                    Order History
+                  </h3>
+                  <h4 className="text-xl font-black text-white tracking-tight">
+                    All Participants ({groupBuy.currentParticipantCount})
+                  </h4>
+                </div>
                 {groupBuy.participants?.length > 0 && (
                   <button
                     onClick={exportParticipants}
-                    className="px-3 py-1.5 text-xs border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors flex items-center gap-1"
+                    className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/70 hover:bg-white/10 hover:text-white transition-all flex items-center gap-2"
                   >
-                    <svg
-                      className="w-3.5 h-3.5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                      />
-                    </svg>
+                    <span className="material-symbols-outlined text-sm">download</span>
                     Export CSV
                   </button>
                 )}
               </div>
 
               {!groupBuy.participants?.length ? (
-                <p className="text-sm text-slate-400 text-center py-6">
-                  No participants yet
-                </p>
+                <div className="text-center py-16 bg-white/[0.02] rounded-3xl border border-dashed border-white/10">
+                  <span className="material-symbols-outlined text-4xl text-white/10 mb-4">group_off</span>
+                  <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">
+                    No active participants yet
+                  </p>
+                </div>
               ) : (
-                <div className="space-y-2">
-                  {groupBuy.participants.map((p, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between py-2 border-b border-slate-100 last:border-0"
-                    >
-                      <div className="flex items-center gap-3">
-                        <span className="w-7 h-7 bg-slate-100 rounded-full flex items-center justify-center text-xs font-semibold text-slate-600">
-                          {i + 1}
-                        </span>
-                        <div>
-                          <p className="text-sm text-slate-600">
-                            Participant #{i + 1}
-                          </p>
-                          <p className="text-xs text-slate-400">
-                            {new Date(p.joinedAt).toLocaleDateString()}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-slate-900">
-                          {p.quantity} units
-                        </p>
-                        {p.unitPrice && (
-                          <p className="text-xs text-slate-400">
-                            ${p.unitPrice}/unit
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20 border-b border-white/5">
+                        <th className="text-left py-4 px-4 font-black">#</th>
+                        <th className="text-left py-4 px-4 font-black">Participant ID</th>
+                        <th className="text-left py-4 px-4 font-black">Joined At</th>
+                        <th className="text-center py-4 px-4 font-black">Quantity</th>
+                        <th className="text-right py-4 px-4 font-black">Unit Price</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                      {groupBuy.participants.map((p, i) => (
+                        <tr key={i} className="group hover:bg-white/[0.02] transition-colors">
+                          <td className="py-4 px-4">
+                            <span className="text-[10px] font-black text-white/20">{i + 1}</span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className="text-xs font-black text-white/70">PRT-{i + 1001}</span>
+                          </td>
+                          <td className="py-4 px-4">
+                            <span className="text-xs font-bold text-white/40">{new Date(p.joinedAt).toLocaleDateString()}</span>
+                          </td>
+                          <td className="py-4 px-4 text-center">
+                            <span className="px-3 py-1 bg-white/5 rounded-lg text-xs font-black text-white">{p.quantity}</span>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <span className="text-xs font-black text-emerald-400">${p.unitPrice || groupBuy.basePrice}</span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Sidebar */}
-          <div className="space-y-4">
-            {/* Live Stats */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h3 className="text-sm font-semibold text-slate-900 mb-4">
-                Live Stats
+          {/* Sidebar Stats */}
+          <div className="space-y-6">
+            {/* Countdown Widget */}
+            {["active", "paused", "scheduled"].includes(groupBuy.status) && (
+              <div className="bg-gradient-to-br from-purple-600 to-indigo-700 rounded-[2.5rem] p-8 shadow-2xl shadow-purple-500/20 relative overflow-hidden group">
+                <div className="absolute -top-24 -right-24 w-48 h-48 bg-white/20 blur-[60px] rounded-full group-hover:scale-150 transition-transform duration-1000" />
+                <div className="relative z-10">
+                  <h3 className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-6 flex items-center gap-2">
+                    <span className="material-symbols-outlined text-sm">schedule</span>
+                    {groupBuy.status === "scheduled" ? "LAUNCH COUNTDOWN" : "TIME REMAINING"}
+                  </h3>
+                  <div className="text-4xl font-black tracking-tighter text-white drop-shadow-lg">
+                    <Countdown
+                      endDate={
+                        groupBuy.status === "scheduled"
+                          ? groupBuy.startDate
+                          : groupBuy.endDate
+                      }
+                    />
+                  </div>
+                  <div className="mt-8 space-y-3 pt-6 border-t border-white/10">
+                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-white/40">
+                      <span>START DATE</span>
+                      <span className="text-white">{new Date(groupBuy.startDate).toLocaleDateString()}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-white/40">
+                      <span>EXPIRY DATE</span>
+                      <span className="text-white">{new Date(groupBuy.endDate).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Performance Stats */}
+            <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden">
+              <h3 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-8 flex items-center gap-2">
+                <span className="material-symbols-outlined text-sm">insights</span>
+                Campaign Performance
               </h3>
-              <div className="space-y-3">
+              <div className="space-y-6">
                 {[
                   {
-                    label: "Participants",
+                    label: "Active Participants",
                     value: groupBuy.currentParticipantCount,
+                    icon: "groups",
+                    color: "text-blue-400"
                   },
-                  { label: "Total Units", value: groupBuy.currentQuantity },
-                  {
-                    label: "Current Price",
-                    value: `$${groupBuy.currentDiscountedPrice || groupBuy.basePrice}/unit`,
+                  { 
+                    label: "Total Units Sold", 
+                    value: groupBuy.currentQuantity,
+                    icon: "inventory",
+                    color: "text-purple-400"
                   },
                   {
-                    label: "Revenue Potential",
+                    label: "Current Price Point",
+                    value: `$${groupBuy.currentDiscountedPrice || groupBuy.basePrice}`,
+                    icon: "tag",
+                    color: "text-[#eb9728]"
+                  },
+                  {
+                    label: "Estimated Revenue",
                     value: `$${revenuePotential.toLocaleString()}`,
-                  },
-                  {
-                    label: "Active Tier",
-                    value: activeTier
-                      ? `Tier ${groupBuy.currentTierIndex + 1}`
-                      : "None unlocked",
+                    icon: "payments",
+                    color: "text-emerald-400"
                   },
                 ].map((s) => (
-                  <div key={s.label} className="flex justify-between text-sm">
-                    <span className="text-slate-500">{s.label}</span>
-                    <span className="font-semibold text-slate-900">
-                      {s.value}
-                    </span>
+                  <div key={s.label} className="flex items-center gap-4 group/item">
+                    <div className={`w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center ${s.color} group-hover/item:scale-110 transition-transform`}>
+                      <span className="material-symbols-outlined text-lg">{s.icon}</span>
+                    </div>
+                    <div>
+                      <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">{s.label}</p>
+                      <p className="text-lg font-black text-white tracking-tight">{s.value}</p>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Countdown */}
-            {["active", "paused", "scheduled"].includes(groupBuy.status) && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                <h3 className="text-sm font-semibold text-slate-900 mb-2">
-                  {groupBuy.status === "scheduled"
-                    ? "Starts In"
-                    : "Time Remaining"}
-                </h3>
-                <p className="text-2xl text-slate-900">
-                  <Countdown
-                    endDate={
-                      groupBuy.status === "scheduled"
-                        ? groupBuy.startDate
-                        : groupBuy.endDate
-                    }
-                  />
-                </p>
-                <div className="mt-3 space-y-1 text-xs text-slate-500">
-                  <p>Start: {new Date(groupBuy.startDate).toLocaleString()}</p>
-                  <p>End: {new Date(groupBuy.endDate).toLocaleString()}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Pricing */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">
-                Pricing
+            {/* Pricing Matrix */}
+            <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8">
+              <h3 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-6">
+                Pricing Matrix
               </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Base Price</span>
-                  <span className="font-semibold text-slate-900">
-                    ${groupBuy.basePrice}
-                  </span>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center p-3 bg-white/5 rounded-2xl border border-white/10">
+                  <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">BASE PRICE</span>
+                  <span className="text-sm font-black text-white">${groupBuy.basePrice}</span>
                 </div>
                 {groupBuy.tiers.map((t, i) => (
-                  <div key={i} className="flex justify-between">
-                    <span className="text-slate-500">
-                      Tier {i + 1} ({t.minQuantity}+ units)
-                    </span>
-                    <span
-                      className={`font-semibold ${groupBuy.currentTierIndex >= i ? "text-emerald-600" : "text-slate-900"}`}
-                    >
+                  <div key={i} className={`flex justify-between items-center p-3 rounded-2xl border transition-all ${
+                    groupBuy.currentTierIndex >= i ? "bg-emerald-500/10 border-emerald-500/20" : "bg-white/[0.02] border-white/5"
+                  }`}>
+                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">TIER {i + 1} ({t.minQuantity}+)</span>
+                    <span className={`text-sm font-black ${groupBuy.currentTierIndex >= i ? "text-emerald-400" : "text-white/60"}`}>
                       ${t.discountedPrice}
                     </span>
                   </div>
@@ -570,34 +558,30 @@ export default function GroupBuyDetailPage() {
               </div>
             </div>
 
-            {/* Limits */}
-            <div className="bg-white rounded-2xl border border-slate-200 p-6">
-              <h3 className="text-sm font-semibold text-slate-900 mb-3">
-                Limits
+            {/* Constraints */}
+            <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8">
+              <h3 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-6">
+                Campaign Limits
               </h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Min Participants</span>
-                  <span className="font-semibold text-slate-900">
-                    {groupBuy.minParticipants}
-                  </span>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-white/40 font-bold uppercase tracking-widest text-[9px]">Min Participants</span>
+                  <span className="font-black text-white">{groupBuy.minParticipants}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-slate-500">Max Participants</span>
-                  <span className="font-semibold text-slate-900">
-                    {groupBuy.maxParticipants || "No limit"}
-                  </span>
+                <div className="flex justify-between items-center text-xs">
+                  <span className="text-white/40 font-bold uppercase tracking-widest text-[9px]">Max Participants</span>
+                  <span className="font-black text-white">{groupBuy.maxParticipants || "UNLIMITED"}</span>
                 </div>
               </div>
             </div>
 
             {/* Terms */}
             {groupBuy.termsAndConditions && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-6">
-                <h3 className="text-sm font-semibold text-slate-900 mb-2">
-                  Terms & Conditions
+              <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8">
+                <h3 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-4">
+                  Legal Terms
                 </h3>
-                <p className="text-xs text-slate-600 leading-relaxed">
+                <p className="text-xs text-white/40 leading-relaxed font-medium">
                   {groupBuy.termsAndConditions}
                 </p>
               </div>

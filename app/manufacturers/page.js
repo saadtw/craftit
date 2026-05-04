@@ -1,6 +1,7 @@
 // app/manufacturers/page.js
 "use client";
 
+import GlobalNoResults from "@/components/ui/GlobalNoResults";
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
@@ -48,7 +49,7 @@ function ManufacturerCard({ mfr, isWishlisted, onToggleWishlist }) {
 
   return (
     <Link href={`/manufacturers/${mfr._id}`}>
-      <div className="group relative bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden hover:-translate-y-0.5 cursor-pointer h-full">
+      <div className="group relative h-full cursor-pointer overflow-hidden rounded-[24px] border border-white/8 bg-[#0c0c11] transition-all duration-300 hover:-translate-y-0.5 hover:border-[#eb9728]/40 hover:bg-white/[0.025]">
         {onToggleWishlist && (
           <button
             type="button"
@@ -57,10 +58,10 @@ function ManufacturerCard({ mfr, isWishlisted, onToggleWishlist }) {
               e.stopPropagation();
               onToggleWishlist(manufacturerId);
             }}
-            className={`absolute top-3 left-3 z-20 inline-flex items-center justify-center w-8 h-8 rounded-full border backdrop-blur-sm transition-colors ${
+            className={`absolute left-3 top-3 z-20 inline-flex h-9 w-9 items-center justify-center rounded-full border backdrop-blur-md transition-colors ${
               isWishlisted
-                ? "text-[#eb9728] bg-white/95 border-[#eb9728]/40"
-                : "text-gray-500 bg-white/85 border-gray-200 hover:text-[#eb9728] hover:border-[#eb9728]/40"
+                ? "border-[#eb9728]/40 bg-[#050507]/80 text-[#eb9728]"
+                : "border-white/10 bg-[#050507]/65 text-white/65 hover:border-[#eb9728]/40 hover:text-[#eb9728]"
             }`}
             title={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
             aria-label={
@@ -72,32 +73,24 @@ function ManufacturerCard({ mfr, isWishlisted, onToggleWishlist }) {
             </span>
           </button>
         )}
-        {/* Banner */}
-        <div className="relative h-28 bg-linear-to-br from-slate-100 to-slate-200 overflow-hidden">
+
+        <div className="relative h-28 overflow-hidden bg-white/[0.04]">
           {mfr.businessBanner ? (
             <Image
               src={mfr.businessBanner}
               alt={`${displayName} banner`}
               fill
               sizes="(max-width: 768px) 100vw, 33vw"
-              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              className="object-cover opacity-75 transition-transform duration-500 group-hover:scale-105"
             />
           ) : (
-            <div className="absolute inset-0 bg-linear-to-br from-slate-200 via-slate-100 to-gray-200">
-              <div
-                className="absolute inset-0 opacity-20"
-                style={{
-                  backgroundImage:
-                    "repeating-linear-gradient(45deg, #94a3b8 0, #94a3b8 1px, transparent 0, transparent 50%)",
-                  backgroundSize: "12px 12px",
-                }}
-              />
-            </div>
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.20),transparent_36%),radial-gradient(circle_at_left,rgba(235,151,40,0.16),transparent_32%),#111118]" />
           )}
+
           {isVerified && (
-            <div className="absolute top-3 right-3 bg-blue-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow">
+            <div className="absolute right-3 top-3 flex items-center gap-1 rounded-full border border-blue-500/20 bg-blue-500/15 px-2 py-0.5 text-[10px] font-black text-blue-300 shadow">
               <svg
-                className="w-2.5 h-2.5"
+                className="h-2.5 w-2.5"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -112,34 +105,33 @@ function ManufacturerCard({ mfr, isWishlisted, onToggleWishlist }) {
           )}
         </div>
 
-        <div className="p-4 -mt-7 relative">
-          {/* Logo */}
-          <div className="w-14 h-14 rounded-xl border-2 border-white shadow-md overflow-hidden bg-white mb-3">
+        <div className="relative -mt-7 p-4">
+          <div className="mb-3 h-14 w-14 overflow-hidden rounded-xl border-2 border-[#0c0c11] bg-white/[0.04] shadow-md">
             {mfr.businessLogo ? (
               <Image
                 src={mfr.businessLogo}
                 alt={displayName}
                 width={56}
                 height={56}
-                className="object-cover w-full h-full"
+                className="h-full w-full object-cover"
               />
             ) : (
-              <div className="w-full h-full bg-linear-to-br from-amber-100 to-amber-200 flex items-center justify-center">
-                <span className="text-amber-700 font-bold text-lg">
+              <div className="flex h-full w-full items-center justify-center bg-[#eb9728]/10">
+                <span className="text-lg font-black text-[#eb9728]">
                   {displayName?.charAt(0)?.toUpperCase() || "M"}
                 </span>
               </div>
             )}
           </div>
 
-          <h3 className="font-bold text-gray-900 text-sm leading-tight mb-0.5 truncate">
+          <h3 className="mb-0.5 truncate text-sm font-black leading-tight text-white transition-colors group-hover:text-[#eb9728]">
             {displayName}
           </h3>
 
           {location && (
-            <p className="text-xs text-gray-400 flex items-center gap-1 mb-2">
+            <p className="mb-2 flex items-center gap-1 text-xs text-white/35">
               <svg
-                className="w-3 h-3 shrink-0"
+                className="h-3 w-3 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -162,48 +154,46 @@ function ManufacturerCard({ mfr, isWishlisted, onToggleWishlist }) {
           )}
 
           {mfr.businessDescription && (
-            <p className="text-xs text-gray-500 leading-relaxed line-clamp-2 mb-3">
+            <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-white/45">
               {mfr.businessDescription}
             </p>
           )}
 
-          {/* Capabilities */}
           {mfr.manufacturingCapabilities?.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-3">
+            <div className="mb-3 flex flex-wrap gap-1">
               {mfr.manufacturingCapabilities.slice(0, 3).map((cap) => (
                 <span
                   key={cap}
-                  className="text-[10px] px-2 py-0.5 bg-amber-50 text-amber-700 rounded-full border border-amber-100 font-medium"
+                  className="rounded-full border border-[#eb9728]/20 bg-[#eb9728]/10 px-2 py-0.5 text-[10px] font-bold text-[#eb9728]"
                 >
                   {CAPABILITY_LABELS[cap] || cap}
                 </span>
               ))}
               {mfr.manufacturingCapabilities.length > 3 && (
-                <span className="text-[10px] px-2 py-0.5 bg-gray-50 text-gray-500 rounded-full border border-gray-100">
+                <span className="rounded-full border border-white/8 bg-white/[0.04] px-2 py-0.5 text-[10px] text-white/40">
                   +{mfr.manufacturingCapabilities.length - 3} more
                 </span>
               )}
             </div>
           )}
 
-          {/* Stats */}
-          <div className="flex items-center justify-between pt-3 border-t border-gray-50 text-xs text-gray-500">
+          <div className="flex items-center justify-between border-t border-white/8 pt-3 text-xs text-white/40">
             <div className="flex items-center gap-1">
               <svg
-                className="w-3.5 h-3.5 text-amber-400 fill-current"
+                className="h-3.5 w-3.5 fill-current text-[#eb9728]"
                 viewBox="0 0 20 20"
               >
                 <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
               </svg>
-              <span className="font-semibold text-gray-700">
+              <span className="font-bold text-white/70">
                 {rating.toFixed(1)}
               </span>
-              <span className="text-gray-400">({reviews})</span>
+              <span>({reviews})</span>
             </div>
-            <span className="text-gray-400">{completed} orders</span>
-            {mfr.minOrderQuantity && (
-              <span className="text-gray-400">MOQ: {mfr.minOrderQuantity}</span>
-            )}
+
+            <span>{completed} orders</span>
+
+            {mfr.minOrderQuantity && <span>MOQ: {mfr.minOrderQuantity}</span>}
           </div>
         </div>
       </div>
@@ -253,11 +243,8 @@ function ManufacturersPageContent() {
 
       setWishlistManufacturerIds((prev) => {
         const next = new Set(prev);
-        if (isCurrentlyWishlisted) {
-          next.delete(targetId);
-        } else {
-          next.add(targetId);
-        }
+        if (isCurrentlyWishlisted) next.delete(targetId);
+        else next.add(targetId);
         return next;
       });
 
@@ -277,11 +264,8 @@ function ManufacturersPageContent() {
       } catch (_) {
         setWishlistManufacturerIds((prev) => {
           const next = new Set(prev);
-          if (isCurrentlyWishlisted) {
-            next.add(targetId);
-          } else {
-            next.delete(targetId);
-          }
+          if (isCurrentlyWishlisted) next.add(targetId);
+          else next.delete(targetId);
           return next;
         });
       }
@@ -300,12 +284,12 @@ function ManufacturersPageContent() {
           ...(search && { search }),
           ...(capability && { capability }),
         });
-        // 2-minute TTL: shorter than the landing page because filters make
-        // results more dynamic. A new filter/sort/page combo = new cache key.
+
         const data = await fetchWithCache(
           `/api/manufacturers/public?${params}`,
           2 * 60 * 1000,
         );
+
         if (data.success) {
           setManufacturers(data.manufacturers);
           setPagination(data.pagination);
@@ -324,21 +308,19 @@ function ManufacturersPageContent() {
   }, [fetchManufacturers]);
 
   useEffect(() => {
-    if (session?.user?.role === "customer") {
-      fetchWishlist();
-    }
+    if (session?.user?.role === "customer") fetchWishlist();
   }, [session?.user?.role, fetchWishlist]);
 
   return (
-    <div className="min-h-screen bg-[#f8f7f6]">
+    <div className="min-h-screen bg-[#050507] text-white">
       {session?.user?.role === "customer" ? (
         <CustomerMainNavbar />
       ) : (
-        <nav className="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-gray-100">
-          <div className="max-w-7xl mx-auto px-5 h-14 flex items-center justify-between">
+        <nav className="sticky top-0 z-30 border-b border-white/10 bg-[#0c0c11]/90 backdrop-blur-xl">
+          <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5">
             <Link href="/" className="flex items-center gap-2">
               <svg
-                className="h-6 w-6 text-amber-600"
+                className="h-6 w-6 text-[#eb9728]"
                 fill="none"
                 viewBox="0 0 48 48"
                 xmlns="http://www.w3.org/2000/svg"
@@ -357,23 +339,25 @@ function ManufacturersPageContent() {
                   strokeWidth="3"
                 />
               </svg>
-              <span className="font-extrabold text-lg text-gray-900 tracking-tight">
+              <span className="text-lg font-black tracking-tight text-white">
                 Craftit
               </span>
             </Link>
+
             <div className="flex items-center gap-5">
               <Link
                 href="/customer/explore"
-                className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
+                className="text-sm font-semibold text-white/50 transition-colors hover:text-white"
               >
                 Products
               </Link>
               <Link
                 href="/customer/group-buys"
-                className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
+                className="text-sm font-semibold text-white/50 transition-colors hover:text-white"
               >
                 Group Buys
               </Link>
+
               {session ? (
                 <Link
                   href={
@@ -381,14 +365,14 @@ function ManufacturersPageContent() {
                       ? "/manufacturer/dashboard"
                       : "/customer/dashboard"
                   }
-                  className="text-sm font-semibold bg-[#eb9728] text-white px-4 py-1.5 rounded-full hover:bg-amber-600 transition-colors"
+                  className="rounded-full bg-[#eb9728] px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-amber-500"
                 >
                   Dashboard
                 </Link>
               ) : (
                 <Link
                   href="/auth/login"
-                  className="text-sm font-semibold bg-gray-900 text-white px-4 py-1.5 rounded-full hover:bg-gray-700 transition-colors"
+                  className="rounded-full border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-bold text-white/70 hover:border-[#eb9728]/40 hover:text-[#eb9728]"
                 >
                   Login
                 </Link>
@@ -398,99 +382,29 @@ function ManufacturersPageContent() {
         </nav>
       )}
 
-      <div className="max-w-7xl mx-auto px-5 py-10">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-1">
-            Manufacturers
-          </h1>
-          <p className="text-gray-500 text-sm">
-            Browse verified hardware manufacturers ready to bring your designs
-            to life.
-          </p>
-        </div>
+      <main className="mx-auto max-w-7xl px-5 py-10">
+        <section className="relative mb-8 overflow-hidden rounded-[28px] border border-white/10 bg-[#0c0c11] p-6 sm:p-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.13),transparent_32%),radial-gradient(circle_at_left,rgba(235,151,40,0.12),transparent_28%)] pointer-events-none" />
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-5">
-          <div className="relative flex-1">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              />
-            </svg>
-            <input
-              type="text"
-              placeholder="Search manufacturers…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 focus:border-transparent"
-            />
+          <div className="relative">
+            <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#eb9728]">
+              Manufacturer Network
+            </p>
+            <h1 className="mt-2 text-3xl font-black tracking-tight text-white">
+              Manufacturers
+            </h1>
+            <p className="mt-2 max-w-2xl text-sm leading-6 text-white/50">
+              Browse verified hardware manufacturers ready to bring your designs
+              to life.
+            </p>
           </div>
-          <select
-            value={capability}
-            onChange={(e) => setCapability(e.target.value)}
-            className="px-4 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 min-w-[180px]"
-          >
-            <option value="">All Capabilities</option>
-            {CAPABILITIES.map((c) => (
-              <option key={c} value={c}>
-                {CAPABILITY_LABELS[c]}
-              </option>
-            ))}
-          </select>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value)}
-            className="px-4 py-2.5 text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-400 min-w-[150px]"
-          >
-            <option value="rating">Top Rated</option>
-            <option value="orders">Most Orders</option>
-            <option value="newest">Newest</option>
-          </select>
-        </div>
+        </section>
 
-        {!loading && (
-          <p className="text-xs text-gray-400 mb-4">
-            {pagination.total} manufacturer{pagination.total !== 1 ? "s" : ""}{" "}
-            found
-          </p>
-        )}
-
-        {/* Grid */}
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {[...Array(8)].map((_, i) => (
-              <div
-                key={i}
-                className="bg-white rounded-2xl overflow-hidden border border-gray-100 animate-pulse"
-              >
-                <div className="h-28 bg-gray-100" />
-                <div className="p-4 space-y-3">
-                  <div className="w-14 h-14 rounded-xl bg-gray-100 -mt-7" />
-                  <div className="h-4 bg-gray-100 rounded w-3/4" />
-                  <div className="h-3 bg-gray-100 rounded w-1/2" />
-                  <div className="h-3 bg-gray-100 rounded w-full" />
-                  <div className="flex gap-1">
-                    <div className="h-4 bg-gray-100 rounded-full w-16" />
-                    <div className="h-4 bg-gray-100 rounded-full w-16" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        ) : manufacturers.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-24 text-center">
-            <div className="w-16 h-16 bg-amber-50 rounded-2xl flex items-center justify-center mb-4">
+        <section className="mb-5 rounded-[24px] border border-white/8 bg-[#0c0c11] p-4">
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <div className="relative flex-1">
               <svg
-                className="w-8 h-8 text-amber-400"
+                className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -498,32 +412,78 @@ function ManufacturersPageContent() {
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"
+                  strokeWidth={2}
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
                 />
               </svg>
+
+              <input
+                type="text"
+                placeholder="Search manufacturers…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full rounded-2xl border border-white/10 bg-white/[0.03] py-3 pl-11 pr-4 text-sm text-white placeholder:text-white/30 focus:border-[#eb9728] focus:outline-none"
+              />
             </div>
-            <h3 className="text-lg font-semibold text-gray-800 mb-1">
-              No manufacturers found
-            </h3>
-            <p className="text-gray-400 text-sm">
-              Try adjusting your search or filters.
-            </p>
-            {(search || capability) && (
-              <button
-                onClick={() => {
-                  setSearch("");
-                  setCapability("");
-                }}
-                className="mt-3 text-sm text-amber-600 font-medium underline underline-offset-2"
-              >
-                Clear filters
-              </button>
-            )}
+
+            <select
+              value={capability}
+              onChange={(e) => setCapability(e.target.value)}
+              className="min-w-[180px] rounded-2xl border border-white/10 bg-[#101017] px-4 py-3 text-sm text-white/80 focus:border-[#eb9728] focus:outline-none"
+            >
+              <option value="">All Capabilities</option>
+              {CAPABILITIES.map((c) => (
+                <option key={c} value={c}>
+                  {CAPABILITY_LABELS[c]}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={sort}
+              onChange={(e) => setSort(e.target.value)}
+              className="min-w-[150px] rounded-2xl border border-white/10 bg-[#101017] px-4 py-3 text-sm text-white/80 focus:border-[#eb9728] focus:outline-none"
+            >
+              <option value="rating">Top Rated</option>
+              <option value="orders">Most Orders</option>
+              <option value="newest">Newest</option>
+            </select>
           </div>
+        </section>
+
+        {!loading && (
+          <p className="mb-4 text-xs text-white/35">
+            {pagination.total} manufacturer{pagination.total !== 1 ? "s" : ""}{" "}
+            found
+          </p>
+        )}
+
+        {loading ? (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {[...Array(8)].map((_, i) => (
+              <div
+                key={i}
+                className="overflow-hidden rounded-[24px] border border-white/8 bg-[#0c0c11] animate-pulse"
+              >
+                <div className="h-28 bg-white/[0.04]" />
+                <div className="space-y-3 p-4">
+                  <div className="-mt-7 h-14 w-14 rounded-xl bg-white/[0.06]" />
+                  <div className="h-4 w-3/4 rounded bg-white/[0.06]" />
+                  <div className="h-3 w-1/2 rounded bg-white/[0.06]" />
+                  <div className="h-3 w-full rounded bg-white/[0.06]" />
+                  <div className="flex gap-1">
+                    <div className="h-4 w-16 rounded-full bg-white/[0.06]" />
+                    <div className="h-4 w-16 rounded-full bg-white/[0.06]" />
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : manufacturers.length === 0 ? (
+          <GlobalNoResults text="No manufacturers found" />
         ) : (
           <>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
               {manufacturers.map((mfr) => (
                 <ManufacturerCard
                   key={mfr._id}
@@ -541,21 +501,23 @@ function ManufacturersPageContent() {
             </div>
 
             {pagination.pages > 1 && (
-              <div className="flex justify-center gap-2 mt-10">
+              <div className="mt-10 flex justify-center gap-2">
                 <button
                   onClick={() => fetchManufacturers(pagination.page - 1)}
                   disabled={pagination.page === 1}
-                  className="px-4 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-bold text-white/70 hover:border-[#eb9728]/40 hover:text-[#eb9728] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   ← Previous
                 </button>
-                <span className="px-4 py-2 text-sm text-gray-500">
+
+                <span className="px-4 py-2 text-sm text-white/40">
                   Page {pagination.page} of {pagination.pages}
                 </span>
+
                 <button
                   onClick={() => fetchManufacturers(pagination.page + 1)}
                   disabled={pagination.page === pagination.pages}
-                  className="px-4 py-2 text-sm rounded-lg border border-gray-200 bg-white hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed"
+                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-bold text-white/70 hover:border-[#eb9728]/40 hover:text-[#eb9728] disabled:cursor-not-allowed disabled:opacity-40"
                 >
                   Next →
                 </button>
@@ -563,7 +525,7 @@ function ManufacturersPageContent() {
             )}
           </>
         )}
-      </div>
+      </main>
     </div>
   );
 }
@@ -572,8 +534,8 @@ export default function ManufacturersPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-[#faf9f7] flex items-center justify-center">
-          <div className="w-8 h-8 border-2 border-gray-300 border-t-amber-500 rounded-full animate-spin" />
+        <div className="flex min-h-screen items-center justify-center bg-[#050507]">
+          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
         </div>
       }
     >
@@ -581,3 +543,4 @@ export default function ManufacturersPage() {
     </Suspense>
   );
 }
+

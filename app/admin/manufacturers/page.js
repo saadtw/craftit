@@ -1,10 +1,34 @@
 // app/admin/manufacturers/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
+import GlobalNoResults from "@/components/ui/GlobalNoResults";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { FiCheckCircle, FiXCircle, FiClock, FiShield } from "react-icons/fi";
+
+const STATUS_STYLES = {
+  unverified: {
+    bg: "bg-amber-500/10",
+    text: "text-amber-500",
+    border: "border-amber-500/20",
+    dot: "bg-amber-500"
+  },
+  verified: {
+    bg: "bg-emerald-500/10",
+    text: "text-emerald-500",
+    border: "border-emerald-500/20",
+    dot: "bg-emerald-500"
+  },
+  suspended: {
+    bg: "bg-red-500/10",
+    text: "text-red-500",
+    border: "border-red-500/20",
+    dot: "bg-red-500"
+  }
+};
 
 export default function AdminManufacturersPage() {
   const { data: session, status } = useSession();
@@ -72,235 +96,169 @@ export default function AdminManufacturersPage() {
 
   if (status === "loading") {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="text-slate-400 text-sm">Loading...</div>
+      <div className="flex min-h-screen items-center justify-center bg-[#020617]">
+        <GlobalLoader text="Loading..." />
       </div>
     );
   }
 
   return (
-    <div className="p-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-slate-50">
-          Manufacturer Verification
-        </h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Review and approve manufacturer applications
-        </p>
-      </div>
+    <div className="min-h-screen bg-[#020617] p-4 sm:p-8 relative z-10">
+      {/* Ambient Background Glow */}
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/20 via-[#020617]/0 to-[#020617]/0" />
 
-      {/* Tabs */}
-      <div className="flex gap-1 mb-6 bg-slate-900 border border-slate-800 rounded-lg p-1 w-fit">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setFilter(tab.key)}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-              filter === tab.key
-                ? "bg-amber-600 text-white"
-                : "text-slate-400 hover:text-slate-200"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6 mb-8">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-500 via-red-500 to-yellow-500 text-transparent bg-clip-text tracking-tighter uppercase leading-none mb-2">
+              Manufacturer Verification
+            </h1>
+            <p className="text-white/40 text-sm font-medium">
+              Review and approve manufacturer applications
+            </p>
+          </div>
+        </div>
 
-      {loading ? (
-        <div className="text-center py-16 text-slate-500 text-sm">
-          Loading manufacturers...
-        </div>
-      ) : manufacturers.length === 0 ? (
-        <div className="text-center py-16">
-          <p className="text-slate-500">No {filter} manufacturers found</p>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          {manufacturers.map((m) => (
-            <div
-              key={m._id}
-              className="bg-slate-900 border border-slate-800 rounded-xl p-6"
+        {/* Filters */}
+        <div className="flex flex-wrap gap-2 sm:gap-4 border-b border-white/5 pb-6">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setFilter(tab.key)}
+              className={`relative px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${
+                filter === tab.key
+                  ? "text-white shadow-[0_0_20px_rgba(168,85,247,0.3)]"
+                  : "text-slate-500 hover:text-white bg-white/[0.02] hover:bg-white/[0.05] border border-white/5"
+              }`}
             >
-              <div className="flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-3">
-                    <h3 className="text-slate-50 font-semibold text-lg">
-                      {m.businessName}
-                    </h3>
-                    <span
-                      className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                        m.verificationStatus === "verified"
-                          ? "bg-emerald-900/60 text-emerald-400 border border-emerald-800"
-                          : m.verificationStatus === "suspended"
-                            ? "bg-red-900/60 text-red-400 border border-red-800"
-                            : "bg-amber-900/60 text-amber-400 border border-amber-800"
-                      }`}
-                    >
-                      {m.verificationStatus?.toUpperCase()}
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-x-8 gap-y-1.5 text-sm mb-4">
-                    <div className="flex gap-2">
-                      <span className="text-slate-600 w-28 shrink-0">
-                        Contact
-                      </span>
-                      <span className="text-slate-300">
-                        {m.contactPerson || m.name}
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-slate-600 w-28 shrink-0">
-                        Email
-                      </span>
-                      <span className="text-slate-300 truncate">
-                        {m.businessEmail || m.email}
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-slate-600 w-28 shrink-0">
-                        Phone
-                      </span>
-                      <span className="text-slate-300">
-                        {m.businessPhone || m.phone || "—"}
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-slate-600 w-28 shrink-0">
-                        Reg. #
-                      </span>
-                      <span className="text-slate-300">
-                        {m.businessRegistrationNumber || "—"}
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-slate-600 w-28 shrink-0">
-                        Location
-                      </span>
-                      <span className="text-slate-300">
-                        {[m.businessAddress?.city, m.businessAddress?.country]
-                          .filter(Boolean)
-                          .join(", ") || "—"}
-                      </span>
-                    </div>
-                    <div className="flex gap-2">
-                      <span className="text-slate-600 w-28 shrink-0">
-                        Joined
-                      </span>
-                      <span className="text-slate-300">
-                        {new Date(m.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                          year: "numeric",
-                        })}
-                      </span>
-                    </div>
-                  </div>
-
-                  {m.manufacturingCapabilities?.length > 0 && (
-                    <div className="mb-3">
-                      <p className="text-slate-600 text-xs font-medium uppercase tracking-wider mb-1.5">
-                        Capabilities
-                      </p>
-                      <div className="flex flex-wrap gap-1.5">
-                        {m.manufacturingCapabilities.map((cap) => (
-                          <span
-                            key={cap}
-                            className="px-2 py-0.5 bg-sky-900/40 text-sky-400 border border-sky-800/40 text-xs rounded"
-                          >
-                            {cap.replace(/_/g, " ")}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {m.verificationDocuments?.documents?.length > 0 && (
-                    <div className="mb-3">
-                      <p className="text-slate-600 text-xs font-medium uppercase tracking-wider mb-1.5">
-                        Documents Submitted
-                      </p>
-                      <div className="space-y-1">
-                        {m.verificationDocuments.documents.map((doc, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center gap-2 text-sm"
-                          >
-                            <span className="text-slate-600">📄</span>
-                            <span className="text-slate-400 capitalize">
-                              {doc.type?.replace(/_/g, " ")}
-                            </span>
-                            <span className="text-slate-600">—</span>
-                            <a
-                              href={doc.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-amber-500 hover:text-amber-400 text-xs underline"
-                            >
-                              {doc.filename || "View"}
-                            </a>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {m.rejectionReason && (
-                    <div className="p-3 bg-red-950/40 border border-red-800/40 rounded-lg text-sm">
-                      <span className="text-red-400 font-medium">
-                        Rejection reason:{" "}
-                      </span>
-                      <span className="text-red-300">{m.rejectionReason}</span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Detail link */}
-                <Link
-                  href={`/admin/manufacturers/${m._id}`}
-                  className="shrink-0 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs rounded-lg transition-colors"
-                >
-                  Full Review →
-                </Link>
-              </div>
-
-              {/* Action buttons for pending */}
-              {m.verificationStatus === "unverified" && (
-                <div className="flex gap-3 pt-4 mt-4 border-t border-slate-800">
-                  <button
-                    onClick={() => handleVerify(String(m._id), "approve")}
-                    className="px-4 py-2 bg-emerald-700 hover:bg-emerald-600 text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    ✓ Approve
-                  </button>
-                  <button
-                    onClick={() => {
-                      const reason = prompt("Rejection reason (optional):");
-                      if (reason !== null)
-                        handleVerify(String(m._id), "reject", reason);
-                    }}
-                    className="px-4 py-2 bg-red-800 hover:bg-red-700 text-white text-sm font-medium rounded-lg transition-colors"
-                  >
-                    ✗ Reject
-                  </button>
-                  <button
-                    onClick={() => {
-                      const info = prompt(
-                        "What additional information is needed?",
-                      );
-                      if (info)
-                        handleVerify(String(m._id), "request_info", info);
-                    }}
-                    className="px-4 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 text-sm font-medium rounded-lg transition-colors"
-                  >
-                    Request Info
-                  </button>
-                </div>
+              {filter === tab.key && (
+                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 -z-10" />
               )}
-            </div>
+              {tab.label}
+            </button>
           ))}
         </div>
-      )}
+
+        {/* Content */}
+        {loading ? (
+          <div className="py-20 flex justify-center">
+             <GlobalLoader text="Loading manufacturers..." />
+          </div>
+        ) : manufacturers.length === 0 ? (
+          <GlobalNoResults text={`No ${filter} manufacturers found`} />
+        ) : (
+          <div className="bg-white/[0.02] border border-white/5 rounded-[32px] overflow-hidden backdrop-blur-xl shadow-2xl">
+            <div className="divide-y divide-white/5">
+              {manufacturers.map((m) => {
+                const statusStyle = STATUS_STYLES[m.verificationStatus || "unverified"] || STATUS_STYLES.unverified;
+                
+                return (
+                  <div key={m._id} className="p-6 sm:p-8 hover:bg-white/[0.02] transition-colors group">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-3 mb-2">
+                           <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border flex items-center gap-1.5 ${statusStyle.bg} ${statusStyle.border} ${statusStyle.text}`}>
+                              <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot} animate-pulse`} />
+                              {m.verificationStatus?.toUpperCase()}
+                           </span>
+                           <h3 className="text-white font-black text-xl tracking-tight">
+                              {m.businessName}
+                           </h3>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 mt-4 mb-4">
+                           <div>
+                              <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest mb-1">Contact</p>
+                              <p className="text-slate-300 text-sm font-medium">{m.contactPerson || m.name}</p>
+                           </div>
+                           <div>
+                              <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest mb-1">Email</p>
+                              <p className="text-slate-300 text-sm font-medium truncate">{m.businessEmail || m.email}</p>
+                           </div>
+                           <div>
+                              <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest mb-1">Location</p>
+                              <p className="text-slate-300 text-sm font-medium">
+                                {[m.businessAddress?.city, m.businessAddress?.country].filter(Boolean).join(", ") || "—"}
+                              </p>
+                           </div>
+                           <div>
+                              <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest mb-1">Joined</p>
+                              <p className="text-slate-300 text-sm font-medium">
+                                {new Date(m.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                              </p>
+                           </div>
+                        </div>
+
+                        {/* Capabilities preview */}
+                        {m.manufacturingCapabilities?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5 mb-2">
+                            {m.manufacturingCapabilities.slice(0, 4).map((cap) => (
+                              <span key={cap} className="px-2 py-1 bg-white/[0.03] text-white/50 border border-white/5 text-[10px] uppercase font-bold tracking-wider rounded-lg">
+                                {cap.replace(/_/g, " ")}
+                              </span>
+                            ))}
+                            {m.manufacturingCapabilities.length > 4 && (
+                              <span className="px-2 py-1 bg-white/[0.03] text-white/30 border border-white/5 text-[10px] font-bold rounded-lg">
+                                +{m.manufacturingCapabilities.length - 4} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+                        
+                        {m.rejectionReason && (
+                          <div className="mt-3 p-3 bg-red-500/10 border border-red-500/20 rounded-xl">
+                            <p className="text-red-400 text-xs font-medium"><span className="font-bold">Rejection reason:</span> {m.rejectionReason}</p>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Actions */}
+                      <div className="shrink-0 flex flex-col items-end gap-3">
+                        <Link
+                          href={`/admin/manufacturers/${m._id}`}
+                          className="inline-flex items-center justify-center px-6 py-3 bg-white/[0.02] border border-white/5 hover:border-transparent hover:bg-gradient-to-r hover:from-purple-600 hover:to-indigo-600 text-slate-300 hover:text-white hover:shadow-[0_0_15px_rgba(168,85,247,0.3)] text-[10px] font-black uppercase tracking-widest rounded-xl transition-all"
+                        >
+                          Review Application
+                        </Link>
+                        
+                        {m.verificationStatus === "unverified" && (
+                           <div className="flex flex-col gap-2 w-full">
+                             <button
+                               onClick={() => handleVerify(String(m._id), "approve")}
+                               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 hover:bg-emerald-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                             >
+                               <FiCheckCircle className="w-4 h-4 shrink-0" /> Approve
+                             </button>
+                             <button
+                               onClick={() => {
+                                 const reason = prompt("Rejection reason (optional):");
+                                 if (reason !== null) handleVerify(String(m._id), "reject", reason);
+                               }}
+                               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                             >
+                               <FiXCircle className="w-4 h-4 shrink-0" /> Reject
+                             </button>
+                             <button
+                               onClick={() => {
+                                 const info = prompt("What additional information is needed?");
+                                 if (info) handleVerify(String(m._id), "request_info", info);
+                               }}
+                               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                             >
+                               <FiClock className="w-4 h-4 shrink-0" /> Request Info
+                             </button>
+                           </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

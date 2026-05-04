@@ -1,10 +1,20 @@
 // app/admin/manufacturers/[id]/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { FiArrowLeft, FiCheckCircle, FiXCircle, FiClock, FiAlertCircle, FiShield } from "react-icons/fi";
+import Image from "next/image";
+import documentIcon from "@/assets/document.png";
+
+const STATUS_STYLES = {
+  unverified: { bg: "bg-amber-500/10", text: "text-amber-500", border: "border-amber-500/20", dot: "bg-amber-500" },
+  verified: { bg: "bg-emerald-500/10", text: "text-emerald-500", border: "border-emerald-500/20", dot: "bg-emerald-500" },
+  suspended: { bg: "bg-red-500/10", text: "text-red-500", border: "border-red-500/20", dot: "bg-red-500" }
+};
 
 export default function AdminManufacturerDetailPage() {
   const { data: session, status } = useSession();
@@ -81,100 +91,93 @@ export default function AdminManufacturerDetailPage() {
 
   if (status === "loading" || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen bg-slate-950">
-        <div className="text-slate-400 text-sm">Loading...</div>
+      <div className="flex items-center justify-center min-h-screen bg-[#020617]">
+        <GlobalLoader text="Loading..." />
       </div>
     );
   }
 
   if (!manufacturer) {
     return (
-      <div className="p-8">
-        <p className="text-slate-400">Manufacturer not found.</p>
-        <Link
-          href="/admin/manufacturers"
-          className="text-amber-500 text-sm mt-2 inline-block"
-        >
-          ← Back to list
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#020617]">
+        <div className="w-16 h-16 rounded-full bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-4">
+          <FiAlertCircle className="w-8 h-8 text-red-500" />
+        </div>
+        <p className="text-white text-xl font-black mb-4 tracking-tight">Manufacturer not found.</p>
+        <Link href="/admin/manufacturers" className="text-purple-500 hover:text-purple-400 font-bold text-sm">
+          Return to Manufacturers List
         </Link>
       </div>
     );
   }
 
   const isPending = manufacturer.verificationStatus === "unverified";
+  const statusStyle = STATUS_STYLES[manufacturer.verificationStatus || "unverified"] || STATUS_STYLES.unverified;
 
   return (
-    <div className="p-8 max-w-4xl">
-      {/* Back */}
-      <Link
-        href="/admin/manufacturers"
-        className="text-slate-500 hover:text-slate-300 text-sm transition-colors mb-6 inline-block"
-      >
-        ← Back to Manufacturers
-      </Link>
+    <div className="min-h-screen bg-[#020617] p-4 sm:p-8 relative z-10">
+      {/* Ambient Glow */}
+      <div className="fixed inset-0 pointer-events-none -z-10 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-purple-900/10 via-[#020617]/0 to-[#020617]/0" />
 
-      <div className="flex items-center gap-3 mb-8">
-        <h1 className="text-2xl font-bold text-slate-50">
-          {manufacturer.businessName}
-        </h1>
-        <span
-          className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-            manufacturer.verificationStatus === "verified"
-              ? "bg-emerald-900/60 text-emerald-400 border border-emerald-800"
-              : manufacturer.verificationStatus === "suspended"
-                ? "bg-red-900/60 text-red-400 border border-red-800"
-                : "bg-amber-900/60 text-amber-400 border border-amber-800"
-          }`}
+      <div className="max-w-4xl mx-auto space-y-6">
+        {/* Back Link */}
+        <Link
+          href="/admin/manufacturers"
+          className="group inline-flex items-center gap-3 text-slate-400 hover:text-white text-[11px] font-black tracking-[0.25em] uppercase transition-colors mb-2"
         >
-          {manufacturer.verificationStatus?.toUpperCase()}
-        </span>
-      </div>
+          <span className="w-6 h-6 rounded-full bg-gradient-to-tr from-indigo-600 to-purple-400 flex items-center justify-center shadow-[0_0_15px_rgba(168,85,247,0.2)] group-hover:shadow-[0_0_20px_rgba(168,85,247,0.4)] transition-all">
+            <FiArrowLeft className="w-3 h-3 text-[#020617] stroke-[3]" />
+          </span>
+          Back To Manufacturers
+        </Link>
 
-      <div className="space-y-6">
-        {/* Business Info */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-slate-300 font-semibold text-sm uppercase tracking-wider mb-4">
+        {/* Header */}
+        <div className="relative overflow-hidden bg-white/[0.02] backdrop-blur-xl border border-white/5 rounded-[28px] p-8">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.1),transparent_40%)] pointer-events-none" />
+          <div className="relative flex flex-col sm:flex-row justify-between items-start sm:items-center gap-6">
+            <div>
+              <p className="text-purple-500 text-[11px] font-black uppercase tracking-[0.2em] mb-2 flex items-center gap-2">
+                <FiShield className="w-4 h-4" />
+                Manufacturer Profile
+              </p>
+              <h1 className="text-2xl font-black text-white tracking-tight">
+                {manufacturer.businessName}
+              </h1>
+            </div>
+            <div className={`px-4 py-2 rounded-full border flex items-center gap-2 ${statusStyle.bg} ${statusStyle.border} ${statusStyle.text}`}>
+              <span className={`w-2 h-2 rounded-full ${statusStyle.dot} animate-pulse`} />
+              <span className="text-[11px] font-black uppercase tracking-widest">{manufacturer.verificationStatus?.toUpperCase()}</span>
+            </div>
+          </div>
+        </div>
+
+          {/* Business Info */}
+          <div className="bg-white/[0.02] backdrop-blur-md border border-white/5 rounded-[24px] p-6 sm:p-8">
+          <h2 className="text-white text-sm font-black uppercase tracking-widest flex items-center gap-2 mb-6">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
             Business Information
           </h2>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+          <div className="grid grid-cols-2 gap-6">
             {[
-              ["Business Name", manufacturer.businessName],
-              [
-                "Contact Person",
-                manufacturer.contactPerson || manufacturer.name,
-              ],
+              ["Contact Person", manufacturer.contactPerson || manufacturer.name],
               ["Email", manufacturer.businessEmail || manufacturer.email],
-              [
-                "Phone",
-                manufacturer.businessPhone || manufacturer.phone || "—",
-              ],
+              ["Phone", manufacturer.businessPhone || manufacturer.phone || "—"],
               ["Reg. Number", manufacturer.businessRegistrationNumber || "—"],
               ["City", manufacturer.businessAddress?.city || "—"],
               ["Country", manufacturer.businessAddress?.country || "—"],
-              [
-                "Joined",
-                new Date(manufacturer.createdAt).toLocaleDateString("en-US", {
-                  year: "numeric",
-                  month: "long",
-                  day: "numeric",
-                }),
-              ],
+              ["Joined", new Date(manufacturer.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })],
             ].map(([label, value]) => (
               <div key={label}>
-                <p className="text-slate-600 text-xs mb-0.5">{label}</p>
-                <p className="text-slate-200">{value}</p>
+                <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-1">{label}</p>
+                <p className="text-white font-medium text-sm">{value}</p>
               </div>
             ))}
           </div>
 
           {manufacturer.businessDescription && (
-            <div className="mt-4 pt-4 border-t border-slate-800">
-              <p className="text-slate-600 text-xs mb-1">
-                Business Description
-              </p>
-              <p className="text-slate-300 text-sm leading-relaxed">
-                {manufacturer.businessDescription}
-              </p>
+            <div className="mt-6 pt-6 border-t border-white/5">
+              <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-2">Description</p>
+              <p className="text-white/80 text-sm leading-relaxed">{manufacturer.businessDescription}</p>
             </div>
           )}
         </div>
@@ -182,21 +185,17 @@ export default function AdminManufacturerDetailPage() {
         {/* Capabilities & Materials */}
         {(manufacturer.manufacturingCapabilities?.length > 0 ||
           manufacturer.materialsAvailable?.length > 0) && (
-          <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-            <h2 className="text-slate-300 font-semibold text-sm uppercase tracking-wider mb-4">
+          <div className="bg-white/[0.02] backdrop-blur-md border border-white/5 rounded-[24px] p-6 sm:p-8">
+            <h2 className="text-white text-sm font-black uppercase tracking-widest flex items-center gap-2 mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
               Capabilities & Materials
             </h2>
             {manufacturer.manufacturingCapabilities?.length > 0 && (
-              <div className="mb-4">
-                <p className="text-slate-600 text-xs mb-2">
-                  Manufacturing Capabilities
-                </p>
+              <div className="mb-6">
+                <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-3">Manufacturing Capabilities</p>
                 <div className="flex flex-wrap gap-2">
                   {manufacturer.manufacturingCapabilities.map((cap) => (
-                    <span
-                      key={cap}
-                      className="px-2.5 py-1 bg-sky-900/40 text-sky-400 border border-sky-800/40 text-xs rounded-lg"
-                    >
+                    <span key={cap} className="px-3 py-1.5 bg-white/[0.03] text-white/70 border border-white/5 text-[10px] font-bold uppercase tracking-wider rounded-xl">
                       {cap.replace(/_/g, " ")}
                     </span>
                   ))}
@@ -205,15 +204,10 @@ export default function AdminManufacturerDetailPage() {
             )}
             {manufacturer.materialsAvailable?.length > 0 && (
               <div>
-                <p className="text-slate-600 text-xs mb-2">
-                  Materials Available
-                </p>
+                <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-3">Materials Available</p>
                 <div className="flex flex-wrap gap-2">
                   {manufacturer.materialsAvailable.map((mat) => (
-                    <span
-                      key={mat}
-                      className="px-2.5 py-1 bg-emerald-900/40 text-emerald-400 border border-emerald-800/40 text-xs rounded-lg"
-                    >
+                    <span key={mat} className="px-3 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/20 text-[10px] font-bold uppercase tracking-wider rounded-xl">
                       {mat}
                     </span>
                   ))}
@@ -224,44 +218,36 @@ export default function AdminManufacturerDetailPage() {
         )}
 
         {/* Documents */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-slate-300 font-semibold text-sm uppercase tracking-wider mb-4">
+        <div className="bg-white/[0.02] backdrop-blur-md border border-white/5 rounded-[24px] p-6 sm:p-8">
+          <h2 className="text-white text-sm font-black uppercase tracking-widest flex items-center gap-2 mb-6">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
             Submitted Documents
           </h2>
           {manufacturer.verificationDocuments?.documents?.length > 0 ? (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {manufacturer.verificationDocuments.documents.map((doc, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center justify-between p-3 bg-slate-800 rounded-lg"
+                <a key={idx} href={doc.url} target="_blank" rel="noopener noreferrer"
+                  className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 hover:border-white/10 hover:bg-white/[0.04] transition-all rounded-xl group"
                 >
-                  <div className="flex items-center gap-3">
-                    <span className="text-slate-400">📄</span>
-                    <span className="text-slate-300 text-sm capitalize">
-                      {doc.type?.replace(/_/g, " ") || "Document"}
-                    </span>
-                  </div>
-                  <a
-                    href={doc.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-amber-500 hover:text-amber-400 text-xs font-medium transition-colors"
-                  >
-                    View Document →
-                  </a>
-                </div>
+                  <span className="text-white/70 text-sm font-medium flex items-center gap-3">
+                    <Image src={documentIcon} alt="Document" className="w-5 h-5 object-contain opacity-70" />
+                    <span className="capitalize">{doc.type?.replace(/_/g, " ") || "Document"}</span>
+                  </span>
+                  <span className="text-purple-500 opacity-0 group-hover:opacity-100 transition-opacity text-sm font-bold">View</span>
+                </a>
               ))}
             </div>
           ) : (
-            <p className="text-slate-500 text-sm">No documents submitted</p>
+            <p className="text-white/40 text-sm font-medium text-center py-6">No documents submitted</p>
           )}
         </div>
 
         {/* Review Checklist (only for pending) */}
         {isPending && (
-          <div className="bg-slate-900 border border-amber-800/40 rounded-xl p-6">
-            <h2 className="text-slate-300 font-semibold text-sm uppercase tracking-wider mb-4">
-              Review Checklist
+          <div className="bg-white/[0.02] backdrop-blur-md border border-white/10 rounded-[24px] p-6 sm:p-8 shadow-2xl">
+            <h2 className="text-white text-sm font-black uppercase tracking-widest flex items-center gap-2 mb-6">
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shadow-[0_0_10px_#f59e0b]" />
+              Internal Review Checklist
             </h2>
             <div className="space-y-3">
               {[
@@ -293,40 +279,68 @@ export default function AdminManufacturerDetailPage() {
 
         {/* Rejection reason display */}
         {manufacturer.rejectionReason && (
-          <div className="bg-red-950/40 border border-red-800/40 rounded-xl p-6">
-            <h2 className="text-red-400 font-semibold text-sm mb-2">
+          <div className="bg-red-500/5 border border-red-500/20 rounded-[24px] p-6">
+            <h2 className="text-red-500 text-sm font-black uppercase tracking-widest flex items-center gap-2 mb-3">
+              <FiAlertCircle className="w-4 h-4" />
               Rejection Reason
             </h2>
-            <p className="text-red-300 text-sm">
-              {manufacturer.rejectionReason}
-            </p>
+            <p className="text-white/80 text-sm">{manufacturer.rejectionReason}</p>
           </div>
         )}
 
-        {/* Action Buttons */}
+        {/* Verification form */}
         {isPending && (
-          <div className="flex gap-3">
-            <button
-              onClick={() => handleAction("approve")}
-              disabled={actionLoading}
-              className="px-6 py-2.5 bg-emerald-700 hover:bg-emerald-600 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
-            >
-              ✓ Approve Manufacturer
-            </button>
-            <button
-              onClick={() => handleAction("reject")}
-              disabled={actionLoading}
-              className="px-6 py-2.5 bg-red-800 hover:bg-red-700 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
-            >
-              ✗ Reject Application
-            </button>
-            <button
-              onClick={() => handleAction("request_info")}
-              disabled={actionLoading}
-              className="px-6 py-2.5 bg-slate-700 hover:bg-slate-600 disabled:opacity-50 text-slate-200 text-sm font-semibold rounded-lg transition-colors"
-            >
-              Request More Info
-            </button>
+          <div className="bg-[#0c0c11] border border-white/10 rounded-[32px] p-6 sm:p-10 relative overflow-hidden shadow-2xl">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(168,85,247,0.05),transparent_60%)] pointer-events-none" />
+            <div className="relative z-10">
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 mx-auto bg-amber-500/10 border border-amber-500/20 rounded-2xl flex items-center justify-center mb-4">
+                  <FiShield className="w-8 h-8 text-amber-500" />
+                </div>
+                <h2 className="text-2xl font-black text-white tracking-tight">Review Application</h2>
+                <p className="text-white/40 text-sm mt-2">Complete the checklist before taking action.</p>
+              </div>
+
+              <div className="space-y-3 mb-8">
+                {[
+                  { key: "legitimacy", label: "Business legitimacy verified" },
+                  { key: "documents", label: "Documents appear authentic" },
+                  { key: "contact", label: "Contact information verified" },
+                ].map((item) => (
+                  <label key={item.key} className={`flex items-center gap-4 p-4 rounded-2xl border cursor-pointer transition-all ${
+                    checklist[item.key] ? "bg-emerald-500/10 border-emerald-500/30" : "bg-white/[0.02] border-white/5 hover:border-white/10"
+                  }`}>
+                    <div className={`w-5 h-5 rounded flex items-center justify-center border transition-colors ${
+                      checklist[item.key] ? "bg-emerald-500 border-emerald-500" : "border-white/20"
+                    }`}>
+                      {checklist[item.key] && <FiCheckCircle className="w-3 h-3 text-[#0c0c11] stroke-[3]" />}
+                    </div>
+                    <input type="checkbox" checked={checklist[item.key]}
+                      onChange={(e) => setChecklist({ ...checklist, [item.key]: e.target.checked })}
+                      className="sr-only"
+                    />
+                    <span className={`text-sm font-bold ${checklist[item.key] ? "text-emerald-500" : "text-white/70"}`}>
+                      {item.label}
+                    </span>
+                  </label>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-white/10 pt-8">
+                <button onClick={() => handleAction("approve")} disabled={actionLoading}
+                  className="py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-[11px] uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] flex items-center justify-center gap-2">
+                  <FiCheckCircle className="w-4 h-4" /> Approve
+                </button>
+                <button onClick={() => handleAction("reject")} disabled={actionLoading}
+                  className="py-4 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 font-black text-[11px] uppercase tracking-wider hover:bg-red-500 hover:text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                  <FiXCircle className="w-4 h-4" /> Reject
+                </button>
+                <button onClick={() => handleAction("request_info")} disabled={actionLoading}
+                  className="py-4 rounded-2xl bg-white/[0.02] text-white border border-white/10 font-black text-[11px] uppercase tracking-wider hover:bg-white/[0.05] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                  <FiClock className="w-4 h-4" /> Request Info
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

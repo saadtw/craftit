@@ -1,6 +1,7 @@
 // // app/customer/explore/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -116,14 +117,7 @@ export default function CustomerExplorePage() {
   }, [fetchProducts, status]);
 
   if (status === "loading") {
-    return (
-      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-          <p className="text-sm text-white/45">Loading marketplace...</p>
-        </div>
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading marketplace..." />;
   }
 
   if (status === "unauthenticated") return null;
@@ -284,8 +278,7 @@ export default function CustomerExplorePage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <p className="text-sm text-white/45">
             {loading
-              ? "Loading..."
-              : `${pagination.total} product${pagination.total !== 1 ? "s" : ""} found`}
+              ? <GlobalLoader text="Loading..." /> : `${pagination.total} product${pagination.total !== 1 ? "s" : ""} found`}
           </p>
 
           {debouncedSearch && (

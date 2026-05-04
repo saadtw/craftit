@@ -1,6 +1,8 @@
 // app/manufacturer/notifications/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
+import GlobalNoResults from "@/components/ui/GlobalNoResults";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -26,18 +28,18 @@ const TYPE_ICONS = {
 };
 
 const TYPE_COLORS = {
-  order_placed: "text-blue-600 bg-blue-50",
-  order_completed: "text-green-700 bg-green-50",
-  order_cancelled: "text-red-600 bg-red-50",
-  bid_accepted: "text-green-600 bg-green-50",
-  bid_rejected: "text-red-600 bg-red-50",
-  new_message: "text-blue-600 bg-blue-50",
-  dispute_opened: "text-orange-600 bg-orange-50",
-  dispute_resolved: "text-purple-600 bg-purple-50",
-  payment_received: "text-emerald-600 bg-emerald-50",
-  verification_approved: "text-green-600 bg-green-50",
-  verification_rejected: "text-red-600 bg-red-50",
-  default: "text-gray-600 bg-gray-100",
+  order_placed: "text-blue-400 bg-blue-500/10 border-blue-500/20",
+  order_completed: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  order_cancelled: "text-red-400 bg-red-500/10 border-red-500/20",
+  bid_accepted: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  bid_rejected: "text-red-400 bg-red-500/10 border-red-500/20",
+  new_message: "text-purple-400 bg-purple-500/10 border-purple-500/20",
+  dispute_opened: "text-orange-400 bg-orange-500/10 border-orange-500/20",
+  dispute_resolved: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
+  payment_received: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  verification_approved: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  verification_rejected: "text-red-400 bg-red-500/10 border-red-500/20",
+  default: "text-white/40 bg-white/5 border-white/10",
 };
 
 export default function ManufacturerNotificationsPage() {
@@ -95,15 +97,40 @@ export default function ManufacturerNotificationsPage() {
 
   const handleClick = async (notif) => {
     if (!notif.isRead) await markRead(notif._id);
-    if (notif.link) router.push(notif.link);
+    
+    let targetLink = notif.link;
+
+    // Repair logic for broken legacy/seed links
+    if (!targetLink || targetLink === "/dashboard" || targetLink === "/chat" || targetLink.includes("/customer/") || targetLink.includes("/manufacturer/bids/") || !targetLink.startsWith("/")) {
+      if (notif.relatedType === "order" && notif.relatedId) {
+        targetLink = `/manufacturer/orders/${notif.relatedId}`;
+      } else if (notif.relatedType === "dispute" && notif.relatedId) {
+        targetLink = `/manufacturer/disputes/${notif.relatedId}`;
+      } else if (notif.relatedType === "rfq" && notif.relatedId) {
+        targetLink = `/manufacturer/rfqs/${notif.relatedId}`;
+      } else if (notif.relatedType === "bid" || targetLink?.includes("/bids/")) {
+        targetLink = `/manufacturer/bids`; // No detail page exists for bids
+      } else if (notif.type === "new_message" && notif.relatedId) {
+        targetLink = `/manufacturer/orders/${notif.relatedId}`; // Order chats use order ID
+      } else {
+        // Default fallbacks
+        if (notif.type?.includes("order")) targetLink = "/manufacturer/orders";
+        else if (notif.type?.includes("bid") || notif.type?.includes("rfq")) targetLink = "/manufacturer/rfqs";
+        else if (notif.type?.includes("dispute")) targetLink = "/manufacturer/disputes";
+        else targetLink = "/manufacturer/dashboard";
+      }
+    }
+
+    // Final sanity check: ensure leading slash
+    if (targetLink && !targetLink.startsWith("/")) {
+      targetLink = "/" + targetLink;
+    }
+
+    if (targetLink) router.push(targetLink);
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen bg-linear-to-b from-blue-50 to-white flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-gray-300 border-t-orange-500 rounded-full animate-spin" />
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading notifications..." />;
   }
 
   const groupedByDate = notifications.reduce((acc, n) => {
@@ -118,46 +145,60 @@ export default function ManufacturerNotificationsPage() {
   }, {});
 
   return (
-    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-2xl">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-extrabold text-blue-900">
-              Notifications
-            </h1>
-            {unreadCount > 0 && (
-              <span className="px-2.5 py-0.5 bg-orange-500 text-white text-xs font-bold rounded-full">
-                {unreadCount} new
+    <div className="min-h-screen bg-[#050507] text-white">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 pt-4 pb-12">
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#eb9728] mb-1">
+              Activity Stream
+            </p>
+            <h1 className="text-3xl font-black tracking-tight">
+              <span className="bg-gradient-to-r from-purple-500 via-orange-500 to-[#eb9728] bg-clip-text text-transparent inline-block">
+                Notifications
               </span>
+            </h1>
+          </div>
+          <div className="flex items-center gap-3">
+            {unreadCount > 0 && (
+              <>
+                <span className="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold uppercase tracking-wider animate-pulse">
+                  {unreadCount} new
+                </span>
+                <button
+                  onClick={markAllRead}
+                  disabled={markingAll}
+                  className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/10 rounded-xl text-[11px] font-bold uppercase tracking-widest text-white/40 hover:text-white hover:bg-purple-500/10 hover:border-purple-500/30 transition-all disabled:opacity-50 group"
+                >
+                  <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">done_all</span>
+                  <span>Mark all as read</span>
+                </button>
+              </>
             )}
           </div>
-          {unreadCount > 0 && (
-            <button
-              onClick={markAllRead}
-              disabled={markingAll}
-              className="text-sm text-orange-500 font-semibold hover:underline disabled:opacity-50"
-            >
-              Mark all as read
-            </button>
-          )}
         </div>
 
         {notifications.length === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm text-center py-20">
-            <span className="material-symbols-outlined text-5xl text-gray-200 block mb-3">
-              notifications
-            </span>
-            <p className="text-gray-500 font-medium">No notifications yet</p>
+          <div className="bg-white/[0.03] rounded-3xl border-2 border-purple-500/30 text-center py-24 px-8">
+            <div className="h-20 w-20 rounded-3xl bg-white/[0.03] border border-white/5 flex items-center justify-center mx-auto mb-6">
+              <span className="material-symbols-outlined text-5xl text-white/10">
+                notifications_off
+              </span>
+            </div>
+            <GlobalNoResults text="No notifications yet" />
+            <p className="text-sm text-white/20 mt-2">We'll notify you when something important happens.</p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-10">
             {Object.entries(groupedByDate).map(([day, items]) => (
               <div key={day}>
-                <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">
-                  {day}
-                </p>
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                  {items.map((notif, i) => {
+                <div className="flex items-center gap-4 mb-4">
+                  <p className="text-[11px] font-bold text-white/20 uppercase tracking-[0.2em] whitespace-nowrap">
+                    {day}
+                  </p>
+                  <div className="h-px bg-white/5 flex-1" />
+                </div>
+                <div className="bg-white/[0.03] border-2 border-purple-500/30 rounded-3xl overflow-hidden divide-y divide-white/5">
+                  {items.map((notif) => {
                     const icon = TYPE_ICONS[notif.type] || TYPE_ICONS.default;
                     const colorClass =
                       TYPE_COLORS[notif.type] || TYPE_COLORS.default;
@@ -165,37 +206,39 @@ export default function ManufacturerNotificationsPage() {
                       <button
                         key={notif._id}
                         onClick={() => handleClick(notif)}
-                        className={`w-full text-left flex items-start gap-4 p-4 transition-colors ${i > 0 ? "border-t border-gray-50" : ""} ${
+                        className={`w-full text-left flex items-start gap-5 p-5 transition-all group relative border-l-4 border-l-transparent ${
                           notif.isRead
-                            ? "bg-white hover:bg-gray-50"
-                            : "bg-orange-50/40 hover:bg-orange-50"
+                            ? "bg-transparent hover:bg-white/[0.07] hover:border-l-purple-500/50"
+                            : "bg-[#eb9728]/5 hover:bg-[#eb9728]/10 border-l-[#eb9728]"
                         }`}
                       >
                         <div
-                          className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${colorClass}`}
+                          className={`w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 border ${colorClass} group-hover:scale-110 transition-transform`}
                         >
-                          <span className="material-symbols-outlined text-lg">
+                          <span className="material-symbols-outlined text-xl">
                             {icon}
                           </span>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p
-                            className={`text-sm font-semibold ${notif.isRead ? "text-gray-700" : "text-gray-900"}`}
-                          >
-                            {notif.title}
-                          </p>
-                          <p className="text-sm text-gray-500 mt-0.5 line-clamp-2">
+                          <div className="flex items-center justify-between gap-4 mb-1">
+                            <p
+                              className={`text-base font-bold truncate transition-colors ${notif.isRead ? "text-white/70 group-hover:text-white" : "text-white"}`}
+                            >
+                              {notif.title}
+                            </p>
+                            <p className="text-[10px] font-bold text-white/20 uppercase tracking-tighter shrink-0">
+                              {new Date(notif.createdAt).toLocaleTimeString(
+                                "en-US",
+                                { hour: "2-digit", minute: "2-digit" },
+                              )}
+                            </p>
+                          </div>
+                          <p className={`text-sm leading-relaxed line-clamp-2 transition-colors ${notif.isRead ? "text-white/40" : "text-white/60"}`}>
                             {notif.message}
-                          </p>
-                          <p className="text-xs text-gray-400 mt-1">
-                            {new Date(notif.createdAt).toLocaleTimeString(
-                              "en-US",
-                              { hour: "2-digit", minute: "2-digit" },
-                            )}
                           </p>
                         </div>
                         {!notif.isRead && (
-                          <div className="w-2 h-2 bg-orange-500 rounded-full shrink-0 mt-2" />
+                          <div className="w-2 h-2 bg-[#eb9728] rounded-full shrink-0 mt-3 shadow-[0_0_10px_rgba(235,151,40,0.5)]" />
                         )}
                       </button>
                     );

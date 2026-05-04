@@ -126,7 +126,7 @@ function SelectScrollUpButton({ className, ...props }) {
     <SelectPrimitive.ScrollUpButton
       data-slot="select-scroll-up-button"
       className={cn(
-        "z-10 flex cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-4",
+        "z-10 flex cursor-default items-center justify-center bg-transparent text-slate-400 hover:text-white py-1 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}
@@ -141,7 +141,7 @@ function SelectScrollDownButton({ className, ...props }) {
     <SelectPrimitive.ScrollDownButton
       data-slot="select-scroll-down-button"
       className={cn(
-        "z-10 flex cursor-default items-center justify-center bg-popover py-1 [&_svg:not([class*='size-'])]:size-4",
+        "z-10 flex cursor-default items-center justify-center bg-transparent text-slate-400 hover:text-white py-1 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       {...props}

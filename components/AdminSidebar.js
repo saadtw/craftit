@@ -2,102 +2,116 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState } from "react";
 import { useSession, signOut } from "next-auth/react";
+import Image from "next/image";
+import Logo from "@/components/CrafitLogo";
 
-const navItems = [
-  { href: "/admin/dashboard", icon: "⬡", label: "Dashboard" },
-  { href: "/admin/manufacturers", icon: "🏭", label: "Manufacturers" },
-  { href: "/admin/users", icon: "👥", label: "Users" },
-  { href: "/admin/orders", icon: "📦", label: "Orders" },
-  { href: "/admin/disputes", icon: "⚠️", label: "Disputes" },
-  { href: "/admin/support", icon: "🎫", label: "Support" },
-  { href: "/admin/activity-log", icon: "📋", label: "Activity Log" },
-  { href: "/admin/profile", icon: "👤", label: "Profile" },
-];
+import DashboardIcon from "@/assets/Dashboard.png";
+import ManufacturersIcon from "@/assets/manufacture.png";
+import TotalUsersIcon from "@/assets/TotalUsers.png";
+import OrderIcon from "@/assets/orders.png";
+import DisputesIcon from "@/assets/disputes.png";
+import SupportIcon from "@/assets/support.png";
+import ActivityLogIcon from "@/assets/ActivityLog.png";
+import ProfileIcon from "@/assets/Adminprofile.png";
+import LogoutIcon from "@/assets/logout.png";
 
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  const isActive = (href) => {
-    if (href === "/admin/dashboard") return pathname === href;
-    return pathname.startsWith(href);
+  const handleLogout = async () => {
+    setLoggingOut(true);
+    await signOut({ callbackUrl: "/auth/login" });
+  };
+
+  const navItems = [
+    { href: "/admin/dashboard", icon: DashboardIcon, label: "Dashboard", key: "dashboard" },
+    { href: "/admin/manufacturers", icon: ManufacturersIcon, label: "Manufacturers", key: "manufacturers" },
+    { href: "/admin/users", icon: TotalUsersIcon, label: "Users", key: "users" },
+    { href: "/admin/orders", icon: OrderIcon, label: "Orders", key: "orders" },
+    { href: "/admin/disputes", icon: DisputesIcon, label: "Disputes", key: "disputes" },
+    { href: "/admin/support", icon: SupportIcon, label: "Support", key: "support" },
+    { href: "/admin/activity-log", icon: ActivityLogIcon, label: "Activity Log", key: "activity-log" },
+    { href: "/admin/profile", icon: ProfileIcon, label: "Profile", key: "profile" },
+    { icon: LogoutIcon, label: "Logout", key: "logout", isLogout: true },
+  ];
+
+  const isActive = (item) => {
+    if (item.href === "/admin/dashboard") return pathname === item.href;
+    return pathname.startsWith(item.href);
   };
 
   return (
-    <aside className="w-64 h-screen shrink-0 bg-slate-900 flex flex-col overflow-y-auto">
+    <aside className="w-52 shrink-0 border-r border-slate-800/60 bg-[#020617] text-slate-200 flex flex-col h-screen sticky top-0">
       {/* Brand */}
-      <div className="px-6 py-5 border-b border-slate-800">
-        <Link href="/admin/dashboard" className="flex items-center gap-2">
-          <svg
-            className="h-7 w-7 text-amber-500"
-            fill="none"
-            viewBox="0 0 48 48"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            <path
-              d="M4.177,14.686,21.5,4.2a3,3,0,0,1,3,0l17.323,10.485a3,3,0,0,1,1.5,2.6V30.714a3,3,0,0,1-1.5,2.6L24.5,43.8a3,3,0,0,1-3,0L4.177,33.314a3,3,0,0,1-1.5-2.6V17.286a3,3,0,0,1,1.5-2.6Z"
-              stroke="currentColor"
-              strokeLinejoin="round"
-              strokeWidth="3"
-            />
-            <path
-              d="m22.5,24,14.5-8.5M22.5,24V43.5M22.5,24,9,16"
-              stroke="currentColor"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="3"
-            />
-          </svg>
-          <div>
-            <span className="text-slate-50 font-bold text-base tracking-tight">
-              Craftit
-            </span>
-            <span className="block text-amber-500 text-xs font-medium tracking-widest uppercase">
-              Admin
-            </span>
-          </div>
+      <div className="py-6 border-b border-slate-800/60 px-4">
+        <Link href="/admin/dashboard" className="flex items-center gap-3">
+          <Logo className="h-8 w-8 text-[#eb9728]" />
+          <span className="text-[#eb9728] text-lg font-black tracking-widest uppercase">
+            Craftit
+          </span>
         </Link>
       </div>
 
-      {/* Nav */}
-      <nav className="flex-1 px-3 py-4 space-y-1">
-        {navItems.map((item) => (
-          <Link
-            key={item.href}
-            href={item.href}
-            className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              isActive(item.href)
-                ? "bg-amber-600 text-white"
-                : "text-slate-400 hover:bg-slate-800 hover:text-slate-50"
-            }`}
-          >
-            <span className="text-base">{item.icon}</span>
-            <span>{item.label}</span>
-          </Link>
-        ))}
-      </nav>
+      {/* SECTION 1: SCROLLABLE NAVIGATION */}
+      <nav className="flex-1 min-h-0 overflow-y-auto py-4 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+        {navItems.map((item) => {
+          if (item.isLogout) {
+            return (
+              <button
+                key={item.key}
+                onClick={handleLogout}
+                disabled={loggingOut}
+                className="group flex items-center gap-3 px-4 py-3.5 w-full border-l-2 border-l-transparent hover:bg-purple-900/20 hover:border-l-purple-500 hover:shadow-[inset_0_0_20px_rgba(168,85,247,0.15)] transition-all disabled:opacity-50"
+              >
+                <div className="relative shrink-0">
+                  <Image
+                    src={item.icon}
+                    alt={item.label}
+                    width={35}
+                    height={35}
+                  />
+                </div>
+                <span className="text-[14px] font-semibold text-left leading-tight text-slate-400 group-hover:text-purple-300 truncate">
+                  {loggingOut ? "..." : item.label}
+                </span>
+              </button>
+            );
+          }
 
-      {/* User + Logout */}
-      <div className="px-3 py-4 border-t border-slate-800">
-        {session?.user && (
-          <div className="px-3 py-2 mb-2">
-            <p className="text-slate-50 text-sm font-medium truncate">
-              {session.user.name}
-            </p>
-            <p className="text-slate-500 text-xs truncate">
-              {session.user.email}
-            </p>
-          </div>
-        )}
-        <button
-          onClick={() => signOut({ callbackUrl: "/auth/login" })}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-400 hover:bg-slate-800 hover:text-red-400 transition-colors"
-        >
-          <span>🚪</span>
-          <span>Sign Out</span>
-        </button>
-      </div>
+          const activeItem = isActive(item);
+          return (
+            <Link
+              key={item.key}
+              href={item.href}
+              className={`group flex items-center gap-3 px-4 py-3.5 w-full border-l-2 transition-all ${
+                activeItem
+                  ? "bg-purple-500/10 border-l-purple-500 shadow-[inset_0_0_20px_rgba(168,85,247,0.1)]"
+                  : "bg-transparent border-l-transparent hover:bg-purple-900/20 hover:border-l-purple-500 hover:shadow-[inset_0_0_20px_rgba(168,85,247,0.15)]"
+              }`}
+            >
+              <div className="relative shrink-0">
+                <Image
+                  src={item.icon}
+                  alt={item.label}
+                  width={35}
+                  height={35}
+                />
+              </div>
+              <span
+                className={`text-[14px] font-semibold text-left leading-tight truncate ${
+                  activeItem ? "text-purple-400" : "text-slate-400 group-hover:text-purple-300"
+                }`}
+              >
+                {item.label}
+              </span>
+            </Link>
+          );
+        })}
+      </nav>
     </aside>
   );
 }

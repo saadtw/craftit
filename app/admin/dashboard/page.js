@@ -1,10 +1,26 @@
 // app/admin/dashboard/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
+import dynamic from 'next/dynamic';
+
+// Lottie for the main header animation
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
+
+// Assets Import 
+import AdminDashboardAni from "@/assets/AdminDashboard.json";
+import PendingVerificationsIcon from "@/assets/PendingVerifications.png";
+import TotalUsersIcon from "@/assets/TotalUsers.png";
+import TotalManufacturersIcon from "@/assets/TotalManufacturers.png";
+import OrdersIcon from "@/assets/orders.png";
+import DisputesIcon from "@/assets/disputes.png";
+import SettingsIcon from "@/assets/settings.png";
+import { Portal } from "@radix-ui/react-select";
 
 export default function AdminDashboard() {
   const { data: session, status } = useSession();
@@ -35,267 +51,162 @@ export default function AdminDashboard() {
       router.push("/auth/login");
       return;
     }
-    if (status === "authenticated") {
-      if (session?.user?.role !== "admin") {
-        router.push("/");
-        return;
-      }
+    if (status === "authenticated" && session?.user?.role === "admin") {
       fetchDashboardData();
+    } else if (status === "authenticated") {
+      router.push("/");
     }
   }, [status, session, router, fetchDashboardData]);
 
   if (status === "loading" || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-slate-950">
-        <div className="text-slate-400 text-sm">Loading dashboard...</div>
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading dashboard..." />;
   }
 
   const statCards = [
-    {
-      label: "Pending Verifications",
-      value: stats?.pendingVerifications ?? 0,
-      icon: "🏭",
-      href: "/admin/manufacturers",
-      accent: "text-amber-400",
-      urgent: (stats?.pendingVerifications ?? 0) > 0,
-    },
-    {
-      label: "Active Disputes",
-      value: stats?.activeDisputes ?? 0,
-      icon: "⚠️",
-      href: "/admin/disputes",
-      accent: "text-red-400",
-      urgent: (stats?.activeDisputes ?? 0) > 0,
-    },
-    {
-      label: "Total Users",
-      value: stats?.totalUsers ?? 0,
-      icon: "👥",
-      href: "/admin/users",
-      accent: "text-sky-400",
-      urgent: false,
-    },
-    {
-      label: "Total Manufacturers",
-      value: stats?.totalManufacturers ?? 0,
-      icon: "🏭",
-      href: "/admin/manufacturers",
-      accent: "text-emerald-400",
-      urgent: false,
-    },
-    {
-      label: "Active Orders",
-      value: stats?.activeOrders ?? 0,
-      icon: "📦",
-      href: "/admin/orders",
-      accent: "text-violet-400",
-      urgent: false,
-    },
+    { label: "Pending Verifications", value: stats?.pendingVerifications ?? 0, img: PendingVerificationsIcon, href: "/admin/manufacturers", urgent: (stats?.pendingVerifications ?? 0) > 0 },
+    { label: "Active Disputes", value: stats?.activeDisputes ?? 0, img: DisputesIcon, href: "/admin/disputes", urgent: (stats?.activeDisputes ?? 0) > 0 },
+    { label: "Total Users", value: stats?.totalUsers ?? 0, img: TotalUsersIcon, href: "/admin/users", urgent: false },
+    { label: "Total Manufacturers", value: stats?.totalManufacturers ?? 0, img: TotalManufacturersIcon, href: "/admin/manufacturers", urgent: false },
+    { label: "Active Orders", value: stats?.activeOrders ?? 0, img: OrdersIcon, href: "/admin/orders", urgent: false },
   ];
 
   return (
-    <div className="p-8">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-slate-50">Dashboard</h1>
-        <p className="text-slate-500 text-sm mt-1">
-          Welcome back, {session?.user?.name}. Here&apos;s what needs your
-          attention.
-        </p>
+    <div className="min-h-screen bg-[#020617] text-slate-200 pb-12 selection:bg-purple-500/30">
+      {/* Background Ambient Glow */}
+      <div className="fixed top-0 left-0 w-full h-full pointer-events-none z-0">
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-purple-600/10 blur-[140px] rounded-full opacity-50" />
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        {statCards.map((card) => (
-          <Link
-            key={card.label}
-            href={card.href}
-            className={`bg-slate-900 border rounded-xl p-5 hover:border-slate-600 transition-colors ${
-              card.urgent ? "border-amber-800/60" : "border-slate-800"
-            }`}
-          >
-            <div className="flex items-center justify-between mb-3">
-              <span className="text-xl">{card.icon}</span>
-              {card.urgent && (
-                <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse" />
-              )}
-            </div>
-            <p className={`text-3xl font-bold ${card.accent}`}>{card.value}</p>
-            <p className="text-slate-500 text-xs mt-1 leading-tight">
-              {card.label}
+      <div className="relative z-10 max-w-[1600px] mx-auto p-6 lg:p-10">
+        
+        {/* HEADER SECTION */}
+        <header className="flex flex-col md:flex-row md:items-center justify-between mb-12 gap-6 border-b border-white/5 pb-8">
+          <div className="flex-1">
+            <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-500 via-red-500 to-yellow-500 text-transparent bg-clip-text tracking-tighter uppercase leading-none">Executive Dashboard</h1>
+            <p className="text-slate-400 text-lg mt-3 font-medium">
+              Welcome back, <span className="text-purple-400 font-bold">{session?.user?.name || "Super Admin"}</span>. Here's what needs you attention.
             </p>
-          </Link>
-        ))}
-      </div>
-
-      {/* Alerts + Quick Actions */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-        {/* Critical Alerts */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-slate-50 font-semibold text-sm mb-4">
-            Critical Alerts
-          </h2>
-          <div className="space-y-3">
-            {(stats?.pendingVerifications ?? 0) > 0 && (
-              <Link
-                href="/admin/manufacturers"
-                className="flex items-center gap-3 p-3 bg-amber-950/40 border border-amber-800/40 rounded-lg hover:border-amber-700/60 transition-colors"
-              >
-                <span className="text-amber-400 text-lg">🏭</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-slate-200 text-sm font-medium">
-                    {stats.pendingVerifications} manufacturer
-                    {stats.pendingVerifications !== 1 ? "s" : ""} awaiting
-                    verification
-                  </p>
-                  <p className="text-slate-500 text-xs">Requires review</p>
-                </div>
-                <span className="text-slate-500 text-sm">→</span>
-              </Link>
-            )}
-            {(stats?.activeDisputes ?? 0) > 0 && (
-              <Link
-                href="/admin/disputes"
-                className="flex items-center gap-3 p-3 bg-red-950/40 border border-red-800/40 rounded-lg hover:border-red-700/60 transition-colors"
-              >
-                <span className="text-red-400 text-lg">⚠️</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-slate-200 text-sm font-medium">
-                    {stats.activeDisputes} active dispute
-                    {stats.activeDisputes !== 1 ? "s" : ""} open
-                  </p>
-                  <p className="text-slate-500 text-xs">Needs resolution</p>
-                </div>
-                <span className="text-slate-500 text-sm">→</span>
-              </Link>
-            )}
-            {(stats?.pendingVerifications ?? 0) === 0 &&
-              (stats?.activeDisputes ?? 0) === 0 && (
-                <div className="flex items-center gap-3 p-3 bg-emerald-950/30 border border-emerald-800/30 rounded-lg">
-                  <span className="text-emerald-400 text-lg">✓</span>
-                  <p className="text-slate-400 text-sm">
-                    No critical alerts — all clear
-                  </p>
-                </div>
-              )}
           </div>
-        </div>
-
-        {/* Quick Actions */}
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-6">
-          <h2 className="text-slate-50 font-semibold text-sm mb-4">
-            Quick Actions
-          </h2>
-          <div className="grid grid-cols-2 gap-3">
-            <Link
-              href="/admin/manufacturers"
-              className="flex flex-col items-center gap-2 p-4 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-center"
-            >
-              <span className="text-2xl">🏭</span>
-              <span className="text-slate-300 text-xs font-medium">
-                Verify Manufacturers
-              </span>
-            </Link>
-            <Link
-              href="/admin/disputes"
-              className="flex flex-col items-center gap-2 p-4 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-center"
-            >
-              <span className="text-2xl">⚠️</span>
-              <span className="text-slate-300 text-xs font-medium">
-                Resolve Disputes
-              </span>
-            </Link>
-            <Link
-              href="/admin/users"
-              className="flex flex-col items-center gap-2 p-4 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-center"
-            >
-              <span className="text-2xl">👥</span>
-              <span className="text-slate-300 text-xs font-medium">
-                Manage Users
-              </span>
-            </Link>
-            <Link
-              href="/admin/orders"
-              className="flex flex-col items-center gap-2 p-4 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-center"
-            >
-              <span className="text-2xl">📦</span>
-              <span className="text-slate-300 text-xs font-medium">
-                View Orders
-              </span>
-            </Link>
+          
+          {/* Main Animation */}
+         <div className="w-full md:w-80 h-40 md:h-44 flex items-center justify-center relative group">
+            {/* Subtle glow behind animation */}
+             <div className="absolute inset-0 bg-indigo-500/10 blur-3xl rounded-full scale-125 group-hover:bg-indigo-600/20 transition-all duration-700" />
+            <Lottie 
+              animationData={AdminDashboardAni} 
+              loop={true} 
+              className="w-full h-full object-contain relative z-10 transform scale-110"
+            />
           </div>
-        </div>
-      </div>
+        </header>
 
-      {/* Recent Activity Log */}
-      <div className="bg-slate-900 border border-slate-800 rounded-xl">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-800">
-          <h2 className="text-slate-50 font-semibold text-sm">
-            Recent Admin Activity
-          </h2>
-          <Link
-            href="/admin/activity-log"
-            className="text-amber-500 text-xs hover:text-amber-400 transition-colors"
-          >
-            View all →
-          </Link>
-        </div>
-        {activityLog.length === 0 ? (
-          <div className="px-6 py-8 text-center text-slate-500 text-sm">
-            No activity recorded yet
-          </div>
-        ) : (
-          <div className="divide-y divide-slate-800">
-            {activityLog.map((log, idx) => (
-              <div
-                key={log._id || idx}
-                className="flex items-center justify-between px-6 py-3"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-slate-500 text-base">
-                    {log.action?.includes("approve")
-                      ? "✅"
-                      : log.action?.includes("reject")
-                        ? "❌"
-                        : log.action?.includes("suspend")
-                          ? "🔒"
-                          : log.action?.includes("dispute")
-                            ? "⚖️"
-                            : "📝"}
+        {/* STATS GRID - Using Corrected PNG Imports */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-12">
+          {statCards.map((card) => (
+            <Link key={card.label} href={card.href} 
+              className="group relative bg-white/[0.02] border border-white/5 p-5 rounded-3xl hover:border-purple-500 hover:bg-purple-900/20 hover:shadow-[0_0_20px_rgba(168,85,247,0.25)] transition-all duration-300 backdrop-blur-md overflow-hidden"
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-10 h-10 relative group-hover:scale-110 transition-transform duration-300">
+                  <Image src={card.img} alt={card.label} fill className="object-contain" />
+                </div>
+                {card.urgent && (
+                  <span className="flex h-2.5 w-2.5">
+                    <span className="animate-ping absolute inline-flex h-2.5 w-2.5 rounded-full bg-red-400 opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-red-500 shadow-[0_0_10px_red]"></span>
                   </span>
-                  <div className="min-w-0">
-                    <p className="text-slate-300 text-sm truncate">
-                      {log.description || log.action}
-                    </p>
-                    <p className="text-slate-600 text-xs">
-                      {log.adminName || "Admin"}
-                    </p>
-                  </div>
-                </div>
-                <div className="text-right ml-4 shrink-0">
-                  <p className="text-slate-600 text-xs">
-                    {log.createdAt
-                      ? new Date(log.createdAt).toLocaleDateString("en-US", {
-                          month: "short",
-                          day: "numeric",
-                        })
-                      : "—"}
-                  </p>
-                  <p className="text-slate-700 text-xs">
-                    {log.createdAt
-                      ? new Date(log.createdAt).toLocaleTimeString("en-US", {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })
-                      : ""}
-                  </p>
-                </div>
+                )}
               </div>
-            ))}
+              <h3 className="text-3xl font-bold text-white tracking-tight">{card.value}</h3>
+              <p className="text-slate-500 text-[9px] font-black uppercase tracking-[0.2em] mt-2 group-hover:text-purple-400 transition-colors">
+                {card.label}
+              </p>
+            </Link>
+          ))}
+        </div>
+
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-10">
+          
+          {/* RECENT ACTIVITY STREAM */}
+          <div className="xl:col-span-2">
+            <section className="bg-white/[0.02] border border-white/5 rounded-[3rem] overflow-hidden backdrop-blur-md">
+                <div className="px-8 py-7 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
+                    <div className="flex items-center gap-3">
+                        <div className="w-2.5 h-2.5 rounded-full bg-purple-500 animate-pulse shadow-[0_0_8px_#a855f7]" />
+                        <h2 className="font-bold text-xs text-white uppercase tracking-[0.3em]">Live System Stream</h2>
+                    </div>
+                    <Link href="/admin/activity-log" className="text-purple-400 text-[10px] font-black uppercase tracking-widest hover:text-purple-300 transition-colors">
+                        View all &rarr;
+                    </Link>
+                </div>
+                
+                <div className="divide-y divide-white/5">
+                    {activityLog.length === 0 ? (
+                        <div className="p-20 text-center text-slate-500 text-sm font-medium italic">Scanning for activity...</div>
+                    ) : (
+                        activityLog.map((log, idx) => (
+                            <div key={log._id || idx} className="px-6 py-4 hover:bg-purple-500/[0.03] transition-colors flex items-center justify-between group">
+                                <div className="flex items-center gap-4">
+                                    <div className="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-base group-hover:border-purple-400/40 transition-all shadow-inner">
+                                      {log.action?.includes("approve") ? "✅" : log.action?.includes("reject") ? "❌" : log.action?.includes("suspend") ? "🔒" : log.action?.includes("dispute") ? "⚖️" : "📝"}
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-200 text-sm font-semibold group-hover:text-white transition-colors tracking-tight">{log.description || log.action}</p>
+                                        <p className="text-slate-500 text-[9px] uppercase font-black tracking-widest mt-0.5 opacity-60">Verified by {log.adminId?.name || "System Root"}</p>
+                                    </div>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-slate-400 text-xs font-mono font-bold tracking-tighter">
+                                        {log.createdAt ? new Date(log.createdAt).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—"}
+                                    </p>
+                                    <p className="text-slate-600 text-[9px] font-black uppercase mt-0.5">
+                                        {log.createdAt ? new Date(log.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }) : "Audit Logged"}
+                                    </p>
+                                </div>
+                            </div>
+                        ))
+                    )}
+                </div>
+            </section>
           </div>
-        )}
+
+          {/* QUICK CONTROLS SIDEBAR */}
+          <div className="space-y-8">
+            <section className="bg-white/[0.02] border border-white/5 rounded-[2rem] p-6 backdrop-blur-md">
+                <h2 className="text-white font-black text-[11px] uppercase tracking-[0.4em] mb-8 opacity-50 text-center">Admin Controls</h2>
+                <div className="grid grid-cols-2 gap-4">
+                    {[
+                        { label: "Verify", href: "/admin/manufacturers", img: PendingVerificationsIcon },
+                        { label: "Disputes", href: "/admin/disputes", img: DisputesIcon },
+                        { label: "Users", href: "/admin/users", img: TotalUsersIcon },
+                        { label: "Settings", href: "/admin/settings", img: SettingsIcon },
+                    ].map((item) => (
+                        <Link key={item.label} href={item.href} 
+                          className="flex flex-col items-center gap-3 p-4 rounded-2xl bg-white/[0.02] border border-white/5 hover:border-purple-400/50 hover:bg-purple-500/10 transition-all group"
+                        >
+                            <div className="w-10 h-10 relative group-hover:scale-110 transition-transform duration-300">
+                              <Image src={item.img} alt={item.label} fill className="object-contain" />
+                            </div>
+                            <span className="text-slate-300 text-[9px] font-black uppercase tracking-[0.2em] group-hover:text-purple-400">{item.label}</span>
+                        </Link>
+                    ))}
+                </div>
+            </section>
+
+            {/* PRIORITY ACTION CARD */}
+            {(stats?.pendingVerifications ?? 0) > 0 && (
+                <div className="p-10 bg-gradient-to-br from-purple-500/20 via-[#0a0f1d] to-transparent border border-purple-500/30 rounded-[3rem] relative overflow-hidden group hover:border-purple-400 transition-all duration-500">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/10 blur-[60px] -mr-16 -mt-16 group-hover:bg-purple-500/20 transition-all" />
+                    <p className="text-purple-400 text-[10px] font-black uppercase tracking-[0.4em] mb-4">Urgent Task</p>
+                    <p className="text-white text-xl font-bold mb-8 leading-tight">Review {stats.pendingVerifications} manufacturer applications.</p>
+                    <Link href="/admin/manufacturers" className="flex items-center justify-center gap-3 py-4.5 bg-purple-600 text-white text-xs font-black uppercase tracking-widest rounded-[1.5rem] hover:bg-purple-500 transition-all shadow-lg active:scale-95">
+                        View Applications
+                    </Link>
+                </div>
+            )}
+          </div>
+
+        </div>
       </div>
     </div>
   );

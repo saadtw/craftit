@@ -1,6 +1,7 @@
 // app/customer/wishlist/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -61,14 +62,7 @@ export default function CustomerWishlistPage() {
   const manufacturers = wishlist.filter((w) => w.itemType === "manufacturer");
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen bg-[#050507] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-          <p className="text-sm text-white/40">Loading wishlist...</p>
-        </div>
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading wishlist..." />;
   }
 
   return (

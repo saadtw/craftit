@@ -176,45 +176,49 @@ export default function DraftModelEditorPage() {
 
   // ── Full-screen editor ─────────────────────────────────────────────────────
   return (
-    <div style={styles.root}>
+    <div className="flex flex-col h-[calc(100vh-56px)] bg-[#050507] overflow-hidden">
       {/* Top bar */}
-      <div style={styles.topBar}>
-        <div style={styles.topBarLeft}>
-          <span style={styles.breadcrumb}>New Product</span>
-          <span style={styles.breadcrumbSep}>›</span>
-          <span style={styles.breadcrumbCurrent}>3D Model Editor</span>
+      <div className="flex items-center justify-between px-6 py-3 bg-[#0B011D]/80 border-b border-purple-500/20 backdrop-blur-xl shrink-0 gap-4 flex-wrap z-10">
+        <div className="flex items-center gap-3">
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">New Product</span>
+          <span className="text-white/10 text-xs">/</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-purple-400">3D Configuration Studio</span>
         </div>
 
-        <div style={styles.fileInfo}>
-          <span style={styles.fileIcon}>📦</span>
-          <span style={styles.fileName}>
-            {draftModel.filename || "3D Model"}
-          </span>
-          {draftModel.fileSize && (
-            <span style={styles.fileSize}>
-              {(draftModel.fileSize / 1024 / 1024).toFixed(2)} MB
-            </span>
-          )}
+        <div className="flex items-center gap-4 bg-white/[0.03] border border-white/5 px-4 py-2 rounded-xl">
+          <div className="w-8 h-8 rounded-lg bg-purple-600/10 flex items-center justify-center text-purple-400">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            </svg>
+          </div>
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-widest text-white leading-none">
+              {draftModel.filename || "3D Model"}
+            </p>
+            {draftModel.fileSize && (
+              <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mt-1 leading-none">
+                {(draftModel.fileSize / 1024 / 1024).toFixed(2)} MB
+              </p>
+            )}
+          </div>
         </div>
 
-        <div style={styles.topBarRight}>
-          <p style={styles.helpText}>
-            Use the toolbar to add tags, measure, or paint the model. Click{" "}
-            <strong style={{ color: "white" }}>SAVE_&amp;_FINISH</strong> in the
-            sidebar when done.
+        <div className="flex items-center gap-6">
+          <p className="hidden lg:block text-[9px] font-black uppercase tracking-[0.15em] text-white/30 max-w-xs leading-relaxed">
+            Use the studio tools to define measurements and annotations. Click <span className="text-white">SAVE_&_FINISH</span> when done.
           </p>
           <button
             id="cancelEditorBtn"
             onClick={handleCancel}
-            style={styles.cancelBtn}
+            className="px-5 py-2.5 bg-red-500/10 border border-red-500/20 text-red-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-red-500/20 transition-all flex items-center gap-2 group"
           >
-            ✕ Cancel — back to form
+            <span>✕ Cancel Edits</span>
           </button>
         </div>
       </div>
 
       {/* Editor canvas — takes all remaining height */}
-      <div style={styles.editorContainer}>
+      <div className="flex-1 min-h-0 relative overflow-hidden flex flex-col">
         <Editor3DWrapper
           modelUrl={draftModel.url}
           initialAnnotations={draftModel.annotations || []}
@@ -223,131 +227,12 @@ export default function DraftModelEditorPage() {
           readOnly={false}
         />
       </div>
+
+      <style jsx global>{`
+        @keyframes spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
-
-// ── Inline styles ─────────────────────────────────────────────────────────────
-//
-// Why calc(100vh - 56px)?
-//   The manufacturer layout wraps every page with <ManufacturerNav>, a sticky
-//   header that is ~56px tall. Using 100vh here would overflow the viewport
-//   and produce a scrollbar that pushes the WebGL canvas out of view.
-//
-// Why minHeight: 0 on editorContainer?
-//   In a flex column, children default to min-height: auto, which means they
-//   won't shrink below their intrinsic size. Setting minHeight: 0 allows the
-//   flex child to honour the parent's height constraint so the inner h-full
-//   on Editor3DWrapper resolves correctly.
-const styles = {
-  root: {
-    display: "flex",
-    flexDirection: "column",
-    height: "calc(100vh - 56px)",
-    background: "#0a0a0a",
-    overflow: "hidden",
-  },
-  topBar: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: "10px 20px",
-    background: "#0e0e0e",
-    borderBottom: "1px solid rgba(255,255,255,0.06)",
-    flexShrink: 0,
-    gap: "16px",
-    flexWrap: "wrap",
-    zIndex: 10,
-  },
-  topBarLeft: {
-    display: "flex",
-    alignItems: "center",
-    gap: "6px",
-  },
-  breadcrumb: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "11px",
-    color: "#525252",
-    letterSpacing: "0.08em",
-  },
-  breadcrumbSep: {
-    color: "#333",
-    fontSize: "12px",
-  },
-  breadcrumbCurrent: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "11px",
-    color: "#a3a3a3",
-    letterSpacing: "0.08em",
-  },
-  fileInfo: {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  },
-  fileIcon: {
-    fontSize: "14px",
-  },
-  fileName: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "11px",
-    color: "white",
-    fontWeight: 700,
-    letterSpacing: "0.04em",
-    maxWidth: "220px",
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap",
-  },
-  fileSize: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "10px",
-    color: "#525252",
-    letterSpacing: "0.06em",
-  },
-  topBarRight: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  },
-  helpText: {
-    fontFamily: "'JetBrains Mono', monospace",
-    fontSize: "10px",
-    color: "#525252",
-    letterSpacing: "0.06em",
-    margin: 0,
-    maxWidth: "320px",
-    lineHeight: "1.5",
-  },
-  cancelBtn: {
-    padding: "6px 14px",
-    background: "rgba(147,0,10,0.12)",
-    border: "1px solid rgba(147,0,10,0.3)",
-    borderRadius: "4px",
-    color: "#ffb4ab",
-    fontSize: "11px",
-    fontFamily: "'JetBrains Mono', monospace",
-    fontWeight: 700,
-    cursor: "pointer",
-    letterSpacing: "0.08em",
-    whiteSpace: "nowrap",
-  },
-  // flex:1 + minHeight:0 is the correct pattern for a flex child that must
-  // fill remaining space AND allow its own children to use h-full / 100%.
-  editorContainer: {
-    flex: 1,
-    minHeight: 0,
-    display: "flex",
-    flexDirection: "column",
-    overflow: "hidden",
-    position: "relative",
-  },
-  spinner: {
-    width: "24px",
-    height: "24px",
-    border: "2px solid rgba(255,255,255,0.08)",
-    borderTopColor: "white",
-    borderRadius: "50%",
-    animation: "spin 0.8s linear infinite",
-  },
-};

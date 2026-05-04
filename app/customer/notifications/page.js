@@ -1,6 +1,8 @@
 // app/customer/notifications/page.js
 "use client";
 
+import GlobalNoResults from "@/components/ui/GlobalNoResults";
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -104,18 +106,32 @@ export default function CustomerNotificationsPage() {
 
   const handleClick = async (notif) => {
     if (!notif.isRead) await markRead(notif._id);
-    if (notif.link) router.push(notif.link);
+    
+    let targetLink = notif.link;
+
+    // Repair logic for broken legacy/seed links
+    if (!targetLink || targetLink === "/dashboard" || targetLink === "/chat" || targetLink.includes("/manufacturer/")) {
+      if (notif.relatedType === "order" && notif.relatedId) {
+        targetLink = `/customer/orders/${notif.relatedId}`;
+      } else if (notif.relatedType === "dispute" && notif.relatedId) {
+        targetLink = `/customer/orders`; // or specific dispute if exists
+      } else if (notif.relatedType === "rfq" && notif.relatedId) {
+        targetLink = `/customer/rfqs`;
+      } else if (notif.type === "new_message" && notif.relatedId) {
+        targetLink = `/customer/orders/${notif.relatedId}`;
+      } else {
+        // Default fallbacks
+        if (notif.type.includes("order")) targetLink = "/customer/orders";
+        else if (notif.type.includes("bid") || notif.type.includes("rfq")) targetLink = "/customer/rfqs";
+        else targetLink = "/customer/dashboard";
+      }
+    }
+
+    if (targetLink) router.push(targetLink);
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050507]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
-          <p className="text-sm text-white/45">Loading notifications...</p>
-        </div>
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading notifications..." />;
   }
 
   const groupedByDate = notifications.reduce((acc, n) => {
@@ -176,7 +192,7 @@ export default function CustomerNotificationsPage() {
                 notifications
               </span>
             </div>
-            <p className="text-lg font-bold text-white">No notifications yet</p>
+            <GlobalNoResults text="No notifications yet" />
             <p className="mt-2 text-sm text-white/45">
               You&apos;ll see order updates, messages, and more here.
             </p>

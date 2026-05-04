@@ -1,15 +1,16 @@
 // app/manufacturer/orders/[id]/milestones/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 
 const MILESTONE_STATUS_COLORS = {
-  pending: "bg-gray-100 text-gray-600",
-  in_progress: "bg-blue-100 text-blue-700",
-  completed: "bg-green-100 text-green-700",
+  pending: "bg-white/5 border-white/10 text-white/40",
+  in_progress: "bg-blue-500/10 border-blue-500/20 text-blue-400",
+  completed: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
 };
 
 export default function MilestonesManagementPage() {
@@ -115,11 +116,7 @@ export default function MilestonesManagementPage() {
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-linear-to-b from-blue-50 to-white">
-        <p className="text-gray-600">Loading milestones...</p>
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading milestones..." />;
   }
 
   if (!order) {
@@ -136,57 +133,82 @@ export default function MilestonesManagementPage() {
   const progressPercent =
     total > 0 ? Math.round((completedCount / total) * 100) : 0;
 
+
   return (
-    <div className="min-h-screen bg-linear-to-b from-blue-50 to-white">
-      {/* Header */}
-      <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-sm border-b border-gray-200">
-        <div className="container mx-auto px-4 sm:px-6 lg:px-10 py-3 flex items-center gap-4">
-          <Link
-            href={`/manufacturer/orders/${id}`}
-            className="text-sm text-gray-600 hover:text-orange-500"
-          >
-            ← Back to Order
-          </Link>
-          <span className="text-gray-300">|</span>
-          <span className="text-sm font-mono font-bold text-blue-900">
-            {order.orderNumber}
-          </span>
-          <span className="text-sm text-gray-500">— Milestones</span>
+    <div className="min-h-screen bg-[#050507] text-white">
+      {/* Header section with back button */}
+      <header className="sticky top-0 z-50 bg-[#050507]/80 backdrop-blur-md border-b border-white/5">
+        <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between gap-6">
+          <div className="flex items-center gap-6">
+            <Link
+              href={`/manufacturer/orders/${id}`}
+              className="group flex items-center gap-4 transition-all"
+            >
+              <div className="w-8 h-8 rounded-full bg-purple-600 flex items-center justify-center shadow-[0_0_15px_rgba(147,51,234,0.3)] group-hover:shadow-[0_0_25px_rgba(147,51,234,0.5)] group-hover:scale-105 transition-all duration-300">
+                <span className="material-symbols-outlined text-white text-[16px] font-bold group-hover:-translate-x-0.5 transition-transform">
+                  arrow_back
+                </span>
+              </div>
+              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-white/40 group-hover:text-white transition-colors">
+                BACK TO ORDER
+              </span>
+            </Link>
+            <div className="h-6 w-px bg-white/10" />
+            <h1 className="text-xl font-black tracking-tighter uppercase font-mono">
+              <span
+                style={{ 
+                  background: 'linear-gradient(to right, #9333ea, #f97316, #fbbf24, #ffffff)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  display: 'inline-block'
+                }}
+              >
+                {order.orderNumber}
+              </span>
+            </h1>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">ROADMAP MANAGEMENT</span>
+          </div>
         </div>
       </header>
 
-      <main className="container mx-auto px-4 sm:px-6 lg:px-10 py-8 max-w-3xl">
-        <div className="mb-6">
-          <h1 className="text-3xl font-black text-blue-900">
-            Production Milestones
+      <main className="max-w-3xl mx-auto px-6 py-12">
+        <div className="mb-12">
+          <h1 className="text-4xl font-black tracking-tighter uppercase mb-3">
+            Production Roadmap
           </h1>
-          <p className="text-gray-600 mt-1">
-            Track production stages for{" "}
-            <strong>{order.productDetails?.name || order.orderNumber}</strong>
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-white/60 flex items-center gap-3">
+            <span className="w-8 h-[2px] bg-purple-500/30" />
+            Tracking production stages for {order.productDetails?.name || order.orderNumber}
           </p>
         </div>
 
-        {/* Progress */}
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6 mb-6">
-          <div className="flex justify-between items-center mb-3">
+        {/* Progress Card */}
+        <div className="bg-white/[0.03] border-2 border-purple-500/40 rounded-[2.5rem] p-8 backdrop-blur-md mb-8 relative overflow-hidden group">
+          <div className="absolute top-0 right-0 w-64 h-64 blur-[120px] bg-purple-500/5 group-hover:bg-purple-500/10 transition-all duration-700" />
+          
+          <div className="flex justify-between items-center mb-6 relative z-10">
             <div>
-              <p className="text-sm text-gray-500">
-                Overall Production Progress
-              </p>
-              <p className="text-2xl font-bold text-blue-900">
-                {progressPercent}%
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-1">Overall Progress</p>
+              <p className="text-4xl font-black text-white tracking-tighter">
+                {progressPercent}<span className="text-lg text-white/40">%</span>
               </p>
             </div>
             <div className="text-right">
-              <p className="text-sm text-gray-500">Milestones Completed</p>
-              <p className="text-2xl font-bold text-green-600">
-                {completedCount} / {total}
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/60 mb-1">Completion Status</p>
+              <p className="text-2xl font-black text-emerald-500 tracking-tighter">
+                {completedCount} <span className="text-sm text-white/40">/ {total}</span>
               </p>
             </div>
           </div>
-          <div className="w-full bg-gray-100 rounded-full h-4">
+          
+          <div className="w-full bg-white/5 border border-white/5 rounded-full h-2 relative z-10 overflow-hidden">
             <div
-              className="bg-linear-to-r from-purple-500 to-blue-500 h-4 rounded-full transition-all duration-500"
+              className="bg-gradient-to-r from-purple-600 via-orange-500 to-gold-400 h-full rounded-full transition-all duration-1000 shadow-[0_0_15px_rgba(147,51,234,0.5)]"
               style={{ width: `${progressPercent}%` }}
             />
           </div>
@@ -194,28 +216,34 @@ export default function MilestonesManagementPage() {
 
         {/* Order Status Note */}
         <div
-          className={`mb-6 px-4 py-3 rounded-lg text-sm font-medium ${
+          className={`mb-8 px-6 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest border backdrop-blur-md ${
             order.status === "completed"
-              ? "bg-green-50 text-green-700 border border-green-200"
+              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/20"
               : order.status === "in_production"
-                ? "bg-purple-50 text-purple-700 border border-purple-200"
-                : "bg-blue-50 text-blue-700 border border-blue-200"
+                ? "bg-purple-500/10 text-purple-400 border-purple-500/20 shadow-[0_0_20px_rgba(147,51,234,0.1)]"
+                : "bg-blue-500/10 text-blue-400 border-blue-500/20"
           }`}
         >
-          Order Status:{" "}
-          <strong>{order.status.replace(/_/g, " ").toUpperCase()}</strong>
-          {order.status === "accepted" &&
-            " — Start a milestone to automatically move order to 'In Production'."}
+          <div className="flex items-center gap-3">
+            <span className="w-2 h-2 rounded-full bg-current animate-pulse" />
+            <span>
+              Order Status: <span className="text-white ml-2">{order.status.replace(/_/g, " ")}</span>
+              {order.status === "accepted" && (
+                <span className="text-white/40 italic ml-4 lowercase tracking-normal font-medium">
+                  — Start a milestone to move to production.
+                </span>
+              )}
+            </span>
+          </div>
         </div>
 
         {/* Milestones List */}
-        <div className="space-y-4 mb-6">
+        <div className="space-y-4 mb-12">
           {order.milestones?.length === 0 && (
-            <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-400">
-              <p className="text-lg mb-1">No milestones yet</p>
-              <p className="text-sm">
-                Add milestones to track production stages and keep your customer
-                updated.
+            <div className="bg-white/[0.03] border border-purple-500/20 border-dashed rounded-[2.5rem] p-16 text-center">
+              <span className="material-symbols-outlined text-5xl text-white/10 mb-4">route</span>
+              <p className="text-[10px] font-black uppercase tracking-widest text-white/60 leading-relaxed max-w-[250px] mx-auto">
+                No roadmap defined yet. Add milestones to track production stages.
               </p>
             </div>
           )}
@@ -223,184 +251,184 @@ export default function MilestonesManagementPage() {
           {order.milestones?.map((m, i) => (
             <div
               key={m._id || i}
-              className={`bg-white rounded-xl border shadow-sm p-5 transition-all ${
+              className={`bg-white/[0.03] rounded-[2rem] border transition-all duration-300 group overflow-hidden ${
                 m.status === "completed"
-                  ? "border-green-200"
+                  ? "border-emerald-500/30 bg-emerald-500/[0.02]"
                   : m.status === "in_progress"
-                    ? "border-blue-300"
-                    : "border-gray-200"
+                    ? "border-purple-500/30 bg-purple-500/[0.02] shadow-[0_0_30px_rgba(147,51,234,0.05)]"
+                    : "border-white/5"
               }`}
             >
-              <div className="flex items-start gap-4">
-                {/* Step number / check */}
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${
-                    m.status === "completed"
-                      ? "bg-green-500 text-white"
-                      : m.status === "in_progress"
-                        ? "bg-blue-500 text-white"
-                        : "bg-gray-100 text-gray-500"
-                  }`}
-                >
-                  {m.status === "completed" ? "✓" : i + 1}
-                </div>
-
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-bold text-gray-900">{m.name}</h3>
-                    <span
-                      className={`px-2 py-0.5 rounded-full text-xs font-semibold ${MILESTONE_STATUS_COLORS[m.status]}`}
-                    >
-                      {m.status.replace("_", " ")}
-                    </span>
+              <div className="p-6">
+                <div className="flex items-start gap-6">
+                  {/* Step number / check */}
+                  <div
+                    className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-sm shrink-0 transition-all ${
+                      m.status === "completed"
+                        ? "bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]"
+                        : m.status === "in_progress"
+                          ? "bg-purple-600 text-white shadow-[0_0_20px_rgba(147,51,234,0.3)]"
+                          : "bg-white/5 text-white/20 border border-white/10"
+                    }`}
+                  >
+                    {m.status === "completed" ? (
+                      <span className="material-symbols-outlined">check</span>
+                    ) : (
+                      <span>{i + 1}</span>
+                    )}
                   </div>
-                  {m.description && (
-                    <p className="text-sm text-gray-600 mb-2">
-                      {m.description}
-                    </p>
-                  )}
-                  {m.dueDate && (
-                    <p className="text-xs text-gray-400 mb-2">
-                      Due: {new Date(m.dueDate).toLocaleDateString()}
-                    </p>
-                  )}
-                  {m.completedAt && (
-                    <p className="text-xs text-green-600 mb-2">
-                      Completed: {new Date(m.completedAt).toLocaleString()}
-                    </p>
-                  )}
-                  {m.notes && (
-                    <p className="text-sm text-blue-700 bg-blue-50 rounded px-3 py-2 mb-2">
-                      📝 {m.notes}
-                    </p>
-                  )}
 
-                  {/* Update Controls */}
-                  {["accepted", "in_production"].includes(order.status) &&
-                    m.status !== "completed" && (
-                      <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="text-base font-black tracking-tight text-white">{m.name}</h3>
+                      <span className={`px-4 py-1 rounded-full text-[9px] font-black uppercase tracking-[0.2em] border ${MILESTONE_STATUS_COLORS[m.status]}`}>
+                        {m.status.replace("_", " ")}
+                      </span>
+                    </div>
+                    
+                    {m.description && (
+                      <p className="text-sm text-white/40 leading-relaxed mb-4 normal-case font-medium">
+                        {m.description}
+                      </p>
+                    )}
+                    
+                    <div className="flex flex-wrap gap-4 text-[9px] font-black uppercase tracking-widest mb-4">
+                      {m.dueDate && (
+                        <span className="flex items-center gap-1.5 text-white/20">
+                          <span className="material-symbols-outlined text-[14px]">calendar_today</span>
+                          DUE: {new Date(m.dueDate).toLocaleDateString()}
+                        </span>
+                      )}
+                      {m.completedAt && (
+                        <span className="flex items-center gap-1.5 text-emerald-500/60">
+                          <span className="material-symbols-outlined text-[14px]">check_circle</span>
+                          COMPLETED: {new Date(m.completedAt).toLocaleDateString()}
+                        </span>
+                      )}
+                    </div>
+
+                    {m.notes && (
+                      <div className="flex items-start gap-3 p-4 bg-black/20 rounded-2xl border border-white/5 mb-4 group-hover:bg-black/30 transition-all">
+                        <span className="material-symbols-outlined text-[18px] text-purple-500/40">rate_review</span>
+                        <p className="text-xs text-white/60 leading-relaxed font-medium">
+                          {m.notes}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Update Controls */}
+                    {["accepted", "in_production"].includes(order.status) && m.status !== "completed" && (
+                      <div className="mt-6 pt-6 border-t border-white/5 space-y-4">
                         <textarea
                           value={updateNotes[m._id] || ""}
-                          onChange={(e) =>
-                            setUpdateNotes((prev) => ({
-                              ...prev,
-                              [m._id]: e.target.value,
-                            }))
-                          }
-                          placeholder="Add an update note (optional)..."
+                          onChange={(e) => setUpdateNotes((prev) => ({ ...prev, [m._id]: e.target.value }))}
+                          placeholder="Add progress notes (visible to customer)..."
                           rows={2}
-                          className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none focus:border-blue-400 resize-none"
+                          className="w-full bg-white/[0.02] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white placeholder:text-white/10 focus:outline-none focus:border-purple-500/30 focus:bg-white/[0.04] transition-all resize-none font-medium"
                         />
-                        <div className="flex gap-2">
+                        <div className="flex gap-3">
                           {m.status === "pending" && (
                             <button
-                              onClick={() =>
-                                updateMilestone(m._id, "in_progress")
-                              }
+                              onClick={() => updateMilestone(m._id, "in_progress")}
                               disabled={saving}
-                              className="px-4 py-1.5 bg-blue-600 text-white text-sm font-semibold rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                              className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-[0_0_20px_rgba(147,51,234,0.3)]"
                             >
-                              ▶ Start
+                              <span className="material-symbols-outlined text-[16px]">play_arrow</span>
+                              Start Stage
                             </button>
                           )}
                           {m.status === "in_progress" && (
                             <button
-                              onClick={() =>
-                                updateMilestone(m._id, "completed")
-                              }
+                              onClick={() => updateMilestone(m._id, "completed")}
                               disabled={saving}
-                              className="px-4 py-1.5 bg-green-600 text-white text-sm font-semibold rounded-lg hover:bg-green-700 disabled:opacity-50"
+                              className="flex items-center gap-2 px-6 py-2.5 bg-emerald-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)]"
                             >
-                              ✓ Mark Complete
+                              <span className="material-symbols-outlined text-[16px]">check</span>
+                              Mark Complete
                             </button>
                           )}
                         </div>
                       </div>
                     )}
+                  </div>
                 </div>
               </div>
             </div>
           ))}
         </div>
 
-        {/* Add Milestone */}
+        {/* Add Milestone Form */}
         {["accepted", "in_production"].includes(order.status) && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+          <div className="bg-white/[0.03] border border-white/5 rounded-[2.5rem] p-8 backdrop-blur-md relative overflow-hidden group">
+            <div className="absolute top-0 right-0 w-32 h-32 blur-[80px] bg-purple-500/5 group-hover:bg-purple-500/10 transition-all duration-700" />
+            
             {!showAddForm ? (
               <button
                 onClick={() => setShowAddForm(true)}
-                className="w-full py-3 border-2 border-dashed border-gray-300 rounded-lg text-gray-500 hover:border-orange-400 hover:text-orange-500 transition-colors text-sm font-medium"
+                className="w-full py-10 border-2 border-dashed border-white/5 rounded-[2rem] flex flex-col items-center justify-center gap-3 text-white/20 hover:border-purple-500/30 hover:text-purple-400 hover:bg-white/[0.02] transition-all duration-300"
               >
-                + Add New Milestone
+                <span className="material-symbols-outlined text-4xl">add_circle</span>
+                <span className="text-[10px] font-black uppercase tracking-[0.3em]">Integrate New Stage</span>
               </button>
             ) : (
-              <div>
-                <h3 className="font-bold text-gray-900 mb-4">New Milestone</h3>
+              <div className="relative z-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center gap-3 mb-8">
+                  <h3 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 flex items-center gap-3">
+                    <span className="w-8 h-[2px] bg-purple-500/30" />
+                    New Roadmap Stage
+                  </h3>
+                </div>
+                
                 {addError && (
-                  <p className="text-red-600 text-sm mb-3">{addError}</p>
+                  <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-[11px] font-black uppercase tracking-widest text-red-400">
+                    {addError}
+                  </div>
                 )}
-                <div className="space-y-3">
+                
+                <div className="space-y-6">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Name *
-                    </label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Stage Name *</label>
                     <input
                       type="text"
                       value={newMilestone.name}
-                      onChange={(e) =>
-                        setNewMilestone((p) => ({ ...p, name: e.target.value }))
-                      }
-                      placeholder="e.g. Material Procurement"
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
+                      onChange={(e) => setNewMilestone((p) => ({ ...p, name: e.target.value }))}
+                      placeholder="e.g. Precision CNC Machining"
+                      className="w-full bg-white/[0.02] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-purple-500/30 focus:bg-white/[0.04] transition-all font-medium"
                     />
                   </div>
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Description
-                    </label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Detailed Specification</label>
                     <textarea
                       value={newMilestone.description}
-                      onChange={(e) =>
-                        setNewMilestone((p) => ({
-                          ...p,
-                          description: e.target.value,
-                        }))
-                      }
-                      rows={2}
-                      placeholder="Brief description of this stage..."
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400 resize-none"
+                      onChange={(e) => setNewMilestone((p) => ({ ...p, description: e.target.value }))}
+                      rows={3}
+                      placeholder="Explain the technical details or requirements for this stage..."
+                      className="w-full bg-white/[0.02] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-purple-500/30 focus:bg-white/[0.04] transition-all font-medium resize-none"
                     />
                   </div>
+                  
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Due Date (optional)
-                    </label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Target Completion Date (optional)</label>
                     <input
                       type="date"
                       value={newMilestone.dueDate}
-                      onChange={(e) =>
-                        setNewMilestone((p) => ({
-                          ...p,
-                          dueDate: e.target.value,
-                        }))
-                      }
-                      className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-orange-400"
+                      onChange={(e) => setNewMilestone((p) => ({ ...p, dueDate: e.target.value }))}
+                      className="w-full bg-white/[0.02] border border-white/10 rounded-2xl px-5 py-4 text-sm text-white focus:outline-none focus:border-purple-500/30 focus:bg-white/[0.04] transition-all font-medium"
                     />
                   </div>
-                  <div className="flex gap-3 pt-2">
+                  
+                  <div className="flex gap-4 pt-4">
                     <button
                       onClick={addMilestone}
                       disabled={saving}
-                      className="flex-1 py-2.5 bg-orange-500 text-white font-bold rounded-lg hover:bg-orange-600 disabled:opacity-50 text-sm"
+                      className="flex-1 py-4 bg-purple-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:scale-[1.02] transition-all disabled:opacity-50"
                     >
-                      {saving ? "Adding..." : "Add Milestone"}
+                      {saving ? "Processing..." : "Commit Milestone"}
                     </button>
                     <button
-                      onClick={() => {
-                        setShowAddForm(false);
-                        setAddError("");
-                      }}
-                      className="flex-1 py-2.5 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200 text-sm"
+                      onClick={() => { setShowAddForm(false); setAddError(""); }}
+                      className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/10 hover:bg-white/10 hover:text-white transition-all"
                     >
                       Cancel
                     </button>

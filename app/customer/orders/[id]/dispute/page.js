@@ -1,6 +1,7 @@
 // app/customer/orders/[id]/dispute/page.js
 "use client";
 
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
@@ -130,14 +131,7 @@ export default function FileDisputePage() {
   };
 
   if (status === "loading" || loading) {
-    return (
-      <div className="flex min-h-screen items-center justify-center bg-[#050507]">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
-          <p className="text-sm text-white/45">Loading dispute form...</p>
-        </div>
-      </div>
-    );
+    return <GlobalLoader fullScreen text="Loading dispute form..." />;
   }
 
   if (existingDispute) {
