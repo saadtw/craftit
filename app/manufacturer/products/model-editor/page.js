@@ -79,14 +79,17 @@ export default function DraftModelEditorPage() {
   // Receives (gltfBlob, tags, cameraState) from Toolbar.handleSaveFinish.
   // The GLTFExporter always produces a gltfBlob of the full scene. We upload
   // it to S3 to replace the original, so any paint/mesh changes are persisted.
-  const handleSave = async (gltfBlob, annotations, cameraState) => {
+  const handleSave = async (gltfBlob, annotations, cameraState, snapshotBlob) => {
     setIsSaving(true);
     let finalUrl = draftModel.url;
     let finalSize = draftModel.fileSize;
+    let finalThumbnailUrl = draftModel.thumbnailUrl || null;
 
     if (gltfBlob) {
       try {
-        // Build a safe .glb filename — the backend validates the extension
+        const timestamp = Date.now();
+
+        // 1. Upload the new edited model to S3
         let safeName = draftModel.filename || "edited_model.glb";
         const lower = safeName.toLowerCase();
         if (!lower.endsWith(".glb") && !lower.endsWith(".gltf")) {
@@ -95,9 +98,8 @@ export default function DraftModelEditorPage() {
             (dot > -1 ? safeName.substring(0, dot) : safeName) + "_edited.glb";
         } else {
           const dot = safeName.lastIndexOf(".");
-          safeName =
-            safeName.substring(0, dot) + "_edited" + safeName.substring(dot);
-        }
+safeName = safeName.substring(0, dot) + `_${timestamp}` + safeName.substring(dot);
+}
 
         const formData = new FormData();
         formData.append("type", "3d-model");
@@ -114,11 +116,28 @@ export default function DraftModelEditorPage() {
           finalSize = gltfBlob.size;
         } else {
           console.error("[model-editor] Upload rejected:", data);
-          // Fall back silently — the original model URL is still valid
+        }
+
+        // 2. Upload the snapshot image (if captured)
+        if (snapshotBlob) {
+          const snapshotFile = new File([snapshotBlob], `snapshot_${timestamp}.png`, {
+            type: "image/png",
+          });
+          const snapFormData = new FormData();
+          snapFormData.append("type", "image");
+          snapFormData.append("file", snapshotFile);
+
+          const snapRes = await fetch("/api/upload", { method: "POST", body: snapFormData });
+          const snapData = await snapRes.json();
+
+          if (snapData.success && snapData.file?.url) {
+            finalThumbnailUrl = snapData.file.url;
+          } else {
+            console.warn("[model-editor] Snapshot upload failed:", snapData);
+          }
         }
       } catch (err) {
         console.error("[model-editor] Upload error:", err);
-        // Fall back silently — original URL is still intact
       }
     }
 
@@ -126,6 +145,7 @@ export default function DraftModelEditorPage() {
       ...draftModel,
       url: finalUrl,
       fileSize: finalSize,
+      thumbnailUrl: finalThumbnailUrl,
       annotations: annotations || [],
       cameraState: cameraState || null,
     };

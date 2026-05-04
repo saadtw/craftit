@@ -162,21 +162,31 @@ export default function Toolbar({ modelUrl, onSave, readOnly }) {
           }
         });
 
+        // 1. Capture Snapshot
+        // The WebGLRenderer was updated to have preserveDrawingBuffer: true,
+        // so we can safely capture the canvas state right before the export.
+        const canvas = document.querySelector('canvas');
+        let snapshotBlob = null;
+        if (canvas) {
+          snapshotBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+        }
+
+        // 2. Generate new Model Blob
+        console.log("[Export] parseAsync started...");
+        console.time("parseAsync duration");
+
         const exporter = new GLTFExporter();
-        const exportData = await new Promise((resolve, reject) => {
-          exporter.parse(
-            scene,
-            (result) => resolve(result),
-            (error) => reject(error),
-            { binary: true, onlyVisible: true }
-          );
-        });
+        const exportData = await exporter.parseAsync(scene, { binary: true, onlyVisible: true });
+        
+        console.timeEnd("parseAsync duration");
+        console.log(`[Export] parseAsync resolved successfully. Blob size: ${(exportData.byteLength / 1024 / 1024).toFixed(2)} MB`);
         hiddenObjects.forEach(child => { child.visible = true; });
 
-        const blob = new Blob([exportData], { type: 'model/gltf-binary' });
+        const gltfBlob = new Blob([exportData], { type: 'model/gltf-binary' });
         
         if (onSave) {
-          onSave(blob, state.tags, null);
+          // Pass the new snapshotBlob as the 4th argument
+          onSave(gltfBlob, state.tags, null, snapshotBlob);
         }
       }
     } catch (err) {
