@@ -4,6 +4,10 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import getStripe from "@/lib/stripe";
+import { notify } from "@/services/notificationService";
+
+const isStripeEnabled = () => !!process.env.STRIPE_SECRET_KEY;
 
 // POST /api/group-buys/[id]/join - Customer joins a group buy
 export async function POST(request, context) {
@@ -16,6 +20,39 @@ export async function POST(request, context) {
     }
 
     await connectDB();
+
+    const body = await request.json();
+    const { quantity, paymentIntentId } = body;
+    if (!quantity || quantity < 1) {
+      return NextResponse.json(
+        { error: "Quantity must be at least 1" },
+        { status: 400 },
+      );
+    }
+
+    if (isStripeEnabled()) {
+      if (!paymentIntentId) {
+        return NextResponse.json(
+          { error: "Payment is required" },
+          { status: 400 },
+        );
+      }
+      try {
+        const stripe = getStripe();
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        if (
+          paymentIntent.status !== "requires_capture" &&
+          paymentIntent.status !== "succeeded"
+        ) {
+          return NextResponse.json(
+            { error: "Invalid payment status: " + paymentIntent.status },
+            { status: 400 },
+          );
+        }
+      } catch (e) {
+        return NextResponse.json({ error: "Invalid payment intent" }, { status: 400 });
+      }
+    }
 
     const groupBuy = await GroupBuy.findById(id);
     if (!groupBuy) {
@@ -61,14 +98,6 @@ export async function POST(request, context) {
       );
     }
 
-    const { quantity } = await request.json();
-    if (!quantity || quantity < 1) {
-      return NextResponse.json(
-        { error: "Quantity must be at least 1" },
-        { status: 400 },
-      );
-    }
-
     // Calculate price AFTER adding this participant's quantity
     const newTotalQty = groupBuy.currentQuantity + quantity;
     let activePrice = groupBuy.basePrice;
@@ -82,18 +111,68 @@ export async function POST(request, context) {
 
     const totalPrice = activePrice * quantity;
 
+    let heldAmount = totalPrice;
+    let remainingBalance = 0;
+    let paymentStatus = "authorized";
+
+    if (groupBuy.joinHoldPercent !== undefined) {
+      heldAmount = totalPrice * (groupBuy.joinHoldPercent / 100);
+      remainingBalance = totalPrice - heldAmount;
+    }
+
+    if (isStripeEnabled() && paymentIntentId) {
+      try {
+        const stripe = getStripe();
+        if (heldAmount > 0) {
+          await stripe.paymentIntents.capture(paymentIntentId, {
+            amount_to_capture: Math.round(heldAmount * 100),
+          });
+          paymentStatus = "captured";
+        }
+      } catch (captureErr) {
+        return NextResponse.json(
+          { error: "Payment capture failed: " + captureErr.message },
+          { status: 400 }
+        );
+      }
+    }
+
     // Add participant
     groupBuy.participants.push({
       customerId: session.user.id,
       quantity,
       unitPrice: activePrice,
       totalPrice,
-      paymentStatus: "authorized", // real payment auth would happen here
+      heldAmount,
+      remainingBalance,
+      paymentStatus,
+      paymentIntentId,
     });
+
+    // Capture tier before recalculation for comparison
+    const prevTierIndex = groupBuy.currentTierIndex;
 
     // Recalculate cached fields
     groupBuy.recalculate();
     await groupBuy.save();
+
+    // P1-D: Notify manufacturer that a new participant joined
+    notify.groupBuyJoined(
+      groupBuy.manufacturerId,
+      groupBuy._id,
+      groupBuy.currentParticipantCount,
+    );
+
+    // P1-D: Notify manufacturer if a new tier was just unlocked
+    if (groupBuy.currentTierIndex > prevTierIndex && groupBuy.currentTierIndex >= 0) {
+      const tier = groupBuy.tiers[groupBuy.currentTierIndex];
+      notify.groupBuyTierReached(
+        groupBuy.manufacturerId,
+        groupBuy._id,
+        tier.tierNumber,
+        tier.discountPercent,
+      );
+    }
 
     return NextResponse.json({
       success: true,
@@ -148,8 +227,24 @@ export async function DELETE(request, context) {
       );
     }
 
-    // TODO (Phase 8/Payments): trigger refund for participant's paymentIntentId here
-    // const { paymentIntentId } = groupBuy.participants[participantIndex];
+    const participant = groupBuy.participants[participantIndex];
+
+    if (isStripeEnabled() && participant.paymentIntentId) {
+      try {
+        const stripe = getStripe();
+        if (participant.paymentStatus === "captured") {
+          await stripe.refunds.create({
+            payment_intent: participant.paymentIntentId,
+            amount: Math.round(participant.heldAmount * 100),
+          });
+        } else {
+          await stripe.paymentIntents.cancel(participant.paymentIntentId);
+        }
+      } catch (stripeErr) {
+        console.error("Stripe refund failed:", stripeErr.message);
+        // Non-fatal, proceed with removing participant
+      }
+    }
 
     // Remove participant
     groupBuy.participants.splice(participantIndex, 1);

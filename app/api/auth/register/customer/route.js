@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
-import { createRawToken, hashToken } from "@/lib/token";
-import { sendVerificationEmail } from "@/lib/email";
+import { createNumericCode, hashToken } from "@/lib/token";
+import { sendOtpEmail } from "@/lib/email";
 
 // POST /api/auth/register/customer  — register a new customer
 export async function POST(request) {
@@ -69,22 +69,23 @@ export async function POST(request) {
       isEmailVerified: false,
     });
 
-    const rawVerificationToken = createRawToken(32);
-    user.emailVerificationToken = hashToken(rawVerificationToken);
-    user.emailVerificationExpires = new Date(Date.now() + 1000 * 60 * 60 * 24);
+    const otp = createNumericCode(6);
+    user.emailOtp = hashToken(otp);
+    user.emailOtpExpires = new Date(Date.now() + 1000 * 60 * 15); // 15 minutes
+    user.otpFailCount = 0;
     await user.save();
 
-    await sendVerificationEmail({
+    await sendOtpEmail({
       to: user.email,
       name: user.name,
-      token: rawVerificationToken,
+      otp,
     });
 
     return NextResponse.json(
       {
         success: true,
         message:
-          "Customer registered successfully. Please check your email to verify your account.",
+          "Customer registered successfully. A 6-digit verification code has been sent to your email.",
         data: {
           id: user._id,
           name: user.name,

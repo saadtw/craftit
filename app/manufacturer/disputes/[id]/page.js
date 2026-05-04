@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import ChatBox from "@/components/chat/ChatBox";
 
 const STATUS_COLORS = {
   open: "bg-orange-500/10 text-orange-400 border border-orange-500/20",
@@ -284,6 +285,24 @@ export default function ManufacturerDisputeDetailPage() {
               </div>
             </div>
           )}
+
+          {/* Dispute Chat */}
+          <div className="bg-white/[0.03] rounded-3xl border-2 border-purple-500/30 overflow-hidden h-[600px] flex flex-col mt-6">
+            <div className="px-6 py-4 border-b border-white/5 bg-white/[0.02]">
+              <h2 className="text-sm font-black uppercase tracking-widest text-purple-400">
+                Dispute Discussion
+              </h2>
+            </div>
+            <div className="flex-1 overflow-hidden">
+              <ChatBox
+                orderId={dispute._id}
+                apiPrefix={`/api/disputes/${dispute._id}/messages`}
+                currentUser={{ id: session.user.id, name: session.user.name, role: "manufacturer" }}
+                orderNumber={`Dispute ${dispute.disputeNumber}`}
+                otherParty={{ name: dispute.customerId?.name || "Customer" }}
+              />
+            </div>
+          </div>
 
           {/* Resolution */}
           {isResolved && dispute.resolution && (

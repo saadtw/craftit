@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/CrafitLogo";
@@ -110,7 +110,7 @@ const TESTIMONIALS = [
   },
 ];
 
-export default function LandingPage() {
+function LandingPageContent() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
@@ -604,5 +604,13 @@ export default function LandingPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-[#0B011D]" />}>
+      <LandingPageContent />
+    </Suspense>
   );
 }

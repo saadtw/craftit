@@ -36,14 +36,20 @@ const NotificationSchema = new mongoose.Schema(
         // Payment events
         "payment_received",
         "payment_refunded",
+        "payment_release_requested",
+        "payment_release_approved",
+        "payment_release_rejected",
+        "payment_release_auto_approved",
         // Dispute events
         "dispute_opened",
+        "dispute_under_review",
         "dispute_resolved",
         // Message events
         "new_message",
         // Product Q&A events
         "question_asked",
         "question_answered",
+        "question_customer_reply",
         // Support ticket events
         "support_ticket_created",
         "support_ticket_replied",

@@ -51,6 +51,7 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const q = normalizeText(searchParams.get("q"));
     const status = normalizeText(searchParams.get("status") || "all");
+    const contextParam = normalizeText(searchParams.get("context") || "all"); // all, order, bid
     const unreadOnly = searchParams.get("unread") === "true";
     const sort = normalizeText(searchParams.get("sort") || "latest");
 
@@ -62,9 +63,14 @@ export async function GET(request) {
 
     const baseQuery = {
       participants: session.user.id,
-      contextType: { $in: ["order", "bid"] },
       isActive: true,
     };
+
+    if (contextParam === "order" || contextParam === "bid") {
+      baseQuery.contextType = contextParam;
+    } else {
+      baseQuery.contextType = { $in: ["order", "bid"] };
+    }
 
     if (unreadOnly) {
       baseQuery[`unreadCounts.${session.user.id}`] = { $gt: 0 };
@@ -163,7 +169,9 @@ export async function GET(request) {
           threadInfo = {
             conversationId: conversation._id,
             contextType: "bid",
-            orderId: bid._id, // Using as reference for UI linking
+            orderId: null, // orderId doesn't apply
+            bidId: bid._id,
+            rfqId: bid.rfqId?._id || bid.rfqId,
             orderNumber: bid.rfqId?.rfqNumber || "BID",
             orderStatus: bid.status === "under_consideration" ? "pending" : bid.status,
             productName: co?.title || "RFQ Proposal",

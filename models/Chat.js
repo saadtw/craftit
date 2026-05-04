@@ -16,7 +16,7 @@ const ConversationSchema = new mongoose.Schema(
     // What they're talking about — polymorphic reference
     contextType: {
       type: String,
-      enum: ["bid", "order"], // extend as needed: "support", etc.
+      enum: ["bid", "order", "dispute"], // extend as needed: "support", etc.
       required: true,
     },
     contextId: {

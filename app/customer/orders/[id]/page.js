@@ -31,6 +31,8 @@ function CustomerOrderDetailPageContent() {
   const { data: session, status } = useSession();
 
   const [order, setOrder] = useState(null);
+  const [paymentReleases, setPaymentReleases] = useState([]);
+  const [paymentSchedule, setPaymentSchedule] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -57,6 +59,8 @@ function CustomerOrderDetailPageContent() {
       const data = await res.json();
       if (data.success) {
         setOrder(data.order);
+        setPaymentReleases(data.paymentReleases || []);
+        setPaymentSchedule(data.paymentSchedule || null);
         if (data.order.reviewed) setReviewSubmitted(true);
       } else {
         alert(data.error || "Failed to load order");
@@ -148,6 +152,75 @@ function CustomerOrderDetailPageContent() {
       }
     } catch (err) {
       alert("Error submitting review");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleResolvePaymentRelease = async (releaseId, action) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${id}/payment-release/${releaseId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchOrder();
+        alert(`Payment release ${action}ed successfully.`);
+      } else {
+        alert(data.error || "Failed to process payment release");
+      }
+    } catch (err) {
+      alert("Error processing payment release");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleProductionAck = async () => {
+    setActionLoading(true);
+    try {
+      // Note: In a real system, the user would pay the remaining balance via Stripe Elements first.
+      const res = await fetch(`/api/orders/${id}/production-ack`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchOrder();
+        alert("Production acknowledged! Manufacturer has been notified.");
+      } else {
+        alert(data.error || "Failed to acknowledge production");
+      }
+    } catch (err) {
+      alert("Error acknowledging production");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleMilestoneConfirm = async (milestoneId, confirm) => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${id}/milestones`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          milestoneId,
+          customerStatus: confirm ? "confirmed" : "disputed",
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchOrder();
+        alert(confirm ? "Milestone confirmed!" : "Milestone disputed. Please contact support.");
+      } else {
+        alert(data.error || "Failed to update milestone status");
+      }
+    } catch (err) {
+      alert("Error updating milestone");
     } finally {
       setActionLoading(false);
     }
@@ -480,10 +553,45 @@ function CustomerOrderDetailPageContent() {
                             )}
 
                             {m.completedAt && (
-                              <p className="mt-2 text-xs text-emerald-300">
-                                Completed{" "}
-                                {new Date(m.completedAt).toLocaleDateString()}
-                              </p>
+                              <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                                <p className="text-xs text-emerald-300">
+                                  Completed{" "}
+                                  {new Date(m.completedAt).toLocaleDateString()}
+                                </p>
+                                
+                                {m.customerStatus === "awaiting_confirmation" && (
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => handleMilestoneConfirm(m._id, true)}
+                                      disabled={actionLoading}
+                                      className="rounded-lg bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-50"
+                                    >
+                                      Confirm Complete
+                                    </button>
+                                    <button
+                                      onClick={() => handleMilestoneConfirm(m._id, false)}
+                                      disabled={actionLoading}
+                                      className="rounded-lg bg-red-500/20 px-3 py-1 text-xs font-bold text-red-300 hover:bg-red-500/30 disabled:opacity-50"
+                                    >
+                                      Dispute
+                                    </button>
+                                  </div>
+                                )}
+                                
+                                {m.customerStatus === "confirmed" && (
+                                  <p className="text-xs text-blue-400 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[14px]">verified</span>
+                                    Confirmed by you
+                                  </p>
+                                )}
+                                
+                                {m.customerStatus === "disputed" && (
+                                  <p className="text-xs text-red-400 flex items-center gap-1">
+                                    <span className="material-symbols-outlined text-[14px]">error</span>
+                                    Disputed
+                                  </p>
+                                )}
+                              </div>
                             )}
                           </div>
                         </div>
@@ -530,6 +638,23 @@ function CustomerOrderDetailPageContent() {
               <h2 className="mb-4 text-base font-black text-white">Actions</h2>
 
               <div className="space-y-3">
+                {order.status === "awaiting_production_ack" && (
+                  <div className="p-4 mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 text-center animate-pulse-subtle">
+                    <span className="material-symbols-outlined text-blue-400 mb-2 text-3xl">verified</span>
+                    <h3 className="text-white font-bold mb-1">Production Ready</h3>
+                    <p className="text-white/60 text-xs mb-4">
+                      The group buy is complete! Acknowledge below to begin manufacturing.
+                    </p>
+                    <button
+                      onClick={handleProductionAck}
+                      disabled={actionLoading}
+                      className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl disabled:opacity-50 transition-colors"
+                    >
+                      {actionLoading ? "Processing..." : "Start Production"}
+                    </button>
+                  </div>
+                )}
+
                 {order.status === "pending_acceptance" && (
                   <DangerButton onClick={() => setShowCancelModal(true)}>
                     Cancel Order
@@ -710,6 +835,52 @@ function CustomerOrderDetailPageContent() {
                     "Manufacturer",
                 }}
               />
+            </div>
+          </section>
+        )}
+
+        {/* Payment Releases Section */}
+        {paymentReleases.length > 0 && (
+          <section className="mt-6 rounded-[24px] border border-white/8 bg-[#0c0c11] p-5 sm:p-6">
+            <h2 className="mb-5 text-lg font-black text-white flex items-center gap-2">
+              <span className="material-symbols-outlined text-[#eb9728]">payments</span>
+              Payment Release Requests
+            </h2>
+            <div className="space-y-4">
+              {paymentReleases.map(pr => (
+                <div key={pr._id} className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                  <div className="flex-1">
+                    <p className="text-xl font-black text-white mb-1">${pr.amount.toLocaleString()}</p>
+                    <p className="text-sm text-white/60 mb-3">{pr.reason}</p>
+                    <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full border ${pr.status === 'approved' || pr.status === 'auto_approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : pr.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/30' : 'bg-[#eb9728]/10 text-[#eb9728] border-[#eb9728]/30'}`}>
+                      {pr.status.replace("_", " ")}
+                    </span>
+                    {pr.status === "pending" && (
+                      <p className="text-xs text-[#eb9728] mt-2">
+                        Expires (Auto-Approve): {new Date(pr.expiresAt).toLocaleString()}
+                      </p>
+                    )}
+                  </div>
+                  {pr.status === "pending" && (
+                    <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-4 sm:mt-0">
+                      <button
+                        onClick={() => handleResolvePaymentRelease(pr._id, "approve")}
+                        disabled={actionLoading}
+                        className="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl disabled:opacity-50 transition-colors"
+                      >
+                        Approve
+                      </button>
+                      <button
+                        onClick={() => handleResolvePaymentRelease(pr._id, "reject")}
+                        disabled={actionLoading}
+                        className="px-6 py-2 border border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl disabled:opacity-50 transition-colors"
+                      >
+                        Reject
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
             </div>
           </section>
         )}

@@ -129,6 +129,12 @@ export async function PUT(request, context) {
     // ── In production ──────────────────────────────────────────────────────
     if (status === "in_production") {
       if (shippingMethod) order.shippingMethod = shippingMethod;
+      // P1-B: notify customer that production has started
+      await notify.orderInProduction(
+        order.customerId,
+        order._id,
+        order.orderNumber,
+      );
     }
 
     // ── Shipped ────────────────────────────────────────────────────────────

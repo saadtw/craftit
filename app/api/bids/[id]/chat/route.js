@@ -6,6 +6,7 @@ import Bid from "@/models/Bid";
 import Conversation from "@/models/Chat";
 import ChatMessage from "@/models/ChatMessage";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import { notify } from "@/services/notificationService";
 
 // Verify the user is a participant in this bid, return the bid if so
 async function getAccessibleBid(bidId, session) {
@@ -170,6 +171,20 @@ export async function POST(request, context) {
       },
       $inc: { [`unreadCounts.${otherParticipant}`]: 1 },
     });
+
+    // Notify the other participant with a precise deep-link
+    // For customer: link to /customer/rfqs/[rfqId]/bids
+    // For manufacturer: link to /manufacturer/bids/[bidId]
+    const isOtherCustomer = access.isManufacturer; // sender is manufacturer → other is customer
+    const rfqId = bid.rfqId?._id?.toString() || bid.rfqId?.toString();
+    notify.newMessage(
+      otherParticipant.toString(),
+      bid._id.toString(),
+      session.user.name,
+      "bid",
+      isOtherCustomer,
+      isOtherCustomer ? rfqId : null,
+    );
 
     return NextResponse.json({ success: true, message: newMessage });
   } catch (error) {

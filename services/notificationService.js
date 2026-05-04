@@ -130,6 +130,17 @@ export const notify = {
     ]);
   },
 
+  orderInProduction: (customerId, orderId, orderNumber) =>
+    createNotification({
+      userId: customerId,
+      type: "order_in_production",
+      title: "Order in production",
+      message: `Your order #${orderNumber} is now in production.`,
+      link: `/customer/orders/${orderId}`,
+      relatedType: "order",
+      relatedId: orderId,
+    }),
+
   orderCancelled: (recipientId, orderId, orderNumber, isCustomer) =>
     createNotification({
       userId: recipientId,
@@ -220,7 +231,9 @@ export const notify = {
     }),
 
   // Messages
-  newMessage: (recipientId, conversationId, senderName, contextType, isCustomer = true) =>
+  // contextId: for order context = orderId; for bid context = bidId
+  // extraContextId: for bid context = rfqId (to build a precise deep-link)
+  newMessage: (recipientId, contextId, senderName, contextType, isCustomer = true, extraContextId = null) =>
     createNotification({
       userId: recipientId,
       type: "new_message",
@@ -229,16 +242,74 @@ export const notify = {
       link:
         contextType === "bid"
           ? isCustomer
-            ? `/customer/rfqs` // Fallback to list since we don't have rfqId here easily
-            : `/manufacturer/bids`
+            ? extraContextId
+              ? `/customer/rfqs/${extraContextId}/bids`
+              : `/customer/rfqs`
+            : `/manufacturer/bids/${contextId}`
           : isCustomer
-            ? `/customer/orders/${conversationId}`
-            : `/manufacturer/orders/${conversationId}`,
+            ? `/customer/orders/${contextId}`
+            : `/manufacturer/orders/${contextId}`,
       relatedType: contextType === "bid" ? "bid" : "order",
-      relatedId: conversationId,
+      relatedId: contextId,
+    }),
+
+  // RFQ
+  rfqCreated: (manufacturerId, rfqId, rfqTitle) =>
+    createNotification({
+      userId: manufacturerId,
+      type: "rfq_created",
+      title: "New RFQ available",
+      message: `A new RFQ "${rfqTitle}" is available for bidding.`,
+      link: `/manufacturer/rfqs/${rfqId}`,
+      relatedType: "rfq",
+      relatedId: rfqId,
+    }),
+
+  rfqClosed: (manufacturerId, rfqId, rfqTitle) =>
+    createNotification({
+      userId: manufacturerId,
+      type: "rfq_closed",
+      title: "RFQ closed",
+      message: `The RFQ "${rfqTitle}" has been closed — another bid was selected.`,
+      link: `/manufacturer/rfqs`,
+      relatedType: "rfq",
+      relatedId: rfqId,
+    }),
+
+  rfqExpired: (customerId, rfqId, rfqTitle) =>
+    createNotification({
+      userId: customerId,
+      type: "rfq_expired",
+      title: "RFQ expired",
+      message: `Your RFQ "${rfqTitle}" has expired with no bid selected.`,
+      link: `/customer/rfqs/${rfqId}`,
+      relatedType: "rfq",
+      relatedId: rfqId,
     }),
 
   // Group Buy
+  groupBuyJoined: (manufacturerId, groupBuyId, participantCount) =>
+    createNotification({
+      userId: manufacturerId,
+      type: "group_buy_joined",
+      title: "New participant joined",
+      message: `A new customer joined your group buy. Total participants: ${participantCount}.`,
+      link: `/manufacturer/group-buys/${groupBuyId}`,
+      relatedType: "group_buy",
+      relatedId: groupBuyId,
+    }),
+
+  groupBuyTierReached: (manufacturerId, groupBuyId, tierNumber, discountPercent) =>
+    createNotification({
+      userId: manufacturerId,
+      type: "group_buy_tier_reached",
+      title: `Tier ${tierNumber} unlocked!`,
+      message: `Your group buy has reached Tier ${tierNumber} — ${discountPercent}% discount now active.`,
+      link: `/manufacturer/group-buys/${groupBuyId}`,
+      relatedType: "group_buy",
+      relatedId: groupBuyId,
+    }),
+
   groupBuyCompleted: (customerId, groupBuyId, productName) =>
     createNotification({
       userId: customerId,
@@ -261,57 +332,22 @@ export const notify = {
       relatedId: groupBuyId,
     }),
 
-  // Disputes
-  disputeOpened: (manufacturerId, disputeId, orderNumber) =>
-    createNotification({
-      userId: manufacturerId,
-      type: "dispute_opened",
-      title: "Dispute opened",
-      message: `A dispute has been opened for order #${orderNumber}. Please respond within 48 hours.`,
-      link: `/manufacturer/disputes/${disputeId}`,
-      relatedType: "dispute",
-      relatedId: disputeId,
-    }),
 
-  disputeResolved: async (
-    customerId,
-    manufacturerId,
-    disputeId,
-    resolution,
-  ) => {
-    const customerMsg =
-      resolution === "refund_customer"
-        ? "The dispute was resolved in your favour. A refund has been issued."
-        : resolution === "side_with_manufacturer"
-          ? "The dispute has been resolved. No refund was issued."
-          : "The dispute was resolved with a partial refund.";
-    const manufacturerMsg =
-      resolution === "refund_customer"
-        ? "The dispute was resolved in the customer's favour. A refund has been issued."
-        : resolution === "side_with_manufacturer"
-          ? "The dispute was resolved in your favour."
-          : "The dispute was resolved with a partial refund.";
-    return Promise.all([
-      createNotification({
-        userId: customerId,
-        type: "dispute_resolved",
-        title: "Dispute resolved",
-        message: customerMsg,
-        link: `/customer/orders`,
-        relatedType: "dispute",
-        relatedId: disputeId,
-      }),
-      createNotification({
-        userId: manufacturerId,
-        type: "dispute_resolved",
-        title: "Dispute resolved",
-        message: manufacturerMsg,
-        link: `/manufacturer/disputes/${disputeId}`,
-        relatedType: "dispute",
-        relatedId: disputeId,
-      }),
-    ]);
-  },
+
+
+  // Product Q&A
+  questionCustomerReply: (recipientId, productId, productName, isManufacturer) =>
+    createNotification({
+      userId: recipientId,
+      type: "question_customer_reply",
+      title: "New reply on Q&A",
+      message: `A new reply was posted on a Q&A thread for ${productName}.`,
+      link: isManufacturer
+        ? `/manufacturer/products/${productId}`
+        : `/customer/products/${productId}`,
+      relatedType: "product",
+      relatedId: productId,
+    }),
 
   // Verification
   verificationApproved: (manufacturerId) =>
@@ -355,4 +391,119 @@ export const notify = {
       relatedType: "order",
       relatedId: orderId,
     }),
+
+  // Disputes
+  disputeOpened: (userId, disputeId, orderNumber, isCustomer) =>
+    createNotification({
+      userId,
+      type: "dispute_opened",
+      title: "Dispute opened",
+      message: `A dispute has been opened for order #${orderNumber}.`,
+      link: isCustomer ? `/customer/orders/${orderNumber}/dispute` : `/manufacturer/disputes/${disputeId}`,
+      relatedType: "dispute",
+      relatedId: disputeId,
+    }),
+
+  disputeUnderReview: (customerId, manufacturerId, disputeId, orderNumber) =>
+    Promise.all([
+      createNotification({
+        userId: customerId,
+        type: "dispute_under_review",
+        title: "Dispute under review",
+        message: `The dispute for order #${orderNumber} is now under admin review.`,
+        link: `/customer/orders/${orderNumber}/dispute`,
+        relatedType: "dispute",
+        relatedId: disputeId,
+      }),
+      createNotification({
+        userId: manufacturerId,
+        type: "dispute_under_review",
+        title: "Dispute under review",
+        message: `The dispute for order #${orderNumber} is now under admin review.`,
+        link: `/manufacturer/disputes/${disputeId}`,
+        relatedType: "dispute",
+        relatedId: disputeId,
+      }),
+    ]),
+
+  disputeResolved: (customerId, manufacturerId, disputeId, resolution, orderNumber) => {
+    const isRefund = resolution === "refund_customer";
+    const text = isRefund ? "resolved with a refund" : "resolved in favor of the manufacturer";
+    
+    return Promise.all([
+      createNotification({
+        userId: customerId,
+        type: "dispute_resolved",
+        title: "Dispute resolved",
+        message: `Your dispute for order #${orderNumber} has been ${text}.`,
+        link: `/customer/orders/${orderNumber}/dispute`,
+        relatedType: "dispute",
+        relatedId: disputeId,
+      }),
+      createNotification({
+        userId: manufacturerId,
+        type: "dispute_resolved",
+        title: "Dispute resolved",
+        message: `The dispute for order #${orderNumber} has been ${text}.`,
+        link: `/manufacturer/disputes/${disputeId}`,
+        relatedType: "dispute",
+        relatedId: disputeId,
+      }),
+    ]);
+  },
+
+  paymentReleaseRequested: (customerId, orderId, orderNumber, amount) =>
+    createNotification({
+      userId: customerId,
+      type: "payment_release_requested",
+      title: "Payment Release Requested",
+      message: `The manufacturer has requested a payment release of $${amount} for order #${orderNumber}. Please review and approve.`,
+      link: `/customer/orders/${orderId}`,
+      relatedType: "order",
+      relatedId: orderId,
+    }),
+
+  paymentReleaseApproved: (manufacturerId, orderId, orderNumber, amount) =>
+    createNotification({
+      userId: manufacturerId,
+      type: "payment_release_approved",
+      title: "Payment Release Approved",
+      message: `The customer has approved your payment release request of $${amount} for order #${orderNumber}.`,
+      link: `/manufacturer/orders/${orderId}`,
+      relatedType: "order",
+      relatedId: orderId,
+    }),
+
+  paymentReleaseRejected: (manufacturerId, orderId, orderNumber, amount) =>
+    createNotification({
+      userId: manufacturerId,
+      type: "payment_release_rejected",
+      title: "Payment Release Rejected",
+      message: `The customer has rejected your payment release request of $${amount} for order #${orderNumber}.`,
+      link: `/manufacturer/orders/${orderId}`,
+      relatedType: "order",
+      relatedId: orderId,
+    }),
+
+  paymentReleaseAutoApproved: (customerId, manufacturerId, orderId, orderNumber, amount) =>
+    Promise.all([
+      createNotification({
+        userId: customerId,
+        type: "payment_release_auto_approved",
+        title: "Payment Release Auto-Approved",
+        message: `The payment release of $${amount} for order #${orderNumber} has been automatically approved after 72 hours.`,
+        link: `/customer/orders/${orderId}`,
+        relatedType: "order",
+        relatedId: orderId,
+      }),
+      createNotification({
+        userId: manufacturerId,
+        type: "payment_release_auto_approved",
+        title: "Payment Release Auto-Approved",
+        message: `The payment release of $${amount} for order #${orderNumber} has been automatically approved after 72 hours.`,
+        link: `/manufacturer/orders/${orderId}`,
+        relatedType: "order",
+        relatedId: orderId,
+      }),
+    ]),
 };

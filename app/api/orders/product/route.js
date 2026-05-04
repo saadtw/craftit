@@ -7,6 +7,9 @@ import Order from "@/models/Order";
 import User from "@/models/User";
 import { notify } from "@/services/notificationService";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import getStripe from "@/lib/stripe";
+
+const isStripeEnabled = () => !!process.env.STRIPE_SECRET_KEY;
 
 // POST /api/orders/product
 // Customer places a direct product order.
@@ -53,6 +56,24 @@ export async function POST(request) {
         { error: "deliveryAddress with street, city, and country is required" },
         { status: 400 },
       );
+    }
+
+    if (isStripeEnabled()) {
+      if (!paymentIntentId) {
+        return NextResponse.json(
+          { error: "Payment is required" },
+          { status: 400 }
+        );
+      }
+      try {
+        const stripe = getStripe();
+        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+        if (paymentIntent.status !== "requires_capture" && paymentIntent.status !== "succeeded") {
+           return NextResponse.json({ error: "Invalid payment status: " + paymentIntent.status }, { status: 400 });
+        }
+      } catch (e) {
+        return NextResponse.json({ error: "Invalid payment intent" }, { status: 400 });
+      }
     }
 
     // --- Load product ---

@@ -77,11 +77,9 @@ export default function CustomerSignup() {
       const data = await response.json();
 
       if (data.success) {
-        alert(
-          data.message ||
-            "Registration successful. Please verify your email before login.",
+        router.replace(
+          `/auth/verify-otp?email=${encodeURIComponent(formData.email)}`,
         );
-        router.replace("/auth/login");
       } else {
         setError(data.message || "Registration failed");
       }

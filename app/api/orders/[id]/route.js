@@ -9,6 +9,9 @@ import "@/models/CustomOrder";
 import "@/models/Bid";
 import "@/models/Product";
 import "@/models/GroupBuy";
+import PaymentReleaseRequest from "@/models/PaymentReleaseRequest";
+import PaymentSchedule from "@/models/PaymentSchedule";
+import Review from "@/models/Review";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
 // GET /api/orders/[id] - Get single order detail
@@ -59,7 +62,23 @@ export async function GET(request, context) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    return NextResponse.json({ success: true, order });
+    // Check for a review
+    const review = await Review.findOne({ orderId: id });
+    if (review) {
+      order.reviewed = true;
+    }
+
+    // Fetch Payment Releases
+    const paymentReleases = await PaymentReleaseRequest.find({ orderId: id }).sort({ createdAt: -1 }).lean();
+    // Fetch Payment Schedule
+    const paymentSchedule = await PaymentSchedule.findOne({ orderId: id }).lean();
+
+    return NextResponse.json({ 
+      success: true, 
+      order,
+      paymentReleases,
+      paymentSchedule,
+    });
   } catch (error) {
     console.error("Order GET error:", error);
     return NextResponse.json({ error: error.message }, { status: 500 });

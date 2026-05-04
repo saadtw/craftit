@@ -11,6 +11,7 @@ import { FiShield, FiAlertCircle, FiArrowLeft } from "react-icons/fi";
 import buyerIcon from "@/assets/Buyer.png";
 import sellerIcon from "@/assets/Seller.png";
 import documentIcon from "@/assets/document.png";
+import ChatBox from "@/components/chat/ChatBox";
 
 export default function AdminDisputeDetailPage() {
   const { data: session, status } = useSession();
@@ -344,6 +345,23 @@ export default function AdminDisputeDetailPage() {
             <p className="text-white/40 text-sm leading-relaxed">{dispute.adminNotes}</p>
           </div>
         )}
+
+        {/* Dispute Chat */}
+        <div className="bg-white/[0.02] border border-white/10 rounded-[32px] p-6 sm:p-8 relative overflow-hidden h-[600px] flex flex-col mb-8">
+          <h2 className="text-white text-sm font-black uppercase tracking-widest flex items-center gap-2 mb-4">
+            <span className="w-1.5 h-1.5 rounded-full bg-purple-500" />
+            Dispute Discussion
+          </h2>
+          <div className="flex-1 overflow-hidden rounded-xl border border-white/8">
+            <ChatBox
+              orderId={dispute._id}
+              apiPrefix={`/api/disputes/${dispute._id}/messages`}
+              currentUser={{ id: session.user.id, name: "Admin", role: "admin" }}
+              orderNumber={`Dispute ${dispute.disputeNumber}`}
+              otherParty={{ name: `${dispute.customerId?.name} & ${dispute.manufacturerId?.businessName}` }}
+            />
+          </div>
+        </div>
 
         {/* Resolution Form */}
         {!isResolved && (

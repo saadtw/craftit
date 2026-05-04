@@ -73,7 +73,10 @@ export default function LoginPage() {
           setRequiresTwoFactor(true);
           setError("Invalid or expired 2FA code. Please try again.");
         } else if (result.error === "EMAIL_NOT_VERIFIED") {
-          setError("Please verify your email before logging in.");
+          // Redirect to OTP verification page, passing email
+          router.push(
+            `/auth/verify-otp?email=${encodeURIComponent(formData.email)}`,
+          );
         } else if (result.error?.startsWith("OAUTH_ACCOUNT_ONLY")) {
           const provider = result.error.split(":")[1] || "Google";
           setError(
@@ -124,12 +127,14 @@ export default function LoginPage() {
       <div className="absolute top-[-10%] left-[-10%] h-[300px] w-[300px] rounded-full bg-purple-600/10 blur-[100px]" />
       <div className="absolute bottom-[-10%] right-[-10%] h-[300px] w-[300px] rounded-full bg-amber-600/10 blur-[100px]" />
 
-      <Link 
-        href="/?noRedirect=true" 
+      <Link
+        href="/?noRedirect=true"
         className="absolute top-4 left-4 md:top-6 md:left-6 z-50 flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.3em] text-slate-500 hover:text-purple-400 transition-all group"
       >
         <div className="w-6 h-6 rounded-full bg-linear-to-tr from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
-          <span className="material-symbols-outlined text-white text-[9px]">arrow_back</span>
+          <span className="material-symbols-outlined text-white text-[9px]">
+            arrow_back
+          </span>
         </div>
         Back to Home
       </Link>

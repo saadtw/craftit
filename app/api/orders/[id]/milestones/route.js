@@ -103,20 +103,20 @@ export async function POST(request, context) {
   }
 }
 
-// PUT /api/orders/[id]/milestones - Update a specific milestone (manufacturer only)
+// PUT /api/orders/[id]/milestones - Update a specific milestone (manufacturer or customer)
 export async function PUT(request, context) {
   const { id } = await context.params;
 
   try {
     const session = await resolveRequestSession(request);
-    if (!session || session.user.role !== "manufacturer") {
+    if (!session || !["manufacturer", "customer"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
 
     const body = await request.json();
-    const { milestoneId, status, notes, photos } = body;
+    const { milestoneId, status, notes, photos, customerStatus } = body;
 
     if (!milestoneId) {
       return NextResponse.json(
@@ -130,7 +130,10 @@ export async function PUT(request, context) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (order.manufacturerId.toString() !== session.user.id) {
+    const isCustomer = session.user.role === "customer" && order.customerId.toString() === session.user.id;
+    const isManufacturer = session.user.role === "manufacturer" && order.manufacturerId.toString() === session.user.id;
+
+    if (!isCustomer && !isManufacturer) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -152,14 +155,30 @@ export async function PUT(request, context) {
       );
     }
 
-    if (status) milestone.status = status;
-    if (notes) milestone.notes = notes;
-    if (photos) milestone.photos = photos;
-    if (status === "completed") milestone.completedAt = new Date();
+    if (isManufacturer) {
+      if (status) milestone.status = status;
+      if (notes) milestone.notes = notes;
+      if (photos) milestone.photos = photos;
+      
+      if (status === "completed") {
+        milestone.completedAt = new Date();
+        milestone.customerStatus = "awaiting_confirmation";
+      }
 
-    // Auto-advance order to in_production once any milestone becomes in_progress
-    if (status === "in_progress" && order.status === "accepted") {
-      order.status = "in_production";
+      // Auto-advance order to in_production once any milestone becomes in_progress
+      if (status === "in_progress" && order.status === "accepted") {
+        order.status = "in_production";
+      }
+    } else if (isCustomer) {
+      if (customerStatus) {
+        if (milestone.customerStatus !== "awaiting_confirmation" && milestone.customerStatus !== "disputed") {
+          return NextResponse.json({ error: "Milestone is not awaiting confirmation" }, { status: 400 });
+        }
+        milestone.customerStatus = customerStatus;
+        if (customerStatus === "confirmed") {
+          milestone.customerConfirmedAt = new Date();
+        }
+      }
     }
 
     await order.save();

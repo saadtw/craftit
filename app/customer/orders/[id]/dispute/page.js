@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import ChatBox from "@/components/chat/ChatBox";
 
 const ISSUE_TYPES = [
   { value: "item_not_received", label: "Item not received" },
@@ -176,6 +177,24 @@ export default function FileDisputePage() {
               >
                 Back to Order
               </Link>
+            </div>
+          </section>
+
+          {/* Chat Box */}
+          <section className="bg-white/[0.03] rounded-[28px] border-2 border-[#eb9728]/20 overflow-hidden h-[600px] flex flex-col">
+            <div className="px-6 py-4 border-b border-white/5 bg-[#0c0c11]">
+              <h2 className="text-sm font-black uppercase tracking-widest text-[#eb9728]">
+                Dispute Discussion
+              </h2>
+            </div>
+            <div className="flex-1 overflow-hidden bg-[#050507]">
+              <ChatBox
+                orderId={existingDispute._id}
+                apiPrefix={`/api/disputes/${existingDispute._id}/messages`}
+                currentUser={{ id: session.user.id, name: session.user.name, role: "customer" }}
+                orderNumber={`Dispute ${existingDispute.disputeNumber}`}
+                otherParty={{ name: order?.manufacturerId?.businessName || "Manufacturer" }}
+              />
             </div>
           </section>
         </main>

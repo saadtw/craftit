@@ -2,8 +2,8 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import VerificationDocument from "@/models/VerificationDocument";
-import { createRawToken, hashToken } from "@/lib/token";
-import { sendVerificationEmail } from "@/lib/email";
+import { createNumericCode, hashToken } from "@/lib/token";
+import { sendOtpEmail } from "@/lib/email";
 
 // POST /api/auth/register/manufacturer — register a new manufacturer
 export async function POST(request) {
@@ -104,15 +104,16 @@ export async function POST(request) {
       isEmailVerified: false,
     });
 
-    const rawVerificationToken = createRawToken(32);
-    user.emailVerificationToken = hashToken(rawVerificationToken);
-    user.emailVerificationExpires = new Date(Date.now() + 1000 * 60 * 60 * 24);
+    const otp = createNumericCode(6);
+    user.emailOtp = hashToken(otp);
+    user.emailOtpExpires = new Date(Date.now() + 1000 * 60 * 15); // 15 minutes
+    user.otpFailCount = 0;
     await user.save();
 
-    await sendVerificationEmail({
+    await sendOtpEmail({
       to: user.email,
       name: user.name,
-      token: rawVerificationToken,
+      otp,
     });
 
     // Create verification document if documents provided

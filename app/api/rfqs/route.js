@@ -8,6 +8,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import { notify } from "@/services/notificationService";
 
 // GET /api/rfqs - List RFQs (for manufacturers)
 export async function GET(request) {
@@ -54,6 +55,30 @@ export async function GET(request) {
     if (session.user.role === "customer") {
       query.customerId = session.user.id;
       if (status) query.status = status;
+
+      // P1-C: Auto-mark expired active RFQs and fire rfqExpired notification
+      // Piggybacked on customer GET to avoid a separate cron job
+      const expiredRfqs = await RFQ.find({
+        customerId: session.user.id,
+        status: "active",
+        endDate: { $lt: new Date() },
+      })
+        .select("_id customerId customOrderId")
+        .lean();
+
+      for (const expiredRfq of expiredRfqs) {
+        await RFQ.findByIdAndUpdate(expiredRfq._id, { status: "expired" });
+        const co = expiredRfq.customOrderId
+          ? await CustomOrder.findById(expiredRfq.customOrderId)
+              .select("title")
+              .lean()
+          : null;
+        notify.rfqExpired(
+          expiredRfq.customerId,
+          expiredRfq._id,
+          co?.title || "Custom Order",
+        );
+      }
     }
 
     if (
@@ -229,6 +254,26 @@ export async function POST(request) {
           "title description quantity materialPreferences deadline budget model3D images",
       })
       .lean();
+
+    // P1-C: Notify manufacturers about the new RFQ
+    const rfqTitle = customOrder.title || "Custom Order";
+    if (broadcastToAll) {
+      // Notify all verified active manufacturers (fire-and-forget, errors swallowed)
+      const allManufacturers = await User.find({
+        role: "manufacturer",
+        isActive: true,
+        verificationStatus: "verified",
+      })
+        .select("_id")
+        .lean();
+      for (const mfr of allManufacturers) {
+        notify.rfqCreated(mfr._id, rfq._id, rfqTitle);
+      }
+    } else {
+      for (const mfrId of finalTargetManufacturers) {
+        notify.rfqCreated(mfrId, rfq._id, rfqTitle);
+      }
+    }
 
     return NextResponse.json(
       {

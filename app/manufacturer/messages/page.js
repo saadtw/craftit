@@ -16,6 +16,7 @@ export default function ManufacturerMessagesPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [contextFilter, setContextFilter] = useState("all");
   const [sortBy, setSortBy] = useState("latest");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [unreadThreads, setUnreadThreads] = useState(0);
@@ -40,6 +41,7 @@ export default function ManufacturerMessagesPage() {
           limit: "20",
           sort: sortBy,
           status: statusFilter,
+          context: contextFilter,
         });
 
         if (searchQuery) params.set("q", searchQuery);
@@ -72,7 +74,7 @@ export default function ManufacturerMessagesPage() {
         }
       }
     },
-    [searchQuery, statusFilter, sortBy, unreadOnly],
+    [searchQuery, statusFilter, contextFilter, sortBy, unreadOnly],
   );
 
   useEffect(() => {
@@ -103,6 +105,7 @@ export default function ManufacturerMessagesPage() {
   }, []);
 
   const STATUS_COLORS = {
+    pending: "bg-gray-500/10 border-gray-500/20 text-gray-400",
     accepted: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
     in_production: "bg-purple-500/10 border-purple-500/20 text-purple-400",
     shipped: "bg-indigo-500/10 border-indigo-500/20 text-indigo-400",
@@ -111,7 +114,7 @@ export default function ManufacturerMessagesPage() {
   };
 
   const hasActiveFilters =
-    Boolean(searchQuery) || statusFilter !== "all" || unreadOnly;
+    Boolean(searchQuery) || statusFilter !== "all" || contextFilter !== "all" || unreadOnly;
 
   // ─── Custom Dropdown Component ───────────────────────────────────────────
   function CustomSelect({ value, onChange, options, label }) {
@@ -205,6 +208,22 @@ export default function ManufacturerMessagesPage() {
           </div>
         </div>
 
+        <div className="flex mb-6 border-b border-white/10">
+          {["all", "order", "bid"].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setContextFilter(tab)}
+              className={`px-6 py-3 text-sm font-bold capitalize transition-colors ${
+                contextFilter === tab
+                  ? "border-b-2 border-[#eb9728] text-[#eb9728]"
+                  : "border-b-2 border-transparent text-white/50 hover:text-white"
+              }`}
+            >
+              {tab === "all" ? "All Messages" : tab + "s"}
+            </button>
+          ))}
+        </div>
+
         <div className="bg-white/[0.03] border-2 border-purple-500/30 rounded-2xl p-4 mb-8">
           <div className="flex flex-col lg:flex-row gap-4">
             {/* Search - Main Column */}
@@ -273,6 +292,7 @@ export default function ManufacturerMessagesPage() {
                   onClick={() => {
                     setSearchInput("");
                     setStatusFilter("all");
+                    setContextFilter("all");
                     setSortBy("latest");
                     setUnreadOnly(false);
                   }}
@@ -335,7 +355,7 @@ export default function ManufacturerMessagesPage() {
                   key={thread.conversationId}
                   href={
                     thread.contextType === "bid"
-                      ? `/bids/${thread.orderId}#chat`
+                      ? `/manufacturer/bids/${thread.bidId}`
                       : `/manufacturer/orders/${thread.orderId}#chat`
                   }
                 >

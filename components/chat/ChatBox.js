@@ -11,6 +11,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
  *   orderNumber : string   — shown in header
  *   otherParty  : { name } — the other participant's display name
  *   onUnreadChange? : (count: number) => void
+ *   apiPrefix?  : string   — custom API endpoint prefix (e.g. /api/disputes/123/messages)
  */
 export default function ChatBox({
   orderId,
@@ -18,7 +19,9 @@ export default function ChatBox({
   orderNumber,
   otherParty,
   onUnreadChange,
+  apiPrefix,
 }) {
+  const endpoint = apiPrefix || `/api/chat/${orderId}`;
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
@@ -67,7 +70,7 @@ export default function ChatBox({
       if (!Array.isArray(messageIds) || !messageIds.length) return;
 
       try {
-        await fetch(`/api/chat/${orderId}/read`, {
+        await fetch(`${endpoint}/read`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ messageIds }),
@@ -76,7 +79,7 @@ export default function ChatBox({
         // Silent failure; receipts are eventually consistent via later refreshes.
       }
     },
-    [orderId],
+    [endpoint],
   );
 
   const flushReadQueue = useCallback(() => {
@@ -112,7 +115,7 @@ export default function ChatBox({
   const fetchMessages = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/chat/${orderId}`);
+      const res = await fetch(endpoint);
       const data = await res.json();
       if (data.success) {
         setMessages(data.messages || []);
@@ -125,13 +128,13 @@ export default function ChatBox({
     } finally {
       setLoading(false);
     }
-  }, [orderId]);
+  }, [endpoint]);
 
   // ── SSE real-time updates ────────────────────────────────────────────────
   useEffect(() => {
     fetchMessages();
 
-    const es = new EventSource(`/api/chat/${orderId}/stream`);
+    const es = new EventSource(`${endpoint}/stream`);
 
     es.onmessage = (event) => {
       try {
@@ -164,7 +167,7 @@ export default function ChatBox({
       flushReadQueue();
     };
   }, [
-    orderId,
+    endpoint,
     currentUser.id,
     fetchMessages,
     queueReadReceipt,
@@ -263,7 +266,7 @@ export default function ChatBox({
     setMessages((prev) => [...prev, optimisticMsg]);
 
     try {
-      const res = await fetch(`/api/chat/${orderId}`, {
+      const res = await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text }),

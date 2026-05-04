@@ -1,5 +1,27 @@
 import mongoose from "mongoose";
 
+const ReplySchema = new mongoose.Schema(
+  {
+    authorId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    authorRole: {
+      type: String,
+      enum: ["customer", "manufacturer"],
+      required: true,
+    },
+    text: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 1200,
+    },
+  },
+  { timestamps: true },
+);
+
 const ProductQuestionSchema = new mongoose.Schema(
   {
     productId: {
@@ -43,6 +65,11 @@ const ProductQuestionSchema = new mongoose.Schema(
         ref: "User",
       },
       answeredAt: Date,
+    },
+    // P1-E: follow-up thread after the question is answered
+    replies: {
+      type: [ReplySchema],
+      default: [],
     },
   },
   { timestamps: true },

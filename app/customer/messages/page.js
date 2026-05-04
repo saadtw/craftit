@@ -16,6 +16,7 @@ export default function CustomerMessagesPage() {
   const [searchInput, setSearchInput] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [contextFilter, setContextFilter] = useState("all");
   const [sortBy, setSortBy] = useState("latest");
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [unreadThreads, setUnreadThreads] = useState(0);
@@ -39,6 +40,7 @@ export default function CustomerMessagesPage() {
           limit: "20",
           sort: sortBy,
           status: statusFilter,
+          context: contextFilter,
         });
 
         if (searchQuery) params.set("q", searchQuery);
@@ -68,7 +70,7 @@ export default function CustomerMessagesPage() {
         }
       }
     },
-    [searchQuery, statusFilter, sortBy, unreadOnly],
+    [searchQuery, statusFilter, contextFilter, sortBy, unreadOnly],
   );
 
   useEffect(() => {
@@ -98,6 +100,7 @@ export default function CustomerMessagesPage() {
   }, []);
 
   const STATUS_COLORS = {
+    pending: "bg-gray-500/10 text-gray-300 border border-gray-500/20",
     accepted: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
     in_production:
       "bg-purple-500/10 text-purple-300 border border-purple-500/20",
@@ -109,7 +112,7 @@ export default function CustomerMessagesPage() {
   };
 
   const hasActiveFilters =
-    Boolean(searchQuery) || statusFilter !== "all" || unreadOnly;
+    Boolean(searchQuery) || statusFilter !== "all" || contextFilter !== "all" || unreadOnly;
 
   if (status === "loading" || initialLoading) {
     return <GlobalLoader fullScreen text="Loading messages..." />;
@@ -147,6 +150,22 @@ export default function CustomerMessagesPage() {
                 </span>
               )}
             </div>
+          </div>
+
+          <div className="mt-6 flex border-b border-white/10">
+            {["all", "order", "bid"].map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setContextFilter(tab)}
+                className={`px-6 py-3 text-sm font-bold capitalize transition-colors ${
+                  contextFilter === tab
+                    ? "border-b-2 border-[#eb9728] text-[#eb9728]"
+                    : "border-b-2 border-transparent text-white/50 hover:text-white"
+                }`}
+              >
+                {tab === "all" ? "All Messages" : tab + "s"}
+              </button>
+            ))}
           </div>
         </section>
 
@@ -204,6 +223,7 @@ export default function CustomerMessagesPage() {
               onClick={() => {
                 setSearchInput("");
                 setStatusFilter("all");
+                setContextFilter("all");
                 setSortBy("latest");
                 setUnreadOnly(false);
               }}
@@ -267,7 +287,7 @@ export default function CustomerMessagesPage() {
                   key={thread.conversationId}
                   href={
                     thread.contextType === "bid"
-                      ? `/bids/${thread.orderId}#chat`
+                      ? `/customer/rfqs/${thread.rfqId}/bids`
                       : `/customer/orders/${thread.orderId}`
                   }
                 >

@@ -8,6 +8,7 @@ import Conversation from "@/models/Chat";
 import ChatMessage from "@/models/ChatMessage";
 import { publish } from "@/lib/chatEmitter";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import { notify } from "@/services/notificationService";
 
 // ─── helpers ──────────────────────────────────────────────────────────────────
 
@@ -241,8 +242,17 @@ export async function POST(request, context) {
     await conversation.save();
 
     // Push the new message to all connected SSE clients in this order's room.
-    // toObject() converts the Mongoose doc to a plain object (serialisable).
     publish(orderId, { type: "message", message: newMessage.toObject() });
+
+    // Notify the other participant — swallowed if it fails, never breaks response
+    const isOtherCustomer = session.user.role === "manufacturer";
+    notify.newMessage(
+      otherParticipantId,
+      orderId,
+      senderName,
+      "order",
+      isOtherCustomer,
+    );
 
     return NextResponse.json({
       success: true,

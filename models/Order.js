@@ -72,6 +72,7 @@ const OrderSchema = new mongoose.Schema(
       type: String,
       enum: [
         "pending_acceptance",
+        "awaiting_production_ack",
         "accepted",
         "in_production",
         "shipped",
@@ -96,6 +97,12 @@ const OrderSchema = new mongoose.Schema(
         completedAt: Date,
         photos: [String],
         notes: String,
+        customerStatus: {
+          type: String,
+          enum: ["pending", "awaiting_confirmation", "confirmed", "disputed"],
+          default: "pending",
+        },
+        customerConfirmedAt: Date,
       },
     ],
 

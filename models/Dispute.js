@@ -23,9 +23,16 @@ const DisputeSchema = new mongoose.Schema(
       unique: true,
     },
 
+    initiatedBy: {
+      type: String,
+      enum: ["customer", "manufacturer"],
+      default: "customer",
+    },
+
     issueType: {
       type: String,
       enum: [
+        // Customer issues
         "item_not_received",
         "item_not_as_described",
         "quality_issue",
@@ -33,6 +40,9 @@ const DisputeSchema = new mongoose.Schema(
         "damaged_item",
         "late_delivery",
         "refund_not_received",
+        // Manufacturer issues
+        "payment_release_rejected",
+        "customer_unresponsive",
         "other",
       ],
       required: true,

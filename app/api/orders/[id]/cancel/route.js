@@ -51,6 +51,37 @@ async function processRefund(order, reason) {
     return;
   }
 
+  if (order.orderType === "group_buy" && order.paymentStatus === "captured") {
+    // Phase 5-E: Forfeit the held amount to the manufacturer
+    if (stripe) {
+      try {
+        const manufacturer = await import("@/models/User").then((m) =>
+          m.default.findById(order.manufacturerId).lean()
+        );
+        if (manufacturer?.stripeConnectAccountId) {
+          const pi = await stripe.paymentIntents.retrieve(order.paymentIntentId);
+          if (pi.amount_received > 0) {
+            // Transfer forfeited deposit to manufacturer
+            const chargeId = pi.latest_charge || (pi.charges && pi.charges.data[0]?.id);
+            if (chargeId) {
+              await stripe.transfers.create({
+                amount: pi.amount_received,
+                currency: pi.currency,
+                destination: manufacturer.stripeConnectAccountId,
+                source_transaction: chargeId,
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Failed to transfer forfeited group buy deposit:", err.message);
+      }
+    }
+    order.paymentStatus = "refunded"; // mark as resolved
+    order.refundReason = reason + " (Deposit forfeited to manufacturer)";
+    return;
+  }
+
   if (!stripe) {
     if (["authorized", "captured"].includes(order.paymentStatus)) {
       order.paymentStatus = "refunded";

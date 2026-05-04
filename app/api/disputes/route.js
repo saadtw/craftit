@@ -7,11 +7,11 @@ import Order from "@/models/Order";
 import { notify } from "@/services/notificationService";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
-// POST /api/disputes  — customer opens a dispute
+// POST /api/disputes  — customer or manufacturer opens a dispute
 export async function POST(request) {
   try {
     const session = await resolveRequestSession(request);
-    if (!session || session.user.role !== "customer") {
+    if (!session || !["customer", "manufacturer"].includes(session.user.role)) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -36,22 +36,32 @@ export async function POST(request) {
       );
     }
 
-    // Verify order belongs to this customer
-    const order = await Order.findOne({
-      _id: orderId,
-      customerId: session.user.id,
-    });
+    // Verify order belongs to this user
+    const query = { _id: orderId };
+    if (session.user.role === "customer") {
+      query.customerId = session.user.id;
+    } else {
+      query.manufacturerId = session.user.id;
+    }
+    const order = await Order.findOne(query);
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (!["accepted", "in_production", "completed"].includes(order.status)) {
+    const allowedStatuses =
+      session.user.role === "customer"
+        ? ["accepted", "in_production", "completed"]
+        : ["in_production", "shipped", "completed"];
+
+    if (!allowedStatuses.includes(order.status)) {
       return NextResponse.json(
         { error: "Cannot open a dispute for this order in its current status" },
         { status: 400 },
       );
     }
+
+    // TODO: Phase 4 - For manufacturer disputes, verify there is a rejected/expired PaymentReleaseRequest
 
     // Check for existing open dispute on this order
     const existing = await Dispute.findOne({
@@ -67,8 +77,9 @@ export async function POST(request) {
 
     const dispute = await Dispute.create({
       orderId,
-      customerId: session.user.id,
+      customerId: order.customerId,
       manufacturerId: order.manufacturerId,
+      initiatedBy: session.user.role,
       issueType,
       description,
       desiredResolution,
@@ -79,12 +90,20 @@ export async function POST(request) {
     order.status = "disputed";
     await order.save();
 
-    // Notify manufacturer
-    await notify.disputeOpened(
-      order.manufacturerId,
-      dispute._id,
-      order.orderNumber,
-    );
+    // Notify counterpart
+    if (session.user.role === "customer") {
+      await notify.disputeOpened(
+        order.manufacturerId,
+        dispute._id,
+        order.orderNumber,
+      );
+    } else {
+      await notify.disputeOpened(
+        order.customerId,
+        dispute._id,
+        order.orderNumber,
+      );
+    }
 
     return NextResponse.json({ dispute }, { status: 201 });
   } catch (error) {

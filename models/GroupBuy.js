@@ -20,6 +20,8 @@ const ParticipantSchema = new mongoose.Schema(
     quantity: { type: Number, required: true, min: 1 },
     unitPrice: Number, // locked-in price at time of joining
     totalPrice: Number,
+    heldAmount: { type: Number, default: 0 },
+    remainingBalance: { type: Number, default: 0 },
     paymentIntentId: String,
     paymentStatus: {
       type: String,
@@ -75,6 +77,8 @@ const GroupBuySchema = new mongoose.Schema(
     endDate: { type: Date, required: true },
 
     termsAndConditions: String,
+
+    joinHoldPercent: { type: Number, min: 0, max: 100, default: 100 },
 
     status: {
       type: String,

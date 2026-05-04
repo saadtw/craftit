@@ -6,6 +6,8 @@ import Dispute from "@/models/Dispute";
 import Order from "@/models/Order";
 import { notify } from "@/services/notificationService";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import getStripe from "@/lib/stripe";
+import mongoose from "mongoose";
 
 // GET /api/disputes/[id] - get dispute details (only accessible to involved parties and admins)
 export async function GET(request, { params }) {
@@ -86,6 +88,27 @@ export async function PATCH(request, { params }) {
       return NextResponse.json({ success: true, dispute });
     }
 
+    // ── Admin review dispute ───────────────────────────────────────────────
+    if (action === "admin_review") {
+      if (session.user.role !== "admin") {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      dispute.status = "under_review";
+      await dispute.save();
+
+      const order = await Order.findById(dispute.orderId).select("orderNumber");
+
+      await notify.disputeUnderReview(
+        dispute.customerId,
+        dispute.manufacturerId,
+        dispute._id,
+        order?.orderNumber || "Unknown"
+      );
+
+      return NextResponse.json({ success: true, dispute });
+    }
+
     // ── Admin resolves dispute ─────────────────────────────────────────────
     if (action === "admin_resolve") {
       if (session.user.role !== "admin") {
@@ -111,14 +134,48 @@ export async function PATCH(request, { params }) {
       dispute.status = "resolved";
       await dispute.save();
 
-      // Restore order status
+      // Restore order status and process Stripe payments
       const order = await Order.findById(dispute.orderId);
       if (order) {
+        const stripe = process.env.STRIPE_SECRET_KEY ? getStripe() : null;
         if (resolution === "refund_customer") {
+          // Stripe refund
+          try {
+            if (stripe && order.paymentIntentId && order.paymentStatus !== "refunded") {
+              await stripe.refunds.create({
+                payment_intent: order.paymentIntentId,
+                amount: resolutionAmount ? Math.round(resolutionAmount * 100) : undefined
+              });
+            }
+          } catch (stripeError) {
+            console.error("Stripe refund failed:", stripeError);
+            return NextResponse.json({ error: "Stripe refund failed: " + stripeError.message }, { status: 500 });
+          }
+
           order.status = "cancelled";
           order.paymentStatus = "refunded";
           if (resolutionAmount) order.refundAmount = resolutionAmount;
+        } else if (resolution === "side_with_manufacturer") {
+          // Release held funds to manufacturer via Stripe Connect
+          try {
+            const manufacturer = await mongoose.model("User").findById(order.manufacturerId);
+            if (stripe && manufacturer?.stripeConnectAccountId && order.paymentIntentId && order.paymentStatus === "captured") {
+              const amountToTransfer = resolutionAmount || order.totalPrice;
+              await stripe.transfers.create({
+                amount: Math.round(amountToTransfer * 100),
+                currency: "usd",
+                destination: manufacturer.stripeConnectAccountId,
+                transfer_group: order._id.toString(),
+              });
+            }
+          } catch (stripeError) {
+            console.error("Stripe transfer failed:", stripeError);
+            return NextResponse.json({ error: "Stripe transfer failed: " + stripeError.message }, { status: 500 });
+          }
+
+          order.status = "completed";
         } else {
+          // partial_resolution
           order.status = "completed";
         }
         await order.save();
@@ -130,6 +187,7 @@ export async function PATCH(request, { params }) {
         dispute.manufacturerId,
         dispute._id,
         resolution,
+        order?.orderNumber || "Unknown"
       );
 
       return NextResponse.json({ success: true, dispute });

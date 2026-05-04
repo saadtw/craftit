@@ -4,7 +4,9 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
 import Product from "@/models/Product";
+import Order from "@/models/Order";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import { notify } from "@/services/notificationService";
 
 // GET  /api/group-buys - List group buys
 // Manufacturer sees their own; public/customer sees active ones
@@ -46,10 +48,47 @@ export async function GET(request) {
       { status: "scheduled", startDate: { $lte: now } },
       { $set: { status: "active" } },
     );
-    await GroupBuy.updateMany(
-      { status: { $in: ["active", "paused"] }, endDate: { $lte: now } },
-      { $set: { status: "completed", completedAt: now } },
-    );
+    
+    // Auto-complete ended campaigns
+    const endedCampaigns = await GroupBuy.find({
+      status: { $in: ["active", "paused"] },
+      endDate: { $lte: now },
+    });
+
+    for (const groupBuy of endedCampaigns) {
+      groupBuy.status = "completed";
+      groupBuy.completedAt = now;
+
+      const productName = groupBuy.title || "Group Buy";
+      for (let i = 0; i < groupBuy.participants.length; i++) {
+        const participant = groupBuy.participants[i];
+        
+        // Create order
+        const order = await Order.create({
+          orderType: "group_buy",
+          groupBuyId: groupBuy._id,
+          productId: groupBuy.productId,
+          customerId: participant.customerId,
+          manufacturerId: groupBuy.manufacturerId,
+          quantity: participant.quantity,
+          unitPrice: participant.unitPrice,
+          totalPrice: participant.totalPrice,
+          status: participant.remainingBalance > 0 ? "awaiting_production_ack" : "accepted",
+          paymentStatus: participant.remainingBalance > 0 ? "authorized" : "captured",
+        });
+
+        // Save orderId to participant
+        groupBuy.participants[i].orderId = order._id;
+
+        // Notify
+        notify.groupBuyCompleted(
+          participant.customerId,
+          groupBuy._id,
+          productName,
+        );
+      }
+      await groupBuy.save();
+    }
 
     let sortObj = {};
     switch (sort) {
@@ -146,6 +185,7 @@ export async function POST(request) {
       startDate,
       endDate,
       termsAndConditions,
+      joinHoldPercent,
     } = body;
 
     // Validate required
@@ -236,6 +276,7 @@ export async function POST(request) {
       startDate: start,
       endDate: end,
       termsAndConditions,
+      joinHoldPercent: joinHoldPercent !== undefined ? joinHoldPercent : 100,
       status: start <= new Date() ? "active" : "scheduled",
     });
 

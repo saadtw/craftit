@@ -295,6 +295,35 @@ const UserSchema = new mongoose.Schema(
       select: false,
     },
 
+    // OTP-based email verification (replaces link-based for new registrations)
+    emailOtp: {
+      type: String,
+      select: false,
+    },
+    emailOtpExpires: {
+      type: Date,
+      select: false,
+    },
+    otpFailCount: {
+      type: Number,
+      default: 0,
+      select: false,
+    },
+    otpLockUntil: {
+      type: Date,
+      select: false,
+    },
+    otpResendAt: {
+      type: Date,
+      select: false,
+    },
+
+    // OAuth users: must set a password on first login
+    requiresPasswordSetup: {
+      type: Boolean,
+      default: false,
+    },
+
     // Optional email-based 2FA for login
     twoFactorEnabled: {
       type: Boolean,

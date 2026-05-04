@@ -183,11 +183,9 @@ export default function ManufacturerSignup() {
       const data = await response.json();
 
       if (data.success) {
-        alert(
-          data.message ||
-            "Registration successful. Verify your email before login.",
+        router.replace(
+          `/auth/verify-otp?email=${encodeURIComponent(formData.email)}`,
         );
-        router.replace("/auth/login");
       } else {
         setError(data.message || "Registration failed");
       }
@@ -588,9 +586,15 @@ export default function ManufacturerSignup() {
 
                       <SelectContent className="bg-[#0c0c11] border-white/10 text-white shadow-[0_10px_30px_rgba(0,0,0,0.5)] backdrop-blur-xl">
                         {[
-                          { label: "Sole Proprietorship", value: "sole_proprietorship" },
+                          {
+                            label: "Sole Proprietorship",
+                            value: "sole_proprietorship",
+                          },
                           { label: "Partnership", value: "partnership" },
-                          { label: "Private Limited (Pvt. Ltd.)", value: "private_limited" },
+                          {
+                            label: "Private Limited (Pvt. Ltd.)",
+                            value: "private_limited",
+                          },
                           { label: "Public Limited", value: "public_limited" },
                           { label: "NGO / Non-Profit", value: "ngo" },
                           { label: "Other", value: "other" },

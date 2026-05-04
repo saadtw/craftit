@@ -44,6 +44,8 @@ export default function ManufacturerOrderDetailPage() {
   const { data: session, status } = useSession();
 
   const [order, setOrder] = useState(null);
+  const [paymentReleases, setPaymentReleases] = useState([]);
+  const [paymentSchedule, setPaymentSchedule] = useState(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -54,8 +56,10 @@ export default function ManufacturerOrderDetailPage() {
   const [showTrackingModal, setShowTrackingModal] = useState(false);
   const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
   const [showCancelRejectModal, setShowCancelRejectModal] = useState(false);
+  const [showPaymentReleaseModal, setShowPaymentReleaseModal] = useState(false);
 
   const [acceptForm, setAcceptForm] = useState({ estimatedDeliveryDate: "" });
+  const [paymentReleaseForm, setPaymentReleaseForm] = useState({ amount: "", reason: "" });
   const [rejectForm, setRejectForm] = useState({ reason: "" });
   const [shipForm, setShipForm] = useState({
     trackingNumber: "",
@@ -73,7 +77,11 @@ export default function ManufacturerOrderDetailPage() {
     try {
       const res = await fetch(`/api/orders/${id}`);
       const data = await res.json();
-      if (data.success) setOrder(data.order);
+      if (data.success) {
+        setOrder(data.order);
+        setPaymentReleases(data.paymentReleases || []);
+        setPaymentSchedule(data.paymentSchedule || null);
+      }
       else alert(data.error || "Failed to load order");
     } catch (err) {
       console.error(err);
@@ -237,6 +245,33 @@ export default function ManufacturerOrderDetailPage() {
     } catch (err) {
       console.error(err);
       alert("Error rejecting cancellation");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleRequestPaymentRelease = async () => {
+    if (!paymentReleaseForm.amount || !paymentReleaseForm.reason) {
+      alert("Please provide amount and reason.");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${id}/payment-release`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount: Number(paymentReleaseForm.amount), reason: paymentReleaseForm.reason }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchOrder();
+        setShowPaymentReleaseModal(false);
+        setPaymentReleaseForm({ amount: "", reason: "" });
+      } else {
+        alert(data.error || "Failed to request payment release");
+      }
+    } catch (err) {
+      alert("Error requesting payment release");
     } finally {
       setActionLoading(false);
     }
@@ -546,9 +581,19 @@ export default function ManufacturerOrderDetailPage() {
                         )}
                       </div>
                       <div className="flex items-center gap-3">
-                        <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${MILESTONE_STATUS_COLORS[m.status]}`}>
-                          {m.status.replace("_", " ")}
-                        </span>
+                        <div className="flex flex-col items-end gap-1">
+                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${MILESTONE_STATUS_COLORS[m.status]}`}>
+                            {m.status.replace("_", " ")}
+                          </span>
+                          {m.status === "completed" && m.customerStatus && (
+                            <span className={`text-[8px] font-black uppercase tracking-wider ${
+                              m.customerStatus === "confirmed" ? "text-emerald-400" :
+                              m.customerStatus === "disputed" ? "text-red-400" : "text-blue-400"
+                            }`}>
+                              {m.customerStatus.replace("_", " ")}
+                            </span>
+                          )}
+                        </div>
                         {["accepted", "in_production"].includes(order.status) && !hasPendingCancellationRequest && m.status !== "completed" && (
                           <select
                             defaultValue=""
@@ -719,6 +764,14 @@ export default function ManufacturerOrderDetailPage() {
                     </button>
                   </div>
                 )}
+                {["accepted", "in_production", "shipped", "completed"].includes(order.status) && (
+                  <button
+                    onClick={() => setShowPaymentReleaseModal(true)}
+                    className="w-full py-3.5 mt-3 bg-[#eb9728]/10 text-[#eb9728] text-[11px] font-black uppercase tracking-widest rounded-2xl border border-[#eb9728]/30 shadow-[0_0_20px_rgba(235,151,40,0.1)] hover:bg-[#eb9728]/20 transition-all"
+                  >
+                    Request Payment Release
+                  </button>
+                )}
                 {["completed", "cancelled", "disputed"].includes(order.status) && (
                   <div className="text-center py-8 bg-white/[0.02] border border-white/5 rounded-[2rem]">
                     <span className="material-symbols-outlined text-white/5 text-4xl mb-2">lock</span>
@@ -822,6 +875,33 @@ export default function ManufacturerOrderDetailPage() {
                 orderNumber={order.orderNumber}
                 otherParty={{ name: order.customerId?.name || "Customer" }}
               />
+            </div>
+          </div>
+        )}
+
+        {/* Payment Releases Section */}
+        {paymentReleases.length > 0 && (
+          <div className="mt-8 bg-white/[0.03] border-2 border-[#eb9728]/30 rounded-[2.5rem] p-8 backdrop-blur-md">
+            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#eb9728] mb-6 flex items-center gap-3">
+              <span className="w-8 h-[2px] bg-[#eb9728]/40" />
+              Payment Release Requests
+            </h2>
+            <div className="space-y-4">
+              {paymentReleases.map(pr => (
+                <div key={pr._id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                  <div>
+                    <p className="text-sm font-bold text-white mb-1">${pr.amount.toLocaleString()}</p>
+                    <p className="text-xs text-white/60 mb-2">{pr.reason}</p>
+                    <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-full border ${pr.status === 'approved' || pr.status === 'auto_approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : pr.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/30' : 'bg-[#eb9728]/10 text-[#eb9728] border-[#eb9728]/30'}`}>
+                      {pr.status.replace("_", " ")}
+                    </span>
+                  </div>
+                  <div className="text-[9px] font-black uppercase tracking-widest text-white/40 text-right">
+                    <p>{new Date(pr.createdAt).toLocaleDateString()}</p>
+                    {pr.status === "pending" && <p className="mt-1 text-[#eb9728]">Expires: {new Date(pr.expiresAt).toLocaleDateString()}</p>}
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -1033,6 +1113,28 @@ export default function ManufacturerOrderDetailPage() {
             >
               Back
             </button>
+          </div>
+        </Modal>
+      )}
+
+      {/* Payment Release Modal */}
+      {showPaymentReleaseModal && (
+        <Modal title="Request Payment Release" onClose={() => setShowPaymentReleaseModal(false)}>
+          <div className="space-y-6">
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Amount ($) *</label>
+              <input type="number" min="1" max={order.totalPrice} value={paymentReleaseForm.amount} onChange={(e) => setPaymentReleaseForm((p) => ({ ...p, amount: e.target.value }))} placeholder="e.g. 500" className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10" />
+            </div>
+            <div>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Reason / Milestone *</label>
+              <textarea value={paymentReleaseForm.reason} onChange={(e) => setPaymentReleaseForm((p) => ({ ...p, reason: e.target.value }))} rows={3} placeholder="e.g. Completed initial prototyping phase" className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10 resize-none" />
+            </div>
+          </div>
+          <div className="flex gap-3 mt-8">
+            <button onClick={handleRequestPaymentRelease} disabled={actionLoading} className="flex-1 py-4 bg-[#eb9728] text-black text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#eb9728]/90 disabled:opacity-50 transition-all">
+              {actionLoading ? "Processing..." : "Request Funds"}
+            </button>
+            <button onClick={() => setShowPaymentReleaseModal(false)} className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all">Cancel</button>
           </div>
         </Modal>
       )}
