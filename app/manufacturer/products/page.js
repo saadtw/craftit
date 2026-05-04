@@ -377,7 +377,7 @@ export default function ManufacturerProductsPage() {
           </div>
 
           {/* Status Tabs Navigation - Standalone Card */}
-          <div className="bg-white/[0.02] border border-white/5 rounded-full p-1.5 flex items-center gap-2 overflow-x-auto no-scrollbar backdrop-blur-md">
+          <div className="bg-white/[0.02] border border-white/5 rounded-full p-1.5 flex items-center gap-2 overflow-x-auto scrollbar-none backdrop-blur-md">
             {STATUS_TABS.map((tab) => (
               <button
                 key={tab.key}
@@ -759,7 +759,7 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
 
       {isOpen && (
         <div className="absolute z-[100] mt-2 w-full sm:w-56 bg-[#0B011D] border-2 border-purple-500/30 rounded-2xl shadow-2xl py-2 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-          <div className="max-h-[200px] overflow-y-auto custom-scrollbar">
+          <div className="max-h-[200px] overflow-y-auto">
             {options.map((opt) => (
               <button
                 key={opt.value}

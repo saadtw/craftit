@@ -46,8 +46,7 @@ export default function DraftModelEditorPage() {
     if (!raw) {
       // No draft data — the user navigated here directly. Send them back.
       // We intentionally set state here to trigger the deferred redirect effect below.
-      // This pattern is safe and is the recommended approach for conditional redirects.
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- redirect is deferred to next effect so sessionStorage read completes first
       setShouldRedirect(true);
       return;
     }
@@ -55,7 +54,6 @@ export default function DraftModelEditorPage() {
     try {
       const parsed = JSON.parse(raw);
       if (!parsed?.url) {
-        // eslint-disable-next-line react-hooks/set-state-in-effect
         setShouldRedirect(true);
         return;
       }
@@ -63,7 +61,6 @@ export default function DraftModelEditorPage() {
     } catch {
       // Corrupted data — clean up and redirect
       sessionStorage.removeItem(SESSION_KEY);
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setShouldRedirect(true);
     }
   }, []);
@@ -175,7 +172,10 @@ safeName = safeName.substring(0, dot) + `_${timestamp}` + safeName.substring(dot
           gap: "16px",
         }}
       >
-        <div style={styles.spinner} />
+        <div
+          className="h-10 w-10 shrink-0 rounded-full border-2 border-purple-500/20 border-t-purple-500 animate-spin"
+          aria-hidden
+        />
         {isSaving && (
           <p
             style={{

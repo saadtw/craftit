@@ -161,7 +161,9 @@ export default function ManufacturerRFQDetails() {
               {rfq.customOrderId?.specialRequirements && (
                 <div className="mt-8 p-6 bg-white/5 rounded-2xl border border-white/10">
                   <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Extended Protocols</p>
-                  <p className="text-sm font-medium text-white/60 leading-relaxed italic">"{rfq.customOrderId.specialRequirements}"</p>
+                  <p className="text-sm font-medium text-white/60 leading-relaxed italic">
+                    &ldquo;{rfq.customOrderId.specialRequirements}&rdquo;
+                  </p>
                 </div>
               )}
             </div>

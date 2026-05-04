@@ -185,7 +185,7 @@ export default function ManufacturerNotificationsPage() {
               </span>
             </div>
             <GlobalNoResults text="No notifications yet" />
-            <p className="text-sm text-white/20 mt-2">We'll notify you when something important happens.</p>
+            <p className="text-sm text-white/20 mt-2">We&apos;ll notify you when something important happens.</p>
           </div>
         ) : (
           <div className="space-y-10">

@@ -262,11 +262,133 @@ body {
   }
 }
 
-/* Hide scrollbar globally but keep scroll functionality */
-::-webkit-scrollbar {
-  display: none;
+/* ─── Scroll skins (set `data-scroll-skin` on `<html>` via ScrollSkin) ─── */
+html[data-scroll-skin="b2b"] {
+  --scroll-track: oklch(0.22 0.01 280);
+  --scroll-thumb: oklch(0.45 0.02 280 / 0.45);
+  --scroll-thumb-hover: oklch(0.58 0.06 290 / 0.55);
+  --scroll-size: 8px;
+  --scroll-radius: 9999px;
 }
-html, body {
-  -ms-overflow-style: none;  /* IE and Edge */
-  scrollbar-width: none;  /* Firefox */
+
+html[data-scroll-skin="admin"] {
+  --scroll-track: oklch(0.22 0.02 260);
+  --scroll-thumb: oklch(0.42 0.03 260 / 0.5);
+  --scroll-thumb-hover: oklch(0.52 0.04 270 / 0.65);
+  --scroll-size: 8px;
+  --scroll-radius: 9999px;
+}
+
+html[data-scroll-skin="marketing"] {
+  --scroll-track: oklch(0.93 0.01 260);
+  --scroll-thumb: oklch(0.72 0.02 260);
+  --scroll-thumb-hover: oklch(0.58 0.03 260);
+  --scroll-size: 8px;
+  --scroll-radius: 9999px;
+}
+
+html[data-scroll-skin="b2b"] *,
+html[data-scroll-skin="admin"] *,
+html[data-scroll-skin="marketing"] * {
+  scrollbar-width: thin;
+  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
+}
+
+html[data-scroll-skin="b2b"] *::-webkit-scrollbar,
+html[data-scroll-skin="admin"] *::-webkit-scrollbar,
+html[data-scroll-skin="marketing"] *::-webkit-scrollbar {
+  width: var(--scroll-size);
+  height: var(--scroll-size);
+}
+
+html[data-scroll-skin="b2b"] *::-webkit-scrollbar-track,
+html[data-scroll-skin="admin"] *::-webkit-scrollbar-track,
+html[data-scroll-skin="marketing"] *::-webkit-scrollbar-track {
+  background: var(--scroll-track);
+  border-radius: var(--scroll-radius);
+}
+
+html[data-scroll-skin="b2b"] *::-webkit-scrollbar-thumb,
+html[data-scroll-skin="admin"] *::-webkit-scrollbar-thumb,
+html[data-scroll-skin="marketing"] *::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border-radius: var(--scroll-radius);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+html[data-scroll-skin="b2b"] *::-webkit-scrollbar-thumb:hover,
+html[data-scroll-skin="admin"] *::-webkit-scrollbar-thumb:hover,
+html[data-scroll-skin="marketing"] *::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Hide scrollbar but keep scroll (sidebars, horizontal chips, etc.)
+   Skin uses `*::-webkit-scrollbar-*` on thumb/track too — must override every
+   part + use !important so WebKit still wins over those universal rules. */
+.scrollbar-none,
+.scrollbar-hide {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+html[data-scroll-skin="b2b"] .scrollbar-none,
+html[data-scroll-skin="b2b"] .scrollbar-hide,
+html[data-scroll-skin="admin"] .scrollbar-none,
+html[data-scroll-skin="admin"] .scrollbar-hide,
+html[data-scroll-skin="marketing"] .scrollbar-none,
+html[data-scroll-skin="marketing"] .scrollbar-hide {
+  scrollbar-width: none !important;
+  scrollbar-color: transparent transparent !important;
+  -ms-overflow-style: none !important;
+}
+
+html[data-scroll-skin="b2b"] .scrollbar-none::-webkit-scrollbar,
+html[data-scroll-skin="b2b"] .scrollbar-hide::-webkit-scrollbar,
+html[data-scroll-skin="admin"] .scrollbar-none::-webkit-scrollbar,
+html[data-scroll-skin="admin"] .scrollbar-hide::-webkit-scrollbar,
+html[data-scroll-skin="marketing"] .scrollbar-none::-webkit-scrollbar,
+html[data-scroll-skin="marketing"] .scrollbar-hide::-webkit-scrollbar {
+  width: 0 !important;
+  height: 0 !important;
+  display: none !important;
+  background: transparent !important;
+}
+
+html[data-scroll-skin="b2b"] .scrollbar-none::-webkit-scrollbar-track,
+html[data-scroll-skin="b2b"] .scrollbar-hide::-webkit-scrollbar-track,
+html[data-scroll-skin="b2b"] .scrollbar-none::-webkit-scrollbar-thumb,
+html[data-scroll-skin="b2b"] .scrollbar-hide::-webkit-scrollbar-thumb,
+html[data-scroll-skin="admin"] .scrollbar-none::-webkit-scrollbar-track,
+html[data-scroll-skin="admin"] .scrollbar-hide::-webkit-scrollbar-track,
+html[data-scroll-skin="admin"] .scrollbar-none::-webkit-scrollbar-thumb,
+html[data-scroll-skin="admin"] .scrollbar-hide::-webkit-scrollbar-thumb,
+html[data-scroll-skin="marketing"] .scrollbar-none::-webkit-scrollbar-track,
+html[data-scroll-skin="marketing"] .scrollbar-hide::-webkit-scrollbar-track,
+html[data-scroll-skin="marketing"] .scrollbar-none::-webkit-scrollbar-thumb,
+html[data-scroll-skin="marketing"] .scrollbar-hide::-webkit-scrollbar-thumb {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+  border: none !important;
+}
+
+html[data-scroll-skin="b2b"] .scrollbar-none::-webkit-scrollbar-thumb:hover,
+html[data-scroll-skin="b2b"] .scrollbar-hide::-webkit-scrollbar-thumb:hover,
+html[data-scroll-skin="admin"] .scrollbar-none::-webkit-scrollbar-thumb:hover,
+html[data-scroll-skin="admin"] .scrollbar-hide::-webkit-scrollbar-thumb:hover,
+html[data-scroll-skin="marketing"] .scrollbar-none::-webkit-scrollbar-thumb:hover,
+html[data-scroll-skin="marketing"] .scrollbar-hide::-webkit-scrollbar-thumb:hover {
+  display: none !important;
+  background: transparent !important;
+}
+
+.scrollbar-none::-webkit-scrollbar,
+.scrollbar-hide::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+  display: none;
 }

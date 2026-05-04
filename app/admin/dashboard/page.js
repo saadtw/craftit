@@ -84,7 +84,7 @@ export default function AdminDashboard() {
           <div className="flex-1">
             <h1 className="text-4xl md:text-5xl font-black bg-gradient-to-r from-purple-500 via-red-500 to-yellow-500 text-transparent bg-clip-text tracking-tighter uppercase leading-none">Executive Dashboard</h1>
             <p className="text-slate-400 text-lg mt-3 font-medium">
-              Welcome back, <span className="text-purple-400 font-bold">{session?.user?.name || "Super Admin"}</span>. Here's what needs you attention.
+              Welcome back, <span className="text-purple-400 font-bold">{session?.user?.name || "Super Admin"}</span>. Here&apos;s what needs you attention.
             </p>
           </div>
           

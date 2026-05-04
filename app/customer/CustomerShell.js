@@ -18,9 +18,9 @@ export default function CustomerShell({ children }) {
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#050507] text-white">
       <CustomerMainNavbar />
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         {!isMarketplaceRoute && <CustomerSidebar />}
-        <div className="flex-1 min-w-0 overflow-y-auto bg-[#050507]">
+        <div className="min-h-0 flex-1 min-w-0 overflow-y-auto bg-[#050507]">
           <CustomerLayoutContext.Provider value={true}>
             {children}
           </CustomerLayoutContext.Provider>

@@ -249,7 +249,7 @@ export default function AdminDisputeDetailPage() {
           </div>
 
           <div>
-            <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-3">Customer's Description</p>
+            <p className="text-white/40 text-[10px] font-black uppercase tracking-widest mb-3">Customer&apos;s Description</p>
             <div className="bg-black/20 rounded-2xl p-5 border border-white/5 text-white/70 text-sm leading-relaxed">
               {dispute.description || "No description provided."}
             </div>

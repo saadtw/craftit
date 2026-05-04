@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { 
   FiUser, FiMail, FiPhone, FiCalendar, FiMapPin, FiActivity, 
   FiShield, FiClock, FiCheckCircle, FiAlertCircle, FiArrowLeft,
@@ -161,7 +162,13 @@ export default function AdminUserDetailPage() {
                 <div className="w-28 h-28 rounded-[2.5rem] bg-gradient-to-tr from-purple-600 to-indigo-500 p-px shadow-[0_0_40px_rgba(168,85,247,0.3)] overflow-hidden">
                   <div className="w-full h-full rounded-[2.5rem] bg-[#020617] flex items-center justify-center text-4xl font-black text-white overflow-hidden">
                     {user.image || user.profileImage ? (
-                      <img src={user.image || user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                      <Image
+                        src={user.image || user.profileImage}
+                        alt={user.name || ""}
+                        width={112}
+                        height={112}
+                        className="w-full h-full object-cover"
+                      />
                     ) : (
                       user.name?.charAt(0)
                     )}

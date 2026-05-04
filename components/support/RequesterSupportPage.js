@@ -137,7 +137,7 @@ export default function RequesterSupportPage({
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
               <div className="absolute top-full left-0 right-0 mt-2 z-50 bg-[#0a0a0c] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="py-1 max-h-48 overflow-y-auto custom-scrollbar">
+                <div className="py-1 max-h-48 overflow-y-auto">
                   {options.map((opt) => (
                     <button
                       key={opt.value}
@@ -216,7 +216,7 @@ export default function RequesterSupportPage({
           <div className="px-8 py-6 border-b border-white/5 bg-white/[0.02]">
             <h2 className="text-lg font-black text-white uppercase tracking-wider">New Ticket</h2>
             <p className="text-[11px] font-bold text-white/60 uppercase tracking-widest mt-1">
-              Describe your issue and we'll get back to you shortly
+              Describe your issue and we&apos;ll get back to you shortly
             </p>
           </div>
 

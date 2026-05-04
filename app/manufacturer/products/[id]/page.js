@@ -299,7 +299,7 @@ export default function ProductDetailPage() {
 
               {product.images?.length > 1 && (
                 <div className="p-6 bg-white/[0.02] border-t border-white/5">
-                  <div className="flex gap-4 overflow-x-auto py-4 px-6 custom-scrollbar">
+                  <div className="flex gap-4 overflow-x-auto py-4 px-6">
                     {product.images.map((img, idx) => (
                       <button
                         key={idx}
@@ -562,7 +562,9 @@ export default function ProductDetailPage() {
                   {product.seoDescription && (
                     <div>
                       <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">Meta Description</p>
-                      <p className="text-xs font-medium text-white/40 leading-relaxed italic">"{product.seoDescription}"</p>
+                      <p className="text-xs font-medium text-white/40 leading-relaxed italic">
+                        &ldquo;{product.seoDescription}&rdquo;
+                      </p>
                     </div>
                   )}
                 </div>

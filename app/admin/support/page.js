@@ -239,7 +239,7 @@ export default function AdminSupportTicketsPage() {
                         </div>
                         <span className="w-1 h-1 rounded-full bg-white/10" />
                         <p className="text-xs text-white/30 font-medium truncate italic max-w-sm">
-                          "{ticket.lastMessagePreview || "No messages yet"}"
+                          &ldquo;{ticket.lastMessagePreview || "No messages yet"}&rdquo;
                         </p>
                       </div>
                     </div>

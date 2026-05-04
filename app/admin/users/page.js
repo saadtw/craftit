@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { FiSearch, FiUser, FiShield, FiArrowRight } from "react-icons/fi";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -179,7 +180,13 @@ export default function AdminUsersPage() {
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center overflow-hidden text-white/20 font-black text-xl group-hover:bg-purple-500/10 group-hover:border-purple-500/20 group-hover:text-purple-500 transition-all shrink-0">
                             {user.image || user.profileImage ? (
-                              <img src={user.image || user.profileImage} alt={user.name} className="w-full h-full object-cover" />
+                              <Image
+                                src={user.image || user.profileImage}
+                                alt={user.name || ""}
+                                width={48}
+                                height={48}
+                                className="w-full h-full object-cover"
+                              />
                             ) : (
                               user.name.charAt(0)
                             )}

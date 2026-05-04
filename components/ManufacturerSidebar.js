@@ -70,7 +70,7 @@ export default function ManufacturerSidebar({ session }) {
 
   return (
     <aside className="w-30 shrink-0 border-r border-white/10 bg-[#050507] text-white flex flex-col h-full sticky top-0 z-30">
-      <nav className="flex-1 min-h-0 overflow-y-auto py-4 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <nav className="scrollbar-none flex-1 min-h-0 overflow-y-auto py-4 pb-24">
         {navItems.map((item) => {
           if (item.isLogout) {
             return (

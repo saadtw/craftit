@@ -1,7 +1,9 @@
 // app/layout.js
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "./SessionProvider";
+import ScrollSkin from "@/components/ScrollSkin";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,7 +22,7 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
+    <html lang="en" data-scroll-skin="marketing" suppressHydrationWarning>
       <head>
         {/* Preconnect for faster font load */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -38,7 +40,12 @@ export default function RootLayout({ children }) {
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <SessionProvider>{children}</SessionProvider>
+        <SessionProvider>
+          <Suspense fallback={null}>
+            <ScrollSkin />
+          </Suspense>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

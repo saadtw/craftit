@@ -165,9 +165,8 @@ export default function ModelViewerPreview({
   // ── model-viewer is ready ──────────────────────────────────────────────────
   // We render the custom element via createElement so we can attach the ref.
   // Hotspot children are injected imperatively by the useEffect above.
-  // Note: This ref is for a native custom element (web component), not a function component,
-  // so it's safe to pass to React.createElement() here. The eslint rule is overly cautious.
-  // eslint-disable-next-line react-hooks/rules-of-hooks
+  // Note: This ref is for a native custom element (web component), not a function component.
+  // eslint-disable-next-line react-hooks/refs -- ref targets a DOM custom element, not a React child function
   return React.createElement("model-viewer", {
     ref: viewerRef,
     src: modelUrl,

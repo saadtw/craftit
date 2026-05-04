@@ -121,7 +121,7 @@ export default function CustomerSidebar({ active, session }) {
   return (
     <aside className="w-24 shrink-0 border-r border-white/10 bg-[#050507] text-white flex flex-col h-screen sticky top-0">
       {/* SECTION 1: SCROLLABLE NAVIGATION */}
-      <nav className="flex-1 min-h-0 overflow-y-auto py-4 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <nav className="scrollbar-none flex-1 min-h-0 overflow-y-auto py-4 pb-24">
         {navItems.map((item) => {
           // Handle logout button with same styling as other nav items
           if (item.isLogout) {

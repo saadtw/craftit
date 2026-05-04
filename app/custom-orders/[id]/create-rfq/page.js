@@ -1,4 +1,4 @@
-// app/custom-orders/[id]/create-rfq/page.js
+﻿// app/custom-orders/[id]/create-rfq/page.js
 "use client";
 
 import GlobalLoader from "@/components/ui/GlobalLoader";
@@ -434,7 +434,7 @@ export default function CreateRFQ() {
                       type="text"
                       value={manufacturerSearch}
                       onChange={(e) => setManufacturerSearch(e.target.value)}
-                      placeholder="Search verified manufacturers by name…"
+                      placeholder="Search verified manufacturers by nameΓÇª"
                       className="w-full bg-white/[0.04] border border-white/10 rounded-xl pl-9 pr-4 py-3 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-[#eb9728]/40 transition-all"
                     />
                   </div>
@@ -467,7 +467,7 @@ export default function CreateRFQ() {
                 </div>
 
                 {/* Manufacturer List */}
-                <div className="max-h-56 overflow-y-auto rounded-xl border border-white/8 bg-[#050507] divide-y divide-white/5 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                <div className="max-h-56 overflow-y-auto rounded-xl border border-white/8 bg-[#050507] divide-y divide-white/5">
                   {manufacturersLoading ? (
                     <div className="flex items-center justify-center py-8 gap-2">
                       <div className="h-5 w-5 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
@@ -827,7 +827,7 @@ export default function CreateRFQ() {
 //             onClick={() => router.back()}
 //             className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
 //           >
-//             ← Back
+//             ΓåÉ Back
 //           </button>
 //           <h1 className="text-3xl font-bold">Create RFQ (Auction)</h1>
 //         </div>

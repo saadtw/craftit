@@ -57,7 +57,7 @@ export default function AdminSidebar() {
       </div>
 
       {/* SECTION 1: SCROLLABLE NAVIGATION */}
-      <nav className="flex-1 min-h-0 overflow-y-auto py-4 pb-24 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+      <nav className="scrollbar-none flex-1 min-h-0 overflow-y-auto py-4 pb-24">
         {navItems.map((item) => {
           if (item.isLogout) {
             return (

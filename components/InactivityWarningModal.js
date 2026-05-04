@@ -3,22 +3,18 @@
 import { useEffect, useState } from "react";
 import { signOut } from "next-auth/react";
 
-export function InactivityWarningModal({
-  isOpen,
-  onExtend,
-  remainingSeconds = 600,
-}) {
+/**
+ * Renders only while open so inner state remounts with a fresh countdown
+ * without syncing state inside an effect (satisfies react-hooks/set-state-in-effect).
+ */
+function InactivityWarningModalOpen({ onExtend, remainingSeconds }) {
   const [timeLeft, setTimeLeft] = useState(remainingSeconds);
 
   useEffect(() => {
-    if (!isOpen) return;
-
-    setTimeLeft(remainingSeconds);
     const interval = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          // Auto logout
           signOut({ callbackUrl: "/auth/login" });
           return 0;
         }
@@ -27,9 +23,7 @@ export function InactivityWarningModal({
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [isOpen, remainingSeconds]);
-
-  if (!isOpen) return null;
+  }, []);
 
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
@@ -57,7 +51,7 @@ export function InactivityWarningModal({
             {seconds.toString().padStart(2, "0")}
           </p>
           <p className="text-sm text-gray-500">
-            Click "Continue Session" to stay logged in.
+            Click &quot;Continue Session&quot; to stay logged in.
           </p>
         </div>
 
@@ -77,5 +71,21 @@ export function InactivityWarningModal({
         </div>
       </div>
     </div>
+  );
+}
+
+export function InactivityWarningModal({
+  isOpen,
+  onExtend,
+  remainingSeconds = 600,
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <InactivityWarningModalOpen
+      key={remainingSeconds}
+      onExtend={onExtend}
+      remainingSeconds={remainingSeconds}
+    />
   );
 }

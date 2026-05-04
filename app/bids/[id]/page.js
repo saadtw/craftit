@@ -137,7 +137,7 @@ function ChatPanel({ bidId, session, bidStatus }) {
     <div className="flex flex-col h-96">
       <div
         ref={scrollRef}
-        className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#050507] rounded-xl border border-white/8 no-scrollbar"
+        className="flex-1 overflow-y-auto p-4 space-y-3 bg-[#050507] rounded-xl border border-white/8"
       >
         {loadingChat ? (
           <div className="flex items-center justify-center h-full">

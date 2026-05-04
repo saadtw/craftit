@@ -285,7 +285,7 @@ export default function AdminSupportTicketDetailPage() {
 
         {/* Chat Interface */}
         <div className="bg-white/[0.02] border border-white/5 rounded-[40px] overflow-hidden backdrop-blur-2xl flex flex-col shadow-2xl">
-          <div className="flex-1 max-h-[600px] overflow-y-auto p-8 space-y-6 scrollbar-hide">
+          <div className="flex-1 max-h-[600px] overflow-y-auto p-8 space-y-6">
             {messages.length === 0 ? (
               <div className="py-20 flex flex-col items-center text-center">
                 <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mb-4">

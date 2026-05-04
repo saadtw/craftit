@@ -174,7 +174,7 @@ export default function ManufacturerOrdersPage() {
             <>
               <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
               <div className="absolute top-full right-0 mt-2 z-50 min-w-[200px] bg-[#0a0a0c] border border-white/10 rounded-2xl overflow-hidden backdrop-blur-xl shadow-2xl animate-in fade-in slide-in-from-top-2 duration-200">
-                <div className="py-1 max-h-48 overflow-y-auto custom-scrollbar">
+                <div className="py-1 max-h-48 overflow-y-auto">
                   {options.map((opt) => (
                     <button
                       key={opt.value}

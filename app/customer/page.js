@@ -293,7 +293,7 @@ export default function CustomerHomePage() {
           subtitle={
             !isSuggestedPersonalized ? (
               <p className="text-xs text-gray-500 mb-3">
-                // Popular picks to get you started. //{" "}
+                Popular picks to get you started.
               </p>
             ) : (
               ""

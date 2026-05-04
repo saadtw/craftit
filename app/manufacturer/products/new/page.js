@@ -1243,7 +1243,7 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
 
       {isOpen && (
         <div className="absolute z-[100] mt-2 w-full bg-[#080112] border-2 border-purple-500/40 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] py-2 overflow-hidden animate-in fade-in zoom-in-95 duration-200 backdrop-blur-2xl">
-          <div className="max-h-[200px] overflow-y-auto custom-scrollbar">
+          <div className="max-h-[200px] overflow-y-auto">
             {options.map((opt) => (
               <button
                 key={opt.value}

@@ -140,7 +140,7 @@ export default function AdminOrdersPage() {
           <GlobalNoResults text="No orders found" />
         ) : (
           <div className="bg-white/[0.02] border border-white/5 rounded-[32px] overflow-hidden backdrop-blur-xl shadow-2xl">
-            <div className="overflow-x-auto scrollbar-hide">
+            <div className="overflow-x-auto scrollbar-none">
               <table className="w-full border-collapse">
                 <thead>
                   <tr className="border-b border-white/5">

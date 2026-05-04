@@ -160,7 +160,7 @@ export default function ManufacturerBidsPage() {
       <main className="container mx-auto px-4 sm:px-6 lg:px-10 pt-0 pb-8">
         <div className="flex flex-col lg:flex-row gap-8 items-start">
           {/* Filters Sidebar - Now with independent scroll if content exceeds screen height */}
-          <aside className="lg:w-72 shrink-0 sticky top-2 lg:top-4 h-fit max-h-[calc(100vh-60px)] overflow-y-auto no-scrollbar pb-10 space-y-5">
+          <aside className="lg:w-72 shrink-0 sticky top-2 lg:top-4 h-fit max-h-[calc(100vh-60px)] overflow-y-auto pb-10 space-y-5">
             {/* Page Title - Now part of sticky sidebar */}
             <h1 className="text-4xl font-black bg-gradient-to-r from-[#eb9728] via-purple-500 via-indigo-500 to-emerald-400 bg-clip-text text-transparent mb-1">
               My Bids
