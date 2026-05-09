@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import Image from "next/image";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 
 const customizationTypeLabelMap = CUSTOMIZATION_TYPE_OPTIONS.reduce(
   (acc, item) => {
@@ -258,21 +258,36 @@ export default function CustomOrderReview() {
           </div>
         </div>
 
-        {/* 3D Model */}
-        {customOrder.model3D && (
-          <div className="bg-white p-6 rounded shadow mb-6">
-            <h2 className="text-xl font-bold mb-4">3D Model</h2>
-            <Editor3DWrapper
-              modelUrl={customOrder.model3D.url}
-              initialAnnotations={customOrder.model3D.annotations}
-              initialCameraState={customOrder.model3D.cameraState}
-              readOnly={true}
-            />
-            <p className="text-sm text-gray-600 mt-2">
-              File: {customOrder.model3D.filename}
-            </p>
-          </div>
-        )}
+          {/* 3D Model */}
+          {customOrder.model3D && (
+            <div className="rounded-2xl border border-white/8 bg-[#0c0c11] overflow-hidden">
+              <div className="px-6 py-5 border-b border-white/8">
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-[#eb9728]">
+                    view_in_ar
+                  </span>
+                  3D Model
+                </h2>
+              </div>
+              <div className="p-5">
+                <div className="rounded-xl overflow-hidden border border-white/8 bg-white/[0.02]">
+                  <ModelViewerPreview
+                    modelUrl={customOrder.model3D.url}
+                    annotations={customOrder.model3D.annotations}
+                    height="300px"
+                  />
+                </div>
+                <div className="flex items-center gap-2 mt-3">
+                  <span className="material-symbols-outlined text-[14px] text-white/25">
+                    attach_file
+                  </span>
+                  <p className="text-[11px] text-white/35">
+                    {customOrder.model3D.filename}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
         {/* Images */}
         {customOrder.images && customOrder.images.length > 0 && (

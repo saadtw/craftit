@@ -5,7 +5,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
-import Editor3DWrapper from "../../../modules/components/Editor3DWrapper";
+import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 
 function formatCurrency(value) {
   if (!value) return "-";
@@ -641,33 +642,68 @@ function NewCustomOrderContent() {
             />
           </div>
 
-          <div className="mb-4">
-            <label className="block mb-2 font-semibold">Upload 3D Model</label>
-            {!isEditorOpen && (
-              <>
-                <input
-                  type="file"
-                  accept=".stl,.obj,.gltf,.glb"
-                  onChange={handle3DUpload}
-                  className="w-full border p-2 rounded"
-                />
-                {model3D && (
-                  <div className="mt-2 p-2 bg-green-100 rounded">
-                    ✓ {model3D.filename} uploaded and annotated
+          {/* Attachments */}
+          <div className="rounded-2xl border border-white/8 bg-[#0c0c11] p-6 space-y-5">
+            <h2 className="text-sm font-bold text-white flex items-center gap-2">
+              <span className="material-symbols-outlined text-[16px] text-[#eb9728]">
+                attach_file
+              </span>
+              Attachments
+            </h2>
+
+            {/* 3D Model */}
+            <div>
+              <label className={labelClass}>3D Model</label>
+              
+              {!model3D ? (
+                <label className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-6 cursor-pointer hover:border-[#eb9728]/30 hover:bg-white/[0.04] transition-all group">
+                  <span className="material-symbols-outlined text-3xl text-white/20 group-hover:text-[#eb9728]/50 transition-colors">
+                    view_in_ar
+                  </span>
+                  <p className="text-sm text-white/40 group-hover:text-white/60 transition-colors">
+                    Click to upload 3D model
+                  </p>
+                  <p className="text-[11px] text-white/20">
+                    .stl, .obj, .gltf, .glb
+                  </p>
+                  <input
+                    type="file"
+                    accept=".stl,.obj,.gltf,.glb"
+                    onChange={handle3DUpload}
+                    className="hidden"
+                  />
+                </label>
+              ) : (
+                <div className="rounded-xl border border-white/8 bg-[#0c0c11] overflow-hidden">
+                  <div className="p-4 border-b border-white/8 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[15px] text-emerald-400">
+                        check_circle
+                      </span>
+                      <p className="text-[11px] font-semibold text-emerald-400">
+                        {model3D.filename || "Model Uploaded"}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditorOpen(true)}
+                      className="px-3 py-1.5 text-xs font-bold text-[#eb9728] bg-[#eb9728]/10 rounded-lg hover:bg-[#eb9728]/20 transition-colors"
+                    >
+                      Edit 3D Model
+                    </button>
                   </div>
-                )}
-              </>
-            )}
-            
-            {isEditorOpen && baseModelUrl && (
-              <div className="mt-4 border rounded p-2">
-                <Editor3DWrapper 
-                  modelUrl={baseModelUrl}
-                  onSave={handleEditorSave}
-                />
-              </div>
-            )}
-          </div>
+                  <div className="p-4">
+                    <div className="rounded-xl overflow-hidden border border-white/8 bg-white/[0.02]">
+                      <ModelViewerPreview
+                        modelUrl={model3D.url}
+                        annotations={model3D.annotations}
+                        height="300px"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
 
           <div className="mb-4">
             <label className="block mb-2 font-semibold">Upload Images</label>

@@ -6,7 +6,12 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
-import Editor3DWrapper from "../../../../modules/components/Editor3DWrapper";
+import ModelViewerPreview from "../../../../modules/components/ModelViewerPreview";
+
+const STATUS_STYLES = {
+  active: "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400",
+  closed: "bg-red-500/10 border border-red-500/20 text-red-400",
+};
 
 export default function ManufacturerRFQDetails() {
   const params = useParams();
@@ -298,15 +303,21 @@ export default function ManufacturerRFQDetails() {
 
             {/* 3D Model Viewer */}
             {model3D?.url && (
-              <div className="mt-6">
-                <h3 className="font-bold text-gray-900 mb-2">3D Model</h3>
-                <div className="w-full rounded-lg overflow-hidden">
-                  <Editor3DWrapper
+              <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-10 shadow-xl overflow-hidden">
+                <div className="flex items-center gap-4 mb-8">
+                  <div className="w-12 h-12 rounded-2xl bg-purple-600/10 flex items-center justify-center text-purple-400 border border-purple-500/20">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" strokeWidth={2} /></svg>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-black uppercase tracking-widest text-white">Integrated Asset Engine</h3>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">Real-time Inspection Protocol</p>
+                  </div>
+                </div>
+                <div className="rounded-[2rem] overflow-hidden border-2 border-white/5 bg-black/40">
+                  <ModelViewerPreview
                     modelUrl={model3D.url}
-                    initialAnnotations={model3D.annotations || []}
-                    initialCameraState={model3D.cameraState || null}
-                    readOnly={true}
-                    onSave={() => {}}
+                    annotations={model3D.annotations || []}
+                    height="400px"
                   />
                 </div>
               </div>

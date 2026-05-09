@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchWithCache } from "@/lib/clientCache";
-import ModelManager from "@/modules/components/ModelManager";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 
 export default function CustomerProductDetailPage() {
   const { id } = useParams();
@@ -495,20 +495,13 @@ export default function CustomerProductDetailPage() {
                 </div>
               )}
 
-              {/* 3D Model Viewer */}
-              {product.model3D?.url && (
-                <div className="bg-white rounded-xl border border-gray-200 p-6">
-                  <h3 className="text-sm font-bold text-gray-900 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-white text-xs rounded font-medium">
-                      3D
-                    </span>
-                    3D Model
-                  </h3>
-                  <ModelManager
-                    model3D={product.model3D}
-                    resourceId={product._id}
-                    resourceType="product"
-                    canEdit={false}
+            {product.model3D?.url && (
+              <Card title="3D Model">
+                <div className="overflow-hidden rounded-[20px] border border-white/8 bg-[#0c0c11]">
+                  <ModelViewerPreview
+                    modelUrl={product.model3D.url}
+                    annotations={product.model3D.annotations}
+                    height="400px"
                   />
                   <div className="flex items-center gap-3 mt-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <span className="material-symbols-outlined text-xl text-blue-500">

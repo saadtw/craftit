@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ChatBox from "@/components/chat/ChatBox";
 import { CARRIER_NAMES } from "@/lib/carriers";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-yellow-100 text-yellow-800",
@@ -357,31 +357,35 @@ export default function ManufacturerOrderDetailPage() {
             </div>
 
             {orderModel3D?.url && (
-              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                <h2 className="text-lg font-bold text-blue-900 mb-4 flex items-center gap-2">
-                  <span className="px-1.5 py-0.5 bg-slate-900 text-white text-xs rounded font-medium">
-                    3D
-                  </span>
-                  3D Model
-                </h2>
-                <Editor3DWrapper
-                  modelUrl={orderModel3D.url}
-                  initialAnnotations={orderModel3D.annotations}
-                  initialCameraState={orderModel3D.cameraState}
-                  readOnly={true}
-                />
-                <div className="mt-3 flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                  <p className="text-sm text-gray-700 truncate">
-                    {orderModel3D.filename || "Attached 3D model"}
-                  </p>
+              <div className="bg-white/[0.03] border-2 border-purple-500/40 rounded-[2.5rem] p-8 backdrop-blur-md">
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 flex items-center gap-3">
+                    <span className="w-8 h-[2px] bg-blue-500/30" />
+                    3D Specification
+                  </h2>
                   <a
                     href={orderModel3D.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100"
+                    download
+                    className="flex items-center gap-2 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-white/40 hover:bg-white/10 hover:text-white transition-all"
                   >
+                    <span className="material-symbols-outlined text-[16px]">download</span>
                     Download
                   </a>
+                </div>
+                
+                <div className="rounded-3xl overflow-hidden border border-white/10 bg-black/40">
+                  <ModelViewerPreview
+                    modelUrl={orderModel3D.url}
+                    annotations={orderModel3D.annotations}
+                    height="400px"
+                  />
+                </div>
+                
+                <div className="mt-4 flex items-center gap-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
+                  <span className="material-symbols-outlined text-white/20">deployed_code</span>
+                  <p className="text-[11px] font-black uppercase tracking-widest text-white/40 truncate">
+                    {orderModel3D.filename || "order_model_specification.glb"}
+                  </p>
                 </div>
               </div>
             )}

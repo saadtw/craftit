@@ -7,7 +7,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ChatBox from "@/components/chat/ChatBox";
 import { getTrackingUrl } from "@/lib/carriers";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-yellow-100 text-yellow-800",
@@ -348,19 +348,19 @@ function CustomerOrderDetailPageContent() {
                 )}
               </div>
 
-              {orderModel3D?.url && (
-                <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
-                  <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                    <span className="px-1.5 py-0.5 bg-slate-900 text-white text-xs rounded font-medium">
-                      3D
-                    </span>
-                    3D Model
-                  </h2>
-                  <Editor3DWrapper
+            {orderModel3D?.url && (
+              <section className="rounded-[24px] border border-white/8 bg-[#0c0c11] p-5 sm:p-6">
+                <h2 className="mb-5 text-lg font-black text-white flex items-center gap-2">
+                  <span className="px-1.5 py-0.5 bg-[#eb9728] text-white text-xs rounded font-medium">
+                    3D
+                  </span>
+                  3D Model
+                </h2>
+                <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
+                  <ModelViewerPreview
                     modelUrl={orderModel3D.url}
-                    initialAnnotations={orderModel3D.annotations}
-                    initialCameraState={orderModel3D.cameraState}
-                    readOnly={true}
+                    annotations={orderModel3D.annotations}
+                    height="400px"
                   />
                   <div className="mt-3 flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
                     <p className="text-sm text-gray-700 truncate">

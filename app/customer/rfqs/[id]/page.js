@@ -5,7 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import Editor3DWrapper from "../../../../modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 
 export default function CustomerRFQDetails() {
   const params = useParams();
@@ -231,33 +231,32 @@ export default function CustomerRFQDetails() {
                 </div>
               )}
 
-              {rfq.customOrderId.specialRequirements && (
-                <div>
-                  <label className="font-semibold text-gray-700">
-                    Special Requirements:
-                  </label>
-                  <p className="text-gray-900 whitespace-pre-wrap">
-                    {rfq.customOrderId.specialRequirements}
-                  </p>
-                </div>
-              )}
-            </div>
+                {rfq.customOrderId.specialRequirements && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-2">
+                      Special Requirements
+                    </p>
+                    <p className="text-sm text-white/60 leading-relaxed whitespace-pre-wrap bg-white/[0.02] border border-white/6 rounded-xl px-4 py-3">
+                      {rfq.customOrderId.specialRequirements}
+                    </p>
+                  </div>
+                )}
 
-            {/* 3D Model Viewer */}
-            {model3D?.url && (
-              <div className="mt-6">
-                <h3 className="font-bold mb-2">3D Model</h3>
-                <div className="w-full rounded overflow-hidden">
-                  <Editor3DWrapper
-                    modelUrl={model3D.url}
-                    initialAnnotations={model3D.annotations || []}
-                    initialCameraState={model3D.cameraState || null}
-                    readOnly={true}
-                    onSave={() => {}}
-                  />
-                </div>
-              </div>
-            )}
+                {/* 3D Model */}
+                {rfq.customOrderId.model3D && (
+                  <div>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-3">
+                      3D Model
+                    </p>
+                    <div className="rounded-xl overflow-hidden border border-white/8 bg-white/[0.02]">
+                      <ModelViewerPreview
+                        modelUrl={rfq.customOrderId.model3D.url}
+                        annotations={rfq.customOrderId.model3D.annotations}
+                        height="400px"
+                      />
+                    </div>
+                  </div>
+                )}
 
             {/* Images */}
             {rfq.customOrderId.images &&

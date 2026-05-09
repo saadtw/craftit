@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import Editor3DWrapper from "../../../../modules/components/Editor3DWrapper";
+import ModelViewerPreview from "../../../../modules/components/ModelViewerPreview";
 
 const STATUS_STYLES = {
   active: "bg-emerald-100 text-emerald-700",
@@ -316,26 +316,25 @@ export default function GroupBuyDetailPage() {
                     View product →
                   </Link>
                 </div>
+
+                {hasProductModel3D && (
+                  <div className="mt-8 pt-8 border-t border-white/5">
+                    <div className="flex items-center justify-between mb-6">
+                      <h4 className="text-[10px] font-black text-white/20 uppercase tracking-widest flex items-center gap-2">
+                        <span className="material-symbols-outlined text-sm">view_in_ar</span>
+                        Interactive 3D Preview
+                      </h4>
+                    </div>
+                    <div className="rounded-3xl overflow-hidden border border-white/10 bg-[#050507]">
+                      <ModelViewerPreview
+                        modelUrl={product.model3D.url}
+                        annotations={product.model3D.annotations || []}
+                        height="400px"
+                      />
+                    </div>
+                  </div>
+                )}
               </div>
-              {groupBuy.description && (
-                <p className="text-sm text-slate-600 mt-4 pt-4 border-t border-slate-100">
-                  {groupBuy.description}
-                </p>
-              )}
-              {hasProductModel3D && (
-                <div className="mt-4 pt-4 border-t border-slate-100">
-                  <h4 className="text-xs font-semibold text-slate-700 uppercase tracking-wide mb-2">
-                    Product 3D Preview
-                  </h4>
-                  <Editor3DWrapper
-                    modelUrl={product.model3D.url}
-                    initialAnnotations={product.model3D.annotations || []}
-                    initialCameraState={product.model3D.cameraState || null}
-                    readOnly={true}
-                    onSave={() => {}}
-                  />
-                </div>
-              )}
             </div>
 
             {/* Tier Progress */}

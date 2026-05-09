@@ -6,7 +6,10 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ManufacturerNavbar from "@/components/ManufacturerNavbar";
+import ManufacturerSidebar from "@/components/ManufacturerSidebar";
+import CustomerSidebar from "@/components/CustomerSidebar";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 
 function StatusBadge({ status }) {
   const styles = {
@@ -780,39 +783,38 @@ export default function BidDetailsPage() {
           </div>
         </div>
 
-        {bidModel3D?.url && (
-          <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b border-gray-100 bg-gray-50/50">
-              <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
-                <span className="px-1.5 py-0.5 bg-slate-900 text-white text-xs rounded font-medium">
-                  3D
-                </span>
-                Custom Order 3D Model
-              </h2>
-            </div>
-            <div className="p-6">
-              <Editor3DWrapper
-                modelUrl={bidModel3D.url}
-                initialAnnotations={bidModel3D.annotations}
-                initialCameraState={bidModel3D.cameraState}
-                readOnly={true}
-              />
-              <div className="mt-3 flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200">
-                <p className="text-sm text-gray-700 truncate">
-                  {bidModel3D.filename || "Attached 3D model"}
-                </p>
-                <a
-                  href={bidModel3D.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs font-medium hover:bg-blue-100"
-                >
-                  Download
-                </a>
-              </div>
+      {bidModel3D?.url && (
+        <div className="rounded-2xl border border-white/8 bg-[#0c0c11] overflow-hidden">
+          <div className="px-6 py-4 border-b border-white/8">
+            <h2 className="text-base font-bold text-white flex items-center gap-2">
+              <span className="px-1.5 py-0.5 bg-[#eb9728] text-white text-xs rounded font-medium">
+                3D
+              </span>
+              Custom Order 3D Model
+            </h2>
+          </div>
+          <div className="p-6">
+            <ModelViewerPreview
+              modelUrl={bidModel3D.url}
+              annotations={bidModel3D.annotations}
+              height="400px"
+            />
+            <div className="mt-3 flex items-center justify-between gap-3 p-3 bg-white/[0.03] rounded-lg border border-white/8">
+              <p className="text-sm text-white/60 truncate">
+                {bidModel3D.filename || "Attached 3D model"}
+              </p>
+              <a
+                href={bidModel3D.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-1.5 bg-[#eb9728]/10 text-[#eb9728] rounded-lg text-xs font-medium hover:bg-[#eb9728]/20"
+              >
+                Download
+              </a>
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Chat */}
         <div className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
