@@ -204,10 +204,10 @@ export default function LoginPage() {
                 </label>
                 <input
                   type="text"
-                  maxLength={6}
+                  maxLength={8}
                   value={twoFactorCode}
                   onChange={(e) => setTwoFactorCode(e.target.value)}
-                  placeholder="6-digit code"
+                  placeholder="8-digit code"
                   className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs outline-none focus:border-purple-500 transition-all placeholder:text-slate-600"
                   required
                 />

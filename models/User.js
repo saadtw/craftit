@@ -1,10 +1,16 @@
 // models/User.js
 import mongoose from "mongoose";
-import bcrypt from "bcryptjs"; // ✅ Changed from "bcrypt" to "bcryptjs"
 
 const UserSchema = new mongoose.Schema(
   {
-    // Basic Authentication
+    // Link to Supabase Auth user
+    supabaseId: {
+      type: String,
+      unique: true,
+      sparse: true, // allows null for legacy records during transition
+    },
+
+    // Basic Info
     email: {
       type: String,
       required: true,
@@ -12,37 +18,6 @@ const UserSchema = new mongoose.Schema(
       lowercase: true,
       trim: true,
     },
-    password: {
-      type: String,
-      required: true,
-      select: false,
-    },
-
-    // OAuth Provider Tracking
-    authMethod: {
-      type: String,
-      enum: ["credentials", "oauth"],
-      default: "credentials",
-    },
-    oauthProviders: [
-      {
-        provider: {
-          type: String,
-          enum: ["google"],
-          required: true,
-        },
-        providerId: {
-          type: String,
-          required: true,
-        },
-        email: String,
-        linkedAt: {
-          type: Date,
-          default: Date.now,
-        },
-        _id: false,
-      },
-    ],
 
     role: {
       type: String,
@@ -172,6 +147,13 @@ const UserSchema = new mongoose.Schema(
     },
     suspensionReason: String,
 
+    // Email verification (cached from Supabase for quick session checks)
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    emailVerifiedAt: Date,
+
     // Statistics
     stats: {
       totalOrders: { type: Number, default: 0 },
@@ -265,77 +247,10 @@ const UserSchema = new mongoose.Schema(
     lastLogin: Date,
     lastActive: Date,
 
-    // Password reset
-    passwordResetToken: {
-      type: String,
-      select: false,
-    },
-    passwordResetExpires: {
-      type: Date,
-      select: false,
-    },
-
-    // Email verification
-    isEmailVerified: {
-      type: Boolean,
-      default: false,
-    },
-    emailVerifiedAt: Date,
-    emailVerificationMethod: {
-      type: String,
-      enum: ["manual", "oauth"],
-      default: "manual",
-    },
-    emailVerificationToken: {
-      type: String,
-      select: false,
-    },
-    emailVerificationExpires: {
-      type: Date,
-      select: false,
-    },
-
-    // OTP-based email verification (replaces link-based for new registrations)
-    emailOtp: {
-      type: String,
-      select: false,
-    },
-    emailOtpExpires: {
-      type: Date,
-      select: false,
-    },
-    otpFailCount: {
-      type: Number,
-      default: 0,
-      select: false,
-    },
-    otpLockUntil: {
-      type: Date,
-      select: false,
-    },
-    otpResendAt: {
-      type: Date,
-      select: false,
-    },
-
-    // OAuth users: must set a password on first login
-    requiresPasswordSetup: {
-      type: Boolean,
-      default: false,
-    },
-
     // Optional email-based 2FA for login
     twoFactorEnabled: {
       type: Boolean,
       default: false,
-    },
-    twoFactorCodeToken: {
-      type: String,
-      select: false,
-    },
-    twoFactorCodeExpires: {
-      type: Date,
-      select: false,
     },
 
     // Mobile refresh token sessions (stored hashed, never plaintext)
@@ -374,28 +289,7 @@ UserSchema.index({ businessName: "text", name: "text" });
 UserSchema.index({ "location.country": 1 }); // For location-based filtering
 UserSchema.index({ "location.state": 1 }); // For state-based manufacturer matching
 UserSchema.index({ "mobileRefreshTokens.tokenHash": 1 });
-UserSchema.index({
-  "oauthProviders.provider": 1,
-  "oauthProviders.providerId": 1,
-}); // For OAuth provider lookups
-UserSchema.index({ authMethod: 1 }); // For auth method filtering
-
-UserSchema.pre("save", async function () {
-  // Only hash if password is modified
-  if (!this.isModified("password")) {
-    return;
-  }
-
-  // Hash the password
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-});
-
-// Compare password method
-UserSchema.methods.comparePassword = async function (candidatePassword) {
-  const user = await this.constructor.findById(this._id).select("+password");
-  return await bcrypt.compare(candidatePassword, user.password);
-};
+UserSchema.index({ supabaseId: 1 }); // For Supabase user lookups
 
 // Update last active
 UserSchema.methods.updateLastActive = function () {

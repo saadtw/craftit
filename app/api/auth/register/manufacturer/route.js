@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import VerificationDocument from "@/models/VerificationDocument";
-import { createNumericCode, hashToken } from "@/lib/token";
-import { sendOtpEmail } from "@/lib/email";
+import { supabase, supabaseAdmin } from "@/lib/supabase";
 
 // POST /api/auth/register/manufacturer — register a new manufacturer
 export async function POST(request) {
@@ -63,28 +62,38 @@ export async function POST(request) {
 
     const existingUser = await User.findOne({ email: normalizedEmail });
     if (existingUser) {
-      // Check if user exists via OAuth only
-      if (existingUser.authMethod === "oauth" && !existingUser.password) {
-        return NextResponse.json(
-          {
-            success: false,
-            message:
-              "This email is already registered via Google. Please sign in with Google instead.",
-          },
-          { status: 409 },
-        );
-      }
       return NextResponse.json(
         { success: false, message: "Email already registered" },
         { status: 409 },
       );
     }
+
+    // 1. Create the user in Supabase using the anon client so it sends the verification email
+    const { data: supaData, error: supaError } = await supabase.auth.signUp({
+      email: normalizedEmail,
+      password,
+      options: {
+        data: {
+          name,
+          role: "manufacturer",
+        },
+      },
+    });
+
+    if (supaError) {
+      console.error("Supabase registration error:", supaError);
+      return NextResponse.json(
+        { success: false, message: supaError.message || "Registration failed" },
+        { status: 400 },
+      );
+    }
+
+    // 2. Create the profile in MongoDB (no password stored here)
     const user = await User.create({
+      supabaseId: supaData.user.id,
       role: "manufacturer",
       name,
       email: normalizedEmail,
-      password,
-      authMethod: "credentials",
       phone,
       businessName,
       contactPerson: contactPerson || name,
@@ -102,18 +111,6 @@ export async function POST(request) {
       verificationStatus: "unverified",
       isActive: true,
       isEmailVerified: false,
-    });
-
-    const otp = createNumericCode(6);
-    user.emailOtp = hashToken(otp);
-    user.emailOtpExpires = new Date(Date.now() + 1000 * 60 * 15); // 15 minutes
-    user.otpFailCount = 0;
-    await user.save();
-
-    await sendOtpEmail({
-      to: user.email,
-      name: user.name,
-      otp,
     });
 
     // Create verification document if documents provided

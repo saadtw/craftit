@@ -15,7 +15,7 @@ function VerifyOtpContent() {
   const emailFromQuery = searchParams.get("email") || "";
 
   const [email, setEmail] = useState(emailFromQuery);
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [otp, setOtp] = useState(["", "", "", "", "", "", "", ""]);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
@@ -50,11 +50,11 @@ function VerifyOtpContent() {
   };
 
   const handleOtpChange = (index, value) => {
-    // Accept paste of full 6 digits
-    if (value.length === 6 && /^\d{6}$/.test(value)) {
+    // Accept paste of full 8 digits
+    if (value.length === 8 && /^\d{8}$/.test(value)) {
       const digits = value.split("");
       setOtp(digits);
-      inputRefs.current[5]?.focus();
+      inputRefs.current[7]?.focus();
       return;
     }
 
@@ -63,7 +63,7 @@ function VerifyOtpContent() {
     newOtp[index] = value.slice(-1);
     setOtp(newOtp);
 
-    if (value && index < 5) {
+    if (value && index < 7) {
       inputRefs.current[index + 1]?.focus();
     }
   };
@@ -76,8 +76,8 @@ function VerifyOtpContent() {
 
   const handleVerify = useCallback(async () => {
     const otpString = otp.join("");
-    if (otpString.length !== 6) {
-      setError("Please enter all 6 digits.");
+    if (otpString.length !== 8) {
+      setError("Please enter all 8 digits.");
       return;
     }
     if (!email) {
@@ -106,7 +106,7 @@ function VerifyOtpContent() {
       } else {
         setError(data.message || "Verification failed.");
         if (data.locked) {
-          setOtp(["", "", "", "", "", ""]);
+          setOtp(["", "", "", "", "", "", "", ""]);
         }
       }
     } catch {
@@ -145,7 +145,7 @@ function VerifyOtpContent() {
       } else {
         setResendCooldown(RESEND_COOLDOWN_SECONDS);
         setExpiryCountdown(OTP_EXPIRY_SECONDS);
-        setOtp(["", "", "", "", "", ""]);
+        setOtp(["", "", "", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
         setSuccess("A new code has been sent to your email.");
         setTimeout(() => setSuccess(""), 3000);
@@ -178,7 +178,7 @@ function VerifyOtpContent() {
           </div>
           <h1 className="text-2xl font-bold text-gray-900">Check your email</h1>
           <p className="text-gray-500 mt-2 text-sm">
-            We sent a 6-digit code to{" "}
+            We sent an 8-digit code to{" "}
             <span className="font-medium text-gray-800">
               {email || "your email"}
             </span>
@@ -208,7 +208,7 @@ function VerifyOtpContent() {
               ref={(el) => (inputRefs.current[i] = el)}
               type="text"
               inputMode="numeric"
-              maxLength={6}
+              maxLength={8}
               value={digit}
               onChange={(e) => handleOtpChange(i, e.target.value)}
               onKeyDown={(e) => handleKeyDown(i, e)}
@@ -217,7 +217,7 @@ function VerifyOtpContent() {
                 const pasted = e.clipboardData
                   .getData("text")
                   .replace(/\D/g, "")
-                  .slice(0, 6);
+                  .slice(0, 8);
                 handleOtpChange(i, pasted);
               }}
               className="w-12 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
@@ -238,7 +238,7 @@ function VerifyOtpContent() {
 
         <button
           onClick={handleVerify}
-          disabled={loading || otp.join("").length !== 6}
+          disabled={loading || otp.join("").length !== 8}
           className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? "Verifying..." : "Verify Email"}

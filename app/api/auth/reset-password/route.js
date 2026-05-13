@@ -1,17 +1,15 @@
 import { NextResponse } from "next/server";
-import crypto from "crypto";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
+import { supabaseAdmin } from "@/lib/supabase";
 
 // POST /api/auth/reset-password
-// Validates token and updates password.
+// Receives the access_token from Supabase's reset link + new password.
 export async function POST(request) {
   try {
-    await connectDB();
+    const { access_token, password, confirmPassword } = await request.json();
 
-    const { token, password, confirmPassword } = await request.json();
-
-    if (!token || !password || !confirmPassword) {
+    if (!access_token || !password || !confirmPassword) {
       return NextResponse.json(
         {
           success: false,
@@ -35,25 +33,37 @@ export async function POST(request) {
       );
     }
 
-    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    // 1. Verify the access token to identify the user
+    const { data: userData, error: userError } =
+      await supabaseAdmin.auth.getUser(access_token);
 
-    const user = await User.findOne({
-      passwordResetToken: hashedToken,
-      passwordResetExpires: { $gt: new Date() },
-    }).select("+passwordResetToken +passwordResetExpires");
-
-    if (!user) {
+    if (userError || !userData?.user) {
       return NextResponse.json(
         { success: false, message: "Reset link is invalid or has expired" },
         { status: 400 },
       );
     }
 
-    user.password = password;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpires = undefined;
-    user.sessionVersion = (user.sessionVersion || 0) + 1;
-    await user.save();
+    // 2. Update the password in Supabase
+    const { error: updateError } =
+      await supabaseAdmin.auth.admin.updateUserById(userData.user.id, {
+        password,
+      });
+
+    if (updateError) {
+      console.error("Supabase password update error:", updateError);
+      return NextResponse.json(
+        { success: false, message: "Unable to reset password" },
+        { status: 500 },
+      );
+    }
+
+    // 3. Increment sessionVersion in MongoDB to invalidate old sessions
+    await connectDB();
+    await User.findOneAndUpdate(
+      { supabaseId: userData.user.id },
+      { $inc: { sessionVersion: 1 } },
+    );
 
     return NextResponse.json({
       success: true,

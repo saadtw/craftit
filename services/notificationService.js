@@ -1,7 +1,6 @@
 import connectDB from "@/lib/mongodb";
 import Notification from "@/models/Notification";
 import User from "@/models/User";
-import { sendTransactionalNotificationEmail } from "@/lib/email";
 
 /**
  * Central helper to create notifications.
@@ -41,18 +40,8 @@ export async function createNotification({
       "email name emailNotifications isEmailVerified",
     );
 
-    if (user?.email && user.emailNotifications && user.isEmailVerified) {
-      await sendTransactionalNotificationEmail({
-        to: user.email,
-        subject: `[Craftit] ${title}`,
-        title,
-        message,
-        link,
-      });
-
-      notification.emailSentAt = new Date();
-      await notification.save();
-    }
+    // Email notification logic has been removed as part of the migration away from Nodemailer.
+    // In-app notifications are still saved below.
   } catch (err) {
     // Never let a notification failure break the calling flow
     console.error("Failed to create notification:", err.message);

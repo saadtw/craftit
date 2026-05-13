@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
-import bcrypt from "bcryptjs";
+import { supabaseAdmin } from "@/lib/supabase";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
 // POST /api/auth/change-password — change password for logged-in user
@@ -22,10 +20,7 @@ export async function POST(request) {
 
     if (!newPassword) {
       return NextResponse.json(
-        {
-          success: false,
-          error: "New password is required",
-        },
+        { success: false, error: "New password is required" },
         { status: 400 },
       );
     }
@@ -39,33 +34,22 @@ export async function POST(request) {
 
     await connectDB();
 
-    // Fetch with password field explicitly selected
-    const user = await User.findById(session.user.id).select(
-      "+password authMethod oauthProviders",
-    );
-
-    if (!user) {
+    const user = await User.findById(session.user.id).select("supabaseId");
+    if (!user || !user.supabaseId) {
       return NextResponse.json(
         { success: false, error: "User not found" },
         { status: 404 },
       );
     }
 
-    const hasLocalPassword = Boolean(user.password);
+    // Verify current password by attempting a sign-in against Supabase
+    if (currentPassword) {
+      const { error: signInErr } = await supabaseAdmin.auth.signInWithPassword({
+        email: session.user.email,
+        password: currentPassword,
+      });
 
-    if (hasLocalPassword) {
-      if (!currentPassword) {
-        return NextResponse.json(
-          {
-            success: false,
-            error: "Current password is required to change your password",
-          },
-          { status: 400 },
-        );
-      }
-
-      const isMatch = await bcrypt.compare(currentPassword, user.password);
-      if (!isMatch) {
+      if (signInErr) {
         return NextResponse.json(
           { success: false, error: "Current password is incorrect" },
           { status: 400 },
@@ -73,15 +57,19 @@ export async function POST(request) {
       }
     }
 
-    // Hash and save new password
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
-    // Mark modified so the pre-save hook does NOT re-hash (we already hashed)
-    user.markModified("password");
-    // Bypass the pre-save hook by using direct save with a flag
-    await User.findByIdAndUpdate(user._id, {
-      $set: { password: user.password },
-    });
+    // Update password in Supabase
+    const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(
+      user.supabaseId,
+      { password: newPassword },
+    );
+
+    if (updateErr) {
+      console.error("Supabase password update error:", updateErr);
+      return NextResponse.json(
+        { success: false, error: "Password update failed" },
+        { status: 500 },
+      );
+    }
 
     return NextResponse.json({
       success: true,

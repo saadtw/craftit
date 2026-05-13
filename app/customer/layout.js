@@ -7,9 +7,5 @@ import { redirect } from "next/navigation";
 export default async function CustomerLayout({ children }) {
   const session = await getServerSession(authOptions);
 
-  if (session?.user?.requiresPasswordSetup) {
-    redirect("/auth/set-password");
-  }
-
   return <CustomerShell>{children}</CustomerShell>;
 }

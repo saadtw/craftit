@@ -1,15 +1,10 @@
 import { NextResponse } from "next/server";
-import connectDB from "@/lib/mongodb";
-import User from "@/models/User";
-import { createRawToken, hashToken } from "@/lib/token";
-import { sendPasswordResetEmail } from "@/lib/email";
+import { supabaseAdmin } from "@/lib/supabase";
 
 // POST /api/auth/forgot-password
-// Generates a short-lived reset token. In production this should be emailed.
+// Triggers Supabase to send a password reset email
 export async function POST(request) {
   try {
-    await connectDB();
-
     const { email } = await request.json();
 
     if (!email) {
@@ -19,30 +14,20 @@ export async function POST(request) {
       );
     }
 
-    const user = await User.findOne({ email: email.toLowerCase().trim() });
+    // Supabase sends the reset email automatically
+    const { error } = await supabaseAdmin.auth.resetPasswordForEmail(
+      email.toLowerCase().trim(),
+      {
+        redirectTo: `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/auth/reset-password`,
+      },
+    );
 
-    // Always return a generic success response to avoid email enumeration.
-    if (!user) {
-      return NextResponse.json({
-        success: true,
-        message:
-          "If an account with that email exists, a reset link has been generated.",
-      });
+    if (error) {
+      console.error("Supabase forgot-password error:", error);
+      // Don't reveal if the email exists or not
     }
 
-    const rawToken = createRawToken(32);
-    const hashedToken = hashToken(rawToken);
-
-    user.passwordResetToken = hashedToken;
-    user.passwordResetExpires = new Date(Date.now() + 1000 * 60 * 30); // 30 minutes
-    await user.save();
-
-    await sendPasswordResetEmail({
-      to: user.email,
-      name: user.name,
-      token: rawToken,
-    });
-
+    // Always return a generic success response to avoid email enumeration.
     return NextResponse.json({
       success: true,
       message:

@@ -302,8 +302,6 @@ function PaymentMethodsTab({ user }) {
 // ─── SECURITY TAB ─────────────────────────────────────────────────────────────
 function SecurityTab({ user }) {
   const hasLocalPassword = Boolean(user?.hasLocalPassword);
-  const isOAuthUser =
-    user?.authMethod === "oauth" || user?.oauthProviders?.length > 0;
 
   const [form, setForm] = useState({
     currentPassword: "",

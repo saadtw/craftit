@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
-import { hashToken } from "@/lib/token";
+import { supabaseAdmin } from "@/lib/supabase";
 
+// POST /api/auth/verify-email
+// Body: { token } — link-based verification (Supabase handles this via redirect,
+// but we keep this endpoint for backwards compatibility)
 export async function POST(request) {
   try {
-    await connectDB();
-
     const { token } = await request.json();
     if (!token) {
       return NextResponse.json(
@@ -15,27 +16,35 @@ export async function POST(request) {
       );
     }
 
-    const hashedToken = hashToken(token);
+    // For Supabase link-based verification, the token is exchanged automatically.
+    // This endpoint syncs the MongoDB side if called after Supabase confirms.
+    // If a valid Supabase access token is passed, we can verify the user.
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
 
-    const user = await User.findOne({
-      emailVerificationToken: hashedToken,
-      emailVerificationExpires: { $gt: new Date() },
-    }).select(
-      "+emailVerificationToken +emailVerificationExpires isEmailVerified",
-    );
-
-    if (!user) {
+    if (error || !data?.user) {
       return NextResponse.json(
         { success: false, message: "Verification link is invalid or expired" },
         { status: 400 },
       );
     }
 
-    user.isEmailVerified = true;
-    user.emailVerifiedAt = new Date();
-    user.emailVerificationToken = undefined;
-    user.emailVerificationExpires = undefined;
-    await user.save();
+    if (!data.user.email_confirmed_at) {
+      return NextResponse.json(
+        { success: false, message: "Email has not been confirmed yet" },
+        { status: 400 },
+      );
+    }
+
+    await connectDB();
+    const user = await User.findOne({
+      email: data.user.email.toLowerCase().trim(),
+    });
+
+    if (user && !user.isEmailVerified) {
+      user.isEmailVerified = true;
+      user.emailVerifiedAt = new Date(data.user.email_confirmed_at);
+      await user.save();
+    }
 
     return NextResponse.json({
       success: true,

@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
-import bcrypt from "bcryptjs";
+import { supabaseAdmin } from "@/lib/supabase";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
 // POST /api/auth/oauth/set-password
-// Sets a real password for a Google OAuth customer who has requiresPasswordSetup = true.
+// Sets a password in Supabase for a Google OAuth user who doesn't have one yet.
 // Body: { password: string }
 export async function POST(request) {
   try {
@@ -14,13 +14,6 @@ export async function POST(request) {
 
     if (!session || session.user.role !== "customer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    if (!session.user.requiresPasswordSetup) {
-      return NextResponse.json(
-        { error: "Password is already set for this account" },
-        { status: 400 },
-      );
     }
 
     const body = await request.json();
@@ -35,12 +28,25 @@ export async function POST(request) {
 
     await connectDB();
 
-    const hashedPassword = await bcrypt.hash(password, 12);
+    const user = await User.findById(session.user.id).select("supabaseId");
+    if (!user || !user.supabaseId) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
 
-    await User.findByIdAndUpdate(session.user.id, {
-      password: hashedPassword,
-      requiresPasswordSetup: false,
-      $inc: { sessionVersion: 1 }, // invalidates existing sessions
+    // Set the password in Supabase
+    const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(
+      user.supabaseId,
+      { password },
+    );
+
+    if (updateErr) {
+      console.error("Supabase set-password error:", updateErr);
+      return NextResponse.json({ error: "Server error" }, { status: 500 });
+    }
+
+    // Increment session version to force re-login
+    await User.findByIdAndUpdate(user._id, {
+      $inc: { sessionVersion: 1 },
     });
 
     return NextResponse.json({
