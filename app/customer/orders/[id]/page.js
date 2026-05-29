@@ -9,6 +9,7 @@ import Link from "next/link";
 import ChatBox from "@/components/chat/ChatBox";
 import { getTrackingUrl } from "@/lib/carriers";
 import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const STATUS_COLORS = {
   pending_acceptance:
@@ -29,6 +30,7 @@ function CustomerOrderDetailPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
+  const toast = useToast();
 
   const [order, setOrder] = useState(null);
   const [paymentReleases, setPaymentReleases] = useState([]);
@@ -63,8 +65,7 @@ function CustomerOrderDetailPageContent() {
         setPaymentSchedule(data.paymentSchedule || null);
         if (data.order.reviewed) setReviewSubmitted(true);
       } else {
-        alert(data.error || "Failed to load order");
-      }
+        }
     } catch (err) {
       console.error(err);
     } finally {
@@ -104,14 +105,14 @@ function CustomerOrderDetailPageContent() {
         setCancelReason("");
 
         if (data.requiresConfirmation) {
-          alert(
+          toast.error(
             "Cancellation request sent to manufacturer. They have up to 72 hours to respond.",
           );
         } else {
-          alert("Order cancelled. A full refund will be processed.");
+          toast.success("Order cancelled. A full refund will be processed.");
         }
       } else {
-        alert(data.error || "Failed to cancel order");
+        toast.error(data.error || "Failed to cancel order");
 
         if (data.requiresDispute) {
           const openDispute = confirm(
@@ -124,7 +125,7 @@ function CustomerOrderDetailPageContent() {
       }
     } catch (err) {
       console.error(err);
-      alert("Error processing cancellation request");
+      toast.error("Error processing cancellation request");
     } finally {
       setActionLoading(false);
     }
@@ -132,7 +133,7 @@ function CustomerOrderDetailPageContent() {
 
   const handleSubmitReview = async () => {
     if (reviewForm.overallRating === 0) {
-      alert("Please provide an overall rating.");
+      toast.error("Please provide an overall rating.");
       return;
     }
     setActionLoading(true);
@@ -148,10 +149,10 @@ function CustomerOrderDetailPageContent() {
         setShowReviewModal(false);
         setOrder((prev) => ({ ...prev, reviewed: true }));
       } else {
-        alert(data.error || "Failed to submit review");
+        toast.error(data.error || "Failed to submit review");
       }
     } catch (err) {
-      alert("Error submitting review");
+      toast.error("Error submitting review");
     } finally {
       setActionLoading(false);
     }
@@ -168,12 +169,12 @@ function CustomerOrderDetailPageContent() {
       const data = await res.json();
       if (data.success) {
         await fetchOrder();
-        alert(`Payment release ${action}ed successfully.`);
+        toast.success(`Payment release ${action}ed successfully`);
       } else {
-        alert(data.error || "Failed to process payment release");
+        toast.error(data.error || "Failed to process payment release");
       }
     } catch (err) {
-      alert("Error processing payment release");
+      toast.error("Error processing payment release");
     } finally {
       setActionLoading(false);
     }
@@ -190,12 +191,12 @@ function CustomerOrderDetailPageContent() {
       const data = await res.json();
       if (data.success) {
         await fetchOrder();
-        alert("Production acknowledged! Manufacturer has been notified.");
+        toast.success("Production acknowledged! Manufacturer has been notified.");
       } else {
-        alert(data.error || "Failed to acknowledge production");
+        toast.error(data.error || "Failed to acknowledge production");
       }
     } catch (err) {
-      alert("Error acknowledging production");
+      toast.error("Error acknowledging production");
     } finally {
       setActionLoading(false);
     }
@@ -215,12 +216,12 @@ function CustomerOrderDetailPageContent() {
       const data = await res.json();
       if (data.success) {
         await fetchOrder();
-        alert(confirm ? "Milestone confirmed!" : "Milestone disputed. Please contact support.");
+        toast.error(confirm ? "Milestone confirmed!" : "Milestone disputed. Please contact support.");
       } else {
-        alert(data.error || "Failed to update milestone status");
+        toast.error(data.error || "Failed to update milestone status");
       }
     } catch (err) {
-      alert("Error updating milestone");
+      toast.error("Error updating milestone");
     } finally {
       setActionLoading(false);
     }

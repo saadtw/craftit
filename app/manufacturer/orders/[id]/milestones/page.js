@@ -5,6 +5,7 @@ import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useToast } from "@/components/ui/ToastProvider";
 import Link from "next/link";
 
 const MILESTONE_STATUS_COLORS = {
@@ -16,6 +17,7 @@ const MILESTONE_STATUS_COLORS = {
 export default function MilestonesManagementPage() {
   const { id } = useParams();
   const router = useRouter();
+  const toast = useToast();
   const { data: session, status } = useSession();
 
   const [order, setOrder] = useState(null);
@@ -106,10 +108,10 @@ export default function MilestonesManagementPage() {
         }));
         setUpdateNotes((prev) => ({ ...prev, [milestoneId]: "" }));
       } else {
-        alert(data.error || "Failed to update");
+        toast.error(data.error || "Failed to update");
       }
     } catch (err) {
-      alert("Error updating milestone");
+      toast.error("Error updating milestone");
     } finally {
       setSaving(false);
     }

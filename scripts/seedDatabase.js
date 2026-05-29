@@ -3,6 +3,7 @@
 
 import mongoose from "mongoose";
 import { faker } from "@faker-js/faker";
+import { supabaseAdmin } from "../lib/supabase.js";
 
 // Import all models
 import User from "../models/User.js";
@@ -66,6 +67,42 @@ const randomSubset = (arr, min = 1, max = 3) => {
 };
 const randomBool = (probability = 0.5) => Math.random() < probability;
 const randomInt = (min, max) => faker.number.int({ min, max });
+
+// ============================================================================
+// SUPABASE HELPERS
+// ============================================================================
+async function clearSupabaseUsers() {
+  console.log("Clearing Supabase Auth users...");
+  let hasMore = true;
+  let page = 1;
+  let count = 0;
+  while (hasMore) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error || !data.users || data.users.length === 0) {
+      hasMore = false;
+      break;
+    }
+    for (const user of data.users) {
+      await supabaseAdmin.auth.admin.deleteUser(user.id);
+      count++;
+    }
+    page++;
+  }
+  console.log(`✓ Cleared ${count} Supabase Auth users`);
+}
+
+async function createSupabaseUser(email, password, name, role) {
+  const { data, error } = await supabaseAdmin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { name, role },
+  });
+  if (error) {
+    throw new Error(`Failed to create Supabase user ${email}: ${error.message}`);
+  }
+  return data.user.id;
+}
 
 // ============================================================================
 // DATA POOLS
@@ -237,9 +274,15 @@ async function createFixedAccounts() {
   console.log("Creating fixed accounts...");
 
   // Admin
+  const adminSupaId = await createSupabaseUser(
+    FIXED.admin.email,
+    FIXED.admin.password,
+    "Super Admin",
+    "admin"
+  );
   const admin = await User.create({
+    supabaseId: adminSupaId,
     email: FIXED.admin.email,
-    password: FIXED.admin.password,
     role: "admin",
     name: "Super Admin",
     phone: "+92 300 0000000",
@@ -251,9 +294,15 @@ async function createFixedAccounts() {
   });
 
   // Fixed Customer
+  const customerSupaId = await createSupabaseUser(
+    FIXED.customer.email,
+    FIXED.customer.password,
+    "Ahmed Khan",
+    "customer"
+  );
   const customer = await User.create({
+    supabaseId: customerSupaId,
     email: FIXED.customer.email,
-    password: FIXED.customer.password,
     role: "customer",
     name: "Ahmed Khan",
     phone: "+92 321 1234567",
@@ -302,9 +351,15 @@ async function createFixedAccounts() {
   });
 
   // Fixed Manufacturer
+  const mfgSupaId = await createSupabaseUser(
+    FIXED.manufacturer.email,
+    FIXED.manufacturer.password,
+    "Ali Ahmed",
+    "manufacturer"
+  );
   const manufacturer = await User.create({
+    supabaseId: mfgSupaId,
     email: FIXED.manufacturer.email,
-    password: FIXED.manufacturer.password,
     role: "manufacturer",
     name: "Usman Tariq",
     phone: "+92 333 9876543",
@@ -370,12 +425,25 @@ async function createExtraUsers(fixedAdmin) {
   const manufacturers = [];
 
   for (let i = 0; i < CONFIG.EXTRA_CUSTOMERS; i++) {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    const email = faker.internet.email({ firstName, lastName }).toLowerCase();
+    const password = "Password123!";
+    
+    let supaId;
+    try {
+      supaId = await createSupabaseUser(email, password, `${firstName} ${lastName}`, "customer");
+    } catch (err) {
+      console.log(`Skipping customer ${email}: ${err.message}`);
+      continue;
+    }
+
     const location = randomItem(pakistanCities);
     const customer = await User.create({
-      email: faker.internet.email().toLowerCase(),
-      password: "Customer123!",
+      supabaseId: supaId,
+      email,
       role: "customer",
-      name: faker.person.fullName(),
+      name: `${firstName} ${lastName}`,
       phone: faker.phone.number("+92 3## #######"),
       profilePicture: avatarUrl(faker.string.alphanumeric(10)),
       location: {
@@ -394,7 +462,7 @@ async function createExtraUsers(fixedAdmin) {
       savedAddresses: [
         {
           label: "Home",
-          name: faker.person.fullName(),
+          name: `${firstName} ${lastName}`,
           street: faker.location.streetAddress(),
           city: location.city,
           state: location.state,
@@ -416,18 +484,31 @@ async function createExtraUsers(fixedAdmin) {
   }
 
   for (let i = 0; i < CONFIG.EXTRA_MANUFACTURERS; i++) {
+    const firstName = faker.person.firstName();
+    const lastName = faker.person.lastName();
+    const email = faker.internet.email({ firstName, lastName }).toLowerCase();
+    const password = "Password123!";
+    
+    let supaId;
+    try {
+      supaId = await createSupabaseUser(email, password, `${firstName} ${lastName}`, "manufacturer");
+    } catch (err) {
+      console.log(`Skipping manufacturer ${email}: ${err.message}`);
+      continue;
+    }
+
     const location = randomItem(pakistanCities);
     const isVerified = randomBool(0.8);
     const bizName = faker.company.name();
     const manufacturer = await User.create({
-      email: faker.internet.email().toLowerCase(),
-      password: "Manufacturer123!",
+      supabaseId: supaId,
+      email,
       role: "manufacturer",
-      name: faker.person.fullName(),
+      name: `${firstName} ${lastName}`,
       phone: faker.phone.number("+92 3## #######"),
       profilePicture: avatarUrl(faker.string.alphanumeric(10)),
       businessName: bizName,
-      contactPerson: faker.person.fullName(),
+      contactPerson: `${firstName} ${lastName}`,
       businessEmail: faker.internet.email().toLowerCase(),
       businessPhone: faker.phone.number("+92 4# #######"),
       businessType: randomItem(businessTypes),
@@ -3603,6 +3684,10 @@ async function seedDatabase() {
       SupportTicketMessage.deleteMany({}),
     ]);
     console.log("✓ Cleared existing data\n");
+
+    // Clear Supabase Users
+    await clearSupabaseUsers();
+    console.log("");
 
     // ── STEP 1: Fixed accounts ──────────────────────────────────────────────
     const {

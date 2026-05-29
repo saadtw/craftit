@@ -8,12 +8,14 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchWithCache } from "@/lib/clientCache";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function CustomerProductDetailPage() {
   const { id } = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const toast = useToast();
 
   const [product, setProduct] = useState(null);
   const [manufacturer, setManufacturer] = useState(null);
@@ -160,10 +162,10 @@ export default function CustomerProductDetailPage() {
         setQaItems((prev) => [data.question, ...prev]);
         setQaQuestion("");
       } else {
-        alert(data.error || "Failed to submit question");
+        toast.error(data.error || "Failed to submit question");
       }
     } catch (_) {
-      alert("Failed to submit question");
+      toast.error("Failed to submit question");
     } finally {
       setQaSubmitting(false);
     }
@@ -465,33 +467,13 @@ export default function CustomerProductDetailPage() {
 
             {product.model3D?.url && (
               <Card title="3D Model">
-                <div className="overflow-hidden rounded-[20px] border border-white/8 bg-[#0c0c11]">
-                  <Editor3DWrapper
+                <div className="overflow-hidden rounded-[20px] border border-white/8 bg-[#0c0c11] aspect-video">
+                  <ModelViewerPreview
                     modelUrl={product.model3D.url}
-                    initialAnnotations={product.model3D.annotations}
-                    initialCameraState={product.model3D.cameraState}
-                    readOnly={true}
+                    annotations={product.model3D.annotations}
+                    measurements={product.model3D.measurements}
+                    height="100%"
                   />
-                  <div className="flex items-center justify-between gap-3 p-4 bg-white/[0.02] border-t border-white/8">
-                    <div className="min-w-0 flex-1">
-                      <p className="truncate text-sm font-bold text-white">
-                        {product.model3D.filename || "3D Model"}
-                      </p>
-                      {product.model3D.fileSize && (
-                        <p className="text-xs text-white/35">
-                          {(product.model3D.fileSize / 1024 / 1024).toFixed(1)} MB
-                        </p>
-                      )}
-                    </div>
-                    <a
-                      href={product.model3D.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-4 py-2 bg-[#eb9728]/10 text-[#eb9728] rounded-xl text-xs font-bold hover:bg-[#eb9728]/20 transition-colors"
-                    >
-                      Download
-                    </a>
-                  </div>
                 </div>
               </Card>
             )}

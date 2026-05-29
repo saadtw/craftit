@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import { normalizeCustomizationTypes } from "@/lib/customization";
@@ -183,10 +181,11 @@ export async function PUT(request, context) {
       updateData.status = "out_of_stock";
     }
 
+    // strict: false ensures Mixed-type annotation fields in model3D are preserved
     const updated = await Product.findByIdAndUpdate(
       id,
       { $set: updateData },
-      { new: true, runValidators: true },
+      { new: true, runValidators: true, strict: false },
     ).lean();
 
     return NextResponse.json({ success: true, product: updated });

@@ -1,5 +1,5 @@
 // ─── Active Tool ─────────────────────────────────────────────────────────────
-// ActiveTool: 'select' | 'tag' | 'measure' | 'paint'
+// ActiveTool: 'select' | 'tag' | 'measure'
 
 // ─── Scale Units ─────────────────────────────────────────────────────────────
 // ScaleUnit: 'mm' | 'cm' | 'm' | 'in' | 'ft' | 'units'

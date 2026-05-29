@@ -1,0 +1,126 @@
+import React from 'react';
+import { useAnnotations } from './AnnotationStore';
+
+const TOOLS = [
+  { id: 'select', icon: 'arrow_selector_tool', label: 'SELECT' },
+  { id: 'tag', icon: 'label', label: 'TAG' },
+  { id: 'measure', icon: 'straighten', label: 'MEASURE' },
+];
+
+const SCALE_OPTIONS = [
+  { value: 'units', label: 'Units' },
+  { value: 'mm', label: 'mm' },
+  { value: 'cm', label: 'cm' },
+  { value: 'm', label: 'm' },
+  { value: 'in', label: 'in' },
+  { value: 'ft', label: 'ft' },
+];
+
+const S = {
+  aside: { width: '200px', flexShrink: 0, background: '#0e0e0e', borderRight: '1px solid rgba(255,255,255,0.06)', display: 'flex', flexDirection: 'column', overflowY: 'auto', padding: '8px 0' },
+  logo: { padding: '0 12px 8px', borderBottom: '1px solid rgba(255,255,255,0.06)', marginBottom: '4px' },
+  logoTitle: { fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 900, letterSpacing: '-0.03em', color: 'white', margin: 0 },
+  logoSub: { fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', color: '#525252', textTransform: 'uppercase', letterSpacing: '0.15em' },
+  sectionLabel: { fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', color: '#525252', textTransform: 'uppercase', letterSpacing: '0.15em', padding: '6px 12px 4px' },
+  toolBtn: (active) => ({ display: 'flex', alignItems: 'center', gap: '8px', width: '100%', padding: '6px 12px', background: active ? 'rgba(255,255,255,0.08)' : 'none', border: 'none', borderLeft: active ? '2px solid white' : '2px solid transparent', color: active ? 'white' : '#737373', cursor: 'pointer', fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', transition: 'all 0.15s', textAlign: 'left' }),
+  divider: { height: '1px', background: 'rgba(255,255,255,0.06)', margin: '6px 0' },
+  statRow: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 12px' },
+  statLabel: { fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', color: '#525252', letterSpacing: '0.08em', textTransform: 'uppercase' },
+  statValue: { fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: 'white', fontWeight: 700 },
+  select: { margin: '2px 12px', padding: '5px 8px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '2px', color: 'white', fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', width: 'calc(100% - 24px)', outline: 'none', cursor: 'pointer' },
+  actionBtn: (variant) => ({ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', width: 'calc(100% - 24px)', margin: '2px 12px', padding: '6px 10px', background: variant === 'primary' ? 'white' : variant === 'danger' ? 'rgba(147,0,10,0.15)' : 'rgba(255,255,255,0.06)', border: variant === 'danger' ? '1px solid rgba(147,0,10,0.3)' : '1px solid rgba(255,255,255,0.08)', borderRadius: '2px', color: variant === 'primary' ? '#0a0a0a' : variant === 'danger' ? '#ffb4ab' : '#a3a3a3', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontSize: '9px', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', transition: 'all 0.15s' }),
+};
+
+export default function Toolbar({ modelUrl, onSave, onCancel, readOnly }) {
+  const { state, dispatch, exportJSON, sceneRef, canUndo, canRedo } = useAnnotations();
+
+  if (readOnly) return null;
+
+  const handleSaveFinish = () => {
+    // We do NOT export a GLB blob — annotations and measurements are pure JSON
+    // metadata, and the parent Next.js app saves them directly to MongoDB.
+    // Decoupling from GLTFExporter means save can never silently fail.
+    if (onSave) {
+      onSave(null, state.tags, state.measurements, null);
+    }
+  };
+
+  const handleClearAll = () => {
+    if (confirm('Clear all tags, measurements, and component marks?')) {
+      dispatch({ type: 'CLEAR_ALL' });
+    }
+  };
+
+  return (
+    <aside style={S.aside}>
+      <div style={S.logo}>
+        <p style={S.logoTitle}>3D_EDITOR</p>
+        <span style={S.logoSub}>Annotation Suite</span>
+      </div>
+
+      <div style={S.sectionLabel}>Active Tool</div>
+      {TOOLS.map((tool) => (
+        <button
+          key={tool.id}
+          id={`tool-${tool.id}`}
+          style={S.toolBtn(state.activeTool === tool.id)}
+          onClick={() => dispatch({ type: 'SET_TOOL', payload: tool.id })}
+          title={tool.label}
+          onMouseEnter={e => { if (state.activeTool !== tool.id) e.currentTarget.style.color = 'white'; }}
+          onMouseLeave={e => { if (state.activeTool !== tool.id) e.currentTarget.style.color = '#737373'; }}
+        >
+          <span className="material-symbols-outlined" style={{ fontSize: '16px' }}>{tool.icon}</span>
+          {tool.label}
+        </button>
+      ))}
+
+      {state.activeTool === 'measure' && (
+        <div style={{ margin: '4px 16px', padding: '8px 10px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '2px' }}>
+          <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '9px', color: '#a3a3a3', margin: 0, letterSpacing: '0.06em', display: 'flex', alignItems: 'center', gap: '5px' }}>
+            <span className="material-symbols-outlined" style={{ fontSize: '12px', color: state.measurePointA ? '#6ee7f7' : '#a3a3a3' }}>pin_drop</span>
+            {state.measurePointA ? 'Click Point B on model' : 'Click Point A on model'}
+          </p>
+        </div>
+      )}
+
+      <div style={S.divider} />
+
+      <div style={S.sectionLabel}>Scale Unit</div>
+      <select id="scaleUnitSelect" style={S.select} value={state.scaleUnit} onChange={(e) => dispatch({ type: 'SET_SCALE', payload: e.target.value })}>
+        {SCALE_OPTIONS.map((opt) => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+      </select>
+
+      <div style={S.divider} />
+
+      <div style={S.sectionLabel}>Viewport</div>
+      <button style={S.actionBtn('secondary')} onClick={() => dispatch({ type: 'TOGGLE_GRID' })}>
+        <span className="material-symbols-outlined" style={{ fontSize: '14px' }}>grid_on</span>
+        {state.showGrid ? 'HIDE_GRID' : 'SHOW_GRID'}
+      </button>
+
+      <div style={S.divider} />
+
+      <div style={S.sectionLabel}>Scene Stats</div>
+      {[
+        { label: 'Tags', value: state.tags.length, icon: 'label' },
+        { label: 'Dims', value: state.measurements.length, icon: 'straighten' },
+      ].map(s => (
+        <div key={s.label} style={S.statRow}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}><span className="material-symbols-outlined" style={{ fontSize: '12px', color: '#525252' }}>{s.icon}</span><span style={S.statLabel}>{s.label}</span></div>
+          <span style={S.statValue}>{s.value}</span>
+        </div>
+      ))}
+
+      <div style={{ flex: 1 }} />
+      <div style={S.divider} />
+
+      <div style={{ display: 'flex', gap: '4px', padding: '0 12px', marginBottom: '2px' }}>
+        <button id="undoBtn" title="Undo" disabled={!canUndo} onClick={() => dispatch({ type: 'UNDO' })} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '6px 4px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '2px', color: canUndo ? '#a3a3a3' : '#333', cursor: canUndo ? 'pointer' : 'not-allowed', fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', fontWeight: 700, opacity: canUndo ? 1 : 0.3 }}><span className="material-symbols-outlined" style={{ fontSize: '12px' }}>undo</span>UNDO</button>
+        <button id="redoBtn" title="Redo" disabled={!canRedo} onClick={() => dispatch({ type: 'REDO' })} style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', padding: '6px 4px', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '2px', color: canRedo ? '#a3a3a3' : '#333', cursor: canRedo ? 'pointer' : 'not-allowed', fontFamily: "'JetBrains Mono', monospace", fontSize: '8px', fontWeight: 700, opacity: canRedo ? 1 : 0.3 }}><span className="material-symbols-outlined" style={{ fontSize: '12px' }}>redo</span>REDO</button>
+      </div>
+      <button id="clearAllBtn" style={S.actionBtn('danger')} onClick={handleClearAll}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>delete_sweep</span>CLEAR_ALL</button>
+      <button id="cancelBtn" style={S.actionBtn('secondary')} onClick={onCancel}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>close</span>CANCEL</button>
+      <button id="saveFinishBtn" style={{ ...S.actionBtn('primary'), marginTop: '4px' }} onClick={handleSaveFinish}><span className="material-symbols-outlined" style={{ fontSize: '14px' }}>check</span>SAVE_&_FINISH</button>
+    </aside>
+  );
+}

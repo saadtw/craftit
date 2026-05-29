@@ -1,21 +1,11 @@
 import { NextResponse } from "next/server";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import { uploadToStorage } from "@/lib/storage";
 
-const s3Client = new S3Client({
-  region: process.env.AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-  },
-});
-
-// POST /api/upload/multiple - Handle multiple file uploads to S3
+// POST /api/upload/multiple — upload multiple files to Supabase Storage
 export async function POST(request) {
   try {
-    // Check authentication
+    // Authentication
     const session = await resolveRequestSession(request);
     if (!session) {
       return NextResponse.json(
@@ -46,29 +36,17 @@ export async function POST(request) {
         const timestamp = Date.now();
         const random = Math.random().toString(36).substring(7);
         const sanitizedName = file.name.replace(/\s+/g, "-");
-        const uniqueFileName = `${folder}/${timestamp}-${random}-${sanitizedName}`;
+        const storagePath = `${folder}/${timestamp}-${random}-${sanitizedName}`;
 
-        const command = new PutObjectCommand({
-          Bucket: process.env.AWS_BUCKET_NAME,
-          Key: uniqueFileName,
-          Body: buffer,
-          ContentType: file.type,
-        });
-
-        await s3Client.send(command);
-
-        const fileUrl = `https://${process.env.AWS_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${uniqueFileName}`;
+        const publicUrl = await uploadToStorage(buffer, storagePath, file.type);
 
         uploadedFiles.push({
-          url: fileUrl,
+          url: publicUrl,
           filename: file.name,
           fileSize: file.size,
         });
       } catch (error) {
-        errors.push({
-          filename: file.name,
-          error: error.message,
-        });
+        errors.push({ filename: file.name, error: error.message });
       }
     }
 
@@ -79,7 +57,7 @@ export async function POST(request) {
       errors: errors.length > 0 ? errors : undefined,
     });
   } catch (error) {
-    console.error("Upload error:", error);
+    console.error("[Upload/Multiple] Error:", error);
     return NextResponse.json(
       { success: false, error: error.message },
       { status: 500 },

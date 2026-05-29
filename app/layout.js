@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import SessionProvider from "./SessionProvider";
 import ScrollSkin from "@/components/ScrollSkin";
+import { ToastProvider } from "@/components/ui/ToastProvider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -41,10 +42,12 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionProvider>
-          <Suspense fallback={null}>
-            <ScrollSkin />
-          </Suspense>
-          {children}
+          <ToastProvider>
+            <Suspense fallback={null}>
+              <ScrollSkin />
+            </Suspense>
+            {children}
+          </ToastProvider>
         </SessionProvider>
       </body>
     </html>

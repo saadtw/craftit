@@ -12,9 +12,11 @@ import buyerIcon from "@/assets/Buyer.png";
 import sellerIcon from "@/assets/Seller.png";
 import documentIcon from "@/assets/document.png";
 import ChatBox from "@/components/chat/ChatBox";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function AdminDisputeDetailPage() {
   const { data: session, status } = useSession();
+  const toast = useToast();
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
@@ -57,11 +59,11 @@ export default function AdminDisputeDetailPage() {
 
   const handleResolve = async () => {
     if (!resolutionMessage.trim()) {
-      alert("Resolution message is required.");
+      toast.error("Resolution message is required.");
       return;
     }
     if (resolution === "refund_customer" && !refundAmount) {
-      alert("Please enter the refund amount.");
+      toast.error("Please enter the refund amount.");
       return;
     }
 
@@ -88,12 +90,12 @@ export default function AdminDisputeDetailPage() {
       const data = await res.json();
       if (data.success) {
         await fetchDispute();
-        alert("Dispute resolved successfully.");
+        toast.success("Dispute resolved successfully.");
       } else {
-        alert("Error: " + data.error);
+        toast.error("Error: " + data.error);
       }
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setResolving(false);
     }
@@ -531,11 +533,11 @@ export default function AdminDisputeDetailPage() {
 
 //   const handleResolve = async () => {
 //     if (!resolutionMessage.trim()) {
-//       alert("Resolution message is required.");
+//       toast.error("Resolution message is required.");
 //       return;
 //     }
 //     if (resolution === "refund_customer" && !refundAmount) {
-//       alert("Please enter the refund amount.");
+//       toast.error("Please enter the refund amount.");
 //       return;
 //     }
 
@@ -562,12 +564,12 @@ export default function AdminDisputeDetailPage() {
 //       const data = await res.json();
 //       if (data.success) {
 //         await fetchDispute();
-//         alert("Dispute resolved successfully.");
+//         toast.success("Dispute resolved successfully.");
 //       } else {
-//         alert("Error: " + data.error);
+//         toast.error("Error: " + data.error);
 //       }
 //     } catch (err) {
-//       alert("Error: " + err.message);
+//       toast.error("Error: " + err.message);
 //     } finally {
 //       setResolving(false);
 //     }

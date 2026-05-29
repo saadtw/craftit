@@ -5,9 +5,11 @@ import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function EditGroupBuyPage() {
   const { data: session, status } = useSession();
+  const toast = useToast();
   const router = useRouter();
   const { id } = useParams();
 
@@ -172,10 +174,10 @@ export default function EditGroupBuyPage() {
       if (data.success) {
         router.push(`/manufacturer/group-buys/${id}`);
       } else {
-        alert(data.error || "Failed to save");
+        toast.error(data.error || "Failed to save");
       }
     } catch (_) {
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     }
     setSaving(false);
   };

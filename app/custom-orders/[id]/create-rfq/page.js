@@ -6,11 +6,13 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function CreateRFQ() {
   const router = useRouter();
   const params = useParams();
   const { data: session, status } = useSession();
+  const toast = useToast();
   const [customOrder, setCustomOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [manufacturers, setManufacturers] = useState([]);
@@ -62,7 +64,7 @@ export default function CreateRFQ() {
       const data = await response.json();
       if (data.success && data.order) {
         if (data.order.rfqId) {
-          alert(
+          toast.error(
             "RFQ already created for this order. Redirecting to RFQ details...",
           );
           router.push(
@@ -82,11 +84,9 @@ export default function CreateRFQ() {
           }));
         }
       } else {
-        alert("Error loading order: " + (data.error || "Unknown error"));
-      }
+        }
     } catch (error) {
-      alert("Error loading order: " + error.message);
-    } finally {
+      } finally {
       setLoading(false);
     }
   }, [params.id, router]);
@@ -109,10 +109,10 @@ export default function CreateRFQ() {
           Array.isArray(data.manufacturers) ? data.manufacturers : [],
         );
       } else {
-        alert(data.error || "Failed to load manufacturers");
+        toast.error(data.error || "Failed to load manufacturers");
       }
     } catch (error) {
-      alert("Error loading manufacturers: " + error.message);
+      toast.error("Error loading manufacturers: " + error.message);
     } finally {
       setManufacturersLoading(false);
     }
@@ -172,7 +172,7 @@ export default function CreateRFQ() {
           ];
 
       if (!formData.broadcastToAll && finalTargetManufacturers.length === 0) {
-        alert("Please select at least one manufacturer for a targeted RFQ.");
+        toast.error("Please select at least one manufacturer for a targeted RFQ.");
         setLoading(false);
         return;
       }
@@ -193,13 +193,12 @@ export default function CreateRFQ() {
 
       const data = await response.json();
       if (data.success) {
-        alert("RFQ created successfully!");
         router.push(`/customer/rfqs/${data.rfq._id}`);
       } else {
-        alert("Error: " + data.error);
+        toast.error("Error: " + data.error);
       }
     } catch (error) {
-      alert("Error: " + error.message);
+      toast.error("Error: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -648,7 +647,7 @@ export default function CreateRFQ() {
 //       if (data.success && data.order) {
 //         // Check if RFQ already exists
 //         if (data.order.rfqId) {
-//           alert(
+//           toast.error(
 //             "RFQ already created for this order. Redirecting to RFQ details...",
 //           );
 //           router.push(
@@ -670,11 +669,9 @@ export default function CreateRFQ() {
 //           }));
 //         }
 //       } else {
-//         alert("Error loading order: " + (data.error || "Unknown error"));
-//       }
+//         //       }
 //     } catch (error) {
-//       alert("Error loading order: " + error.message);
-//     } finally {
+//       //     } finally {
 //       setLoading(false);
 //     }
 //   }, [params.id, router]);
@@ -702,10 +699,10 @@ export default function CreateRFQ() {
 //           Array.isArray(data.manufacturers) ? data.manufacturers : [],
 //         );
 //       } else {
-//         alert(data.error || "Failed to load manufacturers");
+//         toast.error(data.error || "Failed to load manufacturers");
 //       }
 //     } catch (error) {
-//       alert("Error loading manufacturers: " + error.message);
+//       toast.error("Error loading manufacturers: " + error.message);
 //     } finally {
 //       setManufacturersLoading(false);
 //     }
@@ -773,7 +770,7 @@ export default function CreateRFQ() {
 //           ];
 
 //       if (!formData.broadcastToAll && finalTargetManufacturers.length === 0) {
-//         alert("Please select at least one manufacturer for a targeted RFQ.");
+//         toast.error("Please select at least one manufacturer for a targeted RFQ.");
 //         setLoading(false);
 //         return;
 //       }
@@ -797,13 +794,12 @@ export default function CreateRFQ() {
 //       const data = await response.json();
 
 //       if (data.success) {
-//         alert("RFQ created successfully!");
-//         router.push(`/customer/rfqs/${data.rfq._id}`);
+//         //         router.push(`/customer/rfqs/${data.rfq._id}`);
 //       } else {
-//         alert("Error: " + data.error);
+//         toast.error("Error: " + data.error);
 //       }
 //     } catch (error) {
-//       alert("Error: " + error.message);
+//       toast.error("Error: " + error.message);
 //     } finally {
 //       setLoading(false);
 //     }

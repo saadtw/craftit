@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useToast } from "@/components/ui/ToastProvider";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -62,6 +63,7 @@ const COLORS_PRESETS = [
 ];
 
 export default function EditProductPage() {
+  const toast = useToast();
   const { data: session, status } = useSession();
   const router = useRouter();
   const params = useParams();
@@ -78,10 +80,43 @@ export default function EditProductPage() {
   const [errors, setErrors] = useState({});
   const [lastSaved, setLastSaved] = useState(null);
   const [showRestockNotice, setShowRestockNotice] = useState(false);
+  // True when we restored form state from sessionStorage (skip server fetch)
+  const [skipServerFetch, setSkipServerFetch] = useState(false);
 
   const imageInputRef = useRef();
   const modelInputRef = useRef();
 
+  // ── Effect 1: Restore from sessionStorage on first mount only ──────────────
+  // Runs with empty deps so it executes EXACTLY ONCE. If the user navigated
+  // back from the model-editor, draftProductForm + draftModel3D will be present.
+  useEffect(() => {
+    const rawForm = sessionStorage.getItem("draftProductForm");
+    if (!rawForm) return; // nothing to restore
+    try {
+      const parsed = JSON.parse(rawForm);
+      if (parsed.form) setForm(parsed.form);
+      if (parsed.step) setStep(parsed.step);
+
+      // Merge in the annotations the editor wrote back
+      const rawModel = sessionStorage.getItem(DRAFT_MODEL_KEY);
+      if (rawModel) {
+        const savedModel = JSON.parse(rawModel);
+        if (savedModel?.url) {
+          setForm((prev) => ({ ...prev, model3D: savedModel }));
+        }
+      }
+
+      sessionStorage.removeItem("draftProductForm");
+      sessionStorage.removeItem(DRAFT_MODEL_KEY);
+      setFetchLoading(false);
+      setSkipServerFetch(true); // signal that the server fetch is not needed
+    } catch (e) {
+      // Corrupted sessionStorage — fall through to server fetch
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // intentionally empty — run once on mount
+
+  // ── Effect 2: Server fetch when auth is ready and session was not restored ──
   useEffect(() => {
     if (status === "unauthenticated") router.push("/auth/login");
     if (status === "authenticated" && session?.user?.role !== "manufacturer")
@@ -89,6 +124,8 @@ export default function EditProductPage() {
   }, [status, session, router]);
 
   useEffect(() => {
+    if (skipServerFetch) return; // already restored from sessionStorage
+
     const fetchProduct = async () => {
       try {
         const res = await fetch(`/api/products/${id}`);
@@ -146,23 +183,18 @@ export default function EditProductPage() {
       setFetchLoading(false);
     };
     if (status === "authenticated") fetchProduct();
-  }, [id, status, router]);
+  }, [id, status, router, skipServerFetch]);
 
-  // ── Hydration: restore annotation data written by the model-editor page ────
-  useEffect(() => {
-    const raw = sessionStorage.getItem(DRAFT_MODEL_KEY);
-    if (!raw) return;
-    try {
-      const saved = JSON.parse(raw);
-      if (saved?.url) {
-        setForm((prev) => (prev ? { ...prev, model3D: saved } : prev));
-      }
-    } catch {
-      // Corrupted data — discard silently
-    } finally {
-      sessionStorage.removeItem(DRAFT_MODEL_KEY);
-    }
-  }, []);
+  // ── Navigate to the dedicated model-editor route ────────────────────────────
+  const handleOpenModelEditor = () => {
+    if (!form?.model3D?.url) return;
+    sessionStorage.setItem("draftProductForm", JSON.stringify({ form, step }));
+    sessionStorage.setItem(DRAFT_MODEL_KEY, JSON.stringify(form.model3D));
+    // Store the product ID so model-editor can directly save annotations to MongoDB
+    sessionStorage.setItem("modelEditorProductId", id);
+    sessionStorage.setItem("modelEditorReturnUrl", `/manufacturer/products/${id}/edit`);
+    router.push("/manufacturer/products/model-editor");
+  };
 
   if (fetchLoading || status === "loading" || !form) {
     return <GlobalLoader fullScreen text="RESTORING CONFIGURATION MATRIX..." />;
@@ -276,84 +308,44 @@ export default function EditProductPage() {
     setModelUploading(false);
   };
 
-const handleModelEditorSave = async (gltfBlob, annotations, cameraState, snapshotBlob) => {
+const handleModelEditorSave = async (payload) => {
     setModelUploading(true);
     try {
-      const timestamp = Date.now();
+      const { modelUrl: newModelUrl, annotations, cameraState } = payload || {};
 
-      // 1. Upload the new edited model to S3 with a cache-busting timestamp
-      const modelFile = new File([gltfBlob], `model_${timestamp}.glb`, {
-        type: "model/gltf-binary",
-      });
-      const modelFormData = new FormData();
-      modelFormData.append("type", "3d-model");
-      modelFormData.append("file", modelFile);
-
-      const modelRes = await fetch("/api/upload", { method: "POST", body: modelFormData });
-      const modelData = await modelRes.json();
-
-      if (!modelData.success) {
-        alert(modelData.error || "Failed to upload edited model");
-        return;
-      }
-
-      // 2. Upload the snapshot image to S3 (if captured)
-      let snapshotUrl = null;
-      if (snapshotBlob) {
-        const snapshotFile = new File([snapshotBlob], `snapshot_${timestamp}.png`, {
-          type: "image/png",
+      // Call PATCH /api/models/update to persist the new URL + annotations in MongoDB
+      if (newModelUrl || annotations) {
+        const updateRes = await fetch("/api/models/update", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            resourceId: id,
+            resourceType: "product",
+            newModelUrl: newModelUrl || form.model3D?.url,
+            annotations: Array.isArray(annotations) ? annotations : [],
+            cameraState: cameraState || null,
+          }),
         });
-        const snapFormData = new FormData();
-        snapFormData.append("type", "image");
-        snapFormData.append("file", snapshotFile);
-
-        const snapRes = await fetch("/api/upload", { method: "POST", body: snapFormData });
-        const snapData = await snapRes.json();
-
-        if (snapData.success) {
-          snapshotUrl = snapData.file.url;
-        } else {
-          console.warn("[model-editor] Snapshot upload failed:", snapData.error);
+        const updateData = await updateRes.json();
+        if (!updateData.success) {
+          console.error("[model-editor] DB update failed:", updateData.error);
         }
       }
 
-      // 3. Atomic Update: Call PATCH /api/models/update to swap URLs and delete old S3 objects
-      const updateRes = await fetch("/api/models/update", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resourceId: id,
-          resourceType: "product",
-          newModelUrl: modelData.file.url,
-          newThumbnailUrl: snapshotUrl || undefined,
-          newFileSize: gltfBlob.size,
-          annotations,
-          cameraState,
-        }),
-      });
-      const updateData = await updateRes.json();
-
-      if (!updateData.success) {
-        console.error("[model-editor] DB update failed:", updateData.error);
-      }
-
-      // 4. Update local form state so the UI reflects the new URLs immediately
+      // Update local form state so the UI reflects changes immediately
       const nextModel = {
-        url: modelData.file.url,
-        filename: modelFile.name,
-        fileSize: gltfBlob.size,
-        thumbnailUrl: snapshotUrl || form.model3D?.thumbnailUrl,
-        annotations,
-        cameraState,
+        ...form.model3D,
+        url: newModelUrl || form.model3D?.url,
+        annotations: Array.isArray(annotations) ? annotations : [],
+        cameraState: cameraState || null,
       };
       setForm((prev) => ({ ...prev, model3D: nextModel }));
-      setBaseModelUrl(nextModel.url);
-      setIsModelEditorOpen(false);
     } catch (err) {
       console.error("[model-editor] Save error:", err);
-      alert("Failed to save 3D model edits");
+      toast.error("Failed to save 3D model edits. Please try again.");
+    } finally {
+      setModelUploading(false);
     }
-    setModelUploading(false);
 };
 
   const addTag = () => {
@@ -478,10 +470,10 @@ const handleModelEditorSave = async (gltfBlob, annotations, cameraState, snapsho
           router.push(`/manufacturer/products/${id}`);
         }
       } else {
-        alert(data.error || "Failed to save product");
+        toast.error(data.error || "Failed to save product");
       }
     } catch (_) {
-      alert("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
     }
     setSaving(false);
   };
@@ -523,7 +515,7 @@ const handleModelEditorSave = async (gltfBlob, annotations, cameraState, snapsho
               disabled={saving}
               className="px-6 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-white/60 border border-white/10 rounded-xl hover:bg-white/5 transition-all disabled:opacity-50"
             >
-              Save Draft
+              {form.currentStatus === "draft" ? "Update Draft" : "Save Draft"}
             </button>
             <button
               onClick={() => handleSave(true)}
@@ -550,7 +542,7 @@ const handleModelEditorSave = async (gltfBlob, annotations, cameraState, snapsho
             {STEPS.map((s, i) => (
               <div key={s.id} className="relative z-10 flex flex-col items-center">
                 <button
-                  onClick={() => s.id < step && setStep(s.id)}
+                  onClick={() => setStep(s.id)}
                   className={`group flex flex-col items-center gap-3 transition-all ${
                     s.id <= step ? "cursor-pointer" : "cursor-default"
                   }`}
@@ -1022,31 +1014,35 @@ const handleModelEditorSave = async (gltfBlob, annotations, cameraState, snapsho
 
                   <div className="pt-8 border-t border-white/5">
                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-4">3D Configuration Model</label>
-                    {form.model3D ? (
-                      <div className="bg-[#0B011D] border-2 border-purple-500/30 rounded-[2rem] p-6">
-                        <div className="flex items-center gap-6">
-                          <div className="w-20 h-20 bg-purple-600/10 rounded-2xl flex items-center justify-center text-purple-400">
-                            <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                            </svg>
+                    {modelUploading ? (
+                      <div className="w-full py-12 rounded-[2rem] border-2 border-purple-500/30 bg-white/5 flex flex-col items-center justify-center gap-4">
+                        <div className="h-12 w-12 rounded-full border-2 border-purple-500/20 border-t-purple-500 animate-spin" aria-hidden />
+                        <div className="text-center">
+                          <p className="text-[10px] font-black uppercase tracking-widest text-purple-400">Processing 3D Model...</p>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mt-1">Converting &amp; optimising — this may take a minute</p>
+                        </div>
+                      </div>
+                    ) : form.model3D?.url ? (
+                      <div className="p-8 bg-white/[0.02] border-2 border-purple-500/20 rounded-[2rem] flex flex-col items-center text-center">
+                        <div className="w-full space-y-6">
+                          <div className="aspect-video w-full rounded-2xl border-2 border-purple-500/40 overflow-hidden bg-[#0B011D]">
+                            <ModelViewerPreview
+                              modelUrl={form.model3D.url}
+                              annotations={form.model3D.annotations || []}
+                              measurements={form.model3D.measurements || []}
+                            />
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-lg font-black uppercase tracking-tight text-white truncate">{form.model3D.filename}</p>
-                            <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-1">
-                              {(form.model3D.fileSize / 1024 / 1024).toFixed(2)} MB • GLTF Engine
-                            </p>
-                            <div className="flex gap-3 mt-4">
-                              <button
-                                onClick={handleOpenModelEditor}
-                                className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-500 shadow-[0_0_15px_rgba(147,51,234,0.3)]"
-                              >
+                          <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
+                            <div className="text-left">
+                              <p className="text-[10px] font-black uppercase tracking-widest text-white truncate max-w-[200px]">{form.model3D.filename}</p>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-1">Ready for annotation</p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button onClick={handleOpenModelEditor} className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-500 shadow-[0_0_15px_rgba(147,51,234,0.3)] transition-all">
                                 Annotate Model
                               </button>
-                              <button
-                                onClick={() => setForm((prev) => ({ ...prev, model3D: null }))}
-                                className="px-5 py-2.5 bg-white/5 text-white/40 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-400 transition-all"
-                              >
-                                Replace Asset
+                              <button onClick={() => setForm((prev) => ({ ...prev, model3D: null }))} className="px-5 py-2.5 bg-white/5 text-white/40 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-400 transition-all">
+                                Replace
                               </button>
                             </div>
                           </div>

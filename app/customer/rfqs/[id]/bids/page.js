@@ -4,6 +4,7 @@ import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const MAX_COMPARE_BIDS = 3;
 
@@ -61,6 +62,7 @@ export default function BidComparisonPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const toast = useToast();
   const [bids, setBids] = useState([]);
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -74,10 +76,10 @@ export default function BidComparisonPage() {
         setBids(data.bids || []);
         setAnalysis(data.analysis);
       } else {
-        alert(data.error || "Failed to fetch bids");
+        toast.error(data.error || "Failed to fetch bids");
       }
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }
@@ -149,7 +151,7 @@ export default function BidComparisonPage() {
     setSelectedBidIds((prev) => {
       if (prev.includes(bidId)) return prev.filter((id) => id !== bidId);
       if (prev.length >= MAX_COMPARE_BIDS) {
-        alert(`You can compare up to ${MAX_COMPARE_BIDS} bids at once.`);
+        toast.info(`Compare limit: up to ${MAX_COMPARE_BIDS} bids at a time`);
         return prev;
       }
       return [...prev, bidId];

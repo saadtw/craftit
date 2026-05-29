@@ -76,6 +76,9 @@ export async function PATCH(request, { params }) {
       "materialsAvailable",
       "budgetRange",
       "certifications",
+      "productionCapacity",
+      "leadTimeDays",
+      "customizationCapabilities",
     ];
     const allowed =
       session.user.role === "manufacturer"
@@ -181,6 +184,31 @@ export async function PATCH(request, { params }) {
     if (update.certifications !== undefined) {
       update.certifications = Array.isArray(update.certifications)
         ? update.certifications.map((c) => String(c).trim()).filter(Boolean)
+        : [];
+    }
+
+    if (update.productionCapacity !== undefined) {
+      if (typeof update.productionCapacity === 'object') {
+         update.productionCapacity = {
+            unitsPerMonth: Number(update.productionCapacity.unitsPerMonth) || 0,
+            minimumOrderQuantity: Number(update.productionCapacity.minimumOrderQuantity) || 1,
+            maximumOrderQuantity: Number(update.productionCapacity.maximumOrderQuantity) || 10000,
+         };
+      }
+    }
+
+    if (update.leadTimeDays !== undefined) {
+      if (typeof update.leadTimeDays === 'object') {
+         update.leadTimeDays = {
+            typical: Number(update.leadTimeDays.typical) || undefined,
+            minimum: Number(update.leadTimeDays.minimum) || undefined,
+         };
+      }
+    }
+
+    if (update.customizationCapabilities !== undefined) {
+      update.customizationCapabilities = Array.isArray(update.customizationCapabilities)
+        ? update.customizationCapabilities.map((c) => String(c).trim()).filter(Boolean)
         : [];
     }
 

@@ -11,6 +11,7 @@ import ManufacturerNavbar from "@/components/ManufacturerNavbar";
 import ManufacturerSidebar from "@/components/ManufacturerSidebar";
 import CustomerSidebar from "@/components/CustomerSidebar";
 import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import { useToast } from "@/components/ui/ToastProvider";
 
 function StatusBadge({ status }) {
   const styles = {
@@ -125,9 +126,9 @@ function ChatPanel({ bidId, session, bidStatus }) {
         setMessages((prev) => [...prev, data.message]);
         lastTimestampRef.current = data.message.createdAt;
         setInput("");
-      } else alert(data.error || "Failed to send");
+      } else toast.error(data.error || "Failed to send");
     } catch (_) {
-      alert("Error sending message");
+      toast.error("Error sending message");
     } finally {
       setSending(false);
     }
@@ -241,6 +242,7 @@ export default function BidDetailsPage() {
   const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const toast = useToast();
 
   const [bid, setBid] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -284,9 +286,9 @@ export default function BidDetailsPage() {
           warrantyInfo: data.bid.warrantyInfo || "",
           paymentTerms: data.bid.paymentTerms || "",
         });
-      } else alert("Error loading bid: " + (data.error || "Unknown error"));
+      } else toast.error("Error loading bid: " + (data.error || "Unknown error"));
     } catch (_) {
-      alert("Error loading bid");
+      toast.error("Error loading bid");
     } finally {
       setLoading(false);
     }
@@ -327,9 +329,9 @@ export default function BidDetailsPage() {
       if (data.success) {
         setIsEditing(false);
         fetchBid();
-      } else alert("Error: " + data.error);
+      } else toast.error("Error: " + data.error);
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setUpdating(false);
     }
@@ -344,9 +346,9 @@ export default function BidDetailsPage() {
       });
       const data = await res.json();
       if (data.success) fetchBid();
-      else alert("Error: " + data.error);
+      else toast.error("Error: " + data.error);
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setWithdrawing(false);
     }
@@ -363,9 +365,9 @@ export default function BidDetailsPage() {
       });
       const data = await res.json();
       if (data.success) router.push(`/customer/rfqs/${bid.rfqId._id}`);
-      else alert("Error: " + data.error);
+      else toast.error("Error: " + data.error);
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setAccepting(false);
     }

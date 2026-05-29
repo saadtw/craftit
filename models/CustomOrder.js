@@ -30,14 +30,11 @@ const CustomOrderSchema = new mongoose.Schema(
       url: String,
       filename: String,
       fileSize: Number,
-      annotations: [
-        {
-          id: String,
-          text: String,
-          position: { x: Number, y: Number, z: Number },
-          normal: { x: Number, y: Number, z: Number },
-        },
-      ],
+      thumbnailUrl: String,
+      // Stored as Mixed so any shape from the editor is preserved
+      annotations: [mongoose.Schema.Types.Mixed],
+      // Measurements: { id, label, pointA: [x,y,z], pointB: [x,y,z] }
+      measurements: [mongoose.Schema.Types.Mixed],
       cameraState: {
         position: { x: Number, y: Number, z: Number },
         target: { x: Number, y: Number, z: Number },
@@ -98,7 +95,7 @@ const CustomOrderSchema = new mongoose.Schema(
       productCustomizationCapabilities: [String],
     },
 
-    // Breakdown items (if customer breaks down the design)
+    // Breakdown items (deprecated in favor of 'parts')
     items: [
       {
         name: String,
@@ -108,6 +105,30 @@ const CustomOrderSchema = new mongoose.Schema(
         specifications: mongoose.Schema.Types.Mixed,
       },
     ],
+    
+    parts: [
+      {
+        _id: { type: mongoose.Schema.Types.ObjectId, auto: true },
+        name: { type: String, required: true },
+        description: String,
+        quantity: { type: Number, default: 1, min: 1 },
+        material: String,
+        colorSpec: String,
+        budget: Number,
+        deadline: Date,
+        specialRequirements: String,
+        annotationIds: [String],
+        rfqId: { type: mongoose.Schema.Types.ObjectId, ref: 'RFQ' },
+        rfqStatus: {
+          type: String,
+          enum: ['pending', 'rfq_created', 'bid_accepted', 'order_placed'],
+          default: 'pending',
+        },
+        orderId: { type: mongoose.Schema.Types.ObjectId, ref: 'Order' },
+        createdAt: { type: Date, default: Date.now },
+      }
+    ],
+    isPartitioned: { type: Boolean, default: false },
 
     status: {
       type: String,
@@ -131,6 +152,15 @@ CustomOrderSchema.index({ materialPreferences: 1 }); // For material matching
 CustomOrderSchema.index({ deadline: 1 }); // For deadline sorting and filtering
 CustomOrderSchema.index({ sourceProductId: 1, createdAt: -1 });
 CustomOrderSchema.index({ sourceManufacturerId: 1, createdAt: -1 });
+
+/*
+ * MIGRATION NOTES (Phase 4):
+ * When deploying to production, run the following index creations manually via MongoDB Atlas UI
+ * or a seed script to optimize parts division queries:
+ * 
+ * db.customorders.createIndex({ "parts.rfqId": 1 });
+ * db.customorders.createIndex({ isPartitioned: 1 });
+ */
 
 export default mongoose.models.CustomOrder ||
   mongoose.model("CustomOrder", CustomOrderSchema);

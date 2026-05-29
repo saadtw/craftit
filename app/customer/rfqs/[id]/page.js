@@ -8,11 +8,13 @@ import { useSession } from "next-auth/react";
 import Script from "next/script";
 import Image from "next/image";
 import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function CustomerRFQDetails() {
   const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
+  const toast = useToast();
   const rfqId = params?.id?.toString();
 
   const [rfq, setRfq] = useState(null);
@@ -36,12 +38,11 @@ export default function CustomerRFQDetails() {
         setRfq(data.rfq);
         if (data.bids) setBids(data.bids);
       } else {
-        alert("Error loading RFQ: " + (data.error || "Unknown error"));
+        toast.error("Error loading RFQ: " + (data.error || "Unknown error"));
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Error loading RFQ");
-    } finally {
+      } finally {
       setLoading(false);
     }
   }, [rfqId, router]);
@@ -83,11 +84,11 @@ export default function CustomerRFQDetails() {
       });
       const data = await response.json();
       if (data.success) {
-        alert("RFQ cancelled successfully");
+        toast.success("RFQ cancelled successfully");
         fetchRFQ();
-      } else alert("Error: " + data.error);
+      } else toast.error("Error: " + data.error);
     } catch (error) {
-      alert("Error: " + error.message);
+      toast.error("Error: " + error.message);
     }
   };
 
@@ -546,12 +547,11 @@ export default function CustomerRFQDetails() {
 //           setBids(data.bids);
 //         }
 //       } else {
-//         alert("Error loading RFQ: " + (data.error || "Unknown error"));
+//         toast.error("Error loading RFQ: " + (data.error || "Unknown error"));
 //       }
 //     } catch (error) {
 //       console.error("Error:", error);
-//       alert("Error loading RFQ");
-//     } finally {
+//       //     } finally {
 //       setLoading(false);
 //     }
 //   }, [rfqId, router]);
@@ -601,13 +601,13 @@ export default function CustomerRFQDetails() {
 //       const data = await response.json();
 
 //       if (data.success) {
-//         alert("RFQ cancelled successfully");
+//         toast.success("RFQ cancelled successfully");
 //         fetchRFQ();
 //       } else {
-//         alert("Error: " + data.error);
+//         toast.error("Error: " + data.error);
 //       }
 //     } catch (error) {
-//       alert("Error: " + error.message);
+//       toast.error("Error: " + error.message);
 //     }
 //   };
 

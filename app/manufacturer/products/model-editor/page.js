@@ -31,6 +31,7 @@ export default function DraftModelEditorPage() {
   // true = sessionStorage was checked and was empty → redirect pending
   const [shouldRedirect, setShouldRedirect] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [returnUrl, setReturnUrl] = useState("/manufacturer/products/new");
 
   // ── Auth guard ─────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -41,6 +42,10 @@ export default function DraftModelEditorPage() {
 
   // ── Read draft from sessionStorage on mount ────────────────────────────────
   useEffect(() => {
+    // Read the return URL first
+    const savedReturnUrl = sessionStorage.getItem("modelEditorReturnUrl");
+    if (savedReturnUrl) setReturnUrl(savedReturnUrl);
+
     // sessionStorage is only available in the browser
     const raw = sessionStorage.getItem(SESSION_KEY);
     if (!raw) {
@@ -68,94 +73,76 @@ export default function DraftModelEditorPage() {
   // Deferred redirect so the effect can finish before navigation
   useEffect(() => {
     if (shouldRedirect) {
-      router.push("/manufacturer/products/new");
+      router.push(returnUrl);
     }
-  }, [shouldRedirect, router]);
+  }, [shouldRedirect, router, returnUrl]);
 
-  // ── onSave: called by Toolbar's "SAVE_&_FINISH" button ─────────────────────
-  // Receives (gltfBlob, tags, cameraState) from Toolbar.handleSaveFinish.
-  // The GLTFExporter always produces a gltfBlob of the full scene. We upload
-  // it to S3 to replace the original, so any paint/mesh changes are persisted.
-  const handleSave = async (gltfBlob, annotations, cameraState, snapshotBlob) => {
+  // ── onSave: called by Editor3DWrapper when the Vite iframe fires SAVE_COMPLETE ──
+  //
+  // IMPORTANT: The Vite editor always exports a gltfBlob, but we intentionally
+  // ignore it. Annotations/tags/camera are pure JSON metadata stored in MongoDB.
+  // The original GLB stays untouched — no need to re-upload 8+ MB for a tag change.
+  const handleSave = async (payload) => {
     setIsSaving(true);
-    let finalUrl = draftModel.url;
-    let finalSize = draftModel.fileSize;
-    let finalThumbnailUrl = draftModel.thumbnailUrl || null;
 
-    if (gltfBlob) {
-      try {
-        const timestamp = Date.now();
+    try {
+      const {
+        annotations,
+        measurements,
+        cameraState,
+      } = payload || {};
 
-        // 1. Upload the new edited model to S3
-        let safeName = draftModel.filename || "edited_model.glb";
-        const lower = safeName.toLowerCase();
-        if (!lower.endsWith(".glb") && !lower.endsWith(".gltf")) {
-          const dot = safeName.lastIndexOf(".");
-          safeName =
-            (dot > -1 ? safeName.substring(0, dot) : safeName) + "_edited.glb";
-        } else {
-          const dot = safeName.lastIndexOf(".");
-safeName = safeName.substring(0, dot) + `_${timestamp}` + safeName.substring(dot);
-}
+      const normalizedAnnotations = Array.isArray(annotations) ? annotations : [];
+      const normalizedMeasurements = Array.isArray(measurements) ? measurements : [];
 
-        const formData = new FormData();
-        formData.append("type", "3d-model");
-        formData.append("file", gltfBlob, safeName);
-
-        const res = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
+      // ── Path A: Existing product — save directly to MongoDB ─────────────────
+      const productId = sessionStorage.getItem("modelEditorProductId");
+      if (productId) {
+        const patchRes = await fetch("/api/models/update", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            resourceId: productId,
+            resourceType: "product",
+            newModelUrl: draftModel.url,
+            annotations: normalizedAnnotations,
+            measurements: normalizedMeasurements,
+            cameraState: cameraState || null,
+          }),
         });
-        const data = await res.json();
-
-        if (data.success && data.file?.url) {
-          finalUrl = data.file.url;
-          finalSize = gltfBlob.size;
-        } else {
-          console.error("[model-editor] Upload rejected:", data);
+        const patchData = await patchRes.json();
+        if (!patchData.success) {
+          console.error("[model-editor] MongoDB PATCH failed:", patchData.error);
         }
-
-        // 2. Upload the snapshot image (if captured)
-        if (snapshotBlob) {
-          const snapshotFile = new File([snapshotBlob], `snapshot_${timestamp}.png`, {
-            type: "image/png",
-          });
-          const snapFormData = new FormData();
-          snapFormData.append("type", "image");
-          snapFormData.append("file", snapshotFile);
-
-          const snapRes = await fetch("/api/upload", { method: "POST", body: snapFormData });
-          const snapData = await snapRes.json();
-
-          if (snapData.success && snapData.file?.url) {
-            finalThumbnailUrl = snapData.file.url;
-          } else {
-            console.warn("[model-editor] Snapshot upload failed:", snapData);
-          }
-        }
-      } catch (err) {
-        console.error("[model-editor] Upload error:", err);
+        sessionStorage.removeItem("modelEditorProductId");
+        sessionStorage.removeItem("draftProductForm");
+        sessionStorage.removeItem(SESSION_KEY);
+        router.push(returnUrl);
+        return;
       }
+
+      // ── Path B: New product — write back to sessionStorage ──────────────────
+      const updated = {
+        ...draftModel,
+        annotations: normalizedAnnotations,
+        measurements: normalizedMeasurements,
+        cameraState: cameraState || null,
+      };
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(updated));
+    } catch (err) {
+      console.error("[model-editor] Save error:", err);
+      sessionStorage.setItem(SESSION_KEY, JSON.stringify(draftModel));
+    } finally {
+      setIsSaving(false);
+      router.push(returnUrl);
     }
-
-    const updated = {
-      ...draftModel,
-      url: finalUrl,
-      fileSize: finalSize,
-      thumbnailUrl: finalThumbnailUrl,
-      annotations: annotations || [],
-      cameraState: cameraState || null,
-    };
-
-    sessionStorage.setItem(SESSION_KEY, JSON.stringify(updated));
-    router.push("/manufacturer/products/new");
   };
 
   // ── handleCancel: discard edits, return without writing ───────────────────
   const handleCancel = () => {
     // Leave sessionStorage intact so the /new page can still restore the
     // original model URL and any previously saved annotations.
-    router.push("/manufacturer/products/new");
+    router.push(returnUrl);
   };
 
   // ── Loading states ─────────────────────────────────────────────────────────
@@ -242,6 +229,7 @@ safeName = safeName.substring(0, dot) + `_${timestamp}` + safeName.substring(dot
         <Editor3DWrapper
           modelUrl={draftModel.url}
           initialAnnotations={draftModel.annotations || []}
+          initialMeasurements={draftModel.measurements || []}
           initialCameraState={draftModel.cameraState || null}
           onSave={handleSave}
           readOnly={false}

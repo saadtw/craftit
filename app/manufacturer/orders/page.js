@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-amber-500/10 border-amber-500/20 text-amber-400",
@@ -43,6 +44,7 @@ const FILTER_TABS = [
 
 export default function ManufacturerOrdersPage() {
   const { data: session, status } = useSession();
+  const toast = useToast();
   const router = useRouter();
 
   const [orders, setOrders] = useState([]);
@@ -415,9 +417,9 @@ function OrderCard({ order, onRefresh }) {
       });
       const data = await res.json();
       if (data.success) onRefresh();
-      else alert(data.error || "Failed to accept order");
+      else toast.error(data.error || "Failed to accept order");
     } catch {
-      alert("Error accepting order");
+      toast.error("Error accepting order");
     } finally {
       setAccepting(false);
     }
@@ -438,9 +440,9 @@ function OrderCard({ order, onRefresh }) {
       });
       const data = await res.json();
       if (data.success) onRefresh();
-      else alert(data.error || "Failed to reject order");
+      else toast.error(data.error || "Failed to reject order");
     } catch {
-      alert("Error rejecting order");
+      toast.error("Error rejecting order");
     } finally {
       setRejecting(false);
     }

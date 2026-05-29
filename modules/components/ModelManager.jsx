@@ -123,6 +123,8 @@ export default function ModelManager({
         <>
           <ModelViewerPreview
             modelUrl={model3D.url}
+            annotations={model3D.annotations || []}
+            measurements={model3D.measurements || []}
             height={viewerHeight}
           />
 

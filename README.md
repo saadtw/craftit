@@ -84,6 +84,10 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 
 # Database
 MONGODB_URI=mongodb+srv://<user>:<password>@cluster0.mongodb.net/craftit?retryWrites=true&w=majority
+# Optional fallback if your DNS blocks Atlas mongodb+srv TXT lookups:
+# MONGODB_DIRECT_URI=mongodb://<user>:<password>@host-00-00.mongodb.net:27017,host-00-01.mongodb.net:27017,host-00-02.mongodb.net:27017/craftit?tls=true&authSource=admin&retryWrites=true&w=majority
+MONGODB_SERVER_SELECTION_TIMEOUT_MS=8000
+MONGODB_CONNECT_TIMEOUT_MS=8000
 
 # OAuth providers
 GOOGLE_CLIENT_ID=your-google-client-id

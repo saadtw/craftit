@@ -4,6 +4,7 @@ import GlobalLoader from "@/components/ui/GlobalLoader";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { useToast } from "@/components/ui/ToastProvider";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
 import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
@@ -17,6 +18,7 @@ function NewCustomOrderContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
+  const toast = useToast();
 
   const productIdParam = searchParams.get("productId");
   const manufacturerIdParam = searchParams.get("manufacturerId");
@@ -222,73 +224,25 @@ function NewCustomOrderContent() {
         setBaseModelUrl(data.file.url);
         setModel3D(data.file);
         setIsEditorOpen(true);
-      } else alert("Upload failed: " + data.error);
+      } else toast.error("Upload failed: " + data.error);
     } catch (error) {
-      alert("Upload error: " + error.message);
+      toast.error("Upload error: " + error.message);
     } finally {
       setUploading(false);
     }
   };
 
-const handleEditorSave = async (gltfBlob, annotations, cameraState, snapshotBlob) => {
-    setUploading(true);
-    try {
-      const timestamp = Date.now();
-
-      // 1. Upload the edited model to S3
-      const file = new File([gltfBlob], `model_${timestamp}.glb`, { type: 'model/gltf-binary' });
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("type", "3d-model");
-
-      const response = await fetch("/api/upload", {
-method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          originalUrl: baseModelUrl,
-          annotations: savedData.annotations,
-          cameraState: savedData.cameraState,
-        }),
-      });
-
-if (!data.success) {
-        alert("Save failed: " + data.error);
-        return;
-}
-
-      // 2. Upload the snapshot image (if captured)
-      let snapshotUrl = null;
-      if (snapshotBlob) {
-        const snapshotFile = new File([snapshotBlob], `snapshot_${timestamp}.png`, {
-          type: "image/png",
-        });
-        const snapFormData = new FormData();
-        snapFormData.append("file", snapshotFile);
-        snapFormData.append("type", "image");
-
-        const snapRes = await fetch("/api/upload", { method: "POST", body: snapFormData });
-        const snapData = await snapRes.json();
-
-        if (snapData.success) {
-          snapshotUrl = snapData.file.url;
-        } else {
-          console.warn("[new-custom-order] Snapshot upload failed:", snapData.error);
-        }
-      }
-
-      // 3. Update local state (no DB record yet — will be submitted with the form)
-      setModel3D({
-        url: data.file.url,
-        filename: file.name,
-        fileSize: file.size,
-        thumbnailUrl: snapshotUrl,
-        annotations,
-        cameraState,
-      });
-      setIsEditorOpen(false);
-    } catch (error) {
-      alert("Error saving 3D model: " + error.message);
-    }
+const handleEditorSave = async (payload) => {
+    const { modelUrl: newModelUrl, annotations, cameraState } = payload || {};
+    // The Vite editor handles its own upload and sends back the new URL.
+    // We just merge it into local state (no DB record yet — saved with form submission).
+    setModel3D((prev) => ({
+      ...prev,
+      url: newModelUrl || prev?.url,
+      annotations: Array.isArray(annotations) ? annotations : [],
+      cameraState: cameraState || null,
+    }));
+    setIsEditorOpen(false);
   };
 
   const handleImageUpload = async (e) => {
@@ -305,9 +259,9 @@ if (!data.success) {
       });
       const data = await response.json();
       if (data.success) setImages((prev) => [...prev, ...data.files]);
-      else alert("Upload failed: " + data.error);
+      else toast.error("Upload failed: " + data.error);
     } catch (error) {
-      alert("Upload error: " + error.message);
+      toast.error("Upload error: " + error.message);
     } finally {
       setUploading(false);
     }
@@ -316,20 +270,20 @@ if (!data.success) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (sourceContext.error) {
-      alert(sourceContext.error);
+      toast.error(sourceContext.error);
       return;
     }
     const quantity = Number(formData.quantity);
     if (sourceContext.sourceType === "product_customization") {
       if (!formData.requestedCustomizationTypes.length) {
-        alert("Please select at least one requested customization type.");
+        toast.error("Please select at least one requested customization type.");
         return;
       }
       if (
         sourceContext.minCustomizationQuantity &&
         quantity < sourceContext.minCustomizationQuantity
       ) {
-        alert(
+        toast.error(
           `Minimum customization quantity is ${sourceContext.minCustomizationQuantity}.`,
         );
         return;
@@ -354,11 +308,11 @@ if (!data.success) {
       });
       const data = await response.json();
       if (data.success) {
-        alert("Custom order created!");
+        toast.success("Custom order created!");
         router.push(`/custom-orders/${data.order._id}/review`);
-      } else alert("Error: " + data.error);
+      } else toast.error("Error: " + data.error);
     } catch (error) {
-      alert("Error: " + error.message);
+      toast.error("Error: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -1164,10 +1118,10 @@ export default function NewCustomOrder() {
 //       if (data.success) {
 //         setModel3D(data.file);
 //       } else {
-//         alert("Upload failed: " + data.error);
+//         toast.error("Upload failed: " + data.error);
 //       }
 //     } catch (error) {
-//       alert("Upload error: " + error.message);
+//       toast.error("Upload error: " + error.message);
 //     } finally {
 //       setUploading(false);
 //     }
@@ -1194,10 +1148,10 @@ export default function NewCustomOrder() {
 //       if (data.success) {
 //         setImages((prev) => [...prev, ...data.files]);
 //       } else {
-//         alert("Upload failed: " + data.error);
+//         toast.error("Upload failed: " + data.error);
 //       }
 //     } catch (error) {
-//       alert("Upload error: " + error.message);
+//       toast.error("Upload error: " + error.message);
 //     } finally {
 //       setUploading(false);
 //     }
@@ -1207,7 +1161,7 @@ export default function NewCustomOrder() {
 //     e.preventDefault();
 
 //     if (sourceContext.error) {
-//       alert(sourceContext.error);
+//       toast.error(sourceContext.error);
 //       return;
 //     }
 
@@ -1215,7 +1169,7 @@ export default function NewCustomOrder() {
 
 //     if (sourceContext.sourceType === "product_customization") {
 //       if (!formData.requestedCustomizationTypes.length) {
-//         alert("Please select at least one requested customization type.");
+//         toast.error("Please select at least one requested customization type.");
 //         return;
 //       }
 
@@ -1223,7 +1177,7 @@ export default function NewCustomOrder() {
 //         sourceContext.minCustomizationQuantity &&
 //         quantity < sourceContext.minCustomizationQuantity
 //       ) {
-//         alert(
+//         toast.error(
 //           `Minimum customization quantity is ${sourceContext.minCustomizationQuantity}.`,
 //         );
 //         return;
@@ -1254,13 +1208,13 @@ export default function NewCustomOrder() {
 //       const data = await response.json();
 
 //       if (data.success) {
-//         alert("Custom order created!");
+//         toast.success("Custom order created!");
 //         router.push(`/custom-orders/${data.order._id}/review`);
 //       } else {
-//         alert("Error: " + data.error);
+//         toast.error("Error: " + data.error);
 //       }
 //     } catch (error) {
-//       alert("Error: " + error.message);
+//       toast.error("Error: " + error.message);
 //     } finally {
 //       setLoading(false);
 //     }

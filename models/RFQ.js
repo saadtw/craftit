@@ -18,6 +18,11 @@ const RFQSchema = new mongoose.Schema(
       unique: true,
     },
 
+    title: {
+      type: String,
+      trim: true,
+    },
+
     // Auction Duration
     duration: {
       type: Number,
@@ -69,6 +74,10 @@ const RFQSchema = new mongoose.Schema(
     closedAt: Date,
     cancelledAt: Date,
     cancellationReason: String,
+
+    isPartRFQ: { type: Boolean, default: false },
+    partId: { type: mongoose.Schema.Types.ObjectId },
+    parentOrderId: { type: mongoose.Schema.Types.ObjectId, ref: 'CustomOrder' },
   },
   { timestamps: true },
 );
@@ -87,5 +96,13 @@ RFQSchema.pre("save", async function () {
     this.rfqNumber = `RFQ-${Date.now()}-${count + 1}`;
   }
 });
+
+/*
+ * MIGRATION NOTES (Phase 4):
+ * When deploying to production, run the following index creations manually via MongoDB Atlas UI
+ * or a seed script to optimize parts division queries:
+ * 
+ * db.rfqs.createIndex({ isPartRFQ: 1, parentOrderId: 1 });
+ */
 
 export default mongoose.models.RFQ || mongoose.model("RFQ", RFQSchema);

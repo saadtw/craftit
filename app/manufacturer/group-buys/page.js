@@ -18,6 +18,7 @@ import TotalUsersIcon from "@/assets/TotalUsers.png";
 import RevenueIcon from "@/assets/revenue.png";
 import OrdersIcon from "@/assets/orders.png";
 import PaymentsIcon from "@/assets/payments.png";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
@@ -61,6 +62,7 @@ function TimeRemaining({ endDate }) {
 
 export default function ManufacturerGroupBuysPage() {
   const { data: session, status } = useSession();
+  const toast = useToast();
   const router = useRouter();
 
   const [groupBuys, setGroupBuys] = useState([]);
@@ -140,7 +142,7 @@ export default function ManufacturerGroupBuysPage() {
       if (data.success) {
         setLoading(true);
         setRefreshKey((k) => k + 1);
-      } else alert(data.error);
+      } else toast.error(data.error);
     } catch (_) {}
     setActionLoading(null);
   };
@@ -158,7 +160,7 @@ export default function ManufacturerGroupBuysPage() {
       if (data.success) {
         setLoading(true);
         setRefreshKey((k) => k + 1);
-      } else alert(data.error);
+      } else toast.error(data.error);
     } catch (_) {}
   };
 

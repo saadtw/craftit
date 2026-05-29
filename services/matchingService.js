@@ -69,6 +69,14 @@ export const matchingService = {
       };
     }
 
+    // Filter by production capacity at DB level
+    if (manufacturer.productionCapacity?.maximumOrderQuantity) {
+      dbFilters['customOrderId.quantity'] = { 
+        $lte: manufacturer.productionCapacity.maximumOrderQuantity,
+        $gte: manufacturer.productionCapacity.minimumOrderQuantity || 1
+      };
+    }
+
     // Filter by budget range at DB level
     if (manufacturer.budgetRange) {
       if (manufacturer.budgetRange.min || manufacturer.budgetRange.max) {
@@ -143,6 +151,35 @@ export const matchingService = {
         if (daysUntilDeadline >= 7) {
           score += 5;
         }
+        // Lead time score
+        if (manufacturer.leadTimeDays?.typical && daysUntilDeadline >= manufacturer.leadTimeDays.typical) {
+          score += 10;
+        }
+      }
+
+      // Production capacity score
+      if (customOrder.quantity && manufacturer.productionCapacity) {
+        if (
+          customOrder.quantity >= (manufacturer.productionCapacity.minimumOrderQuantity || 1) &&
+          customOrder.quantity <= (manufacturer.productionCapacity.maximumOrderQuantity || 10000)
+        ) {
+          score += 15;
+        }
+      }
+
+      // Customization capability score
+      if (manufacturer.customizationCapabilities && customOrder.requestedCustomizationTypes) {
+        const matchingCaps = customOrder.requestedCustomizationTypes.filter((cap) =>
+          manufacturer.customizationCapabilities.includes(cap)
+        );
+        score += Math.min(20, matchingCaps.length * 5); // Max +20
+      }
+
+      // Rating score
+      if (manufacturer.manufacturerRating?.average >= 4.0) {
+        score += 10;
+      } else if (manufacturer.manufacturerRating?.average >= 3.0) {
+        score += 5;
       }
 
       return {
@@ -186,6 +223,43 @@ export const matchingService = {
       if (manufacturer.location.state === rfq.customerId.location.state) {
         reasons.push("Same state");
       }
+    }
+
+    // Production capacity matching
+    if (customOrder.quantity && manufacturer.productionCapacity) {
+      if (
+        customOrder.quantity >= (manufacturer.productionCapacity.minimumOrderQuantity || 1) &&
+        customOrder.quantity <= (manufacturer.productionCapacity.maximumOrderQuantity || 10000)
+      ) {
+        reasons.push("Capacity fits order size");
+      }
+    }
+
+    // Customization matching
+    if (manufacturer.customizationCapabilities && customOrder.requestedCustomizationTypes) {
+      const matchingCaps = customOrder.requestedCustomizationTypes.filter((cap) =>
+        manufacturer.customizationCapabilities.includes(cap)
+      );
+      if (matchingCaps.length > 0) {
+        reasons.push(`Capabilities match: ${matchingCaps.join(', ')}`);
+      }
+    }
+
+    // Lead time feasibility
+    if (customOrder.deadline && manufacturer.leadTimeDays?.typical) {
+      const daysUntilDeadline = Math.floor(
+        (new Date(customOrder.deadline) - new Date()) / (1000 * 60 * 60 * 24),
+      );
+      if (daysUntilDeadline >= manufacturer.leadTimeDays.typical) {
+        reasons.push(`Deadline fits your lead time (${manufacturer.leadTimeDays.typical} days)`);
+      }
+    }
+
+    // Rating
+    if (manufacturer.manufacturerRating?.average >= 4.0) {
+      reasons.push('Highly rated manufacturer (4.0+)');
+    } else if (manufacturer.manufacturerRating?.average >= 3.0) {
+      reasons.push('Well-rated manufacturer (3.0+)');
     }
 
     return reasons;

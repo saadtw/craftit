@@ -1,13 +1,24 @@
 // app/auth/reset-password/[token]/page.js
+// Fallback page for legacy token-in-path links.
+// Supabase's password reset email sends users to /auth/reset-password#access_token=...
+// (hash fragment, not path param). This page redirects those users to the correct handler.
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 
 export default function ResetPasswordPage() {
   const { token } = useParams();
   const router = useRouter();
+
+  // If there's no real path token but there IS a hash token, redirect to the
+  // hash-based handler at /auth/reset-password which reads window.location.hash.
+  useEffect(() => {
+    if (!token && typeof window !== "undefined" && window.location.hash.includes("access_token=")) {
+      router.replace("/auth/reset-password" + window.location.hash);
+    }
+  }, [token, router]);
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");

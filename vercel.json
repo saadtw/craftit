@@ -1,0 +1,12 @@
+{
+  "functions": {
+    "app/api/upload/convert-async/route.js": { "maxDuration": 300 },
+    "app/api/upload/route.js": { "maxDuration": 60 }
+  },
+  "headers": [
+    {
+      "source": "/api/:path*",
+      "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }]
+    }
+  ]
+}

@@ -8,6 +8,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import Editor3DWrapper from "../../../../modules/components/Editor3DWrapper";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const STATUS_STYLES = {
   active: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
@@ -43,6 +44,7 @@ function Countdown({ endDate }) {
 
 export default function GroupBuyDetailPage() {
   const { data: session, status } = useSession();
+  const toast = useToast();
   const router = useRouter();
   const { id } = useParams();
 
@@ -88,7 +90,7 @@ export default function GroupBuyDetailPage() {
       });
       const data = await res.json();
       if (data.success) setRefreshKey((k) => k + 1);
-      else alert(data.error);
+      else toast.error(data.error);
     } catch (_) {}
     setActionLoading(null);
   };
@@ -104,7 +106,7 @@ export default function GroupBuyDetailPage() {
       });
       const data = await res.json();
       if (data.success) setRefreshKey((k) => k + 1);
-      else alert(data.error);
+      else toast.error(data.error);
     } catch (_) {}
   };
 

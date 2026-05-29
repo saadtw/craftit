@@ -1,0 +1,417 @@
+1. Basic/Main Flow
+1.1 Landing Page
+•	Display platform overview and value proposition
+•	Login button (navigates to Login page)
+•	Regular/Customer Signup button (navigates to Customer Signup)
+•	Manufacturer Signup button (navigates to Manufacturer Signup)
+•	Browse/explore content preview
+•	Navigation to Browse/Home Page
+•	Feature highlights
+1.2 Login
+•	Email/username input field
+•	Password input field
+•	"Remember me" checkbox
+•	Login button
+•	"Forgot password" link
+•	Social login options
+•	Back button (returns to Landing Page)
+1.3 Regular/Customer Signup
+•	Full name input field
+•	Email address input field
+•	Phone number (optional)
+•	Password and confirm password fields
+•	Location/address fields (city, country) 
+•	Create account button 
+•	Social signup options (Google, Facebook, etc.) 
+•	Navigation to Login page 
+•	Back button (returns to Landing Page)
+2. Home Page Flow
+2.1 Browse/Home Page (Detailed View)
+•	Main navigation bar
+•	Header with user menu
+•	Search bar with filter for products or manufacturers 
+•	Advanced filtering system
+•	Recent views history
+•	Product categories navigation
+•	Featured products carousel
+•	Group buy listings preview
+•	Manufacturers showcase
+•	Custom order button (navigates to Custom Order flow)
+•	Dashboard/Profile button (navigates to Dashboard)
+•	Filter sidebar (price, category, rating, location)
+•	Sort options (newest, popular, price)
+•	Footer with links
+2.2 Products Search Result
+•	Product cards with images, names, prices
+•	Quick view button on hover
+•	Add to wishlist button
+•	Filter sidebar
+•	Sort options
+•	Clear filters button
+•	Breadcrumb navigation
+2.3 Group Buy Listings
+•	Group buy cards with: 
+o	Product image
+o	Current participants count
+o	Target quantity
+o	Discount tier breakdown
+o	Time remaining countdown
+o	Current price vs. retail price
+•	Filter by category
+•	Sort by ending soon, most popular, highest discount
+•	Progress bar showing participation level
+2.4 Group Buy Details Page
+•	Product name and description
+•	Manufacturer link to profile
+•	Current participant count
+•	Target tiers with pricing
+•	Visual progress indicator
+•	Time remaining countdown
+•	Discount percentage display
+•	Product specifications
+•	Join group buy button 
+•	Share button
+•	Add to wishlist button
+•	Reviews/ratings section
+•	FAQ section
+•	Contact manufacturer button
+•	Related products
+•	Terms and conditions link
+2.5 Product Details Page
+•	Image gallery with zoom
+•	Product title and SKU
+•	Price and availability status
+•	Manufacturer name 
+•	Detailed product description
+•	MOQ
+•	Technical specifications
+•	Material/composition information
+•	Size/dimension options
+•	Quantity selector
+•	Order now button 
+•	Add to wishlist button
+•	Share product button
+•	Customer reviews and ratings
+•	Q&A section
+•	Related products carousel
+•	Shipping information
+2.6 Manufacturers Search Result
+•	Manufacturer profile cards with: 
+o	Business logo
+o	Company name
+o	Specialization tags
+o	Verification badge
+•	Filter by location, specialty, rating
+•	Sort by rating, distance, newest
+•	Pagination
+2.7 Manufacturer Page/Profile (Public View)
+•	Company banner and logo
+•	Business name and tagline
+•	About company description
+•	Years in business
+•	Verification badges/certifications
+•	Location and contact info (limited)
+•	Manufacturing capabilities list
+•	Customer reviews and ratings
+•	Response time indicator
+•	Products tab showing their listings
+•	Contact/message button
+•	Follow/save button
+•	Social media links
+
+ 
+3. Custom Order Flow
+3.1 Custom Order 
+•	Product title input
+•	Product description textarea
+•	3D design file upload (STL, OBJ, etc.)
+•	Upload images
+•	Quantity required input
+•	Material preferences dropdown
+•	Color specifications
+•	Deadline date picker
+•	Special requirements notes
+•	Save as draft button
+•	Submit/Proceed button
+•	File format requirements display
+3.2 Explore Uploaded 3D Design
+Basic functionality:
+•	3D model viewer with rotation/zoom
+•	Dimension display
+•	File information
+•	Edit/replace file option
+•	Back to order review button
+3.3 Order Review
+•	Order summary display
+•	Design preview thumbnail
+•	Specifications list
+•	Quantity, materials, deadline
+•	Edit button for each section
+•	Create auction button 
+•	Break down items option 
+•	Terms acceptance checkbox
+3.4 Break-down to Items
+•	Design viewer showing all parts
+•	List of identified components
+•	Manual split tools
+•	Add/remove parts
+•	Assign quantities to each part
+•	Assign materials per part
+•	Save breakdown button
+•	Continue to manufacturer matching
+3.5 Find Manufacturers for the Parts
+•	Parts list with specifications
+•	Manufacturer suggestions for each part
+•	Manufacturer ratings and capabilities
+•	Filter manufacturers by location, rating, price
+•	Select preferred manufacturers
+•	Request quotes from multiple manufacturers
+•	Continue to place order button
+3.6 Place RFQ Order
+•	Final order summary by part
+•	Selected manufacturers per part
+•	Total estimated cost
+•	Expected timeline
+•	Delivery details form
+•	Payment method selection
+•	Confirm and submit order button
+•	Order confirmation message display
+3.7 Create RFQ
+•	Auction duration selector
+•	Minimum bid threshold input
+•	Target manufacturers selection
+•	Broadcast to all manufacturers checkbox
+•	Create auction button
+•	Back button (returns to Order Review)
+•	Preview auction listing
+3.8 RFQ Details
+•	Auction information summary
+•	Time remaining countdown
+•	Current bids count
+•	Top few bids listed
+•	View all bids button
+•	Edit auction button (if no bids yet)
+•	Cancel auction button
+•	Refresh bids button
+3.9 Bids
+•	List of all bids with: 
+o	Manufacturer name and rating
+o	Bid amount
+o	Estimated completion time
+•	Sort by price, rating, timeline
+•	Filter options
+•	View details button per bid
+•	In-consideration bids section
+3.10 View Bid Details
+•	Manufacturer profile summary
+•	Detailed bid breakdown
+•	Manufacturer proposal
+•	Cost itemization
+•	Timeline with milestones
+•	Materials and process description
+•	Manufacturer's questions/clarifications
+•	Portfolio samples
+•	Bids and counter offers listed
+•	Consider-bid button
+•	Accept-bid button
+•	Counter offer button
+•	Chat with bidder button
+•	Decline bid button
+3.11 Counter Offer
+•	Counter offer amount input
+•	Adjusted timeline request
+•	Modified specifications options
+•	Reasoning/notes textarea
+•	Submit counter offer button
+•	Cancel button
+3.12 Accept Bid
+•	Bid confirmation summary
+•	Final price display
+•	Timeline confirmation
+•	Terms and conditions display
+•	Payment schedule information
+•	Confirm acceptance button
+ 
+4. Join Group Buy Flow
+4.1 Join Group Buy 
+•	Group buy summary
+•	Price breakdown
+•	Quantity selector
+•	Tier benefits display
+•	Join button
+4.5 Deal Activation Waiting/Countdown Timer
+•	Countdown timer to deal closure
+•	Current participants vs. target
+•	Progress bar visualization
+•	Your position/timestamp in queue
+•	Tier progression display
+•	What happens next information
+•	Cancel participation button
+•	Share with friends button
+ 
+5. Order Flow
+5.1 Order Product
+•	Product summary with image
+•	Selected options (size, color, etc.)
+•	Quantity selector 
+•	Apply promo code field
+•	Price calculation
+•	In-stock status
+•	Proceed to delivery button
+•	Save to Wishlist
+5.2 Delivery Details Form
+•	Saved addresses dropdown
+•	Full name input
+•	Address line 1 and 2
+•	City, state, postal code
+•	Country selector
+•	Phone number
+•	Delivery notes textarea
+•	Save address checkbox
+•	Continue button
+5.3 Payment Details Form
+•	Saved Payment method dropdown
+•	New payment method selection (card, PayPal, etc.)
+•	Card number input
+•	Expiry date and CVV
+•	Cardholder name
+•	Billing address (same as delivery checkbox)
+•	Save payment method checkbox
+•	Continue button
+•	Payment gateway logos
+5.4 Order Review and Confirmation
+•	Complete order summary
+•	Product details with image
+•	Quantity and tier
+•	Delivery address display
+•	Payment method display
+•	Total amount breakdown
+•	Estimated delivery date
+•	Edit buttons for each section
+•	Confirm order button
+•	Cancel order option
+ 
+6. Order Details Flow
+6.1 Order Details 
+•	Order number and status
+•	Manufacturer information
+•	Order specifications 
+•	Price details including original price and discount price (if any discount)
+•	Timeline with milestones
+•	Current phase of production details
+•	Payment information
+•	Tracking information 
+•	Contact manufacturer button
+6.2 Chat Box
+•	Conversation history
+•	Message input field
+•	File attachment button
+•	Image sharing
+•	Read receipts
+•	Search in conversation
+•	Pin important messages
+•	Mute notifications option
+6.3 Production Pipeline
+•	Stage-by-stage progress visualization
+•	Current stage highlight
+•	Completed stages checkmarks
+•	Estimated completion per stage
+•	Photos/updates from manufacturer
+•	Milestone notifications
+•	Delay notifications with reasons
+6.4 Feedback
+•	Star rating (1-5)
+•	Written review textarea
+•	Product quality rating
+•	Communication rating
+•	Delivery rating
+•	Photos upload option
+•	Recommend to others checkbox
+•	Submit feedback button
+•	Skip 
+6.5 File Complaint/Refund Request
+•	Issue category dropdown
+•	Detailed description textarea
+•	Evidence upload (photos/documents)
+•	Desired resolution selection
+•	Order information display
+•	Submit request button
+•	Cancel button
+•	View terms and conditions link
+•	Case number generation on submit
+•	Expected response time display
+
+ 
+7. Buyer Dashboard Flow
+7.1 Dashboard (Main Hub)
+•	Account overview statistics
+•	Quick action tiles
+•	Notifications panel
+•	Active orders widget
+•	Quick links to: 
+o	Orders history
+o	Wishlist
+o	Messages
+o	Settings
+o	Saved addresses
+7.2 Orders
+•	Orders list with filters 
+o	status: active, completed, cancelled
+o	type: regular order, group-buy, auction, etc.
+•	Search orders by number or product
+•	Sort by date, status
+•	Order cards showing: 
+o	Order number
+o	Order type
+o	Product thumbnail
+o	Status badge
+o	Date placed
+o	Total amount
+•	Click order card for details
+7.3 Messages
+•	Conversation list
+•	Unread message indicators
+•	Search conversations
+•	Filter by manufacturer/type
+•	Search manufacturer
+•	Message preview
+•	Archive conversations
+•	Mark as read/unread
+•	New message button
+7.4 Wishlist/Saved Items
+•	Sections for products, listings, and manufacturers
+•	Grid view of saved items
+•	Item cards with: 
+o	Image
+o	Name
+o	Current price
+o	Stock status
+o	Remove from wishlist button
+o	Add to cart button
+7.5 Account Settings
+•	Profile information editing
+•	Email and password change
+•	Profile picture upload
+•	Notification preferences
+•	Privacy settings
+•	Connected accounts
+•	Language and region
+•	Delete account option
+•	Save changes button
+7.6 Payments
+•	Saved payment methods list
+•	Add new payment method button
+•	Set default payment method
+•	Remove payment methods
+•	Transaction history
+•	Download receipts/invoices
+•	Refund status tracking
+•	Filter transactions by date/type
+•	Back button (returns to Dashboard)
+7.7 Support / Help / Tickets
+•	FAQ section with search
+•	Contact support form
+•	Active tickets list with status
+•	Create new ticket button
+•	Ticket history
+

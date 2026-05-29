@@ -16,6 +16,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 export default function AdminUserDetailPage() {
   const { data: session, status } = useSession();
+  const toast = useToast();
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
@@ -62,7 +63,7 @@ export default function AdminUserDetailPage() {
 
   const handleSuspend = async () => {
     if (!suspendDetail.trim()) {
-      alert("Please provide a reason for suspension.");
+      toast.error("Please provide a reason for suspension.");
       return;
     }
     setActionLoading(true);
@@ -82,10 +83,10 @@ export default function AdminUserDetailPage() {
         setShowSuspendModal(false);
         await fetchUser();
       } else {
-        alert("Error: " + data.error);
+        toast.error("Error: " + data.error);
       }
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setActionLoading(false);
     }
@@ -103,10 +104,10 @@ export default function AdminUserDetailPage() {
       if (data.success) {
         await fetchUser();
       } else {
-        alert("Error: " + data.error);
+        toast.error("Error: " + data.error);
       }
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setActionLoading(false);
     }
@@ -490,6 +491,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function AdminUserDetailPage() {
   const { data: session, status } = useSession();
@@ -539,7 +541,7 @@ export default function AdminUserDetailPage() {
 
   const handleSuspend = async () => {
     if (!suspendDetail.trim()) {
-      alert("Please provide a reason for suspension.");
+      toast.error("Please provide a reason for suspension.");
       return;
     }
     setActionLoading(true);
@@ -559,10 +561,10 @@ export default function AdminUserDetailPage() {
         setShowSuspendModal(false);
         await fetchUser();
       } else {
-        alert("Error: " + data.error);
+        toast.error("Error: " + data.error);
       }
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setActionLoading(false);
     }
@@ -580,10 +582,10 @@ export default function AdminUserDetailPage() {
       if (data.success) {
         await fetchUser();
       } else {
-        alert("Error: " + data.error);
+        toast.error("Error: " + data.error);
       }
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setActionLoading(false);
     }

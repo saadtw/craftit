@@ -35,11 +35,23 @@ export default function ManufacturerRFQsPage() {
     let cancelled = false;
     const params = new URLSearchParams();
     params.append("status", filters.status || "active");
-    fetch(`/api/rfqs?${params}`)
+    let endpoint = `/api/rfqs?${params}`;
+    if (sortBy === "recommended") {
+      endpoint = "/api/rfqs/recommended";
+    }
+
+    fetch(endpoint)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
-        if (data.success && data.rfqs) setRfqs(data.rfqs);
+        if (data.success && data.rfqs) {
+          // recommended endpoint returns { rfqs: [{ rfq, matchScore, matchReasons }] }
+          if (sortBy === "recommended") {
+            setRfqs(data.rfqs.map(item => ({...item.rfq, matchReasons: item.matchReasons, matchScore: item.matchScore})));
+          } else {
+            setRfqs(data.rfqs);
+          }
+        }
       })
       .catch((err) => console.error("Error:", err))
       .finally(() => {
@@ -83,7 +95,7 @@ export default function ManufacturerRFQsPage() {
           </div>
 
           <div className="flex gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5">
-            {["newest", "ending_soon", "highest_budget"].map((sort) => (
+            {["recommended", "newest", "ending_soon", "highest_budget"].map((sort) => (
               <button
                 key={sort}
                 onClick={() => { setLoading(true); setSortBy(sort); }}
@@ -257,9 +269,19 @@ export default function ManufacturerRFQsPage() {
                         </button>
                       </div>
 
-                      <p className="text-sm text-white/40 font-medium line-clamp-2 mb-8 leading-relaxed max-w-2xl">
+                      <p className="text-sm text-white/40 font-medium line-clamp-2 mb-4 leading-relaxed max-w-2xl">
                         {rfq.customOrderId?.description}
                       </p>
+
+                      {rfq.matchReasons && rfq.matchReasons.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mb-8">
+                          {rfq.matchReasons.map((reason, idx) => (
+                            <span key={idx} className="px-2.5 py-1 bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 rounded-md text-[9px] font-black uppercase tracking-widest">
+                              {reason}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-8 pt-6 border-t border-white/5">
                         <div>

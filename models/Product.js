@@ -56,14 +56,15 @@ const ProductSchema = new mongoose.Schema(
       url: String,
       filename: String,
       fileSize: Number,
-      annotations: [
-        {
-          id: String,
-          text: String,
-          position: { x: Number, y: Number, z: Number },
-          normal: { x: Number, y: Number, z: Number },
-        },
-      ],
+      thumbnailUrl: String,
+      // Annotations from the 3D editor.
+      // Schema: { id, label, colour, worldPosition: [x,y,z], meshName }
+      // Stored as Mixed so any shape from the editor is preserved without
+      // Mongoose's strict mode silently stripping unrecognized fields.
+      annotations: [mongoose.Schema.Types.Mixed],
+      // Measurements from the 3D editor.
+      // Schema: { id, label, pointA: [x,y,z], pointB: [x,y,z] }
+      measurements: [mongoose.Schema.Types.Mixed],
       cameraState: {
         position: { x: Number, y: Number, z: Number },
         target: { x: Number, y: Number, z: Number },

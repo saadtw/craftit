@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FiCheckCircle, FiXCircle, FiClock, FiShield } from "react-icons/fi";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const STATUS_STYLES = {
   unverified: {
@@ -32,6 +33,7 @@ const STATUS_STYLES = {
 
 export default function AdminManufacturersPage() {
   const { data: session, status } = useSession();
+  const toast = useToast();
   const router = useRouter();
   const [manufacturers, setManufacturers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -81,10 +83,10 @@ export default function AdminManufacturersPage() {
       if (data.success) {
         await fetchManufacturers();
       } else {
-        alert("Error: " + data.error);
+        toast.error("Error: " + data.error);
       }
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     }
   };
 

@@ -7,11 +7,13 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function PlaceBidPage({ params }) {
   const unwrappedParams = use(params);
   const router = useRouter();
   const { data: session, status } = useSession();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [rfq, setRfq] = useState(null);
   const [formData, setFormData] = useState({
@@ -79,7 +81,7 @@ export default function PlaceBidPage({ params }) {
 
       router.push(`/manufacturer/rfqs/${unwrappedParams.id}`);
     } catch (error) {
-      alert(error.message);
+      toast.error(error.message);
     } finally {
       setLoading(false);
     }

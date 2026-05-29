@@ -18,6 +18,7 @@ const AdminLogSchema = new mongoose.Schema(
         "dispute_resolved",
         "order_viewed",
         "order_force_cancelled",
+        "order_status_updated",
         "support_ticket_updated",
       ],
       required: true,
@@ -30,7 +31,7 @@ const AdminLogSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
     },
     details: {
-      type: String,
+      type: mongoose.Schema.Types.Mixed,
     },
     description: {
       type: String, // human-readable summary shown in activity log UI

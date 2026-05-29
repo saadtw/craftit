@@ -576,7 +576,7 @@ function ProductCard({
   statusLoading,
 }) {
   const primaryImage =
-    product.images?.find((i) => i.isPrimary)?.url || product.images?.[0]?.url;
+    product.images?.find((i) => i.isPrimary)?.url || product.images?.[0]?.url || product.model3D?.thumbnailUrl;
 
   const nextStatusOptions = {
     draft: [{ status: "active", label: "Publish" }],

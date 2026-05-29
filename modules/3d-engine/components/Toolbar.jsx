@@ -2,13 +2,11 @@
 
 import React from 'react';
 import { useAnnotations } from './AnnotationStore';
-import { GLTFExporter } from 'three/examples/jsm/exporters/GLTFExporter.js';
 
 const TOOLS = [
   { id: 'select', icon: 'arrow_selector_tool', label: 'SELECT' },
   { id: 'tag', icon: 'label', label: 'TAG' },
   { id: 'measure', icon: 'straighten', label: 'MEASURE' },
-  { id: 'paint', icon: 'colors', label: 'PAINT' },
 ];
 
 const SCALE_OPTIONS = [
@@ -143,54 +141,12 @@ export default function Toolbar({ modelUrl, onSave, readOnly }) {
   if (readOnly) return null;
 
 
-  const handleSaveFinish = async () => {
-    try {
-      if (sceneRef && sceneRef.current) {
-        const scene = sceneRef.current;
-        const hiddenObjects = [];
-        scene.traverse((child) => {
-          if (
-            child.type === 'GridHelper' ||
-            child.type.includes('Light') ||
-            child.type.includes('Camera') ||
-            child.isPreview
-          ) {
-            if (child.visible) {
-              child.visible = false;
-              hiddenObjects.push(child);
-            }
-          }
-        });
-
-        // 1. Capture Snapshot
-        // The WebGLRenderer was updated to have preserveDrawingBuffer: true,
-        // so we can safely capture the canvas state right before the export.
-        const canvas = document.querySelector('canvas');
-        let snapshotBlob = null;
-        if (canvas) {
-          snapshotBlob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
-        }
-
-        // 2. Generate new Model Blob
-        console.log("[Export] parseAsync started...");
-        console.time("parseAsync duration");
-
-        const exporter = new GLTFExporter();
-        const exportData = await exporter.parseAsync(scene, { binary: true, onlyVisible: true });
-        
-        console.timeEnd("parseAsync duration");
-        console.log(`[Export] parseAsync resolved successfully. Blob size: ${(exportData.byteLength / 1024 / 1024).toFixed(2)} MB`);
-        hiddenObjects.forEach(child => { child.visible = true; });
-
-        const gltfBlob = new Blob([exportData], { type: 'model/gltf-binary' });
-        
-        if (onSave) {
-          // Pass the new snapshotBlob as the 4th argument
-          onSave(gltfBlob, state.tags, null, snapshotBlob);
-        }
-      }
-    } catch (err) {
-      console.error('Export failed', err);
+  const handleSaveFinish = () => {
+    // We do NOT export a GLB blob — annotations and measurements are pure JSON
+    // metadata saved directly to MongoDB. Decoupling from GLTFExporter ensures
+    // save can never silently fail due to scene/sceneRef issues.
+    if (onSave) {
+      onSave(null, state.tags, state.measurements, null);
     }
   };
 
@@ -229,24 +185,7 @@ export default function Toolbar({ modelUrl, onSave, readOnly }) {
         </button>
       ))}
 
-      {/* Paint colour picker */}
-      {state.activeTool === 'paint' && (
-        <>
-          <div style={S.sectionLabel}>Paint Colour</div>
-          <div style={{ padding: '4px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <input
-              type="color"
-              id="paintColourInput"
-              value={state.paintColour}
-              onChange={(e) => dispatch({ type: 'SET_PAINT_COLOUR', payload: e.target.value })}
-              style={{ width: '32px', height: '28px', border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
-            />
-            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: '10px', color: '#a3a3a3' }}>
-              {state.paintColour.toUpperCase()}
-            </span>
-          </div>
-        </>
-      )}
+
 
       {/* Measure hint */}
       {state.activeTool === 'measure' && (
@@ -292,7 +231,6 @@ export default function Toolbar({ modelUrl, onSave, readOnly }) {
       {[
         { label: 'Tags', value: state.tags.length, icon: 'label' },
         { label: 'Dims', value: state.measurements.length, icon: 'straighten' },
-        { label: 'Marks', value: Object.keys(state.componentMarks).length, icon: 'category' },
       ].map(s => (
         <div key={s.label} style={S.statRow}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>

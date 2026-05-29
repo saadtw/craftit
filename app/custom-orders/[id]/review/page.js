@@ -10,6 +10,8 @@ import Image from "next/image";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
 import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import PartsDivisionPanel from "@/components/custom-orders/PartsDivisionPanel";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const customizationTypeLabelMap = CUSTOMIZATION_TYPE_OPTIONS.reduce(
   (acc, item) => {
@@ -23,6 +25,7 @@ export default function CustomOrderReview() {
   const router = useRouter();
   const params = useParams();
   const { data: session, status } = useSession();
+  const toast = useToast();
   const [customOrder, setCustomOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -72,11 +75,10 @@ export default function CustomOrderReview() {
       });
       const data = await response.json();
       if (data.success) {
-        alert("Saved as draft!");
         router.push("/customer/custom-orders");
-      } else alert("Error: " + data.error);
+      } else toast.error("Error: " + data.error);
     } catch (error) {
-      alert("Error: " + error.message);
+      toast.error("Error: " + error.message);
     }
   };
 
@@ -367,6 +369,12 @@ export default function CustomOrderReview() {
             </div>
           </div>
 
+          {/* Parts Division Panel */}
+          <PartsDivisionPanel
+            customOrder={customOrder}
+            onPartsUpdated={fetchCustomOrder}
+          />
+
           {/* 3D Model */}
           {customOrder.model3D && (
             <div className="rounded-2xl border border-white/8 bg-[#0c0c11] overflow-hidden">
@@ -553,11 +561,9 @@ export default function CustomOrderReview() {
 //       if (data.success && data.order) {
 //         setCustomOrder(data.order);
 //       } else {
-//         alert("Error loading order: " + (data.error || "Unknown error"));
-//       }
+//         //       }
 //     } catch (error) {
-//       alert("Error loading order: " + error.message);
-//     } finally {
+//       //     } finally {
 //       setLoading(false);
 //     }
 //   }, [params.id]);
@@ -604,13 +610,12 @@ export default function CustomOrderReview() {
 
 //       const data = await response.json();
 //       if (data.success) {
-//         alert("Saved as draft!");
-//         router.push("/customer/custom-orders");
+//         //         router.push("/customer/custom-orders");
 //       } else {
-//         alert("Error: " + data.error);
+//         toast.error("Error: " + data.error);
 //       }
 //     } catch (error) {
-//       alert("Error: " + error.message);
+//       toast.error("Error: " + error.message);
 //     }
 //   };
 

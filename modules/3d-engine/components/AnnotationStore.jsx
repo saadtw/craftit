@@ -12,10 +12,8 @@ import React, {
 const initialState = {
   activeTool: 'select',
   scaleUnit: 'units',
-  paintColour: '#ff6b35',
   tags: [],
   measurements: [],
-  componentMarks: {},
   selectedMeshName: null,
   measurePointA: null,
   pendingTag: null,
@@ -30,7 +28,7 @@ const initialState = {
 const HISTORY_ACTIONS = new Set([
   'ADD_TAG', 'DELETE_TAG',
   'ADD_MEASUREMENT', 'DELETE_MEASUREMENT',
-  'SET_COMPONENT_MARK', 'CLEAR_ALL',
+  'CLEAR_ALL',
 ]);
 
 // ─── Reducer ──────────────────────────────────────────────────────────────────
@@ -38,12 +36,10 @@ function coreReducer(state, action) {
   if (state.isReadOnly) {
     const mutationTypes = [
       'SET_TOOL',
-      'SET_PAINT_COLOUR',
       'ADD_TAG',
       'DELETE_TAG',
       'ADD_MEASUREMENT',
       'DELETE_MEASUREMENT',
-      'SET_COMPONENT_MARK',
       'SET_MEASURE_POINT_A',
       'SET_PENDING_TAG',
       'SET_PENDING_MEASUREMENT',
@@ -61,8 +57,6 @@ function coreReducer(state, action) {
       return { ...state, activeTool: action.payload, measurePointA: null, pendingTag: null };
     case 'SET_SCALE':
       return { ...state, scaleUnit: action.payload };
-    case 'SET_PAINT_COLOUR':
-      return { ...state, paintColour: action.payload };
     case 'ADD_TAG':
       return { ...state, tags: [...state.tags, action.payload], pendingTag: null };
     case 'DELETE_TAG':
@@ -73,14 +67,6 @@ function coreReducer(state, action) {
       return { ...state, measurements: state.measurements.filter((m) => m.id !== action.payload) };
     case 'SET_PENDING_MEASUREMENT':
       return { ...state, pendingMeasurement: action.payload };
-    case 'SET_COMPONENT_MARK':
-      return {
-        ...state,
-        componentMarks: {
-          ...state.componentMarks,
-          [action.payload.meshName]: action.payload,
-        },
-      };
     case 'SET_SELECTED_MESH':
       return { ...state, selectedMeshName: action.payload };
     case 'SET_MEASURE_POINT_A':
@@ -90,26 +76,11 @@ function coreReducer(state, action) {
     case 'SET_INTERACTING':
       return { ...state, isInteracting: action.payload };
     case 'CLEAR_ALL':
-      return { 
-        ...state, 
-        tags: [], 
-        measurements: [], 
-        componentMarks: {}, 
-        measurePointA: null, 
-        pendingTag: null, 
-        pendingMeasurement: null,
-        selectedMeshName: null 
-      };
+      return { ...state, tags: [], measurements: [], measurePointA: null, pendingTag: null, pendingMeasurement: null, selectedMeshName: null };
     case 'TOGGLE_GRID':
       return { ...state, showGrid: !state.showGrid };
     case 'LOAD':
-      return {
-        ...state,
-        tags: action.payload.tags,
-        measurements: action.payload.measurements,
-        componentMarks: action.payload.componentMarks,
-        showGrid: action.payload.showGrid !== undefined ? action.payload.showGrid : true,
-      };
+      return { ...state, tags: action.payload.tags, measurements: action.payload.measurements, showGrid: action.payload.showGrid !== undefined ? action.payload.showGrid : true };
     default:
       return state;
   }
@@ -118,7 +89,7 @@ function coreReducer(state, action) {
 // ─── History-aware wrapper reducer ────────────────────────────────────────────
 // Wraps coreReducer. Tracks a past[] stack of annotation snapshots.
 // UNDO pops the last snapshot; REDO pushes current onto the future stack.
-const SNAPSHOT_KEYS = ['tags', 'measurements', 'componentMarks'];
+const SNAPSHOT_KEYS = ['tags', 'measurements'];
 
 function snapshot(state) {
   return Object.fromEntries(SNAPSHOT_KEYS.map((k) => [k, state[k]]));
@@ -168,45 +139,31 @@ function reducer(withHistory, action) {
 const AnnotationContext = createContext(null);
 
 // ─── Provider ─────────────────────────────────────────────────────────────────
-export function AnnotationProvider({ children, modelUrl, initialAnnotations, initialCameraState, readOnly = false }) {
-  // history shape: { past: Snapshot[], present: State, future: Snapshot[] }
-  const [history, dispatch] = useReducer(reducer, {
-    past: [],
-    present: initialState,
-    future: [],
-  });
-
-  // All consumers see `state` — they never need to know about past/future
+export function AnnotationProvider({ children, modelUrl, initialAnnotations, initialMeasurements, initialCameraState, readOnly = false }) {
+  const [history, dispatch] = useReducer(reducer, { past: [], present: initialState, future: [] });
   const state = history.present;
   const canUndo = history.past.length > 0;
   const canRedo = history.future.length > 0;
-
   const sceneRef = React.useRef(null);
 
-  useEffect(() => {
-    dispatch({ type: 'SET_READ_ONLY', payload: readOnly });
-  }, [readOnly]);
+  useEffect(() => { dispatch({ type: 'SET_READ_ONLY', payload: readOnly }); }, [readOnly]);
 
-  // Load on mount
   useEffect(() => {
-    if (initialAnnotations && initialAnnotations.length > 0) {
-      dispatch({ 
-        type: 'LOAD', 
-        payload: { 
-          tags: initialAnnotations, 
-          measurements: [], 
-          componentMarks: {}, 
-          showGrid: true 
-        } 
-      });
+    const hasTags = initialAnnotations && initialAnnotations.length > 0;
+    const hasMeasurements = initialMeasurements && initialMeasurements.length > 0;
+    if (hasTags || hasMeasurements) {
+      dispatch({ type: 'LOAD', payload: {
+        tags: initialAnnotations || [],
+        measurements: initialMeasurements || [],
+        showGrid: true,
+      } });
     }
-  }, [initialAnnotations]);
+  }, [initialAnnotations, initialMeasurements]);
 
   const exportJSON = useCallback(() => {
     const data = {
       tags: state.tags,
       measurements: state.measurements,
-      componentMarks: state.componentMarks,
       showGrid: state.showGrid,
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });

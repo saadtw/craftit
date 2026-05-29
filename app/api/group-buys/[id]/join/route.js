@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
+import Order from "@/models/Order";
 import { resolveRequestSession } from "@/lib/requestAuth";
 import getStripe from "@/lib/stripe";
 import { notify } from "@/services/notificationService";
@@ -172,6 +173,46 @@ export async function POST(request, context) {
         tier.tierNumber,
         tier.discountPercent,
       );
+    }
+
+    // Trigger activation / funding if minParticipants reached
+    if (groupBuy.currentParticipantCount === groupBuy.minParticipants) {
+      // Notify all participants it's funded
+      for (const p of groupBuy.participants) {
+        notify.groupBuyFunded(p.customerId, groupBuy._id, groupBuy.title);
+      }
+    }
+
+    // Automatically complete if maxParticipants reached
+    if (groupBuy.maxParticipants && groupBuy.currentParticipantCount >= groupBuy.maxParticipants) {
+      groupBuy.status = "completed";
+      groupBuy.completedAt = new Date();
+      groupBuy.endDate = new Date();
+      await groupBuy.save();
+
+      const productName = groupBuy.title || "Group Buy";
+      for (let i = 0; i < groupBuy.participants.length; i++) {
+        const participant = groupBuy.participants[i];
+        try {
+          const order = await Order.create({
+            orderType: "group_buy",
+            groupBuyId: groupBuy._id,
+            productId: groupBuy.productId,
+            customerId: participant.customerId,
+            manufacturerId: groupBuy.manufacturerId,
+            quantity: participant.quantity,
+            unitPrice: participant.unitPrice,
+            totalPrice: participant.totalPrice,
+            status: participant.remainingBalance > 0 ? "awaiting_production_ack" : "accepted",
+            paymentStatus: participant.remainingBalance > 0 ? "authorized" : "captured",
+          });
+          groupBuy.participants[i].orderId = order._id;
+          notify.groupBuyCompleted(participant.customerId, groupBuy._id, productName);
+        } catch (orderErr) {
+          console.error("Failed to create order for participant:", orderErr);
+        }
+      }
+      await groupBuy.save();
     }
 
     return NextResponse.json({

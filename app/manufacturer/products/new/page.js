@@ -9,6 +9,7 @@ import Image from "next/image";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
 import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import GlobalLoader from "@/components/ui/GlobalLoader";
+import { useToast } from "@/components/ui/ToastProvider";
 
 // Key shared between this page and the dedicated model-editor route
 const DRAFT_MODEL_KEY = "draftModel3D";
@@ -93,6 +94,7 @@ const initialForm = {
 
 export default function NewProductPage() {
   const { data: session, status } = useSession();
+  const toast = useToast();
   const router = useRouter();
 
   useEffect(() => {
@@ -109,6 +111,7 @@ export default function NewProductPage() {
   const [modelUploading, setModelUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState({});
+  const [uploadError, setUploadError] = useState(null); // blocking error popup
 
   // ── Hydration: restore annotation data written by the model-editor page ────
   // Runs once on mount. If the user visited /model-editor and saved their
@@ -195,6 +198,8 @@ export default function NewProductPage() {
   const handleImageUpload = async (files) => {
     if (!files.length) return;
     setImageUploading(true);
+    // Always reset input so the same file can be selected again on retry
+    if (imageInputRef.current) imageInputRef.current.value = "";
     try {
       const formData = new FormData();
       formData.append("type", "image");
@@ -204,15 +209,19 @@ export default function NewProductPage() {
         body: formData,
       });
       const data = await res.json();
-      if (data.success) {
-        const newImgs = data.files.map((f, i) => ({
-          url: f.url,
-          isPrimary: form.images.length === 0 && i === 0,
-        }));
-        setForm((prev) => ({ ...prev, images: [...prev.images, ...newImgs] }));
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Image upload failed. Please try again.");
       }
-    } catch (_) {}
-    setImageUploading(false);
+      const newImgs = data.files.map((f, i) => ({
+        url: f.url,
+        isPrimary: form.images.length === 0 && i === 0,
+      }));
+      setForm((prev) => ({ ...prev, images: [...prev.images, ...newImgs] }));
+    } catch (err) {
+      setUploadError(err.message || "Image upload failed. Please try again.");
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   const setPrimaryImage = (idx) => {
@@ -235,6 +244,8 @@ export default function NewProductPage() {
   const handleModelUpload = async (file) => {
     if (!file) return;
     setModelUploading(true);
+    // Always reset input so the same file can be re-selected on retry
+    if (modelInputRef.current) modelInputRef.current.value = "";
     try {
       const formData = new FormData();
       formData.append("type", "3d-model");
@@ -244,21 +255,25 @@ export default function NewProductPage() {
         body: formData,
       });
       const data = await res.json();
-      if (data.success) {
-        setForm((prev) => ({
-          ...prev,
-          model3D: {
-            url: data.file.url,
-            filename: file.name,
-            fileSize: file.size,
-          },
-        }));
-        // ✓ Editor no longer auto-mounts here.
-        // The user sees ModelViewerPreview and can optionally click
-        // "Edit / Annotate" to navigate to the dedicated editor page.
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "3D model upload failed. Please try again.");
       }
-    } catch (_) {}
-    setModelUploading(false);
+      setForm((prev) => ({
+        ...prev,
+        model3D: {
+          url: data.file.url,
+          filename: file.name,
+          fileSize: file.size,
+        },
+      }));
+      // ✓ Editor no longer auto-mounts here.
+      // The user sees ModelViewerPreview and can optionally click
+      // "Edit / Annotate" to navigate to the dedicated editor page.
+    } catch (err) {
+      setUploadError(err.message || "3D model upload failed. Please try again.");
+    } finally {
+      setModelUploading(false);
+    }
   };
 
   // Navigate to the dedicated model-editor route.
@@ -268,6 +283,7 @@ export default function NewProductPage() {
     if (!form.model3D?.url) return;
     sessionStorage.setItem("draftProductForm", JSON.stringify({ form, step }));
     sessionStorage.setItem(DRAFT_MODEL_KEY, JSON.stringify(form.model3D));
+    sessionStorage.setItem("modelEditorReturnUrl", "/manufacturer/products/new");
     router.push("/manufacturer/products/model-editor");
   };
 
@@ -384,15 +400,16 @@ export default function NewProductPage() {
         sessionStorage.removeItem("draftProductForm");
         router.push(`/manufacturer/products/${data.product._id}`);
       } else {
-        alert(data.error || "Failed to save product");
+        toast.error(data.error || "Failed to save product");
       }
     } catch (_) {
-      alert("Something went wrong. Please try again.");
+      toast.error("Something went wrong. Please try again.");
     }
     setSaving(false);
   };
 
   return (
+    <>
     <div className="min-h-screen bg-[#050507] text-white">
       {/* Header */}
       <div className="bg-[#050507]/80 border-b border-white/5">
@@ -1003,10 +1020,14 @@ export default function NewProductPage() {
                       3D Configuration Model
                     </label>
                     <div className="p-8 bg-white/[0.02] border-2 border-purple-500/20 rounded-[2rem] flex flex-col items-center text-center">
-                      {form.model3D ? (
+                      {form.model3D?.url ? (
                         <div className="w-full space-y-6">
                           <div className="aspect-video w-full rounded-2xl border-2 border-purple-500/40 overflow-hidden bg-[#0B011D]">
-                            <ModelViewerPreview modelUrl={form.model3D.url} />
+                            <ModelViewerPreview 
+                              modelUrl={form.model3D.url} 
+                              annotations={form.model3D.annotations || []}
+                              measurements={form.model3D.measurements || []}
+                            />
                           </div>
                           <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
                             <div className="text-left">
@@ -1025,8 +1046,11 @@ export default function NewProductPage() {
                         </div>
                       ) : (
                         <button
-                          onClick={() => modelInputRef.current.click()}
-                          disabled={modelUploading}
+                          onClick={() => {
+                            // Clear stale value before opening picker so onChange always fires
+                            if (modelInputRef.current) modelInputRef.current.value = "";
+                            modelInputRef.current.click();
+                          }}
                           className="flex flex-col items-center gap-4 group"
                         >
                           <div className="w-16 h-16 rounded-2xl bg-purple-600/10 border-2 border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-110 group-hover:border-purple-500 transition-all">
@@ -1205,6 +1229,36 @@ export default function NewProductPage() {
         </div>
       </div>
     </div>
+
+      {/* ── Upload Error Modal ──────────────────────────────────────────────── */}
+      {uploadError && (
+        <div
+          className="fixed inset-0 z-[200] flex items-center justify-center p-6"
+          style={{ background: "rgba(0,0,0,0.75)", backdropFilter: "blur(8px)" }}
+        >
+          <div className="w-full max-w-md bg-[#0e0b1a] border-2 border-red-500/40 rounded-[2rem] p-8 shadow-[0_0_60px_rgba(239,68,68,0.2)] animate-in zoom-in-95 duration-200">
+            {/* Icon */}
+            <div className="w-14 h-14 mx-auto mb-5 rounded-2xl bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center">
+              <svg className="w-7 h-7 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+              </svg>
+            </div>
+            <h3 className="text-center text-sm font-black uppercase tracking-[0.2em] text-white mb-2">
+              Upload Failed
+            </h3>
+            <p className="text-center text-[11px] font-medium text-white/50 leading-relaxed mb-6">
+              {uploadError}
+            </p>
+            <button
+              onClick={() => setUploadError(null)}
+              className="w-full py-3 text-[10px] font-black uppercase tracking-[0.2em] bg-red-600 hover:bg-red-500 text-white rounded-2xl transition-all shadow-[0_0_20px_rgba(239,68,68,0.3)]"
+            >
+              Close &amp; Try Again
+            </button>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const STATUS_COLORS = {
   pending_acceptance:
@@ -35,6 +36,7 @@ const TYPE_LABELS = {
 
 export default function CustomerOrdersPage() {
   const { data: session, status } = useSession();
+  const toast = useToast();
   const router = useRouter();
 
   const [orders, setOrders] = useState([]);
@@ -270,9 +272,9 @@ function CustomerOrderCard({ order, onRefresh }) {
       });
       const data = await res.json();
       if (data.success) onRefresh();
-      else alert(data.error || "Could not cancel order");
+      else toast.error(data.error || "Could not cancel order");
     } catch (err) {
-      alert("Error cancelling order");
+      toast.error("Error cancelling order");
     } finally {
       setCancelling(false);
     }

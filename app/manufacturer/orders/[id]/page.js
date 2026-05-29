@@ -16,6 +16,7 @@ import {
   HiOutlineMap
 } from "react-icons/hi2";
 import { useSession } from "next-auth/react";
+import { useToast } from "@/components/ui/ToastProvider";
 import Link from "next/link";
 import GlobalLoader from "@/components/ui/GlobalLoader";
 import ChatBox from "@/components/chat/ChatBox";
@@ -41,6 +42,7 @@ const MILESTONE_STATUS_COLORS = {
 export default function ManufacturerOrderDetailPage() {
   const { id } = useParams();
   const router = useRouter();
+  const toast = useToast();
   const { data: session, status } = useSession();
 
   const [order, setOrder] = useState(null);
@@ -82,7 +84,7 @@ export default function ManufacturerOrderDetailPage() {
         setPaymentReleases(data.paymentReleases || []);
         setPaymentSchedule(data.paymentSchedule || null);
       }
-      else alert(data.error || "Failed to load order");
+      else toast.error(data.error || "Failed to load order");
     } catch (err) {
       console.error(err);
     } finally {
@@ -136,10 +138,10 @@ export default function ManufacturerOrderDetailPage() {
         setShowShipModal(false);
         setShowTrackingModal(false);
       } else {
-        alert(data.error || "Action failed");
+        toast.error(data.error || "Action failed");
       }
     } catch (err) {
-      alert("Error updating order status");
+      toast.error("Error updating order status");
     } finally {
       setActionLoading(false);
     }
@@ -157,9 +159,9 @@ export default function ManufacturerOrderDetailPage() {
       if (data.success) {
         setOrder(data.order);
         setShowTrackingModal(false);
-      } else alert(data.error || "Failed to save tracking info");
+      } else toast.error(data.error || "Failed to save tracking info");
     } catch (err) {
-      alert("Error saving tracking info");
+      toast.error("Error saving tracking info");
     } finally {
       setActionLoading(false);
     }
@@ -167,7 +169,7 @@ export default function ManufacturerOrderDetailPage() {
 
   const markAsShipped = async () => {
     if (!shipForm.trackingNumber || !shipForm.shippingMethod) {
-      alert("Please enter both tracking number and carrier.");
+      toast.error("Please enter both tracking number and carrier.");
       return;
     }
     await updateStatus("shipped", {
@@ -191,9 +193,9 @@ export default function ManufacturerOrderDetailPage() {
           milestones: data.milestones,
           status: data.orderStatus || prev.status,
         }));
-      } else alert(data.error || "Failed to update milestone");
+      } else toast.error(data.error || "Failed to update milestone");
     } catch (err) {
-      alert("Error updating milestone");
+      toast.error("Error updating milestone");
     }
   };
 
@@ -208,13 +210,13 @@ export default function ManufacturerOrderDetailPage() {
       if (data.success) {
         await fetchOrder();
         setShowCancelConfirmModal(false);
-        alert("Cancellation approved. The order has been cancelled.");
+        toast.success("Cancellation approved. The order has been cancelled.");
       } else {
-        alert(data.error || "Failed to confirm cancellation");
+        toast.error(data.error || "Failed to confirm cancellation");
       }
     } catch (err) {
       console.error(err);
-      alert("Error confirming cancellation");
+      toast.error("Error confirming cancellation");
     } finally {
       setActionLoading(false);
     }
@@ -222,7 +224,7 @@ export default function ManufacturerOrderDetailPage() {
 
   const handleRejectCancellation = async () => {
     if (!cancelRejectReason.trim()) {
-      alert("Please provide a reason for rejecting the cancellation request.");
+      toast.error("Please provide a reason for rejecting the cancellation request.");
       return;
     }
 
@@ -238,13 +240,13 @@ export default function ManufacturerOrderDetailPage() {
         await fetchOrder();
         setShowCancelRejectModal(false);
         setCancelRejectReason("");
-        alert("Cancellation request declined.");
+        toast.success("Cancellation request declined.");
       } else {
-        alert(data.error || "Failed to reject cancellation");
+        toast.error(data.error || "Failed to reject cancellation");
       }
     } catch (err) {
       console.error(err);
-      alert("Error rejecting cancellation");
+      toast.error("Error rejecting cancellation");
     } finally {
       setActionLoading(false);
     }
@@ -252,7 +254,7 @@ export default function ManufacturerOrderDetailPage() {
 
   const handleRequestPaymentRelease = async () => {
     if (!paymentReleaseForm.amount || !paymentReleaseForm.reason) {
-      alert("Please provide amount and reason.");
+      toast.error("Please provide amount and reason.");
       return;
     }
     setActionLoading(true);
@@ -268,10 +270,10 @@ export default function ManufacturerOrderDetailPage() {
         setShowPaymentReleaseModal(false);
         setPaymentReleaseForm({ amount: "", reason: "" });
       } else {
-        alert(data.error || "Failed to request payment release");
+        toast.error(data.error || "Failed to request payment release");
       }
     } catch (err) {
-      alert("Error requesting payment release");
+      toast.error("Error requesting payment release");
     } finally {
       setActionLoading(false);
     }

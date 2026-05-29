@@ -7,11 +7,13 @@ import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function EditCustomOrder() {
   const router = useRouter();
   const params = useParams();
   const { data: session, status } = useSession();
+  const toast = useToast();
 
   const [formData, setFormData] = useState({
     title: "",
@@ -52,11 +54,9 @@ export default function EditCustomOrder() {
         setBaseModelUrl(order.model3D?.url || "");
         setImages(order.images || []);
       } else {
-        alert("Error loading order: " + (data.error || "Unknown error"));
-      }
+        }
     } catch (error) {
-      alert("Error loading order: " + error.message);
-    } finally {
+      } finally {
       setInitialLoading(false);
     }
   }, [params.id]);
@@ -101,93 +101,41 @@ export default function EditCustomOrder() {
       if (data.success) {
         setBaseModelUrl(data.file.url);
         setIsEditorOpen(true);
-      } else alert("Upload failed: " + data.error);
+      } else toast.error("Upload failed: " + data.error);
     } catch (error) {
-      alert("Upload error: " + error.message);
+      toast.error("Upload error: " + error.message);
     } finally {
       setUploading(false);
     }
   };
 
-  const handleEditorSave = async (gltfBlob, annotations, cameraState, snapshotBlob) => {
-    setUploading(true);
+  const handleEditorSave = async (payload) => {
+    const { modelUrl: newModelUrl, annotations, cameraState } = payload || {};
     try {
-      const timestamp = Date.now();
-
-      // 1. Upload the new edited model to S3
-      const modelFile = new File([gltfBlob], `model_${timestamp}.glb`, {
-        type: "model/gltf-binary",
-      });
-      const modelFormData = new FormData();
-      modelFormData.append("file", modelFile);
-      modelFormData.append("type", "3d-model");
-
-      const modelRes = await fetch("/api/upload", { method: "POST", body: modelFormData });
-      const modelData = await modelRes.json();
-
-      if (!modelData.success) {
-        alert("Save failed: " + (modelData.error || "Upload error"));
-        return;
-      }
-
-      // 2. Upload the snapshot image to S3 (if captured)
-      let snapshotUrl = null;
-      if (snapshotBlob) {
-        const snapshotFile = new File([snapshotBlob], `snapshot_${timestamp}.png`, {
-          type: "image/png",
-        });
-        const snapFormData = new FormData();
-        snapFormData.append("file", snapshotFile);
-        snapFormData.append("type", "image");
-
-        const snapRes = await fetch("/api/upload", { method: "POST", body: snapFormData });
-        const snapData = await snapRes.json();
-
-        if (snapData.success) {
-          snapshotUrl = snapData.file.url;
-        } else {
-          console.warn("[custom-order-editor] Snapshot upload failed:", snapData.error);
-        }
-      }
-
-      // 3. Atomic Update: swap URLs in DB + delete old S3 objects
-      const updateRes = await fetch("/api/models/update", {
+      // Persist to MongoDB via the models/update API
+      await fetch("/api/models/update", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           resourceId: params.id,
           resourceType: "customOrder",
-          newModelUrl: modelData.file.url,
-          newThumbnailUrl: snapshotUrl || undefined,
-          newFileSize: gltfBlob.size,
-          annotations,
-          cameraState,
+          newModelUrl: newModelUrl || model3D?.url,
+          annotations: Array.isArray(annotations) ? annotations : [],
+          cameraState: cameraState || null,
         }),
       });
-      const updateData = await updateRes.json();
-
-      if (!updateData.success) {
-        console.error("[custom-order-editor] DB update failed:", updateData.error);
-      }
-
-      // 4. Update local state
-      const nextModel = {
-        url: modelData.file.url,
-        filename: modelFile.name,
-        fileSize: gltfBlob.size,
-        thumbnailUrl: snapshotUrl || model3D?.thumbnailUrl,
-        annotations,
-        cameraState,
-      };
-      setModel3D(nextModel);
-      setBaseModelUrl(nextModel.url);
-      setIsEditorOpen(false);
-    } catch (error) {
-      console.error("[custom-order-editor] Save error:", error);
-      alert("Save error: " + error.message);
-    } finally {
-      setUploading(false);
+    } catch (err) {
+      console.error("[custom-order-editor] DB update failed:", err);
     }
+
+    // Always update local state regardless of DB result
+    setModel3D((prev) => ({
+      ...prev,
+      url: newModelUrl || prev?.url,
+      annotations: Array.isArray(annotations) ? annotations : [],
+      cameraState: cameraState || null,
+    }));
+    setIsEditorOpen(false);
   };
 
   const handleImageUpload = async (e) => {
@@ -204,9 +152,9 @@ export default function EditCustomOrder() {
       });
       const data = await response.json();
       if (data.success) setImages((prev) => [...prev, ...data.files]);
-      else alert("Upload failed: " + data.error);
+      else toast.error("Upload failed: " + data.error);
     } catch (error) {
-      alert("Upload error: " + error.message);
+      toast.error("Upload error: " + error.message);
     } finally {
       setUploading(false);
     }
@@ -229,13 +177,12 @@ export default function EditCustomOrder() {
       });
       const data = await response.json();
       if (data.success) {
-        alert("Custom order updated!");
         router.push(`/custom-orders/${params.id}/review`);
       } else {
-        alert("Error: " + data.error);
+        toast.error("Error: " + data.error);
       }
     } catch (error) {
-      alert("Error: " + error.message);
+      toast.error("Error: " + error.message);
     } finally {
       setLoading(false);
     }
@@ -618,11 +565,9 @@ export default function EditCustomOrder() {
 //         setModel3D(order.model3D);
 //         setImages(order.images || []);
 //       } else {
-//         alert("Error loading order: " + (data.error || "Unknown error"));
-//       }
+//         //       }
 //     } catch (error) {
-//       alert("Error loading order: " + error.message);
-//     } finally {
+//       //     } finally {
 //       setInitialLoading(false);
 //     }
 //   }, [params.id]);
@@ -682,10 +627,10 @@ export default function EditCustomOrder() {
 //       if (data.success) {
 //         setModel3D(data.file);
 //       } else {
-//         alert("Upload failed: " + data.error);
+//         toast.error("Upload failed: " + data.error);
 //       }
 //     } catch (error) {
-//       alert("Upload error: " + error.message);
+//       toast.error("Upload error: " + error.message);
 //     } finally {
 //       setUploading(false);
 //     }
@@ -712,10 +657,10 @@ export default function EditCustomOrder() {
 //       if (data.success) {
 //         setImages((prev) => [...prev, ...data.files]);
 //       } else {
-//         alert("Upload failed: " + data.error);
+//         toast.error("Upload failed: " + data.error);
 //       }
 //     } catch (error) {
-//       alert("Upload error: " + error.message);
+//       toast.error("Upload error: " + error.message);
 //     } finally {
 //       setUploading(false);
 //     }
@@ -743,13 +688,12 @@ export default function EditCustomOrder() {
 //       const data = await response.json();
 
 //       if (data.success) {
-//         alert("Custom order updated!");
-//         router.push(`/custom-orders/${params.id}/review`);
+//         //         router.push(`/custom-orders/${params.id}/review`);
 //       } else {
-//         alert("Error: " + data.error);
+//         toast.error("Error: " + data.error);
 //       }
 //     } catch (error) {
-//       alert("Error: " + error.message);
+//       toast.error("Error: " + error.message);
 //     } finally {
 //       setLoading(false);
 //     }

@@ -288,6 +288,17 @@ export const notify = {
       relatedId: groupBuyId,
     }),
 
+  groupBuyFunded: (customerId, groupBuyId, productName) =>
+    createNotification({
+      userId: customerId,
+      type: "group_buy_funded",
+      title: "Group buy funded!",
+      message: `The group buy for "${productName}" has reached its minimum participant threshold and is officially funded.`,
+      link: `/customer/group-buys/${groupBuyId}`,
+      relatedType: "group_buy",
+      relatedId: groupBuyId,
+    }),
+
   groupBuyTierReached: (manufacturerId, groupBuyId, tierNumber, discountPercent) =>
     createNotification({
       userId: manufacturerId,

@@ -6,6 +6,7 @@ import { Suspense, useState, useEffect, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import StripePaymentMethodsTab from "@/components/settings/StripePaymentMethodsTab";
+import { useToast } from "@/components/ui/ToastProvider";
 
 function Label({ children }) {
   return (
@@ -576,7 +577,7 @@ function SecurityTab({ user }) {
           </div>
           <button
             type="button"
-            onClick={() => alert("Contact support to deactivate your account.")}
+            onClick={() => {}}  /* Contact support@craftit.com to deactivate */
             className="px-4 py-2 text-sm font-bold text-red-400 border border-red-500/20 bg-red-500/10 rounded-xl hover:bg-red-500/20 transition-all"
           >
             Deactivate
@@ -674,6 +675,7 @@ function CustomerSettingsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
+  const toast = useToast();
 
   const initialTab = searchParams.get("tab") || "profile";
   const [activeTab, setActiveTab] = useState(initialTab);
@@ -1371,7 +1373,7 @@ export default function CustomerSettingsPage() {
 //           </div>
 //           <button
 //             type="button"
-//             onClick={() => alert("Contact support to deactivate your account.")}
+//             onClick={() => {}}  /* Contact support@craftit.com to deactivate */
 //             className="px-4 py-2 text-sm font-semibold text-red-600 border border-red-200 rounded-xl hover:bg-red-50 transition-colors"
 //           >
 //             Deactivate

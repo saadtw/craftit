@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const initialTier = (num) => ({
   tierNumber: num,
@@ -17,6 +18,7 @@ const initialTier = (num) => ({
 
 export default function NewGroupBuyPage() {
   const { data: session, status } = useSession();
+  const toast = useToast();
   const router = useRouter();
 
   const [products, setProducts] = useState([]);
@@ -204,10 +206,10 @@ export default function NewGroupBuyPage() {
       if (data.success) {
         router.push(`/manufacturer/group-buys/${data.groupBuy._id}`);
       } else {
-        alert(data.error || "Failed to create campaign");
+        toast.error(data.error || "Failed to create campaign");
       }
     } catch (_) {
-      alert("Something went wrong");
+      toast.error("Something went wrong");
     }
     setSaving(false);
   };

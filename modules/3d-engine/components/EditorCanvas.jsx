@@ -213,9 +213,6 @@ export default function EditorCanvas({ modelUrl }) {
           if (child instanceof THREE.Mesh) {
             child.castShadow = true;
             child.receiveShadow = true;
-            if (child.material && "color" in child.material) {
-              child._origColor = child.material.color.clone();
-            }
           }
         });
 
@@ -353,28 +350,6 @@ export default function EditorCanvas({ modelUrl }) {
     }
   }, [state.measurePointA]);
 
-  // ─── React Effect: Handle Mesh Highlighting (Select & Paint Tools) ──────────
-  useEffect(() => {
-    const model = modelGroupRef.current;
-    if (!model) return;
-
-    model.traverse((child) => {
-      if (!(child instanceof THREE.Mesh)) return;
-      const mat = child.material;
-      const mark = state.componentMarks[child.name];
-
-      if (state.selectedMeshName === child.name) {
-        mat.emissive = new THREE.Color(0xffffff);
-        mat.emissiveIntensity = 0.15;
-      } else if (mark) {
-        mat.emissive = new THREE.Color(mark.highlightColour);
-        mat.emissiveIntensity = 0.2;
-      } else {
-        mat.emissive = new THREE.Color(0x000000);
-        mat.emissiveIntensity = 0;
-      }
-    });
-  }, [state.selectedMeshName, state.componentMarks]);
 
   // ─── Event Handlers for Tools ───────────────────────────────────────────────
 
@@ -496,13 +471,6 @@ export default function EditorCanvas({ modelUrl }) {
           meshName: meshName || undefined,
         });
         controlsRef.current.enabled = false;
-      } else if (tool === "paint") {
-        if (hitMesh) {
-          const mat = hitMesh.material;
-          if (mat && "color" in mat) {
-            mat.color.set(state.paintColour);
-          }
-        }
       }
     },
     [state, dispatch, pendingTagLocal, getRaycastHit],
@@ -523,7 +491,6 @@ export default function EditorCanvas({ modelUrl }) {
     select: "default",
     tag: "crosshair",
     measure: "crosshair",
-    paint: "cell",
   };
 
   return (
@@ -653,7 +620,6 @@ export default function EditorCanvas({ modelUrl }) {
             (state.measurePointA
               ? "Release to save dimension"
               : "Drag to measure distance")}
-          {state.activeTool === "paint" && "PAINT — click mesh to apply colour"}
         </div>
       )}
 

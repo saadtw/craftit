@@ -1,0 +1,505 @@
+============================================================================================
+CRAFTIT — CONTEXT UPDATE FILE
+Last updated: reflecting all changes made through the current development session.
+This file is the authoritative source for any deviation from the original project documents.
+When any document or AI prompt conflicts with this file, THIS FILE takes precedence.
+Only edit what is explicitly asked — do not proactively rewrite or regenerate entire files.
+============================================================================================
+
+─────────────────────────────────────────────────────────────────────────────
+1. MANUFACTURER VERIFICATION — REDESIGNED (2026-03-28 update)
+─────────────────────────────────────────────────────────────────────────────
+Original flow (Manufacturer Side.docx section 1.3): Manufacturers gated behind a
+"Pending Verification" screen with no dashboard access until admin approved.
+
+Previous interim decision: Gate removed — both unverified and verified had identical access.
+
+CURRENT flow (now enforced at API level):
+
+Signup collects (all required unless noted):
+  - CEO / Contact Person Name *
+  - Personal Email * (login email)
+  - Personal Mobile Number *
+  - Business Name *
+  - Business Email *
+  - Business / Office Phone *
+  - Business Type * (sole_proprietorship | partnership | private_limited |
+                     public_limited | ngo | other)
+  - Business Registration Number (optional)
+  - Business Description (optional)
+  - City / State / Country (optional)
+  - Manufacturing Capabilities (checkbox multi-select)
+  - Materials Available (checkbox multi-select)
+
+After signup — Unverified restrictions (enforced in API routes):
+  - Can list up to 5 products (archived excluded from count)
+  - Cannot upload 3D models on products
+  - Cannot browse RFQs (GET /api/rfqs returns 403)
+  - Cannot place bids (POST /api/bids returns 403)
+  - Cannot create Group Buys (POST /api/group-buys returns 403)
+  - Cannot receive orders (POST /api/orders/product returns 400 if manufacturer is unverified)
+  - Shown with "Unverified" badge wherever their profile appears
+
+Verification application — submitted via /manufacturer/settings:
+  POST /api/verification-documents
+  Fields accepted:
+    - ntnNumber (NTN / STRN number text)
+    - strnNumber
+    - secpRegistrationNumber (SECP / Form-C number text)
+    - documents[] — each with { type, url, filename, fileSize }
+      Allowed doc types: ntn_certificate, secp_form_c, chamber_certificate,
+                         business_license, tax_registration, certification,
+                         insurance, bank_verification, identity, other
+  On resubmission: documents are REPLACED (not appended).
+  Manufacturer stays unverified until admin approves.
+
+Admin review — PUT /api/admin/manufacturers/[id]/verify
+  Actions: approve | reject | request_info
+  All actions write to AdminLog (description + details fields).
+  - approve: verificationStatus = "verified", notifies manufacturer
+  - reject: reason required, notifies manufacturer
+  - request_info: verificationStatus stays "unverified" on User,
+    VerificationDocument.verificationStatus = "resubmission_required",
+    7-day deadline set, fires "verification_info_requested" notification
+    (NOT the rejection notification type — correct type is used now)
+
+GET /api/verification-documents — manufacturer fetches their own status and doc record.
+
+─────────────────────────────────────────────────────────────────────────────
+2. BID NEGOTIATION / COUNTER-OFFER FLOW — REDESIGNED
+─────────────────────────────────────────────────────────────────────────────
+Original flow (User Flow.docx 3.11, Manufacturer Side.docx 7.3): Separate
+"Counter Offer" and "Counter-Offer Response" form pages.
+
+Current flow:
+  1. Manufacturer submits bid.
+  2. Only the CUSTOMER can initiate chat on a bid.
+  3. Both negotiate freely via chat.
+  4. Manufacturer updates bid (PUT /api/bids/[id]) with agreed terms.
+     Update is logged in bid.counterOffers[] for audit trail / customer visibility.
+  5. Customer accepts updated bid → order created.
+
+Counter-offer form pages (section 3.11, 7.3) are REMOVED.
+Chat IS the negotiation mechanism. counterOffers[] is an audit log, not a form flow.
+
+─────────────────────────────────────────────────────────────────────────────
+3. ORDER STATUS FLOW — "SHIPPED" STATUS ADDED
+─────────────────────────────────────────────────────────────────────────────
+Current enum:
+  pending_acceptance → accepted → in_production → shipped → completed
+  (+ cancelled, disputed)
+
+"shipped" was added between in_production and completed.
+Manufacturer must mark shipped (with carrier + tracking number) before completing.
+
+Valid transitions enforced in /api/orders/[id]/status/route.js:
+  pending_acceptance → accepted | cancelled
+  accepted           → in_production | cancelled
+  in_production      → shipped | cancelled
+  shipped            → completed
+
+─────────────────────────────────────────────────────────────────────────────
+4. PAYMENT SYSTEM — STRIPE (TEST MODE, OPTIONAL)
+─────────────────────────────────────────────────────────────────────────────
+Authorize-then-capture model:
+  1. Checkout → POST /api/payments/create-intent → PaymentIntent (capture_method: "manual")
+  2. Customer confirms card on frontend
+  3. paymentIntentId sent to order creation endpoint
+  4. Manufacturer accepts → capture fires (card charged)
+  5. Cancel before acceptance → authorization released
+  6. Dispute resolved for customer → POST /api/payments/refund
+
+paymentIntentId is OPTIONAL in all order creation routes.
+Without it: paymentStatus = "pending", order works fine (demo/FYP friendly).
+
+Env vars: STRIPE_SECRET_KEY, NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY, STRIPE_WEBHOOK_SECRET
+Test card: 4242 4242 4242 4242, any future date, any CVC.
+
+─────────────────────────────────────────────────────────────────────────────
+5. DELIVERY / TRACKING — CARRIER-BASED (NO AFTERSHIP)
+─────────────────────────────────────────────────────────────────────────────
+AfterShip rejected — requires real tracking numbers, non-functional in demo.
+
+Current tracking:
+  - Manufacturer enters carrier name (from predefined list) + tracking number
+  - Platform stores on Order document
+  - Customer sees "Track Shipment" link generated via lib/carriers.js
+    which maps carrier → official tracking URL with number pre-filled
+
+Supported carriers (lib/carriers.js):
+  DHL, FedEx, UPS, TCS, Leopards, Trax, BlueEX, Pakistan Post,
+  CallCourier, PostEx, Other (no link for Other)
+
+─────────────────────────────────────────────────────────────────────────────
+6. MODELS — FULL LIST
+─────────────────────────────────────────────────────────────────────────────
+User, Product, RFQ, Bid, Order, CustomOrder, GroupBuy, Dispute, Review,
+Notification, AdminLog, VerificationDocument, Chat, ChatMessage  (14 total)
+
+Key model notes:
+  User.js:
+    - Single model for all 3 roles (customer / manufacturer / admin)
+    - verificationStatus default: manufacturers → "unverified", others → "verified"
+    - businessType field: sole_proprietorship | partnership | private_limited |
+                          public_limited | ngo | other
+    - Suspension: isActive=false, suspendedAt, suspendedUntil (null = permanent),
+      suspendedBy, suspensionReason
+    - Stats sub-doc: totalOrders, completedOrders, totalRevenue, averageRating
+
+  VerificationDocument.js:
+    - Pakistan-specific fields: ntnNumber, strnNumber, secpRegistrationNumber
+    - Doc types: ntn_certificate, secp_form_c, chamber_certificate,
+                 business_license, tax_registration, certification,
+                 insurance, bank_verification, identity, other
+    - Status: pending | verified | suspended | resubmission_required
+    - resubmissionCount, resubmissionDeadline for request_info flow
+
+  AdminLog.js:
+    - Fields: adminId, action (enum), targetType, targetId, description, details, ipAddress
+    - Actions: manufacturer_approved, manufacturer_rejected, manufacturer_info_requested,
+               user_suspended, user_unsuspended, dispute_resolved, order_viewed
+    - Written by verify route, users/[id] route, disputes route. Always write here
+      for any new admin action.
+
+  GroupBuy.js:
+    - syncStatus() and recalculate() must be called manually (no cron job)
+    - GET /api/group-buys runs updateMany() to auto-sync scheduled→active→completed
+
+─────────────────────────────────────────────────────────────────────────────
+7. SERVICES
+─────────────────────────────────────────────────────────────────────────────
+services/notificationService.js
+  - Import: import { notify, createNotification } from "@/services/notificationService"
+  - Always call notify.xxx() AFTER primary DB operation succeeds
+  - Never lets notification failure break the calling flow (errors caught internally)
+  - Pre-built templates: orderPlaced, orderAccepted, orderRejected, orderShipped,
+    orderCompleted, orderCancelled, bidReceived, bidAccepted, bidRejected, bidUpdated,
+    newMessage, groupBuyCompleted, groupBuyCancelled, disputeOpened, disputeResolved,
+    verificationApproved, verificationRejected, paymentReceived, paymentRefunded
+  - For request_info: use createNotification() directly with type "verification_info_requested"
+
+─────────────────────────────────────────────────────────────────────────────
+8. API ROUTES — FULL LIST
+─────────────────────────────────────────────────────────────────────────────
+Auth:
+  POST  /api/auth/register/customer
+  POST  /api/auth/register/manufacturer
+  GET   /api/auth/me
+
+Products:
+  GET/POST        /api/products
+  GET/PUT/DELETE  /api/products/[id]
+
+RFQs:
+  GET/POST            /api/rfqs
+  GET                 /api/rfqs/[id]
+  POST                /api/rfqs/[id]/accept-bid
+
+Bids:
+  GET/POST            /api/bids
+  GET/PUT/PATCH/DELETE /api/bids/[id]
+
+Orders:
+  POST  /api/orders/product          (direct product order)
+  POST  /api/orders/rfq              (RFQ bid order)
+  POST  /api/orders/group-buy        (group buy order)
+  GET   /api/orders                  (role-scoped list)
+  GET   /api/orders/[id]
+  PUT   /api/orders/[id]/status      (manufacturer — full status transition)
+  PATCH /api/orders/[id]/status      (manufacturer — tracking update only)
+  PUT   /api/orders/[id]/milestones/[mId]
+  POST  /api/orders/[id]/ship        (dedicated ship endpoint)
+
+Custom Orders:
+  GET/POST    /api/custom-orders
+  GET/PUT     /api/custom-orders/[id]
+
+Group Buys:
+  GET/POST    /api/group-buys
+  GET/PUT     /api/group-buys/[id]
+  POST        /api/group-buys/[id]/join
+
+Disputes:
+  GET/POST    /api/disputes
+  GET/PATCH   /api/disputes/[id]     (PATCH actions: manufacturer_respond | admin_resolve)
+
+Reviews:
+  GET/POST    /api/reviews
+  GET         /api/reviews/order/[orderId]
+
+Notifications:
+  GET         /api/notifications
+  PATCH       /api/notifications/[id]/read
+  PATCH       /api/notifications/read-all
+
+Payments:
+  POST  /api/payments/create-intent
+  POST  /api/payments/capture
+  POST  /api/payments/refund
+  POST  /api/payments/webhook
+
+Verification:
+  GET/POST  /api/verification-documents
+
+Uploads:
+  POST  /api/upload/image
+  POST  /api/upload/3d-model
+  POST  /api/upload/document
+
+Wishlist:
+  GET/POST/DELETE  /api/users/wishlist
+
+Admin:
+  GET          /api/admin/stats
+  GET          /api/admin/manufacturers
+  GET/PUT      /api/admin/manufacturers/[id]/verify
+  GET          /api/admin/users
+  GET/PATCH    /api/admin/users/[id]
+  GET          /api/admin/orders
+  GET          /api/admin/orders/[id]
+  GET          /api/admin/disputes
+  GET/POST     /api/admin/activity-log
+
+─────────────────────────────────────────────────────────────────────────────
+9. BUGS FIXED (2026-03-28)
+─────────────────────────────────────────────────────────────────────────────
+1. auth.js — removed debug console.logs (AUTHORIZE IS RUNNING, TOKEN callback)
+2. auth.js — removed dead commented-out duplicate session callback block
+3. User.js — verificationStatus default restored: manufacturers → "unverified"
+4. AdminLog.js — added "description" field (dashboard showed blank activity)
+5. admin/stats — pendingVerifications now counts from User model (not VerificationDocument)
+6. verify/route.js — AdminLog.create() now called for approve / reject / request_info
+7. users/[id]/route.js — AdminLog.create() now called for suspend / unsuspend
+8. verify/route.js — request_info now fires "verification_info_requested" notification
+   (was incorrectly using verificationRejected notification type)
+9. orders/[id]/status/route.js —  removed stray tracking number assignment that ran
+   for ALL status transitions (was overwriting tracking on accept/in_production)
+10. notificationService.js — disputeResolved: manufacturer now sees accurate outcome
+    message (was always showing "partial refund" regardless of resolution type)
+11. User.js — businessType field added
+12. VerificationDocument.js — Pakistan-specific doc types and NTN/STRN/SECP fields added
+13. verification-documents/route.js — resubmission now REPLACES documents, not appends
+
+─────────────────────────────────────────────────────────────────────────────
+10. TECH STACK — CONFIRMED
+─────────────────────────────────────────────────────────────────────────────
+Framework:  Next.js (App Router), JavaScript (not TypeScript)
+Database:   MongoDB via Mongoose
+Auth:       next-auth v4, JWT strategy, CredentialsProvider
+Storage:    AWS S3 (via @aws-sdk/client-s3)
+Payment:    Stripe test mode (stripe, @stripe/stripe-js, @stripe/react-stripe-js)
+Styling:    Tailwind CSS v4
+Validation: Zod
+
+─────────────────────────────────────────────────────────────────────────────
+11. INDUSTRY STANDARD FEATURES — POLICY
+─────────────────────────────────────────────────────────────────────────────
+POLICY: Any feature not in the original spec but considered industry standard
+must be flagged and discussed before implementation. Once approved, implement.
+Once excluded, document here. Never silently add or skip.
+
+Approved and implemented beyond original spec:
+  - In-app notification system
+  - Dispute / complaint system
+  - Carrier-based shipment tracking with deep-links
+  - Bid update history (counterOffers[] audit log)
+  - Order cancellation with Stripe authorization release
+  - Admin audit log (AdminLog model + activity-log API)
+  - Manufacturer verification system with tiered access
+  - Pakistan-specific verification documents (NTN, STRN, SECP, Chamber)
+
+Features to be built in future development:
+  - Order cancellation by customer AFTER manufacturer acceptance (policy defined — see section 14)
+  - Search/filter for messages inbox
+  - Read receipts in chat
+  - Notification email digest
+  - Product Q&A section
+  - "Recently viewed" products
+  - Email transactional notifications
+  - Google/Social login/signup
+  - MFA / 2FA
+  - 3D model viewer interactive
+  - Support/Help Tickets
+
+─────────────────────────────────────────────────────────────────────────────
+12. SCOPE DECISIONS — FEATURES EXPLICITLY EXCLUDED
+─────────────────────────────────────────────────────────────────────────────
+- Customer rating by manufacturer
+- AfterShip / live tracking API
+- Stripe Connect — single platform wallet model used instead
+- Full Stripe production mode in Pakistan — requires offshore entity
+
+─────────────────────────────────────────────────────────────────────────────
+13. BUILD ORDER / CURRENT PROGRESS
+─────────────────────────────────────────────────────────────────────────────
+Completed:
+  ✓ All 14 models
+  ✓ All service files (bidService, bidComparisonService, matchingService, notificationService)
+  ✓ All API routes (customer, manufacturer, admin, payment, dispute, review,
+    notification, wishlist, shipping, verification-documents)
+  ✓ Auth pages (login, signup customer, signup manufacturer — updated fields 2026-03-28)
+  ✓ Customer pages: dashboard, browse/explore, product detail, custom order flow,
+    RFQ list/detail, bids list, orders list/detail, group buy list/detail, messages,
+    notifications, wishlist, payments, settings, dispute/complaint, review/feedback
+  ✓ Manufacturer pages: dashboard, products (CRUD + restriction-aware), orders + milestones,
+    RFQs, bids, group buys (CRUD), settings (verification application), messages,
+    financial, analytics, disputes, notifications
+  ✓ Admin pages: login, dashboard, manufacturers (list + review), users (list + detail),
+    orders (list + detail), disputes (list + detail), activity log, profile
+  ✓ Bug fixes pass (2026-03-28 — see section 9)
+  ✓ Manufacturer verification access-gating (2026-03-28)
+
+─────────────────────────────────────────────────────────────────────────────
+14. ORDER CANCELLATION & REFUND POLICY 
+─────────────────────────────────────────────────────────────────────────────
+Scope: Customer-initiated cancellation AFTER the manufacturer has accepted the order.
+Pre-acceptance cancellation (existing) is unaffected — already fully implemented.
+
+Basis: Industry standard for B2B custom manufacturing platforms (e.g. Alibaba Trade
+Assurance, Xometry, Fictiv). Custom manufacturing differs from commodity goods —
+once production starts, raw materials may be consumed and work-in-progress cannot
+be easily reversed. Policy must balance buyer protection with fair treatment of
+manufacturers who act in good faith.
+
+─── CANCELLATION RULES BY ORDER STATUS ───────────────────────────────────────
+
+Status: accepted
+  Window: ≤ 48 hours since acceptance
+  Who can cancel: Customer unilaterally (no manufacturer consent needed)
+  Refund: 100% — Stripe refund on captured amount
+  Rationale: Standard "cooling-off" window. Manufacturer is unlikely to have
+  started procuring materials or begun any work this early.
+
+Status: accepted
+  Window: > 48 hours since acceptance
+  Who can cancel: Customer requests cancellation; manufacturer must confirm
+  Refund: 100% if manufacturer confirms. If manufacturer does not respond within
+  72 hours, admin may intervene.
+  Rationale: Manufacturer may have begun prep work. Mutual agreement is fair.
+  If unresponsive, admin escalation protects the buyer.
+
+Status: in_production
+  Cancellation: NOT allowed unilaterally. Customer must open a Dispute.
+  Refund: Admin-decided (full / partial / none) based on evidence of work done.
+  Rationale: Materials likely consumed, labour underway. Unilateral cancellation
+  would be unfair to the manufacturer. Dispute process ensures both sides are heard.
+
+Status: shipped
+  Cancellation: NOT allowed.
+  Recourse: Dispute or return, handled case by case.
+
+Status: completed
+  Cancellation: NOT allowed.
+  Recourse: Dispute only.
+
+─── REFUND AMOUNTS ────────────────────────────────────────────────────────────
+
+  Full refund (100%):
+    - Cancellation within 48 hours of acceptance
+    - Manufacturer confirms cancellation (any time before in_production)
+    - Dispute resolved entirely in customer's favour
+    Implementation: Stripe refund on the captured PaymentIntent
+
+  Partial refund:
+    - Dispute resolved as "partial_resolution"
+    - Admin specifies percentage or fixed amount
+    Implementation: Stripe supports partial refunds on a captured charge
+    (refund amount passed to /api/payments/refund endpoint)
+
+  No refund:
+    - Dispute resolved in manufacturer's favour
+    - Order completed and within no valid dispute window
+
+  Platform fee:
+    - For FYP: no platform fee retained on refunds. Full refund = 100% back to buyer.
+    - Post-launch consideration: retain 2-3% to cover Stripe processing cost on
+      cancellations after 48 hours (industry standard practice).
+
+─── STRIPE IMPLEMENTATION NOTES ───────────────────────────────────────────────
+
+  Existing infrastructure reused:
+    - POST /api/payments/refund already handles full and partial Stripe refunds
+      (used by dispute resolution). Cancellation refunds will call the same endpoint.
+    - Order status will gain a new PATCH action: "cancel_request" (customer)
+      and "cancel_confirm" (manufacturer) — separate from the status flow.
+
+  New API needed (to be built):
+    PATCH /api/orders/[id]/cancel
+      Body: { action: "request" | "confirm" | "admin_force" }
+      - "request": customer submits cancellation request (sets a cancellationRequestedAt
+        timestamp and cancellationStatus: "requested")
+      - "confirm": manufacturer confirms → order cancelled → refund issued
+      - "admin_force": admin overrides after 72h unresponsive manufacturer
+    Notification fired at each step to both parties.
+    AdminLog written on admin_force action.
+
+─── ORDER MODEL CHANGES NEEDED (to be built) ──────────────────────────────────
+
+  Add to Order schema:
+    cancellationStatus: String  // null | "requested" | "confirmed" | "rejected"
+    cancellationRequestedAt: Date
+    cancellationRequestedBy: ObjectId (ref User)
+    cancellationReason: String
+    cancellationConfirmedAt: Date
+
+─── EDGE CASES TO CONSIDER WHEN BUILDING ──────────────────────────────────────
+
+  - Manufacturer rejects the cancellation request: order continues, customer
+    informed. Customer's only recourse is then a Dispute.
+  - Manufacturer rejects AND goes silent: customer reports via dispute,
+    admin can force-cancel if evidence shows no production activity.
+  - Group Buy orders: no cancellation after acceptance (too complex with
+    participant tiers — defer entirely to post-launch).
+  - RFQ-originated orders: same policy as product orders.
+
+─────────────────────────────────────────────────────────────────────────────
+15. SESSION INVALIDATION + FORCED LOGOUT
+─────────────────────────────────────────────────────────────────────────────
+Problem solved:
+  Previously, if a user was deleted/deactivated/suspended in DB, an already-issued
+  JWT session could still appear logged in on client pages until token refresh.
+
+Implemented protection layers:
+
+1) Server-side token revalidation (lib/auth.js)
+  - JWT callback now revalidates token identity against User document every ~60s.
+  - If user is missing, deactivated, suspended, or sessionVersion mismatches:
+      token.sessionInvalid = true
+      token.sessionInvalidReason = user_not_found | deactivated | suspended | version_mismatch
+      token identity fields are cleared.
+  - Session callback maps invalid token to:
+      session.error = "SESSION_INVALID"
+      session.errorReason = <reason>
+
+2) Session versioning for global revocation (User model + auth)
+  - User.sessionVersion is included in JWT at login.
+  - On revalidation, DB value is compared to token value.
+  - If DB sessionVersion changed, all previously issued JWTs become invalid
+    automatically on next revalidation.
+
+3) Immediate forced logout on admin suspend (admin users route)
+  - In PATCH /api/admin/users/[id] action="suspend":
+      user.sessionVersion increments before save.
+  - This revokes all active sessions for that user (version mismatch path).
+
+4) Realtime logout event channel (SSE)
+  - New file: lib/sessionEmitter.js
+      In-memory per-user subscriber map + publishSessionEvent().
+  - New route: GET /api/auth/events
+      Authenticated Server-Sent Events stream with heartbeat.
+  - On suspend, admin route publishes:
+      { type: "SESSION_INVALIDATED", reason: "suspended" }
+
+5) Client auto-signout guards (SessionProvider)
+  - SessionInvalidGuard: signs out when session.error === "SESSION_INVALID".
+  - SessionRealtimeGuard: listens to /api/auth/events and signs out immediately
+    when SESSION_INVALIDATED event arrives.
+  - refetchInterval remains 0 (no periodic client polling), refetch on window focus kept.
+
+6) API safety check for profile endpoint
+  - GET /api/auth/me now returns 401 when session.error is SESSION_INVALID.
+
+Production note:
+  - Current SSE publisher is in-memory (single-instance process scope).
+  - For multi-instance deployment, replace event backend with Redis pub/sub
+    or another shared broker to broadcast invalidation across all instances.

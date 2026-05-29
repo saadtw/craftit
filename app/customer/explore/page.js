@@ -394,15 +394,15 @@ export default function CustomerExplorePage() {
 
 function ProductCard({ product, isWishlisted, onToggleWishlist }) {
   const primaryImage =
-    product.images?.find((i) => i.isPrimary) || product.images?.[0];
+    product.images?.find((i) => i.isPrimary)?.url || product.images?.[0]?.url || product.model3D?.thumbnailUrl;
 
   return (
     <Link href={`/customer/products/${product._id}`}>
       <div className="group h-full overflow-hidden rounded-[24px] border border-white/8 bg-[#0c0c11] hover:border-[#eb9728]/25 transition-all cursor-pointer">
         <div className="relative h-52 bg-white/[0.04] overflow-hidden">
-          {primaryImage?.url ? (
+          {primaryImage ? (
             <Image
-              src={primaryImage.url}
+              src={primaryImage}
               alt={product.name}
               fill
               className="object-cover group-hover:scale-105 transition-transform duration-500"

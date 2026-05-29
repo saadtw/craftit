@@ -9,6 +9,7 @@ import Link from "next/link";
 import { FiArrowLeft, FiCheckCircle, FiXCircle, FiClock, FiAlertCircle, FiShield } from "react-icons/fi";
 import Image from "next/image";
 import documentIcon from "@/assets/document.png";
+import { useToast } from "@/components/ui/ToastProvider";
 
 const STATUS_STYLES = {
   unverified: { bg: "bg-amber-500/10", text: "text-amber-500", border: "border-amber-500/20", dot: "bg-amber-500" },
@@ -18,6 +19,7 @@ const STATUS_STYLES = {
 
 export default function AdminManufacturerDetailPage() {
   const { data: session, status } = useSession();
+  const toast = useToast();
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
@@ -78,12 +80,12 @@ export default function AdminManufacturerDetailPage() {
       const data = await res.json();
       if (data.success) {
         await fetchManufacturer();
-        alert(data.message);
+        toast.error(data.message);
       } else {
-        alert("Error: " + data.error);
+        toast.error("Error: " + data.error);
       }
     } catch (err) {
-      alert("Error: " + err.message);
+      toast.error("Error: " + err.message);
     } finally {
       setActionLoading(false);
     }

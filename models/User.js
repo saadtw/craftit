@@ -65,6 +65,23 @@ const UserSchema = new mongoose.Schema(
 
     certifications: [String],
     minOrderQuantity: Number,
+    productionCapacity: {
+      unitsPerMonth: { type: Number, default: 0 },
+      minimumOrderQuantity: { type: Number, default: 1 },
+      maximumOrderQuantity: { type: Number, default: 10000 },
+    },
+    leadTimeDays: {
+      minimum: { type: Number, default: 1 },
+      typical: { type: Number, default: 14 },
+    },
+    customizationCapabilities: [{ 
+      type: String, 
+      enum: ['printing', 'cutting', 'welding', 'molding', 'assembly', 'painting', 'engraving', 'cnc', 'casting', 'forging']
+    }],
+    manufacturerRating: {
+      average: { type: Number, default: 0, min: 0, max: 5 },
+      count: { type: Number, default: 0 },
+    },
     manufacturingCapabilities: {
       type: [String],
       enum: [
@@ -289,7 +306,7 @@ UserSchema.index({ businessName: "text", name: "text" });
 UserSchema.index({ "location.country": 1 }); // For location-based filtering
 UserSchema.index({ "location.state": 1 }); // For state-based manufacturer matching
 UserSchema.index({ "mobileRefreshTokens.tokenHash": 1 });
-UserSchema.index({ supabaseId: 1 }); // For Supabase user lookups
+// UserSchema.index({ supabaseId: 1 }); // Removed: 'unique: true' in schema already creates this index
 
 // Update last active
 UserSchema.methods.updateLastActive = function () {
