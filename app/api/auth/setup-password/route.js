@@ -4,19 +4,25 @@ import User from "@/models/User";
 import { supabaseAdmin } from "@/lib/supabase";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
-// POST /api/auth/oauth/set-password
-// Sets a password in Supabase for a Google OAuth user who doesn't have one yet.
-// Body: { password: string }
 export async function POST(request) {
   try {
     const session = await resolveRequestSession(request);
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!session || !session.user) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 },
+      );
     }
 
-    const body = await request.json();
-    const password = String(body?.password || "").trim();
+    const { password } = await request.json();
+
+    if (!password) {
+      return NextResponse.json(
+        { success: false, error: "Password is required" },
+        { status: 400 },
+      );
+    }
 
     const hasLower = /[a-z]/.test(password);
     const hasUpper = /[A-Z]/.test(password);
@@ -25,6 +31,7 @@ export async function POST(request) {
     if (password.length < 8 || !hasLower || !hasUpper || !hasNumber) {
       return NextResponse.json(
         {
+          success: false,
           error:
             "Password must be at least 8 characters and include upper, lower, and number",
         },
@@ -38,36 +45,49 @@ export async function POST(request) {
       "supabaseId needsPasswordSetup",
     );
     if (!user || !user.supabaseId) {
-      return NextResponse.json({ error: "User not found" }, { status: 404 });
+      return NextResponse.json(
+        { success: false, error: "User not found" },
+        { status: 404 },
+      );
     }
 
     if (!user.needsPasswordSetup) {
       return NextResponse.json(
-        { error: "Password setup is not required for this account" },
+        {
+          success: false,
+          error: "Password setup is not required for this account",
+        },
         { status: 400 },
       );
     }
 
-    // Set the password in Supabase
+    // Update password in Supabase
     const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(
       user.supabaseId,
-      { password },
+      { password: password },
     );
 
     if (updateErr) {
-      console.error("Supabase set-password error:", updateErr);
-      return NextResponse.json({ error: "Server error" }, { status: 500 });
+      console.error("Supabase password update error:", updateErr);
+      return NextResponse.json(
+        { success: false, error: "Password setup failed" },
+        { status: 500 },
+      );
     }
 
+    // Update MongoDB
     user.needsPasswordSetup = false;
     await user.save();
 
     return NextResponse.json({
       success: true,
-      message: "Password set successfully.",
+      message: "Password set successfully",
     });
   } catch (error) {
-    console.error("Set password error:", error);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("Setup password error:", error);
+    return NextResponse.json(
+      { success: false, error: error.message || "Password setup failed" },
+      { status: 500 },
+    );
   }
 }

@@ -361,6 +361,16 @@ const handleEditorSave = async (payload) => {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* Header */}
         <div>
+          {sourceContext.sourceType === "product_customization" && sourceContext.sourceProductId && (
+            <button
+              type="button"
+              onClick={() => router.push(`/customer/products/${sourceContext.sourceProductId}`)}
+              className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-[10px] font-bold text-white/60 hover:text-white hover:bg-white/10 mb-4 transition-colors"
+            >
+              <span className="material-symbols-outlined text-[14px]">arrow_back</span>
+              Back to Product
+            </button>
+          )}
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#eb9728] mb-1">
             New Request
           </p>
@@ -403,13 +413,22 @@ const handleEditorSave = async (payload) => {
                 {sourceContext.sourceType === "product_customization" &&
                   sourceContext.product && (
                     <>
+                      <div className="flex gap-4 items-start mb-4">
+                        {sourceContext.product.images?.[0]?.url && (
+                           <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-[#eb9728]/20 shrink-0">
+                             <img src={sourceContext.product.images[0].url} alt={sourceContext.product.name} className="w-full h-full object-cover" />
+                           </div>
+                        )}
+                        <div className="flex-1">
+                          <h3 className="text-sm font-bold text-[#eb9728]/90">{sourceContext.product.name}</h3>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                             {sourceContext.product.category && <span className="px-2 py-0.5 rounded border border-[#eb9728]/20 bg-[#eb9728]/10 text-[9px] font-bold text-[#eb9728]/70">{sourceContext.product.category}</span>}
+                             {sourceContext.product.specifications?.material && <span className="px-2 py-0.5 rounded border border-[#eb9728]/20 bg-[#eb9728]/10 text-[9px] font-bold text-[#eb9728]/70">Material: {sourceContext.product.specifications.material}</span>}
+                          </div>
+                        </div>
+                      </div>
                       <div className="grid grid-cols-2 gap-3">
                         {[
-                          {
-                            label: "Product",
-                            value: sourceContext.product.name,
-                            icon: "inventory_2",
-                          },
                           {
                             label: "Manufacturer",
                             value:
@@ -449,8 +468,19 @@ const handleEditorSave = async (payload) => {
                             </div>
                           ))}
                       </div>
+                      {sourceContext.allowedCustomizationTypes?.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-[10px] font-bold uppercase text-[#eb9728]/50 mb-2">Allowed Customizations</p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {sourceContext.allowedCustomizationTypes.map(typeId => {
+                              const label = customizationChoices.find(t => t.id === typeId)?.label || typeId;
+                              return <span key={typeId} className="px-2 py-1 rounded-md border border-[#eb9728]/30 bg-[#eb9728]/10 text-[9px] font-bold text-[#eb9728]/80">{label}</span>;
+                            })}
+                          </div>
+                        </div>
+                      )}
                       {sourceContext.capabilityNotes && (
-                        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-[#eb9728]/15 bg-[#eb9728]/5">
+                        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-[#eb9728]/15 bg-[#eb9728]/5 mt-3">
                           <span className="material-symbols-outlined text-[14px] text-[#eb9728]/60 shrink-0 mt-0.5">
                             note
                           </span>

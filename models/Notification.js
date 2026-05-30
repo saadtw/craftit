@@ -28,6 +28,7 @@ const NotificationSchema = new mongoose.Schema(
         "rfq_created",
         "rfq_closed",
         "rfq_expired",
+        "product_customization_rfq",
         // Group Buy events
         "group_buy_joined",
         "group_buy_tier_reached",

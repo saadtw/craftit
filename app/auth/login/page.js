@@ -7,6 +7,7 @@ import { signIn, useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import googleLogo from "@/assets/google.png";
+import { supabase } from "@/lib/supabase";
 import smartMatch from "@/assets/smartmatch.png";
 import orderIcon from "@/assets/order.png";
 import bidIcon from "@/assets/bid.png";
@@ -26,6 +27,21 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const hasRedirected = useRef(false);
+
+  const handleGoogleOAuth = async () => {
+    setError("");
+    const redirectTo = `${window.location.origin}/auth/supabase-callback?flow=login`;
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo,
+        queryParams: { prompt: "select_account" },
+      },
+    });
+    if (oauthError) {
+      setError(oauthError.message || "Google sign-in failed.");
+    }
+  };
 
   // Redirect if already logged in
   useEffect(() => {
@@ -122,6 +138,12 @@ export default function LoginPage() {
     }
   };
 
+  const handleBackToLogin = () => {
+    setRequiresTwoFactor(false);
+    setTwoFactorCode("");
+    setError("");
+  };
+
   return (
     <div className="flex h-screen w-full items-center justify-center bg-[#0B011D] p-4 overflow-hidden font-sans relative">
       <div className="absolute top-[-10%] left-[-10%] h-[300px] w-[300px] rounded-full bg-purple-600/10 blur-[100px]" />
@@ -139,7 +161,7 @@ export default function LoginPage() {
         Back to Home
       </Link>
 
-      <div className="relative flex h-[540px] w-full max-w-3xl overflow-hidden rounded-[30px] border border-purple-500/30 bg-white/2 backdrop-blur-3xl z-10 text-white shadow-[0_0_50px_rgba(168,85,247,0.15)]">
+      <div className="relative flex min-h-[540px] w-full max-w-3xl overflow-hidden rounded-[30px] border border-purple-500/30 bg-white/2 backdrop-blur-3xl z-10 text-white shadow-[0_0_50px_rgba(168,85,247,0.15)]">
         <div className="flex w-full flex-col justify-center px-10 md:w-[60%] lg:px-14 order-1 border-r border-white/5 bg-[#0B011D]/30">
           <div className="mb-6">
             <span className="text-[9px] font-bold text-amber-500 uppercase tracking-[0.3em]">
@@ -150,54 +172,89 @@ export default function LoginPage() {
             </h1>
             <h2 className="text-xl font-bold opacity-80 mt-1">Welcome Back</h2>
           </div>
-
-          <form onSubmit={handleSubmit} className="space-y-3.5 max-w-[280px]">
-            <div>
-              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1 block ml-1">
-                Email Address
-              </label>
-              <input
-                type="email"
-                placeholder="Enter email"
-                className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs outline-none focus:border-purple-500 transition-all placeholder:text-slate-600"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-              />
-            </div>
-
-            <div className="relative">
-              <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1 block ml-1">
-                Password
-              </label>
-              <div className="relative">
+          {!requiresTwoFactor ? (
+            <form onSubmit={handleSubmit} className="space-y-3.5 max-w-[280px]">
+              <div>
+                <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1 block ml-1">
+                  Email Address
+                </label>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Password"
-                  className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 pr-16 text-xs outline-none focus:border-purple-500 transition-all placeholder:text-slate-600"
-                  value={formData.password}
+                  type="email"
+                  placeholder="Enter email"
+                  className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs outline-none focus:border-purple-500 transition-all placeholder:text-slate-600"
+                  value={formData.email}
                   onChange={(e) =>
-                    setFormData({ ...formData, password: e.target.value })
+                    setFormData({ ...formData, email: e.target.value })
                   }
                 />
+              </div>
+
+              <div className="relative">
+                <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1 block ml-1">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Password"
+                    className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 pr-16 text-xs outline-none focus:border-purple-500 transition-all placeholder:text-slate-600"
+                    value={formData.password}
+                    onChange={(e) =>
+                      setFormData({ ...formData, password: e.target.value })
+                    }
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold uppercase tracking-wider text-purple-300 hover:text-purple-200"
+                  >
+                    {showPassword ? "Hide" : "Show"}
+                  </button>
+                </div>
+                <Link
+                  href="/auth/forgot-password"
+                  className="mt-1 block text-right text-[9px] font-semibold text-purple-400 hover:text-purple-300"
+                >
+                  Forgot?
+                </Link>
+              </div>
+
+              {error && (
+                <p className="text-[9px] text-red-400 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-xl bg-purple-600 py-2.5 text-xs font-black text-white shadow-lg transition-all hover:bg-purple-500 active:scale-[0.98] tracking-widest uppercase"
+              >
+                {loading ? "..." : "LOGIN"}
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-3.5 max-w-[280px]">
+              <div className="flex items-center justify-between">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-amber-500">
+                  Two-Factor Check
+                </p>
                 <button
                   type="button"
-                  onClick={() => setShowPassword((prev) => !prev)}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-[9px] font-bold uppercase tracking-wider text-purple-300 hover:text-purple-200"
+                  onClick={handleBackToLogin}
+                  className="text-[9px] font-bold uppercase tracking-widest text-purple-300 hover:text-purple-200"
                 >
-                  {showPassword ? "Hide" : "Show"}
+                  Back
                 </button>
               </div>
-              <Link
-                href="/auth/forgot-password"
-                className="mt-1 block text-right text-[9px] font-semibold text-purple-400 hover:text-purple-300"
-              >
-                Forgot?
-              </Link>
-            </div>
 
-            {requiresTwoFactor && (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-2.5">
+                <p className="text-[10px] text-white/60">Email</p>
+                <p className="text-[11px] font-bold text-white/80">
+                  {formData.email || "—"}
+                </p>
+              </div>
+
               <div>
                 <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1 block ml-1">
                   2FA Code
@@ -212,22 +269,43 @@ export default function LoginPage() {
                   required
                 />
               </div>
-            )}
 
-            {error && (
-              <p className="text-[9px] text-red-400 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
-                {error}
-              </p>
-            )}
+              <button
+                type="button"
+                onClick={async () => {
+                  setError("Resending code...");
+                  const res = await fetch("/api/auth/2fa/resend", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: formData.email }),
+                  });
+                  const data = await res.json();
+                  setError(
+                    data.success
+                      ? "New code sent to your email."
+                      : data.message || "Failed to resend code.",
+                  );
+                }}
+                className="w-full rounded-xl border border-white/10 bg-white/5 py-2 text-[9px] font-bold uppercase tracking-widest text-purple-300 hover:text-purple-200 hover:bg-white/10"
+              >
+                Resend Code
+              </button>
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-xl bg-purple-600 py-2.5 text-xs font-black text-white shadow-lg transition-all hover:bg-purple-500 active:scale-[0.98] tracking-widest uppercase"
-            >
-              {loading ? "..." : "LOGIN"}
-            </button>
-          </form>
+              {error && (
+                <p className="text-[9px] text-red-400 bg-red-500/10 p-2 rounded-lg border border-red-500/20">
+                  {error}
+                </p>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full rounded-xl bg-purple-600 py-2.5 text-xs font-black text-white shadow-lg transition-all hover:bg-purple-500 active:scale-[0.98] tracking-widest uppercase"
+              >
+                {loading ? "..." : "VERIFY"}
+              </button>
+            </form>
+          )}
 
           <div className="my-5 flex items-center gap-3 max-w-[280px] opacity-20">
             <div className="h-px flex-1 bg-white" />
@@ -238,7 +316,7 @@ export default function LoginPage() {
           <div className="flex gap-2.5 max-w-[280px]">
             <button
               type="button"
-              onClick={() => signIn("google")}
+              onClick={handleGoogleOAuth}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 py-2 hover:bg-white/10 transition-all group"
             >
               <Image src={googleLogo} alt="G" width={16} height={16} />

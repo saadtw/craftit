@@ -178,7 +178,82 @@ export default function ManufacturerRFQsPage() {
           {/* Main Inquiry Stream */}
           <div className="lg:col-span-9 space-y-10">
             
-            {/* Featured Recommendations */}
+            {/* ── Customization Requests (priority section) ── */}
+            {rfqs.some((r) => r.isProductCustomization) && (
+              <section className="mb-2">
+                <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-[#eb9728] mb-6 flex items-center gap-3">
+                  <span className="w-8 h-[2px] bg-[#eb9728]/40" />
+                  Customization Requests for Your Products
+                  <span className="px-2 py-0.5 rounded bg-[#eb9728]/15 text-[#eb9728] text-[9px] font-black border border-[#eb9728]/30">
+                    {rfqs.filter((r) => r.isProductCustomization).length}
+                  </span>
+                </h2>
+                <div className="space-y-4">
+                  {rfqs
+                    .filter((r) => r.isProductCustomization)
+                    .map((rfq) => (
+                      <div
+                        key={rfq._id + "-customization"}
+                        className="group bg-[#eb9728]/5 rounded-[2rem] border-2 border-[#eb9728]/25 p-6 hover:border-[#eb9728]/50 transition-all duration-300 flex flex-col sm:flex-row gap-5 items-start"
+                      >
+                        {/* Product thumbnail */}
+                        {rfq.sourceProductId?.images?.[0]?.url && (
+                          <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-[#eb9728]/20 shrink-0">
+                            <img
+                              src={rfq.sourceProductId.images[0].url}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            <span className="px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded border border-[#eb9728]/40 bg-[#eb9728]/15 text-[#eb9728]">
+                              Product Customization
+                            </span>
+                            <span className="text-[9px] font-black uppercase tracking-widest text-[#eb9728]/40">
+                              #{rfq.rfqNumber}
+                            </span>
+                          </div>
+                          <h3 className="text-base font-black text-white mb-0.5 truncate">
+                            {rfq.customOrderId?.title || "Customization Request"}
+                          </h3>
+                          {rfq.sourceProductId?.name && (
+                            <p className="text-[11px] text-[#eb9728]/60 mb-3 font-semibold">
+                              Based on: {rfq.sourceProductId.name}
+                            </p>
+                          )}
+                          <div className="flex items-center gap-6 text-xs text-white/40 mb-4">
+                            <span>Qty: {rfq.customOrderId?.quantity || "—"}</span>
+                            {rfq.customOrderId?.budget && (
+                              <span className="text-emerald-400 font-bold">
+                                Budget ${rfq.customOrderId.budget.toLocaleString()}
+                              </span>
+                            )}
+                            <span>{rfq.bidsCount || 0} bids</span>
+                          </div>
+                          <div className="flex gap-3">
+                            <a
+                              href={`/manufacturer/rfqs/${rfq._id}`}
+                              className="px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/10 text-white transition-all"
+                            >
+                              Review
+                            </a>
+                            <a
+                              href={`/manufacturer/rfqs/${rfq._id}/bid`}
+                              className="px-5 py-2 bg-[#eb9728] text-black rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-amber-400 shadow-lg shadow-amber-500/20 transition-all"
+                            >
+                              Submit Bid
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </section>
+            )}
+
+            {/* ── Featured Inquiries ── */}
             <section>
               <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 mb-6 flex items-center gap-3">
                 <span className="w-8 h-[2px] bg-purple-500/30" />
@@ -256,11 +331,16 @@ export default function ManufacturerRFQsPage() {
                     <div className="flex-1 w-full">
                       <div className="flex justify-between items-start mb-4">
                         <div>
-                          <div className="flex items-center gap-3 mb-2">
+                          <div className="flex flex-wrap items-center gap-3 mb-2">
                             <span className="text-[9px] font-black uppercase tracking-widest text-purple-400">#{rfq.rfqNumber}</span>
                             <span className={`px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded-md border ${STATUS_STYLES[rfq.status] || STATUS_STYLES.active}`}>
                               {rfq.status}
                             </span>
+                            {rfq.isProductCustomization && (
+                              <span className="px-2 py-0.5 text-[8px] font-black uppercase tracking-widest rounded-md border border-[#eb9728]/30 bg-[#eb9728]/10 text-[#eb9728]">
+                                Customization Request
+                              </span>
+                            )}
                           </div>
                           <h3 className="text-2xl font-black tracking-tighter text-white group-hover:text-purple-400 transition-colors uppercase">{rfq.customOrderId?.title || "Inquiry"}</h3>
                         </div>

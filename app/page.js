@@ -213,7 +213,8 @@ function LandingPageContent() {
     }
 
     const hash = window.location.hash;
-    if (hash) {
+    const isAnchorHash = /^#[A-Za-z][\w-]*$/.test(hash || "");
+    if (hash && isAnchorHash) {
       const section = document.querySelector(hash);
       if (section) {
         const headerOffset = 50;

@@ -195,6 +195,30 @@ export default function ManufacturerRFQDetails() {
 
           {/* Asset Sidebar */}
           <div className="lg:col-span-4 space-y-8">
+            {/* Base Product Reference */}
+            {rfq.isProductCustomization && rfq.sourceProductId && (
+              <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-[#eb9728]/30 p-8 shadow-xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 p-4">
+                  <span className="material-symbols-outlined text-[#eb9728]/20 text-6xl">inventory_2</span>
+                </div>
+                <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#eb9728] mb-6 relative z-10">Product Customization</h3>
+                <p className="text-xs text-white/50 mb-4 relative z-10">This RFQ is for customizing one of your existing products.</p>
+                <div className="bg-white/5 rounded-2xl p-4 border border-white/10 flex items-center gap-4 relative z-10">
+                  {rfq.sourceProductId.images?.[0]?.url && (
+                    <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-white/10 relative">
+                      <Image src={rfq.sourceProductId.images[0].url} alt="" fill className="object-cover" />
+                    </div>
+                  )}
+                  <div>
+                    <p className="text-sm font-bold text-white mb-1 line-clamp-2">{rfq.sourceProductId.name}</p>
+                    <Link href={`/manufacturer/products/${rfq.sourceProductId._id}`} className="text-[10px] font-bold uppercase tracking-widest text-[#eb9728] hover:text-amber-400 transition-colors inline-flex items-center gap-1">
+                      View Product <span className="material-symbols-outlined text-[12px]">open_in_new</span>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Visual Documentation */}
             {rfq.customOrderId?.images && rfq.customOrderId.images.length > 0 && (
               <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-8 shadow-xl">

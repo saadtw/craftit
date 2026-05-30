@@ -33,6 +33,7 @@ export async function GET(request, context) {
       })
       .populate("customerId", "name email phone")
       .populate("acceptedBidId")
+      .populate("sourceProductId", "name images category specifications")
       .lean();
 
     if (!rfq) {

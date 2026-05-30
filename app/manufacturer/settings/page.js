@@ -620,10 +620,59 @@ function SecurityTab({ user }) {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [twoFactorLoading, setTwoFactorLoading] = useState(true);
+  const [twoFactorSaving, setTwoFactorSaving] = useState(false);
+  const [twoFactorError, setTwoFactorError] = useState("");
+  const [twoFactorSuccess, setTwoFactorSuccess] = useState("");
 
   const hasLocalPassword = Boolean(user?.hasLocalPassword);
 
   const set = (field, val) => setForm((f) => ({ ...f, [field]: val }));
+
+  useEffect(() => {
+    let active = true;
+    async function loadTwoFactorSettings() {
+      setTwoFactorLoading(true);
+      setTwoFactorError("");
+      try {
+        const res = await fetch("/api/auth/2fa/settings");
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "Failed to load 2FA settings");
+        }
+        if (active) setTwoFactorEnabled(!!data.twoFactorEnabled);
+      } catch (err) {
+        if (active) setTwoFactorError(err.message || "Failed to load 2FA settings");
+      } finally {
+        if (active) setTwoFactorLoading(false);
+      }
+    }
+    loadTwoFactorSettings();
+    return () => { active = false; };
+  }, []);
+
+  const handleTwoFactorToggle = async () => {
+    setTwoFactorSaving(true);
+    setTwoFactorError("");
+    setTwoFactorSuccess("");
+    try {
+      const res = await fetch("/api/auth/2fa/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !twoFactorEnabled }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to update 2FA settings");
+      setTwoFactorEnabled(!!data.twoFactorEnabled);
+      setTwoFactorSuccess(data.message || (data.twoFactorEnabled ? "2FA enabled" : "2FA disabled"));
+    } catch (err) {
+      setTwoFactorError(err.message || "Failed to update 2FA settings");
+    } finally {
+      setTwoFactorSaving(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -728,6 +777,31 @@ function SecurityTab({ user }) {
             </SaveButton>
           </div>
         </form>
+      </Section>
+
+      <Section title="Two-Factor Authentication" desc="Add an email code challenge each time you sign in.">
+        <div className="space-y-6">
+          <Alert type="error" message={twoFactorError} />
+          {twoFactorSuccess && <Alert type="success" message={twoFactorSuccess} />}
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <p className="text-[12px] font-black uppercase tracking-widest text-white/80">Email-based 2FA</p>
+              <p className="text-[10px] text-white/40 mt-1 uppercase tracking-widest">A 6-digit code will be sent to {user?.email}</p>
+            </div>
+            <button
+              type="button"
+              disabled={twoFactorLoading || twoFactorSaving}
+              onClick={handleTwoFactorToggle}
+              className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                twoFactorEnabled
+                  ? "bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20"
+                  : "bg-purple-600 text-white hover:bg-purple-500 shadow-lg shadow-purple-500/20"
+              } ${twoFactorLoading || twoFactorSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+            >
+              {twoFactorLoading ? "Loading..." : twoFactorSaving ? "Saving..." : twoFactorEnabled ? "Disable 2FA" : "Enable 2FA"}
+            </button>
+          </div>
+        </div>
       </Section>
 
       <Section title="Account Metadata">

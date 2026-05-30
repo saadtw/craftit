@@ -4,12 +4,12 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { signIn } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import Logo from "@/components/CrafitLogo";
 import leftArrow from "@/assets/backArrow.png";
 import googleLogo from "@/assets/google.png";
+import { supabase } from "@/lib/supabase";
 
 export default function CustomerSignup() {
   const router = useRouter();
@@ -27,6 +27,18 @@ export default function CustomerSignup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const handleGoogleOAuth = async () => {
+    setError("");
+    const redirectTo = `${window.location.origin}/auth/supabase-callback?flow=customer`;
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo },
+    });
+    if (oauthError) {
+      setError(oauthError.message || "Google sign-in failed.");
+    }
+  };
 
   // Redirect if already logged in
   useEffect(() => {
@@ -310,7 +322,7 @@ export default function CustomerSignup() {
           <div className="flex justify-center">
             <button
               type="button"
-              onClick={() => signIn("google")}
+              onClick={handleGoogleOAuth}
               className="flex items-center justify-center gap-3 bg-white/3 border border-white/10 py-3 px-6 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95"
             >
               <Image src={googleLogo} width={16} height={16} alt="google" />
