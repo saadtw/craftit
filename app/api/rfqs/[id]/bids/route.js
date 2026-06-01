@@ -26,7 +26,7 @@ export async function GET(request, context) {
         path: "customOrderId",
         select: "title description model3D images",
       })
-      .select("customerId rfqNumber customOrderId")
+      .select("customerId rfqNumber customOrderId status")
       .lean();
     if (!rfq) {
       return NextResponse.json({ error: "RFQ not found" }, { status: 404 });

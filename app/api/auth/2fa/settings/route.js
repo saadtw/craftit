@@ -72,10 +72,6 @@ export async function POST(request) {
     }
 
     user.twoFactorEnabled = enabled;
-    if (!enabled) {
-      user.twoFactorCodeToken = undefined;
-      user.twoFactorCodeExpires = undefined;
-    }
     await user.save();
 
     return NextResponse.json({

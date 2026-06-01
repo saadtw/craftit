@@ -489,8 +489,7 @@ export default function BidDetailsPage() {
 
   const bidOpen =
     bid.status !== "accepted" &&
-    bid.status !== "withdrawn" &&
-    bid.status !== "rejected";
+    bid.status !== "withdrawn";
   const rfqActive = bid.rfqId?.status === "active";
   const canEdit = isManufacturer && bid.status === "pending";
   const canWithdraw =
@@ -519,6 +518,14 @@ export default function BidDetailsPage() {
         </div>
         <StatusBadge status={bid.status} />
       </div>
+
+      {isManufacturer && (
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm font-bold text-amber-200">
+          {bid.status === "accepted"
+            ? "This bid was accepted and converted into an order."
+            : "This bid is a binding commitment if accepted by the customer."}
+        </div>
+      )}
 
       {/* Manufacturer Info — customer only */}
       {isCustomer && (

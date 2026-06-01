@@ -13,11 +13,14 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
 
 const STATUS_COLORS = {
-  pending_acceptance:
+  confirmed:
     "bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20",
+  cancellation_requested:
+    "bg-red-500/10 text-red-300 border border-red-500/20",
   accepted: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
   in_production: "bg-purple-500/10 text-purple-300 border border-purple-500/20",
   shipped: "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20",
+  delivered: "bg-teal-500/10 text-teal-300 border border-teal-500/20",
   completed: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
   cancelled: "bg-red-500/10 text-red-300 border border-red-500/20",
   disputed: "bg-orange-500/10 text-orange-300 border border-orange-500/20",
@@ -184,25 +187,22 @@ function CustomerOrderDetailPageContent() {
     }
   };
 
-  const handleProductionAck = async () => {
+  const handleConfirmDelivery = async () => {
     setActionLoading(true);
     try {
-      // Note: In a real system, the user would pay the remaining balance via Stripe Elements first.
-      const res = await fetch(`/api/orders/${id}/production-ack`, {
+      const res = await fetch(`/api/orders/${id}/deliver`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
       });
       const data = await res.json();
       if (data.success) {
         await fetchOrder();
-        toast.success(
-          "Production acknowledged! Manufacturer has been notified.",
-        );
+        toast.success("Delivery confirmed. Your dispute window is now open.");
       } else {
-        toast.error(data.error || "Failed to acknowledge production");
+        toast.error(data.error || "Failed to confirm delivery");
       }
     } catch (err) {
-      toast.error("Error acknowledging production");
+      toast.error("Error confirming delivery");
     } finally {
       setActionLoading(false);
     }
@@ -285,6 +285,12 @@ function CustomerOrderDetailPageContent() {
     !order.cancellationStatus &&
     acceptedHoursSince !== null &&
     acceptedHoursSince > REQUEST_CANCEL_WINDOW_TOTAL_HOURS;
+  const bidCancellationWindowExpiresAt = order.cancellationWindowExpiresAt
+    ? new Date(order.cancellationWindowExpiresAt)
+    : null;
+  const disputeWindowClosedAt = order.disputeWindowClosedAt
+    ? new Date(order.disputeWindowClosedAt)
+    : null;
   const orderModel3D = order.productDetails?.model3D?.url
     ? order.productDetails.model3D
     : order.productId?.model3D?.url
@@ -468,18 +474,23 @@ function CustomerOrderDetailPageContent() {
                 Production Pipeline
               </h2>
 
-              {order.status === "pending_acceptance" && (
+              {order.status === "confirmed" && (
                 <div className="rounded-2xl border border-white/8 bg-white/[0.03] py-8 text-center text-white/45">
                   <span className="material-symbols-outlined mb-2 block text-4xl">
-                    schedule
+                    verified
                   </span>
                   <p className="text-sm">
-                    Waiting for manufacturer to accept your order...
+                    Order confirmed. Waiting for manufacturer to begin production.
                   </p>
+                  {bidCancellationWindowExpiresAt && (
+                    <p className="mt-2 text-xs text-white/35">
+                      Cancellation window closes {bidCancellationWindowExpiresAt.toLocaleString()}.
+                    </p>
+                  )}
                 </div>
               )}
 
-              {["accepted", "in_production", "shipped", "completed"].includes(
+              {["accepted", "in_production", "shipped", "delivered", "completed"].includes(
                 order.status,
               ) &&
                 totalMilestones === 0 && (
@@ -656,32 +667,25 @@ function CustomerOrderDetailPageContent() {
               <h2 className="mb-4 text-base font-black text-white">Actions</h2>
 
               <div className="space-y-3">
-                {order.status === "awaiting_production_ack" && (
-                  <div className="p-4 mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 text-center animate-pulse-subtle">
-                    <span className="material-symbols-outlined text-blue-400 mb-2 text-3xl">
-                      verified
-                    </span>
-                    <h3 className="text-white font-bold mb-1">
-                      Production Ready
-                    </h3>
-                    <p className="text-white/60 text-xs mb-4">
-                      The group buy is complete! Acknowledge below to begin
-                      manufacturing.
-                    </p>
-                    <button
-                      onClick={handleProductionAck}
-                      disabled={actionLoading}
-                      className="w-full py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl disabled:opacity-50 transition-colors"
-                    >
-                      {actionLoading ? "Processing..." : "Start Production"}
-                    </button>
-                  </div>
-                )}
-
-                {order.status === "pending_acceptance" && (
+                {order.status === "confirmed" && (
                   <DangerButton onClick={() => setShowCancelModal(true)}>
                     Cancel Order
                   </DangerButton>
+                )}
+
+                {order.status === "cancellation_requested" && (
+                  <NoticeCard tone="danger" title="Manufacturer Cancellation">
+                    {order.cancellationReason ||
+                      "The manufacturer requested cancellation for this order."}
+                    {order.rfqId?._id && (
+                      <Link
+                        href={`/customer/rfqs/${order.rfqId._id}/bids`}
+                        className="mt-3 block rounded-lg bg-red-500/20 px-3 py-2 text-center text-xs font-bold text-red-100"
+                      >
+                        View alternative bids
+                      </Link>
+                    )}
+                  </NoticeCard>
                 )}
 
                 {order.status === "accepted" &&
@@ -714,7 +718,23 @@ function CustomerOrderDetailPageContent() {
                   </NoticeCard>
                 )}
 
-                {["in_production", "shipped"].includes(order.status) && (
+                {order.status === "shipped" && (
+                  <button
+                    onClick={handleConfirmDelivery}
+                    disabled={actionLoading}
+                    className="w-full rounded-xl bg-teal-600 py-3 text-sm font-bold text-white hover:bg-teal-500 disabled:opacity-50"
+                  >
+                    {actionLoading ? "Processing..." : "Confirm Delivery"}
+                  </button>
+                )}
+
+                {order.status === "delivered" && disputeWindowClosedAt && (
+                  <NoticeCard title="Delivery Confirmed">
+                    Dispute window closes {disputeWindowClosedAt.toLocaleString()}.
+                  </NoticeCard>
+                )}
+
+                {["in_production", "shipped", "delivered"].includes(order.status) && (
                   <NoticeCard title="Cancellation Unavailable">
                     Please file a dispute if you need intervention.
                   </NoticeCard>
@@ -735,7 +755,7 @@ function CustomerOrderDetailPageContent() {
                   </div>
                 )}
 
-                {["accepted", "in_production", "shipped", "completed"].includes(
+                {["confirmed", "accepted", "in_production", "shipped", "delivered", "completed"].includes(
                   order.status,
                 ) && (
                   <Link

@@ -32,6 +32,7 @@ export default function AdminSidebar() {
     { href: "/admin/manufacturers", icon: ManufacturersIcon, label: "Manufacturers", key: "manufacturers" },
     { href: "/admin/users", icon: TotalUsersIcon, label: "Users", key: "users" },
     { href: "/admin/orders", icon: OrderIcon, label: "Orders", key: "orders" },
+    { href: "/admin/escrow", icon: OrderIcon, label: "Escrow", key: "escrow" },
     { href: "/admin/disputes", icon: DisputesIcon, label: "Disputes", key: "disputes" },
     { href: "/admin/support", icon: SupportIcon, label: "Support", key: "support" },
     { href: "/admin/activity-log", icon: ActivityLogIcon, label: "Activity Log", key: "activity-log" },

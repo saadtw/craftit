@@ -56,6 +56,10 @@ const BidSchema = new mongoose.Schema(
     alternativeProposals: String,
     paymentTerms: String,
     warrantyInfo: String,
+    isBindingCommitment: {
+      type: Boolean,
+      default: true,
+    },
 
     // Counter Offers
     counterOffers: [

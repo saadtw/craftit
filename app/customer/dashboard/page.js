@@ -9,7 +9,7 @@ import Link from "next/link";
 import { formatPKR } from "@/lib/currency";
 
 const STATUS_COLORS = {
-  pending_acceptance:
+  confirmed:
     "bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20",
   accepted: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
   in_production: "bg-purple-500/10 text-purple-300 border border-purple-500/20",
@@ -19,7 +19,7 @@ const STATUS_COLORS = {
 };
 
 const STATUS_LABELS = {
-  pending_acceptance: "Pending",
+  confirmed: "Confirmed",
   accepted: "Accepted",
   in_production: "In Production",
   completed: "Completed",

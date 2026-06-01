@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import getStripe from "@/lib/stripe";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
+import EscrowTransaction from "@/models/EscrowTransaction";
 import { notify } from "@/services/notificationService";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
@@ -103,6 +104,17 @@ export async function POST(request) {
     order.refundReason = reason;
     if (!isPartial) order.status = "cancelled";
     await order.save();
+
+    await EscrowTransaction.create({
+      orderId: order._id,
+      customerId: order.customerId,
+      manufacturerId: order.manufacturerId,
+      amount: amount || order.totalPrice,
+      type: "refunded",
+      reference: refund?.id || order.paymentIntentId,
+      createdBy: session.user.role === "admin" ? session.user.id : undefined,
+      notes: reason,
+    });
 
     await notify.paymentRefunded(
       order.customerId,

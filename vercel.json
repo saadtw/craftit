@@ -8,5 +8,10 @@
       "source": "/api/:path*",
       "headers": [{ "key": "Access-Control-Allow-Origin", "value": "*" }]
     }
+  ],
+  "crons": [
+    { "path": "/api/cron/complete-group-buys", "schedule": "0 * * * *" },
+    { "path": "/api/cron/auto-deliver", "schedule": "0 0 * * *" },
+    { "path": "/api/cron/auto-approve-releases", "schedule": "0 * * * *" }
   ]
 }

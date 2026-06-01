@@ -131,6 +131,50 @@ export const notify = {
       relatedId: orderId,
     }),
 
+  orderConfirmedFromBid: (manufacturerId, orderId, orderNumber) =>
+    createNotification({
+      userId: manufacturerId,
+      type: "order_confirmed_from_bid",
+      title: "Bid accepted, order confirmed",
+      message: `Your bid has been accepted. Order #${orderNumber} is confirmed. You have 48 hours to request cancellation if you cannot fulfil it.`,
+      link: `/manufacturer/orders/${orderId}`,
+      relatedType: "order",
+      relatedId: orderId,
+    }),
+
+  productionStarted: (customerId, orderId, orderNumber) =>
+    createNotification({
+      userId: customerId,
+      type: "production_started",
+      title: "Production started",
+      message: `Production has started for order #${orderNumber}.`,
+      link: `/customer/orders/${orderId}`,
+      relatedType: "order",
+      relatedId: orderId,
+    }),
+
+  manufacturerCancelled: (customerId, orderId, orderNumber, reason, alternativeCount = 0) =>
+    createNotification({
+      userId: customerId,
+      type: "manufacturer_cancelled",
+      title: "Manufacturer requested cancellation",
+      message: `The manufacturer cancelled order #${orderNumber} within the cancellation window.${reason ? ` Reason: ${reason}` : ""} ${alternativeCount} alternative bid(s) are available on your RFQ.`,
+      link: `/customer/orders/${orderId}`,
+      relatedType: "order",
+      relatedId: orderId,
+    }),
+
+  orderDelivered: (manufacturerId, orderId, orderNumber) =>
+    createNotification({
+      userId: manufacturerId,
+      type: "order_delivered",
+      title: "Order delivered",
+      message: `Order #${orderNumber} has been marked delivered. Payment can now be requested if eligible.`,
+      link: `/manufacturer/orders/${orderId}`,
+      relatedType: "order",
+      relatedId: orderId,
+    }),
+
   orderCancelled: (recipientId, orderId, orderNumber, isCustomer) =>
     createNotification({
       userId: recipientId,

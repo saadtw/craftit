@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Dispute from "@/models/Dispute";
 import Order from "@/models/Order";
+import PaymentReleaseRequest from "@/models/PaymentReleaseRequest";
 import { notify } from "@/services/notificationService";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
@@ -49,9 +50,103 @@ export async function POST(request) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    const MANUFACTURER_ONLY_ISSUES = [
+      "payment_release_rejected",
+      "customer_unresponsive",
+    ];
+    const CUSTOMER_ONLY_ISSUES = [
+      "item_not_received",
+      "item_not_as_described",
+      "quality_issue",
+      "wrong_item",
+      "damaged_item",
+      "late_delivery",
+      "refund_not_received",
+    ];
+
+    if (
+      session.user.role === "customer" &&
+      MANUFACTURER_ONLY_ISSUES.includes(issueType)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid issue type for customers." },
+        { status: 400 },
+      );
+    }
+    if (
+      session.user.role === "manufacturer" &&
+      CUSTOMER_ONLY_ISSUES.includes(issueType)
+    ) {
+      return NextResponse.json(
+        { error: "Invalid issue type for manufacturers." },
+        { status: 400 },
+      );
+    }
+
+    if (session.user.role === "customer") {
+      if (order.disputeWindowClosedAt && new Date() > order.disputeWindowClosedAt) {
+        return NextResponse.json(
+          {
+            error:
+              "Dispute window has closed. Disputes must be opened within 7 days of delivery.",
+          },
+          { status: 400 },
+        );
+      }
+      if (order.status === "completed" && !order.deliveredAt) {
+        const fallbackWindow = new Date(order.updatedAt);
+        fallbackWindow.setDate(fallbackWindow.getDate() + 7);
+        if (new Date() > fallbackWindow) {
+          return NextResponse.json(
+            { error: "Dispute window has closed." },
+            { status: 400 },
+          );
+        }
+      }
+    }
+
+    if (session.user.role === "manufacturer") {
+      const rejectedRelease = await PaymentReleaseRequest.findOne({
+        orderId,
+        status: "rejected",
+      }).sort({ resolvedAt: -1 });
+
+      const expiredPendingRelease = await PaymentReleaseRequest.findOne({
+        orderId,
+        status: "pending",
+        expiresAt: { $lt: new Date() },
+      });
+
+      if (!rejectedRelease && !expiredPendingRelease) {
+        return NextResponse.json(
+          {
+            error:
+              "Manufacturers can only open a dispute after a payment release request has been rejected or has expired without customer response.",
+          },
+          { status: 400 },
+        );
+      }
+
+      const triggerDate =
+        rejectedRelease?.resolvedAt || expiredPendingRelease?.expiresAt;
+      if (triggerDate) {
+        const disputeDeadline = new Date(triggerDate);
+        disputeDeadline.setDate(disputeDeadline.getDate() + 3);
+        if (new Date() > disputeDeadline) {
+          return NextResponse.json(
+            {
+              error:
+                "Manufacturer dispute window has closed (3 days after payment release rejection or expiry).",
+            },
+            { status: 400 },
+          );
+        }
+      }
+    }
+
     const allowedStatuses =
       session.user.role === "customer"
-        ? ["accepted", "in_production", "completed"]
+        ? ["confirmed", "accepted", "in_production", "shipped", "delivered", "completed"]
         : ["in_production", "shipped", "completed"];
 
     if (!allowedStatuses.includes(order.status)) {
@@ -60,8 +155,6 @@ export async function POST(request) {
         { status: 400 },
       );
     }
-
-    // TODO: Phase 4 - For manufacturer disputes, verify there is a rejected/expired PaymentReleaseRequest
 
     // Check for existing open dispute on this order
     const existing = await Dispute.findOne({

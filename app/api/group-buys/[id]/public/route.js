@@ -36,7 +36,7 @@ export async function GET(request, context) {
         status: { $in: ["active", "paused"] },
         endDate: { $lte: now },
       },
-      { $set: { status: "completed", completedAt: now } },
+      { $set: { status: "payment_processing" } },
     );
 
     const groupBuyDoc = await GroupBuy.findById(id)
@@ -90,6 +90,8 @@ export async function GET(request, context) {
           totalPrice: myEntry.totalPrice,
           joinedAt: myEntry.joinedAt,
           paymentStatus: myEntry.paymentStatus,
+          status: myEntry.status,
+          captureRetryDeadline: myEntry.captureRetryDeadline,
         };
       }
     }

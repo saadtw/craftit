@@ -29,7 +29,7 @@ export async function GET(request) {
     );
     await GroupBuy.updateMany(
       { status: { $in: ["active", "paused"] }, endDate: { $lte: now } },
-      { $set: { status: "completed", completedAt: now } },
+      { $set: { status: "payment_processing" } },
     );
 
     let query = {

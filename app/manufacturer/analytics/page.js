@@ -222,8 +222,8 @@ export default function ManufacturerAnalyticsPage() {
                   color: "from-purple-400 to-purple-600",
                 },
                 accepted: { label: "Accepted", color: "from-blue-400 to-blue-600" },
-                pending_acceptance: {
-                  label: "Pending",
+                confirmed: {
+                  label: "Confirmed",
                   color: "from-amber-400 to-amber-600",
                 },
                 cancelled: { label: "Cancelled", color: "from-red-400 to-red-600" },

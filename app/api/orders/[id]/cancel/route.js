@@ -51,7 +51,10 @@ async function processRefund(order, reason) {
     return;
   }
 
-  if (order.orderType === "group_buy" && order.paymentStatus === "captured") {
+  if (
+    order.orderType === "group_buy" &&
+    ["captured", "held_in_escrow"].includes(order.paymentStatus)
+  ) {
     // Phase 5-E: Forfeit the held amount to the manufacturer
     if (stripe) {
       try {
@@ -99,7 +102,7 @@ async function processRefund(order, reason) {
     return;
   }
 
-  if (order.paymentStatus === "captured") {
+  if (["captured", "held_in_escrow", "release_requested"].includes(order.paymentStatus)) {
     await stripe.refunds.create({
       payment_intent: order.paymentIntentId,
       reason: "requested_by_customer",
@@ -170,9 +173,9 @@ export async function POST(request, context) {
         );
       }
 
-      // Pre-acceptance cancellation remains unilateral.
-      if (order.status === "pending_acceptance") {
-        await processRefund(order, "Cancelled before manufacturer acceptance");
+      // Confirmed-but-not-started cancellation remains unilateral.
+      if (order.status === "confirmed") {
+        await processRefund(order, "Cancelled before production started");
 
         order.status = "cancelled";
         order.cancelledAt = new Date();

@@ -25,10 +25,12 @@ import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
 import { formatPKR } from "@/lib/currency";
 
 const STATUS_COLORS = {
-  pending_acceptance: "bg-amber-500/10 border-amber-500/20 text-amber-400",
+  confirmed: "bg-amber-500/10 border-amber-500/20 text-amber-400",
+  cancellation_requested: "bg-red-500/10 border-red-500/20 text-red-400",
   accepted: "bg-blue-500/10 border-blue-500/20 text-blue-400",
   in_production: "bg-purple-500/10 border-purple-500/20 text-purple-400",
   shipped: "bg-indigo-500/10 border-indigo-500/20 text-indigo-400",
+  delivered: "bg-teal-500/10 border-teal-500/20 text-teal-400",
   completed: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
   cancelled: "bg-red-500/10 border-red-500/20 text-red-400",
   disputed: "bg-orange-500/10 border-orange-500/20 text-orange-400",
@@ -60,6 +62,7 @@ export default function ManufacturerOrderDetailPage() {
   const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
   const [showCancelRejectModal, setShowCancelRejectModal] = useState(false);
   const [showPaymentReleaseModal, setShowPaymentReleaseModal] = useState(false);
+  const [showManufacturerCancelModal, setShowManufacturerCancelModal] = useState(false);
 
   const [acceptForm, setAcceptForm] = useState({ estimatedDeliveryDate: "" });
   const [paymentReleaseForm, setPaymentReleaseForm] = useState({ amount: "", reason: "" });
@@ -74,6 +77,7 @@ export default function ManufacturerOrderDetailPage() {
     shippingMethod: "",
   });
   const [cancelRejectReason, setCancelRejectReason] = useState("");
+  const [manufacturerCancelReason, setManufacturerCancelReason] = useState("");
 
   const fetchOrder = useCallback(async () => {
     setLoading(true);
@@ -280,6 +284,55 @@ export default function ManufacturerOrderDetailPage() {
     }
   };
 
+  const handleStartProduction = async () => {
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${id}/production-ack`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchOrder();
+        toast.success("Production start recorded.");
+      } else {
+        toast.error(data.error || "Failed to start production");
+      }
+    } catch (err) {
+      toast.error("Error starting production");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleManufacturerCancel = async () => {
+    if (!manufacturerCancelReason.trim()) {
+      toast.error("Please provide a cancellation reason.");
+      return;
+    }
+    setActionLoading(true);
+    try {
+      const res = await fetch(`/api/orders/${id}/manufacturer-cancel`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reason: manufacturerCancelReason.trim() }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        await fetchOrder();
+        setShowManufacturerCancelModal(false);
+        setManufacturerCancelReason("");
+        toast.success("Cancellation request sent to the customer.");
+      } else {
+        toast.error(data.error || "Failed to request cancellation");
+      }
+    } catch (err) {
+      toast.error("Error requesting cancellation");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   if (status === "loading" || loading) {
     return <GlobalLoader fullScreen text="Loading order details..." />;
   }
@@ -300,6 +353,13 @@ export default function ManufacturerOrderDetailPage() {
       : 0;
   const hasPendingCancellationRequest =
     order.cancellationStatus === "requested";
+  const cancellationWindowExpiresAt = order.cancellationWindowExpiresAt
+    ? new Date(order.cancellationWindowExpiresAt)
+    : null;
+  const cancellationWindowOpen =
+    order.status === "confirmed" &&
+    cancellationWindowExpiresAt &&
+    cancellationWindowExpiresAt > new Date();
   const orderModel3D = order.productDetails?.model3D?.url
     ? order.productDetails.model3D
     : order.productId?.model3D?.url
@@ -662,20 +722,34 @@ export default function ManufacturerOrderDetailPage() {
               </h2>
               
               <div className="space-y-4">
-                {order.status === "pending_acceptance" && (
+                {order.status === "confirmed" && (
                   <div className="grid grid-cols-1 gap-3">
+                    {cancellationWindowExpiresAt && (
+                      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-xs font-bold text-amber-300">
+                        Cancellation window {cancellationWindowOpen ? "closes" : "closed"}{" "}
+                        {cancellationWindowExpiresAt.toLocaleString()}.
+                      </div>
+                    )}
                     <button
-                      onClick={() => setShowAcceptModal(true)}
-                      className="w-full py-3.5 bg-emerald-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_rgba(16,185,129,0.2)] hover:bg-emerald-500 hover:scale-[1.02] transition-all"
+                      onClick={handleStartProduction}
+                      disabled={actionLoading}
+                      className="w-full py-3.5 bg-purple-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:bg-purple-500 hover:scale-[1.02] transition-all disabled:opacity-50"
                     >
-                      Accept Order
+                      {actionLoading ? "Processing..." : "Start Production"}
                     </button>
-                    <button
-                      onClick={() => setShowRejectModal(true)}
-                      className="w-full py-3.5 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 transition-all"
-                    >
-                      Reject Order
-                    </button>
+                    {cancellationWindowOpen && (
+                      <button
+                        onClick={() => setShowManufacturerCancelModal(true)}
+                        className="w-full py-3.5 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-red-500/10 hover:text-red-400 hover:border-red-500/20 transition-all"
+                      >
+                        Request Cancellation
+                      </button>
+                    )}
+                  </div>
+                )}
+                {order.status === "cancellation_requested" && (
+                  <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-xs text-red-300">
+                    Cancellation was requested. The customer can choose an alternative bid from the RFQ.
                   </div>
                 )}
                 {order.status === "accepted" && (
@@ -767,7 +841,7 @@ export default function ManufacturerOrderDetailPage() {
                     </button>
                   </div>
                 )}
-                {["accepted", "in_production", "shipped", "completed"].includes(order.status) && (
+                {["accepted", "in_production", "shipped", "delivered", "completed"].includes(order.status) && (
                   <button
                     onClick={() => setShowPaymentReleaseModal(true)}
                     className="w-full py-3.5 mt-3 bg-[#eb9728]/10 text-[#eb9728] text-[11px] font-black uppercase tracking-widest rounded-2xl border border-[#eb9728]/30 shadow-[0_0_20px_rgba(235,151,40,0.1)] hover:bg-[#eb9728]/20 transition-all"
@@ -1113,6 +1187,46 @@ export default function ManufacturerOrderDetailPage() {
                 setCancelRejectReason("");
               }}
               className="w-full py-3 bg-white/5 text-white/20 text-[11px] font-black uppercase tracking-widest rounded-2xl hover:text-white transition-all"
+            >
+              Back
+            </button>
+          </div>
+        </Modal>
+      )}
+
+      {showManufacturerCancelModal && (
+        <Modal
+          title="Request Cancellation"
+          onClose={() => setShowManufacturerCancelModal(false)}
+        >
+          <p className="text-sm text-white/60 mb-4">
+            This is only available during the 48-hour bid cancellation window.
+            The RFQ will reopen so the customer can choose another bid.
+          </p>
+          <label className="block text-sm font-medium text-white/70 mb-1">
+            Reason *
+          </label>
+          <textarea
+            value={manufacturerCancelReason}
+            onChange={(e) => setManufacturerCancelReason(e.target.value)}
+            rows={4}
+            placeholder="Explain why you cannot fulfil this accepted bid..."
+            className="w-full border border-white/10 bg-white/[0.03] rounded-lg px-3 py-2 text-sm mb-4 resize-none focus:outline-none focus:border-red-400"
+          />
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={handleManufacturerCancel}
+              disabled={actionLoading || !manufacturerCancelReason.trim()}
+              className="w-full py-3 bg-red-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-red-500 disabled:opacity-50"
+            >
+              {actionLoading ? "Processing..." : "Send Cancellation Request"}
+            </button>
+            <button
+              onClick={() => {
+                setShowManufacturerCancelModal(false);
+                setManufacturerCancelReason("");
+              }}
+              className="w-full py-3 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl hover:text-white transition-all"
             >
               Back
             </button>

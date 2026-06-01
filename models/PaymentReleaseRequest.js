@@ -50,6 +50,20 @@ const PaymentReleaseRequestSchema = new mongoose.Schema(
     transferId: {
       type: String, // Stripe transfer ID
     },
+    payoutMethod: {
+      type: String,
+      enum: ["stripe_connect", "jazzcash", "bank_transfer", "easypaisa", "manual", "none"],
+      default: "none",
+    },
+    externalReferenceId: {
+      type: String,
+    },
+    paidAt: {
+      type: Date,
+    },
+    adminNote: {
+      type: String,
+    },
     scheduleRef: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "PaymentSchedule",

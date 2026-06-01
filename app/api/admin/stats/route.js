@@ -33,7 +33,7 @@ export async function GET(request) {
       }),
       Order.countDocuments({
         status: {
-          $in: ["pending_acceptance", "accepted", "in_production", "shipped"],
+          $in: ["confirmed", "accepted", "in_production", "shipped", "delivered"],
         },
       }),
       Dispute.countDocuments({

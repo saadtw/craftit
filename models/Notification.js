@@ -19,6 +19,11 @@ const NotificationSchema = new mongoose.Schema(
         "order_shipped",
         "order_completed",
         "order_cancelled",
+        "order_confirmed_from_bid",
+        "production_started",
+        "manufacturer_cancelled",
+        "cancellation_window_expiring",
+        "order_delivered",
         // Bid events
         "bid_received",
         "bid_accepted",
@@ -31,6 +36,7 @@ const NotificationSchema = new mongoose.Schema(
         "product_customization_rfq",
         // Group Buy events
         "group_buy_joined",
+        "group_buy_funded",
         "group_buy_tier_reached",
         "group_buy_completed",
         "group_buy_cancelled",

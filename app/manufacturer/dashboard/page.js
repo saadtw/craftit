@@ -27,7 +27,7 @@ import HomeScreenAnimation from "@/assets/HomeScreenAnimation.json";
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 const STATUS_COLORS = {
-  pending_acceptance: "bg-amber-500/10 text-amber-500 border border-amber-500/20",
+  confirmed: "bg-amber-500/10 text-amber-500 border border-amber-500/20",
   accepted: "bg-blue-500/10 text-blue-500 border border-blue-500/20",
   in_production: "bg-purple-500/10 text-purple-500 border border-purple-500/20",
   completed: "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
@@ -36,7 +36,7 @@ const STATUS_COLORS = {
 };
 
 const STATUS_LABELS = {
-  pending_acceptance: "Pending",
+  confirmed: "Confirmed",
   accepted: "Accepted",
   in_production: "In Production",
   completed: "Completed",
@@ -148,7 +148,7 @@ export default function ManufacturerDashboard() {
         const s = ordersData.stats || {};
         setStats((prev) => ({
           ...prev,
-          pendingOrders: s.pending_acceptance || 0,
+          pendingOrders: s.confirmed || 0,
         }));
       }
 

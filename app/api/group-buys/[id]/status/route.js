@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
-import Order from "@/models/Order";
 import { resolveRequestSession } from "@/lib/requestAuth";
 import { notify } from "@/services/notificationService";
 import getStripe from "@/lib/stripe";
@@ -61,8 +60,7 @@ export async function PATCH(request, context) {
             { status: 400 },
           );
         }
-        groupBuy.status = "completed";
-        groupBuy.completedAt = new Date();
+        groupBuy.status = "payment_processing";
         groupBuy.endDate = new Date(); // set end to now
         break;
 
@@ -85,39 +83,6 @@ export async function PATCH(request, context) {
     }
 
     await groupBuy.save();
-
-    // P1-D / Phase 5-C: Fire notifications and create Orders after status change
-    if (action === "end_early") {
-      const productName = groupBuy.title || "Group Buy";
-      for (let i = 0; i < groupBuy.participants.length; i++) {
-        const participant = groupBuy.participants[i];
-        
-        // Create order
-        const order = await Order.create({
-          orderType: "group_buy",
-          groupBuyId: groupBuy._id,
-          productId: groupBuy.productId,
-          customerId: participant.customerId,
-          manufacturerId: groupBuy.manufacturerId,
-          quantity: participant.quantity,
-          unitPrice: participant.unitPrice,
-          totalPrice: participant.totalPrice,
-          status: participant.remainingBalance > 0 ? "awaiting_production_ack" : "accepted",
-          paymentStatus: participant.remainingBalance > 0 ? "authorized" : "captured",
-        });
-
-        // Save orderId to participant
-        groupBuy.participants[i].orderId = order._id;
-
-        // Notify
-        notify.groupBuyCompleted(
-          participant.customerId,
-          groupBuy._id,
-          productName,
-        );
-      }
-      await groupBuy.save(); // Save again to store orderIds
-    }
 
     if (action === "cancel") {
       const productName = groupBuy.title || "Group Buy";

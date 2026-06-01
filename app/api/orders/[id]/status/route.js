@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import User from "@/models/User";
+import EscrowTransaction from "@/models/EscrowTransaction";
 import { notify } from "@/services/notificationService";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
@@ -64,10 +65,11 @@ export async function PUT(request, context) {
 
     // Valid transitions — includes "shipped" between in_production and completed
     const validTransitions = {
-      pending_acceptance: ["accepted", "cancelled"],
+      confirmed: ["in_production", "cancelled"],
       accepted: ["in_production", "cancelled"],
       in_production: ["shipped", "cancelled"],
-      shipped: ["completed"],
+      shipped: ["delivered", "completed"],
+      delivered: ["completed"],
     };
 
     const allowed = validTransitions[order.status];
@@ -129,6 +131,36 @@ export async function PUT(request, context) {
     // ── In production ──────────────────────────────────────────────────────
     if (status === "in_production") {
       if (shippingMethod) order.shippingMethod = shippingMethod;
+      if (
+        stripe &&
+        order.paymentIntentId &&
+        order.paymentStatus === "authorized"
+      ) {
+        try {
+          await stripe.paymentIntents.capture(order.paymentIntentId);
+          order.paymentStatus = "held_in_escrow";
+          await EscrowTransaction.create([
+            {
+              orderId: order._id,
+              customerId: order.customerId,
+              manufacturerId: order.manufacturerId,
+              amount: order.totalPrice,
+              type: "payment_received",
+              reference: order.paymentIntentId,
+            },
+            {
+              orderId: order._id,
+              customerId: order.customerId,
+              manufacturerId: order.manufacturerId,
+              amount: order.totalPrice,
+              type: "held",
+              reference: order.paymentIntentId,
+            },
+          ]);
+        } catch (stripeErr) {
+          console.error("Stripe capture failed:", stripeErr.message);
+        }
+      }
       // P1-B: notify customer that production has started
       await notify.orderInProduction(
         order.customerId,
@@ -184,7 +216,7 @@ export async function PUT(request, context) {
       order.cancelledBy = session.user.id;
       order.cancellationReason = rejectionReason || "Cancelled by manufacturer";
 
-      if (originalStatus === "pending_acceptance") {
+      if (originalStatus === "confirmed") {
         order.rejectedAt = new Date();
         order.rejectionReason = rejectionReason || "Rejected by manufacturer";
 

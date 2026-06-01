@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn, getSession } from "next-auth/react";
 import { supabase } from "@/lib/supabase";
 
-export default function SupabaseCallbackPage() {
+function SupabaseCallbackContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState("");
@@ -110,5 +110,19 @@ export default function SupabaseCallbackPage() {
         <p className="text-xs text-red-300/80">{error}</p>
       </div>
     </div>
+  );
+}
+
+export default function SupabaseCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#0B011D] flex items-center justify-center">
+          <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />
+        </div>
+      }
+    >
+      <SupabaseCallbackContent />
+    </Suspense>
   );
 }

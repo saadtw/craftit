@@ -209,6 +209,12 @@ export default function PlaceBidPage({ params }) {
                 </div>
 
                 <div className="pt-6">
+                  <div className="mb-5 rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4 text-[11px] font-bold leading-relaxed text-amber-200">
+                    By submitting this bid, you are making a binding commitment.
+                    If accepted, an order is automatically created and you are
+                    expected to fulfil it. You have a 48-hour cancellation window
+                    for exceptional circumstances.
+                  </div>
                   <button
                     type="submit"
                     disabled={loading}
