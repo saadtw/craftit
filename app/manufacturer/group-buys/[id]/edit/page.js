@@ -203,7 +203,9 @@ export default function EditGroupBuyPage() {
               className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all"
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-sm">arrow_back</span>
+                <span className="material-symbols-outlined text-sm">
+                  arrow_back
+                </span>
               </div>
               Discard Adjustments
             </Link>
@@ -237,9 +239,13 @@ export default function EditGroupBuyPage() {
               <span className="material-symbols-outlined">warning</span>
             </div>
             <div>
-              <p className="text-[10px] font-black uppercase tracking-widest text-amber-400">ACTIVE CAMPAIGN PROTECTION</p>
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-400">
+                ACTIVE CAMPAIGN PROTECTION
+              </p>
               <p className="text-sm font-medium text-amber-400/80 mt-1">
-                This campaign has {groupBuy.participants.length} participant(s). Only the end date can be extended to protect existing commitments.
+                This campaign has {groupBuy.participants.length} participant(s).
+                Only the end date can be extended to protect existing
+                commitments.
               </p>
             </div>
           </div>
@@ -266,7 +272,9 @@ export default function EditGroupBuyPage() {
                 className={`w-full px-5 py-4 bg-white/5 border rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all ${hasParticipants ? "opacity-30 cursor-not-allowed" : "border-white/10 hover:border-white/20"} ${errors.title ? "border-red-500/50 bg-red-500/5" : ""}`}
               />
               {errors.title && (
-                <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">{errors.title}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">
+                  {errors.title}
+                </p>
               )}
             </div>
 
@@ -285,10 +293,12 @@ export default function EditGroupBuyPage() {
 
             <div>
               <label className="block text-[10px] font-black text-white/20 uppercase tracking-widest mb-3 px-1">
-                Base Unit Price (USD)
+                Base Unit Price (PKR)
               </label>
               <div className="relative">
-                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-sm font-black">$</span>
+                <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-sm font-black">
+                  Rs
+                </span>
                 <input
                   type="number"
                   min="0"
@@ -335,7 +345,9 @@ export default function EditGroupBuyPage() {
                   className={`w-full px-5 py-4 bg-white/5 border rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all text-white inverted-scheme-icon ${errors.endDate ? "border-red-500/50 bg-red-500/5" : "border-white/10 hover:border-white/20"}`}
                 />
                 {errors.endDate && (
-                  <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">{errors.endDate}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">
+                    {errors.endDate}
+                  </p>
                 )}
               </div>
             </div>
@@ -347,7 +359,9 @@ export default function EditGroupBuyPage() {
           <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/5 blur-[100px] pointer-events-none" />
             <h2 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-8 flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">stacked_bar_chart</span>
+              <span className="material-symbols-outlined text-sm">
+                stacked_bar_chart
+              </span>
               Pricing Milestones
             </h2>
             <div className="grid grid-cols-1 gap-4">
@@ -364,7 +378,7 @@ export default function EditGroupBuyPage() {
                       Tier Milestone {index + 1}
                     </span>
                   </div>
-                  
+
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div>
                       <label className="block text-[9px] font-black text-white/20 uppercase tracking-widest mb-2 px-1">
@@ -398,17 +412,23 @@ export default function EditGroupBuyPage() {
                     </div>
                     <div>
                       <label className="block text-[9px] font-black text-white/20 uppercase tracking-widest mb-2 px-1">
-                        Price ($)
+                        Price (PKR)
                       </label>
                       <div className="relative">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 text-xs font-black">$</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 text-xs font-black">
+                          Rs
+                        </span>
                         <input
                           type="number"
                           min="0"
                           step="0.01"
                           value={tier.discountedPrice}
                           onChange={(e) =>
-                            setTierField(index, "discountedPrice", e.target.value)
+                            setTierField(
+                              index,
+                              "discountedPrice",
+                              e.target.value,
+                            )
                           }
                           className="w-full pl-8 pr-4 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-black focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all"
                         />

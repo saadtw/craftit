@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-amber-500/10 border-amber-500/20 text-amber-400",
@@ -359,6 +360,7 @@ export default function ManufacturerOrdersPage() {
                   key={order._id}
                   order={order}
                   onRefresh={handleRefresh}
+                  toast={toast}
                 />
               ))}
             </div>
@@ -397,7 +399,7 @@ export default function ManufacturerOrdersPage() {
 
 // ── Order Card ────────────────────────────────────────────────────────────────
 
-function OrderCard({ order, onRefresh }) {
+function OrderCard({ order, onRefresh, toast }) {
   const [accepting, setAccepting] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const has3DModel = Boolean(
@@ -529,7 +531,7 @@ function OrderCard({ order, onRefresh }) {
 
             <div className="flex flex-col items-end gap-2 shrink-0">
               <span className="text-2xl font-black text-white tracking-tighter">
-                ${order.totalPrice?.toLocaleString() || "—"}
+                {order.totalPrice ? formatPKR(order.totalPrice) : "-"}
               </span>
               {order.estimatedDeliveryDate && (
                 <div className="flex items-center gap-1.5 px-3 py-1 bg-white/[0.05] border border-purple-500/30 rounded-full">

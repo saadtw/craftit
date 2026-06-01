@@ -10,8 +10,10 @@ import Image from "next/image";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
 import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import PartsDivisionPanel from "@/components/custom-orders/PartsDivisionPanel";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const customizationTypeLabelMap = CUSTOMIZATION_TYPE_OPTIONS.reduce(
   (acc, item) => {
@@ -28,6 +30,8 @@ export default function CustomOrderReview() {
   const toast = useToast();
   const [customOrder, setCustomOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
+  const [isSavingModel, setIsSavingModel] = useState(false);
 
   const fetchCustomOrder = useCallback(async () => {
     try {
@@ -79,6 +83,51 @@ export default function CustomOrderReview() {
       } else toast.error("Error: " + data.error);
     } catch (error) {
       toast.error("Error: " + error.message);
+    }
+  };
+
+  const handleModelSave = async (payload) => {
+    const { modelUrl, annotations, measurements, cameraState } = payload || {};
+    if (!customOrder?.model3D?.url) return;
+
+    setIsSavingModel(true);
+    try {
+      const response = await fetch("/api/models/update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          resourceId: params.id,
+          resourceType: "customOrder",
+          newModelUrl: modelUrl || customOrder.model3D.url,
+          annotations: Array.isArray(annotations) ? annotations : [],
+          measurements: Array.isArray(measurements) ? measurements : [],
+          cameraState: cameraState || null,
+        }),
+      });
+      const data = await response.json();
+      if (!data.success) {
+        toast.error(data.error || "Failed to update 3D model");
+        return;
+      }
+      setCustomOrder((prev) => {
+        if (!prev?.model3D) return prev;
+        return {
+          ...prev,
+          model3D: {
+            ...prev.model3D,
+            url: modelUrl || prev.model3D.url,
+            annotations: Array.isArray(annotations) ? annotations : [],
+            measurements: Array.isArray(measurements) ? measurements : [],
+            cameraState: cameraState || null,
+          },
+        };
+      });
+      toast.success("3D model updated");
+      setIsEditorOpen(false);
+    } catch (error) {
+      toast.error(error.message || "Failed to update 3D model");
+    } finally {
+      setIsSavingModel(false);
     }
   };
 
@@ -221,7 +270,7 @@ export default function CustomOrderReview() {
                       </span>
                     </div>
                     <p className="text-sm font-bold text-white/80">
-                      ${customOrder.budget}
+                      {formatPKR(customOrder.budget)}
                     </p>
                   </div>
                 )}
@@ -378,21 +427,29 @@ export default function CustomOrderReview() {
           {/* 3D Model */}
           {customOrder.model3D && (
             <div className="rounded-2xl border border-white/8 bg-[#0c0c11] overflow-hidden">
-              <div className="px-6 py-5 border-b border-white/8">
+              <div className="px-6 py-5 border-b border-white/8 flex items-center justify-between">
                 <h2 className="text-base font-bold text-white flex items-center gap-2">
                   <span className="material-symbols-outlined text-[16px] text-[#eb9728]">
                     view_in_ar
                   </span>
                   3D Model
                 </h2>
+                <button
+                  type="button"
+                  onClick={() => setIsEditorOpen(true)}
+                  disabled={isSavingModel}
+                  className="px-3 py-1.5 text-[11px] font-bold text-[#eb9728] bg-[#eb9728]/10 rounded-lg hover:bg-[#eb9728]/20 transition-colors disabled:opacity-50"
+                >
+                  {isSavingModel ? "Saving..." : "Edit Model"}
+                </button>
               </div>
               <div className="p-5">
                 <div className="rounded-xl overflow-hidden border border-white/8 bg-white/[0.02]">
-                  <Editor3DWrapper
+                  <ModelViewerPreview
                     modelUrl={customOrder.model3D.url}
-                    initialAnnotations={customOrder.model3D.annotations}
-                    initialCameraState={customOrder.model3D.cameraState}
-                    readOnly={true}
+                    annotations={customOrder.model3D.annotations || []}
+                    measurements={customOrder.model3D.measurements || []}
+                    height="100%"
                   />
                 </div>
                 <div className="flex items-center gap-2 mt-3">
@@ -433,6 +490,13 @@ export default function CustomOrderReview() {
                         sizes="33vw"
                       />
                     </div>
+                  ))}
+                </div>
+                <div className="mt-4 space-y-1">
+                  {customOrder.images.map((img, idx) => (
+                    <p key={idx} className="text-[11px] text-white/35">
+                      {img.filename || `Image ${idx + 1}`}
+                    </p>
                   ))}
                 </div>
               </div>
@@ -522,6 +586,37 @@ export default function CustomOrderReview() {
               )}
             </div>
           </div>
+
+          {isEditorOpen && customOrder.model3D?.url && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+              <div className="w-full max-w-7xl h-[85vh] bg-[#0c0c11] rounded-[24px] border border-white/10 overflow-hidden flex flex-col shadow-2xl">
+                <div className="flex justify-between items-center p-5 border-b border-white/10 bg-white/[0.02]">
+                  <h3 className="text-lg font-black text-white flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[#eb9728]">
+                      view_in_ar
+                    </span>
+                    Edit 3D Model
+                  </h3>
+                  <button
+                    onClick={() => setIsEditorOpen(false)}
+                    className="text-white/50 hover:text-white transition-colors"
+                  >
+                    <span className="material-symbols-outlined">close</span>
+                  </button>
+                </div>
+                <div className="min-h-0 flex-1 overflow-hidden p-6">
+                  <Editor3DWrapper
+                    modelUrl={customOrder.model3D.url}
+                    initialAnnotations={customOrder.model3D.annotations}
+                    initialCameraState={customOrder.model3D.cameraState}
+                    onSave={handleModelSave}
+                    onCancel={() => setIsEditorOpen(false)}
+                    readOnly={false}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
         </main>
       </div>
     </>

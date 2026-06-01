@@ -5,15 +5,12 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const MAX_COMPARE_BIDS = 3;
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value || 0);
+  return formatPKR(value);
 }
 
 function getScoreBand(score) {
@@ -83,7 +80,7 @@ export default function BidComparisonPage() {
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [params.id, toast]);
 
   useEffect(() => {
     if (status === "unauthenticated") {

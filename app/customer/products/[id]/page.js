@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchWithCache } from "@/lib/clientCache";
+import { formatPKR } from "@/lib/currency";
 import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import { useToast } from "@/components/ui/ToastProvider";
 
@@ -24,6 +25,7 @@ export default function CustomerProductDetailPage() {
   const [wishlistProductIds, setWishlistProductIds] = useState(new Set());
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
+  const [mediaView, setMediaView] = useState("images");
   const [qaItems, setQaItems] = useState([]);
   const [qaLoading, setQaLoading] = useState(true);
   const [qaQuestion, setQaQuestion] = useState("");
@@ -50,6 +52,9 @@ export default function CustomerProductDetailPage() {
 
       if (data.success) {
         setProduct(data.product);
+        if (!data.product.images?.length && data.product.model3D?.url) {
+          setMediaView("3d");
+        }
 
         if (data.product.manufacturerId) {
           fetchManufacturer(
@@ -169,7 +174,7 @@ export default function CustomerProductDetailPage() {
     } finally {
       setQaSubmitting(false);
     }
-  }, [id, qaQuestion, qaSubmitting]);
+  }, [id, qaQuestion, qaSubmitting, toast]);
 
   const handleToggleWishlist = useCallback(
     async (productId) => {
@@ -258,25 +263,88 @@ export default function CustomerProductDetailPage() {
 
         <section className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           <div>
-            <div className="relative aspect-square overflow-hidden rounded-[28px] border border-white/8 bg-[#0c0c11]">
-              {product.images?.[activeImage]?.url ? (
-                <Image
-                  src={product.images[activeImage].url}
-                  alt={product.name}
-                  fill
-                  className="object-contain p-5 transition-transform duration-500 hover:scale-105"
-                  sizes="(max-width: 768px) 100vw, 50vw"
-                />
+            <div className="overflow-hidden rounded-[28px] border border-white/8 bg-[#0c0c11]">
+              {product.images?.length > 0 && product.model3D?.url && (
+                <div className="flex items-center gap-2 border-b border-white/8 bg-white/[0.02] p-3">
+                  <button
+                    type="button"
+                    onClick={() => setMediaView("images")}
+                    className={`rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
+                      mediaView === "images"
+                        ? "bg-[#eb9728] text-white"
+                        : "text-white/40 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    Images
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMediaView("3d")}
+                    className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-[10px] font-black uppercase tracking-widest transition-all ${
+                      mediaView === "3d"
+                        ? "bg-[#eb9728] text-white"
+                        : "text-white/40 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    3D Model
+                    {mediaView !== "3d" && (
+                      <span className="h-2 w-2 rounded-full bg-emerald-400" />
+                    )}
+                  </button>
+                </div>
+              )}
+
+              {mediaView === "3d" && product.model3D?.url ? (
+                <div className="p-4">
+                  <div className="mb-4 flex items-center justify-between gap-3">
+                    <div>
+                      <h2 className="text-sm font-black uppercase tracking-widest text-white">
+                        Interactive 3D Preview
+                      </h2>
+                      <p className="mt-1 text-[10px] font-black uppercase tracking-widest text-white/30">
+                        Inspect model, annotations, and dimensions
+                      </p>
+                    </div>
+                    <a
+                      href={product.model3D.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 rounded-xl border border-white/10 bg-white/[0.04] px-3 py-2 text-[9px] font-black uppercase tracking-widest text-white/60 hover:bg-white/[0.07] hover:text-[#eb9728]"
+                    >
+                      Download
+                    </a>
+                  </div>
+                  <div className="aspect-square overflow-hidden rounded-[22px] border border-white/8 bg-black/40">
+                    <ModelViewerPreview
+                      modelUrl={product.model3D.url}
+                      annotations={product.model3D.annotations || []}
+                      measurements={product.model3D.measurements || []}
+                      height="100%"
+                    />
+                  </div>
+                </div>
               ) : (
-                <div className="flex h-full items-center justify-center">
-                  <span className="material-symbols-outlined text-7xl text-white/15">
-                    inventory_2
-                  </span>
+                <div className="relative aspect-square overflow-hidden bg-[#0c0c11]">
+                  {product.images?.[activeImage]?.url ? (
+                    <Image
+                      src={product.images[activeImage].url}
+                      alt={product.name}
+                      fill
+                      className="object-contain p-5 transition-transform duration-500 hover:scale-105"
+                      sizes="(max-width: 768px) 100vw, 50vw"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center">
+                      <span className="material-symbols-outlined text-7xl text-white/15">
+                        inventory_2
+                      </span>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
 
-            {product.images?.length > 1 && (
+            {mediaView !== "3d" && product.images?.length > 1 && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {product.images.map((img, i) => (
                   <button
@@ -344,7 +412,7 @@ export default function CustomerProductDetailPage() {
             <div className="rounded-[24px] border border-[#eb9728]/20 bg-[#0c0c11] p-5">
               <div className="mb-2 flex items-baseline gap-2">
                 <span className="text-4xl font-black text-[#eb9728]">
-                  ${product.price?.toLocaleString()}
+                  {formatPKR(product.price)}
                 </span>
                 <span className="text-sm text-white/35">per unit</span>
               </div>
@@ -465,18 +533,6 @@ export default function CustomerProductDetailPage() {
               </Card>
             )}
 
-            {product.model3D?.url && (
-              <Card title="3D Model">
-                <div className="overflow-hidden rounded-[20px] border border-white/8 bg-[#0c0c11] aspect-video">
-                  <ModelViewerPreview
-                    modelUrl={product.model3D.url}
-                    annotations={product.model3D.annotations}
-                    measurements={product.model3D.measurements}
-                    height="100%"
-                  />
-                </div>
-              </Card>
-            )}
           </div>
 
           {manufacturer && (
@@ -849,7 +905,7 @@ function ProductMiniCard({ product, isWishlisted, onToggleWishlist }) {
 
         <div className="mt-3 flex items-center justify-between gap-3">
           <p className="text-sm font-black text-[#eb9728]">
-            ${product.price?.toLocaleString()}
+            {formatPKR(product.price)}
           </p>
 
           {product.averageRating > 0 ? (

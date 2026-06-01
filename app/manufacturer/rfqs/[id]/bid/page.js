@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 export default function PlaceBidPage({ params }) {
   const unwrappedParams = use(params);
@@ -88,7 +89,7 @@ export default function PlaceBidPage({ params }) {
   };
 
   if (status === "loading" || !rfq) {
-    return <GlobalLoader fullScreen text="PREPARING BID TRANSMISSION..." />;
+    return <GlobalLoader fullScreen text="Preparing proposal..." />;
   }
 
   return (
@@ -108,10 +109,10 @@ export default function PlaceBidPage({ params }) {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-xl font-black tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-400 to-indigo-400">
-                  Bid Transmission
+                  Proposal
                 </h1>
                 <span className="px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border border-purple-500/20 bg-purple-500/10 text-purple-400">
-                  Secured Protocol
+                  RFQ Response
                 </span>
               </div>
               <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mt-1">RFQ Ref: {rfq.rfqNumber}</p>
@@ -123,7 +124,7 @@ export default function PlaceBidPage({ params }) {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 py-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
           
-          {/* Left: Market Analysis & RFQ Summary */}
+          {/* Left: RFQ Summary */}
           <div className="lg:col-span-7 space-y-8">
             
             {/* Project Quick View */}
@@ -139,7 +140,7 @@ export default function PlaceBidPage({ params }) {
                 <div className="flex gap-4 items-center pt-4 border-t border-white/5">
                   <div>
                     <p className="text-[8px] font-black uppercase tracking-widest text-white/20 mb-0.5">Budget</p>
-                    <p className="text-xs font-black text-emerald-400">${rfq.customOrderId?.budget?.toLocaleString()}</p>
+                    <p className="text-xs font-black text-emerald-400">{rfq.customOrderId?.budget ? formatPKR(rfq.customOrderId.budget) : "Not specified"}</p>
                   </div>
                   <div>
                     <p className="text-[8px] font-black uppercase tracking-widest text-white/20 mb-0.5">Quantity</p>
@@ -149,49 +150,17 @@ export default function PlaceBidPage({ params }) {
               </div>
             </div>
 
-            {/* Market Intelligence Matrix */}
-            <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-10 shadow-xl">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-8">Competitive Intelligence</h3>
-              <div className="overflow-hidden rounded-2xl border border-white/5">
-                <table className="w-full text-left">
-                  <thead>
-                    <tr className="bg-white/5">
-                      <th className="py-4 px-6 text-[9px] font-black uppercase tracking-widest text-white/40">Manufacturer</th>
-                      <th className="py-4 px-6 text-[9px] font-black uppercase tracking-widest text-white/40">Bid Value</th>
-                      <th className="py-4 px-6 text-[9px] font-black uppercase tracking-widest text-white/40">Temporal</th>
-                      <th className="py-4 px-6 text-[9px] font-black uppercase tracking-widest text-white/40 text-right">Integrity</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-white/5">
-                    {[
-                      { name: "Node Alpha", amount: "$1,200", timeline: "14 Days", rating: 95 },
-                      { name: "Vector Core", amount: "$1,150", timeline: "12 Days", rating: 92 },
-                    ].map((competitor, i) => (
-                      <tr key={i} className="hover:bg-white/[0.02] transition-colors group">
-                        <td className="py-5 px-6 text-[10px] font-black uppercase tracking-widest text-white/60">{competitor.name}</td>
-                        <td className="py-5 px-6 text-sm font-black text-white">{competitor.amount}</td>
-                        <td className="py-5 px-6 text-[10px] font-black uppercase tracking-widest text-white/40">{competitor.timeline}</td>
-                        <td className="py-5 px-6 text-right">
-                          <span className="text-[10px] font-black text-purple-400">{competitor.rating}%</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              <p className="text-[9px] font-black uppercase tracking-widest text-white/10 mt-6 text-center italic">Market data synchronized with live auctions</p>
-            </div>
           </div>
 
-          {/* Right: Bid Transmission Console */}
+          {/* Right: Proposal Form */}
           <div className="lg:col-span-5">
             <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-10 shadow-xl sticky top-10">
-              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-8">Bid Transmission Console</h3>
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-8">Proposal Details</h3>
               
               <form onSubmit={handleSubmit} className="space-y-8">
                 <div className="grid grid-cols-2 gap-6">
                   <div className="space-y-3">
-                    <label className="block text-[10px] font-black uppercase tracking-widest text-white/20">Proposal Amount ($)</label>
+                    <label className="block text-[10px] font-black uppercase tracking-widest text-white/20">Proposal Amount (PKR)</label>
                     <input
                       type="number"
                       value={formData.amount}
@@ -245,10 +214,10 @@ export default function PlaceBidPage({ params }) {
                     disabled={loading}
                     className="w-full py-5 bg-purple-600 text-white text-[11px] font-black uppercase tracking-[0.2em] rounded-[2rem] hover:bg-purple-500 shadow-[0_0_30px_rgba(147,51,234,0.4)] disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-[1.02]"
                   >
-                    {loading ? "Transmitting..." : "Transmit Proposal"}
+                    {loading ? "Submitting..." : "Submit Proposal"}
                   </button>
                   <p className="text-center text-[9px] font-black uppercase tracking-widest text-white/10 mt-6 leading-relaxed">
-                    By transmitting, you agree to the secured procurement protocols of Craftit Core.
+                    By submitting, you agree to the procurement terms for this RFQ.
                   </p>
                 </div>
               </form>

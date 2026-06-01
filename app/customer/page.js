@@ -20,6 +20,7 @@ import settingsIcon from "@/assets/settings.png";
 import paymentsIcon from "@/assets/payments.png";
 import Lottie from "lottie-react";
 import HomeScreenAnimation from "@/assets/HomeScreenAnimation.json";
+import { formatPKR } from "@/lib/currency";
 
 const WORKSPACE_LINKS = [
   { href: "/customer/dashboard", icon: dashboardIcon, label: "Dashboard" },
@@ -31,8 +32,7 @@ const WORKSPACE_LINKS = [
 ];
 
 function currency(value) {
-  if (typeof value !== "number") return "-";
-  return `$${value.toLocaleString()}`;
+  return formatPKR(value);
 }
 
 function daysLeft(dateString) {
@@ -374,6 +374,9 @@ export default function CustomerHomePage() {
               const unitsToNextTier = nextTier
                 ? Math.max(nextTier.minQuantity - quantity, 0)
                 : 0;
+              const maxQty =
+                groupBuy.tiers?.[groupBuy.tiers.length - 1]?.minQuantity || 1;
+              const progressPct = Math.min(100, (quantity / maxQty) * 100);
 
               return (
                 <div
@@ -384,7 +387,11 @@ export default function CustomerHomePage() {
                     {groupBuy.productId?.images?.[0]?.url ? (
                       <Image
                         src={groupBuy.productId.images[0].url}
-                        alt={groupBuy.title || groupBuy.productId.name || "Group Buy"}
+                        alt={
+                          groupBuy.title ||
+                          groupBuy.productId.name ||
+                          "Group Buy"
+                        }
                         fill
                         sizes="(max-width: 768px) 100vw, 50vw"
                         className="object-cover transition-transform duration-500 group-hover:scale-120"
@@ -399,7 +406,7 @@ export default function CustomerHomePage() {
                     <div className="absolute inset-0 bg-gradient-to-t from-[#050507]/60 via-transparent to-transparent" />
                     <div className="absolute right-3 top-3">
                       <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-500 border border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.6)] backdrop-blur-md">
-                        {daysLeft(groupBuy.endDate)} days  left
+                        {daysLeft(groupBuy.endDate)} days left
                       </span>
                     </div>
                   </div>
@@ -415,42 +422,46 @@ export default function CustomerHomePage() {
                         <div className="flex items-center gap-1.5 mt-1.5">
                           <div className="w-5 h-5 rounded-full overflow-hidden bg-gradient-to-br from-[#eb9728] to-purple-500 flex items-center justify-center shrink-0 ring-1 ring-white/10">
                             {groupBuy.manufacturerId?.businessLogo ? (
-                              <Image 
-                                src={groupBuy.manufacturerId.businessLogo} 
-                                alt="" 
-                                width={20} 
-                                height={20} 
-                                className="object-cover w-full h-full" 
+                              <Image
+                                src={groupBuy.manufacturerId.businessLogo}
+                                alt=""
+                                width={20}
+                                height={20}
+                                className="object-cover w-full h-full"
                               />
                             ) : (
                               <span className="text-[9px] font-black text-white">
-                                {(groupBuy.manufacturerId?.businessName || groupBuy.manufacturerId?.name || "M").charAt(0).toUpperCase()}
+                                {(
+                                  groupBuy.manufacturerId?.businessName ||
+                                  groupBuy.manufacturerId?.name ||
+                                  "M"
+                                )
+                                  .charAt(0)
+                                  .toUpperCase()}
                               </span>
                             )}
                           </div>
                           <p className="text-xs text-white/45 line-clamp-1">
                             {groupBuy.manufacturerId?.businessName ||
-                                groupBuy.manufacturerId?.name ||
-                                "Manufacturer"}
+                              groupBuy.manufacturerId?.name ||
+                              "Manufacturer"}
                           </p>
                         </div>
                       </div>
-                        </div>
+                    </div>
 
                     <div className="mt-4 h-2 rounded-full bg-white/5 overflow-hidden">
                       <div
                         className="h-full rounded-full bg-gradient-to-r from-[#eb9728] via-purple-500 to-amber-400"
                         style={{
-                          width: `${Math.min(
-                            100,
-                            ((groupBuy.currentParticipantCount || 0) / 50) * 100,
-                          )}%`,
+                          width: `${progressPct}%`,
                         }}
                       />
                     </div>
 
                     <div className="mt-4 text-xs text-white/45 flex items-center justify-between">
-                      <span>
+                      <span>{quantity} units ordered</span>
+                      <span className="text-white/35">
                         {groupBuy.currentParticipantCount || 0} participants
                       </span>
                       <span className="font-bold text-[#eb9728] text-sm">
@@ -525,7 +536,9 @@ export default function CustomerHomePage() {
                       />
                     ) : (
                       <div className="w-full h-full bg-gradient-to-br from-[#eb9728] to-purple-500 text-white flex items-center justify-center text-lg font-black">
-                        {(mfr.businessName || mfr.name || "M").charAt(0).toUpperCase()}
+                        {(mfr.businessName || mfr.name || "M")
+                          .charAt(0)
+                          .toUpperCase()}
                       </div>
                     )}
                   </div>
@@ -533,7 +546,9 @@ export default function CustomerHomePage() {
                   {/* VERIFIED badge on banner */}
                   {mfr.isVerified && (
                     <div className="absolute top-3 right-3 flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/25 backdrop-blur-sm z-10">
-                      <span className="material-symbols-outlined text-[11px]">verified</span>
+                      <span className="material-symbols-outlined text-[11px]">
+                        verified
+                      </span>
                       Verified
                     </div>
                   )}
@@ -541,7 +556,6 @@ export default function CustomerHomePage() {
 
                 {/* BODY */}
                 <div className="px-4 pt-8 pb-4 flex flex-col flex-grow">
-
                   {/* NAME + LOCATION + BOOKMARK ROW */}
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
@@ -549,11 +563,15 @@ export default function CustomerHomePage() {
                         {mfr.businessName || mfr.name}
                       </h3>
                       <div className="mt-0.5 flex items-center gap-1 text-[11px] text-white/40">
-                        <span className="material-symbols-outlined text-[12px]">location_on</span>
+                        <span className="material-symbols-outlined text-[12px]">
+                          location_on
+                        </span>
                         <span className="line-clamp-1">
                           {mfr.businessAddress?.city
                             ? `${mfr.businessAddress.city}, ${mfr.businessAddress.country || ""}`
-                            : mfr.businessAddress?.country || mfr.location?.country || "Global"}
+                            : mfr.businessAddress?.country ||
+                              mfr.location?.country ||
+                              "Global"}
                         </span>
                       </div>
                     </div>
@@ -569,10 +587,16 @@ export default function CustomerHomePage() {
                           ? "border-[#eb9728]/30 bg-[#eb9728]/10 text-[#eb9728]"
                           : "border-white/10 bg-white/[0.03] text-white/40 hover:text-[#eb9728] hover:border-[#eb9728]/30"
                       }`}
-                      title={wishlistSet.has(mfr._id) ? "Remove from wishlist" : "Save manufacturer"}
+                      title={
+                        wishlistSet.has(mfr._id)
+                          ? "Remove from wishlist"
+                          : "Save manufacturer"
+                      }
                     >
                       <span className="material-symbols-outlined text-[15px]">
-                        {wishlistSet.has(mfr._id) ? "bookmark_added" : "bookmark"}
+                        {wishlistSet.has(mfr._id)
+                          ? "bookmark_added"
+                          : "bookmark"}
                       </span>
                     </button>
                   </div>
@@ -580,14 +604,16 @@ export default function CustomerHomePage() {
                   {/* CAPABILITY TAGS */}
                   {mfr.manufacturingCapabilities?.length > 0 && (
                     <div className="mt-3 flex flex-nowrap items-center gap-1.5 overflow-hidden">
-                      {mfr.manufacturingCapabilities.slice(0, 2).map((cap, i) => (
-                        <span
-                          key={i}
-                          className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 whitespace-nowrap"
-                        >
-                          {cap.replace(/_/g, " ")}
-                        </span>
-                      ))}
+                      {mfr.manufacturingCapabilities
+                        .slice(0, 2)
+                        .map((cap, i) => (
+                          <span
+                            key={i}
+                            className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 whitespace-nowrap"
+                          >
+                            {cap.replace(/_/g, " ")}
+                          </span>
+                        ))}
                       {mfr.manufacturingCapabilities.length > 2 && (
                         <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-purple-500/10 border border-purple-500/20 text-purple-300 flex-shrink-0">
                           +{mfr.manufacturingCapabilities.length - 2}
@@ -600,7 +626,9 @@ export default function CustomerHomePage() {
                   <div className="mt-4 grid grid-cols-2 gap-2">
                     <div className="rounded-xl bg-white/[0.03] border border-white/8 px-3 py-2 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <span className="material-symbols-outlined text-[13px] text-[#eb9728]">star</span>
+                        <span className="material-symbols-outlined text-[13px] text-[#eb9728]">
+                          star
+                        </span>
                         <span className="text-sm font-black text-white">
                           {(mfr.stats?.averageRating ?? 0) > 0
                             ? mfr.stats.averageRating.toFixed(1)
@@ -611,9 +639,13 @@ export default function CustomerHomePage() {
                     </div>
                     <div className="rounded-xl bg-white/[0.03] border border-white/8 px-3 py-2 text-center">
                       <div className="flex items-center justify-center gap-1">
-                        <span className="material-symbols-outlined text-[13px] text-purple-400">package_2</span>
+                        <span className="material-symbols-outlined text-[13px] text-purple-400">
+                          package_2
+                        </span>
                         <span className="text-sm font-black text-white">
-                          {mfr.stats?.completedOrders ?? mfr.stats?.totalOrders ?? "—"}
+                          {mfr.stats?.completedOrders ??
+                            mfr.stats?.totalOrders ??
+                            "—"}
                         </span>
                       </div>
                       <p className="text-[10px] text-white/35 mt-0.5">Orders</p>

@@ -39,7 +39,7 @@ export async function GET(request, context) {
       { $set: { status: "completed", completedAt: now } },
     );
 
-    const groupBuy = await GroupBuy.findById(id)
+    const groupBuyDoc = await GroupBuy.findById(id)
       .populate({
         path: "productId",
         select: "name images category price description specifications",
@@ -47,15 +47,32 @@ export async function GET(request, context) {
       .populate({
         path: "manufacturerId",
         select: "businessName name verificationStatus",
-      })
-      .lean();
+      });
 
-    if (!groupBuy) {
+    if (!groupBuyDoc) {
       return NextResponse.json(
         { error: "Group buy not found" },
         { status: 404 },
       );
     }
+
+    const previousQuantity = groupBuyDoc.currentQuantity;
+    const previousParticipantCount = groupBuyDoc.currentParticipantCount;
+    const previousTierIndex = groupBuyDoc.currentTierIndex;
+    const previousDiscountedPrice = groupBuyDoc.currentDiscountedPrice;
+
+    groupBuyDoc.recalculate();
+
+    if (
+      groupBuyDoc.currentQuantity !== previousQuantity ||
+      groupBuyDoc.currentParticipantCount !== previousParticipantCount ||
+      groupBuyDoc.currentTierIndex !== previousTierIndex ||
+      groupBuyDoc.currentDiscountedPrice !== previousDiscountedPrice
+    ) {
+      await groupBuyDoc.save();
+    }
+
+    const groupBuy = groupBuyDoc.toObject();
 
     // Check if the requesting customer has already joined
     let hasJoined = false;

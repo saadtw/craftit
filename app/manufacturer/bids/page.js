@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import messageIcon from "@/assets/message.png";
+import { formatPKR } from "@/lib/currency";
 import {
   Select,
   SelectContent,
@@ -250,32 +251,6 @@ export default function ManufacturerBidsPage() {
                 </button>
               </div>
             </div>
-
-            <div className="bg-white/[0.03] rounded-xl border-2 border-purple-500/30 p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-white">Saved RFQs</h3>
-                <span className="text-[10px] font-black text-[#eb9728] uppercase tracking-widest">2 items</span>
-              </div>
-              <div className="space-y-3">
-                {[
-                  { name: "High-Tolerance Gear Assembly", id: "RFQ-9921" },
-                  { name: "Aerospace Bracket Prototypes", id: "RFQ-4402" }
-                ].map((rfq, idx) => (
-                  <a 
-                    key={idx}
-                    href="#" 
-                    className="flex flex-col p-3 rounded-lg bg-white/5 border border-white/5 hover:border-purple-500/30 hover:bg-purple-500/10 transition-all group"
-                  >
-                    <span className="text-sm text-white/80 group-hover:text-[#eb9728] font-bold transition-colors line-clamp-1">
-                      {rfq.name}
-                    </span>
-                    <span className="text-[10px] text-white/20 font-black uppercase tracking-tighter mt-1 group-hover:text-white/40">
-                      ID: {rfq.id}
-                    </span>
-                  </a>
-                ))}
-              </div>
-            </div>
           </aside>
 
           {/* Main Content */}
@@ -361,7 +336,7 @@ export default function ManufacturerBidsPage() {
                           )}
                           <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-[#eb9728]/10 border border-[#eb9728]/20 group-hover:border-[#eb9728]/40 transition-all shadow-[0_0_20px_rgba(235,151,40,0.05)]">
                             <span className="text-[9px] font-black uppercase tracking-[0.2em] text-[#eb9728]">Your Bid</span>
-                            <strong className="text-white font-black text-lg">${bid?.amount?.toLocaleString()}</strong>
+                            <strong className="text-white font-black text-lg">{formatPKR(bid?.amount)}</strong>
                           </div>
                         </div>
                       </div>

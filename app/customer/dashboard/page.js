@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_COLORS = {
   pending_acceptance:
@@ -239,7 +240,7 @@ export default function CustomerDashboard() {
           <StatCard
             icon="payments"
             label="Spend"
-            value={`$${stats.totalSpend >= 1000 ? (stats.totalSpend / 1000).toFixed(1) + "k" : stats.totalSpend.toFixed(0)}`}
+            value={formatPKR(stats.totalSpend)}
           />
         </section>
 
@@ -341,7 +342,7 @@ export default function CustomerDashboard() {
                           {STATUS_LABELS[order.status] || order.status}
                         </span>
                         <p className="mt-1 text-xs font-bold text-white/75">
-                          ${order.totalPrice?.toLocaleString() || "—"}
+                          {order.totalPrice ? formatPKR(order.totalPrice) : "-"}
                         </p>
                       </div>
                     </div>

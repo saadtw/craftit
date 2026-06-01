@@ -22,6 +22,7 @@ import GlobalLoader from "@/components/ui/GlobalLoader";
 import ChatBox from "@/components/chat/ChatBox";
 import { CARRIER_NAMES } from "@/lib/carriers";
 import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_COLORS = {
   pending_acceptance: "bg-amber-500/10 border-amber-500/20 text-amber-400",
@@ -90,7 +91,7 @@ export default function ManufacturerOrderDetailPage() {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, toast]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -377,7 +378,7 @@ export default function ManufacturerOrderDetailPage() {
                     <p className="tracking-[0.2em]">Agreed Price</p>
                   </div>
                   <p className="text-3xl font-black text-white tracking-tighter pl-7">
-                    ${(order.agreedPrice || order.totalPrice)?.toLocaleString()}
+                    {formatPKR(order.agreedPrice || order.totalPrice)}
                   </p>
                 </div>
                 <div className="group/item">
@@ -628,7 +629,7 @@ export default function ManufacturerOrderDetailPage() {
                   <div className="group/item">
                     <p className="text-white/40 mb-2 tracking-[0.2em]">Bid Amount</p>
                     <p className="text-3xl font-black text-white tracking-tighter">
-                      ${order.bidId?.amount?.toLocaleString()}
+                      {formatPKR(order.bidId?.amount)}
                     </p>
                   </div>
                   <div className="group/item">
@@ -892,7 +893,7 @@ export default function ManufacturerOrderDetailPage() {
               {paymentReleases.map(pr => (
                 <div key={pr._id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                   <div>
-                    <p className="text-sm font-bold text-white mb-1">${pr.amount.toLocaleString()}</p>
+                    <p className="text-sm font-bold text-white mb-1">{formatPKR(pr.amount)}</p>
                     <p className="text-xs text-white/60 mb-2">{pr.reason}</p>
                     <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-full border ${pr.status === 'approved' || pr.status === 'auto_approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : pr.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/30' : 'bg-[#eb9728]/10 text-[#eb9728] border-[#eb9728]/30'}`}>
                       {pr.status.replace("_", " ")}
@@ -1124,7 +1125,7 @@ export default function ManufacturerOrderDetailPage() {
         <Modal title="Request Payment Release" onClose={() => setShowPaymentReleaseModal(false)}>
           <div className="space-y-6">
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Amount ($) *</label>
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Amount (PKR) *</label>
               <input type="number" min="1" max={order.totalPrice} value={paymentReleaseForm.amount} onChange={(e) => setPaymentReleaseForm((p) => ({ ...p, amount: e.target.value }))} placeholder="e.g. 500" className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10" />
             </div>
             <div>

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_BADGES = {
   pending: "bg-white/5 border border-white/10 text-white/40",
@@ -268,7 +269,7 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
                   {part.colorSpec && <span>Color: {part.colorSpec}</span>}
                   {part.budget && (
                     <span className="text-emerald-400 font-medium">
-                      ${part.budget}
+                      {formatPKR(part.budget)}
                     </span>
                   )}
                   {part.deadline && (
@@ -303,7 +304,9 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
                 {/* Inline Delete Confirmation */}
                 {confirmDeleteId === part._id && (
                   <div className="mb-3 px-3 py-2.5 rounded-xl border border-red-500/30 bg-red-500/10 flex items-center justify-between gap-3">
-                    <p className="text-[10px] font-bold text-red-400">Delete "{part.name}"? This cannot be undone.</p>
+                    <p className="text-[10px] font-bold text-red-400">
+                      Delete &quot;{part.name}&quot;? This cannot be undone.
+                    </p>
                     <div className="flex gap-2 shrink-0">
                       <button
                         onClick={() => handleDelete(part._id)}
@@ -324,7 +327,10 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
                 {/* Inline RFQ Confirmation */}
                 {confirmRFQPart?._id === part._id && (
                   <div className="mb-3 px-3 py-2.5 rounded-xl border border-purple-500/30 bg-purple-500/10 flex items-center justify-between gap-3">
-                    <p className="text-[10px] font-bold text-purple-400">Create a separate RFQ for "{part.name}"? Manufacturers can bid independently.</p>
+                    <p className="text-[10px] font-bold text-purple-400">
+                      Create a separate RFQ for &quot;{part.name}&quot;?
+                      Manufacturers can bid independently.
+                    </p>
                     <div className="flex gap-2 shrink-0">
                       <button
                         onClick={() => handleCreateRFQ(part)}
@@ -346,30 +352,43 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
                   {part.rfqStatus === "pending" && (
                     <>
                       <button
-                        onClick={() => { setConfirmRFQPart(null); handleOpenForm(part); }}
+                        onClick={() => {
+                          setConfirmRFQPart(null);
+                          handleOpenForm(part);
+                        }}
                         className="px-3 py-1.5 rounded-lg border border-white/10 text-[10px] font-bold text-white/60 hover:bg-white/5"
                       >
                         Edit
                       </button>
                       <button
-                        onClick={() => { setConfirmRFQPart(null); handleDelete(part._id); }}
+                        onClick={() => {
+                          setConfirmRFQPart(null);
+                          handleDelete(part._id);
+                        }}
                         className={`px-3 py-1.5 rounded-lg border text-[10px] font-bold transition-colors ${
                           confirmDeleteId === part._id
                             ? "border-red-500/50 bg-red-500/20 text-red-300"
                             : "border-red-500/20 text-red-400 hover:bg-red-500/10"
                         }`}
                       >
-                        {confirmDeleteId === part._id ? "Click above ↑" : "Delete"}
+                        {confirmDeleteId === part._id
+                          ? "Click above ↑"
+                          : "Delete"}
                       </button>
                       <button
-                        onClick={() => { setConfirmDeleteId(null); handleCreateRFQ(part); }}
+                        onClick={() => {
+                          setConfirmDeleteId(null);
+                          handleCreateRFQ(part);
+                        }}
                         className={`flex-1 px-3 py-1.5 rounded-lg border text-[10px] font-bold text-center transition-colors ${
                           confirmRFQPart?._id === part._id
                             ? "border-purple-500/50 bg-purple-600/30 text-purple-300"
                             : "bg-purple-600/20 border-purple-500/30 text-purple-400 hover:bg-purple-600/30"
                         }`}
                       >
-                        {confirmRFQPart?._id === part._id ? "Confirm above ↑" : "Create RFQ"}
+                        {confirmRFQPart?._id === part._id
+                          ? "Confirm above ↑"
+                          : "Create RFQ"}
                       </button>
                     </>
                   )}

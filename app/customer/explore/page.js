@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { fetchWithCache } from "@/lib/clientCache";
+import { formatPKR } from "@/lib/currency";
 import { useWishlist } from "@/lib/hooks/useWishlist";
 
 const SORT_OPTIONS = [
@@ -277,8 +278,11 @@ export default function CustomerExplorePage() {
 
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="text-sm text-white/45">
-            {loading
-              ? <GlobalLoader text="Loading..." /> : `${pagination.total} product${pagination.total !== 1 ? "s" : ""} found`}
+            {loading ? (
+              <GlobalLoader text="Loading..." />
+            ) : (
+              `${pagination.total} product${pagination.total !== 1 ? "s" : ""} found`
+            )}
           </div>
 
           {debouncedSearch && (
@@ -394,7 +398,9 @@ export default function CustomerExplorePage() {
 
 function ProductCard({ product, isWishlisted, onToggleWishlist }) {
   const primaryImage =
-    product.images?.find((i) => i.isPrimary)?.url || product.images?.[0]?.url || product.model3D?.thumbnailUrl;
+    product.images?.find((i) => i.isPrimary)?.url ||
+    product.images?.[0]?.url ||
+    product.model3D?.thumbnailUrl;
 
   return (
     <Link href={`/customer/products/${product._id}`}>
@@ -488,7 +494,7 @@ function ProductCard({ product, isWishlisted, onToggleWishlist }) {
           <div className="flex items-end justify-between gap-3">
             <div>
               <span className="text-xl font-black text-[#eb9728]">
-                ${product.price?.toLocaleString()}
+                {formatPKR(product.price)}
               </span>
               <span className="text-xs text-white/35 ml-1">/ unit</span>
             </div>

@@ -48,7 +48,7 @@ export async function GET(request) {
       { status: "scheduled", startDate: { $lte: now } },
       { $set: { status: "active" } },
     );
-    
+
     // Auto-complete ended campaigns
     const endedCampaigns = await GroupBuy.find({
       status: { $in: ["active", "paused"] },
@@ -62,7 +62,7 @@ export async function GET(request) {
       const productName = groupBuy.title || "Group Buy";
       for (let i = 0; i < groupBuy.participants.length; i++) {
         const participant = groupBuy.participants[i];
-        
+
         // Create order
         const order = await Order.create({
           orderType: "group_buy",
@@ -73,8 +73,12 @@ export async function GET(request) {
           quantity: participant.quantity,
           unitPrice: participant.unitPrice,
           totalPrice: participant.totalPrice,
-          status: participant.remainingBalance > 0 ? "awaiting_production_ack" : "accepted",
-          paymentStatus: participant.remainingBalance > 0 ? "authorized" : "captured",
+          status:
+            participant.remainingBalance > 0
+              ? "awaiting_production_ack"
+              : "accepted",
+          paymentStatus:
+            participant.remainingBalance > 0 ? "authorized" : "captured",
         });
 
         // Save orderId to participant
@@ -99,7 +103,7 @@ export async function GET(request) {
         sortObj = { createdAt: -1 };
         break;
       case "participants":
-        sortObj = { currentParticipantCount: -1 };
+        sortObj = { currentQuantity: -1 };
         break;
       case "discount":
         sortObj = { "tiers.0.discountPercent": -1 };

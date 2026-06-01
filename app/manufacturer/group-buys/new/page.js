@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const initialTier = (num) => ({
   tierNumber: num,
@@ -229,7 +230,9 @@ export default function NewGroupBuyPage() {
               className="group flex items-center gap-3 text-[10px] font-black uppercase tracking-[0.2em] text-white/40 hover:text-white transition-all"
             >
               <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-600 flex items-center justify-center text-white shadow-lg shadow-purple-500/20 group-hover:scale-110 transition-transform">
-                <span className="material-symbols-outlined text-sm">arrow_back</span>
+                <span className="material-symbols-outlined text-sm">
+                  arrow_back
+                </span>
               </div>
               Campaign Hub
             </Link>
@@ -239,7 +242,9 @@ export default function NewGroupBuyPage() {
                 onClick={() => setShowPreview((v) => !v)}
                 className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/70 hover:bg-white/10 hover:text-white transition-all flex items-center gap-2"
               >
-                <span className="material-symbols-outlined text-sm">{showPreview ? "visibility_off" : "visibility"}</span>
+                <span className="material-symbols-outlined text-sm">
+                  {showPreview ? "visibility_off" : "visibility"}
+                </span>
                 {showPreview ? "Hide Preview" : "Live Preview"}
               </button>
               <button
@@ -250,7 +255,9 @@ export default function NewGroupBuyPage() {
                 {saving ? (
                   <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  <span className="material-symbols-outlined text-sm">rocket_launch</span>
+                  <span className="material-symbols-outlined text-sm">
+                    rocket_launch
+                  </span>
                 )}
                 Publish Campaign
               </button>
@@ -270,7 +277,9 @@ export default function NewGroupBuyPage() {
         <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 relative group">
           <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/5 blur-[100px] pointer-events-none" />
           <h2 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-6 flex items-center gap-2">
-            <span className="material-symbols-outlined text-sm">inventory_2</span>
+            <span className="material-symbols-outlined text-sm">
+              inventory_2
+            </span>
             01. Product Selection
           </h2>
           {productsLoading ? (
@@ -293,13 +302,21 @@ export default function NewGroupBuyPage() {
                   type="button"
                   onClick={() => setProductOpen((o) => !o)}
                   className={`w-full flex items-center justify-between px-5 py-4 bg-white/5 border rounded-2xl text-sm font-bold focus:outline-none transition-all ${
-                    errors.productId ? "border-red-500/50" : "border-purple-500/20 hover:border-purple-500/40"
+                    errors.productId
+                      ? "border-red-500/50"
+                      : "border-purple-500/20 hover:border-purple-500/40"
                   }`}
                 >
-                  <span className={selectedProduct ? "text-white" : "text-white/30"}>
-                    {selectedProduct ? `${selectedProduct.name} — $${selectedProduct.price}` : "Select a product..."}
+                  <span
+                    className={selectedProduct ? "text-white" : "text-white/30"}
+                  >
+                    {selectedProduct
+                      ? `${selectedProduct.name} — ${formatPKR(selectedProduct.price)}`
+                      : "Select a product..."}
                   </span>
-                  <span className={`material-symbols-outlined text-white/30 transition-transform duration-200 ${productOpen ? "rotate-180" : ""}`}>
+                  <span
+                    className={`material-symbols-outlined text-white/30 transition-transform duration-200 ${productOpen ? "rotate-180" : ""}`}
+                  >
                     expand_more
                   </span>
                 </button>
@@ -330,14 +347,16 @@ export default function NewGroupBuyPage() {
                             : "text-white/60 hover:bg-white/5 hover:text-white"
                         }`}
                       >
-                        {p.name} — ${p.price}
+                        {p.name} — {formatPKR(p.price)}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
               {errors.productId && (
-                <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2">{errors.productId}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2">
+                  {errors.productId}
+                </p>
               )}
 
               {selectedProduct && (
@@ -362,7 +381,7 @@ export default function NewGroupBuyPage() {
                       </span>
                       <div className="w-1 h-1 rounded-full bg-white/10" />
                       <span className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
-                        ${selectedProduct.price} BASE PRICE
+                        {formatPKR(selectedProduct.price)} BASE PRICE
                       </span>
                     </div>
                   </div>
@@ -393,7 +412,9 @@ export default function NewGroupBuyPage() {
                 className={`w-full px-5 py-4 bg-white/5 border rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all ${errors.title ? "border-red-500/50 bg-red-500/5" : "border-white/10"}`}
               />
               {errors.title && (
-                <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">{errors.title}</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">
+                  {errors.title}
+                </p>
               )}
             </div>
 
@@ -416,7 +437,9 @@ export default function NewGroupBuyPage() {
                   Base Unit Price <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
-                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-sm font-black">$</span>
+                  <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-sm font-black">
+                    Rs
+                  </span>
                   <input
                     type="number"
                     min="0"
@@ -428,7 +451,9 @@ export default function NewGroupBuyPage() {
                   />
                 </div>
                 {errors.basePrice && (
-                  <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">{errors.basePrice}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">
+                    {errors.basePrice}
+                  </p>
                 )}
               </div>
               <div>
@@ -471,7 +496,9 @@ export default function NewGroupBuyPage() {
                   className={`w-full px-5 py-4 bg-white/5 border rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all text-white inverted-scheme-icon ${errors.startDate ? "border-red-500/50" : "border-white/10"}`}
                 />
                 {errors.startDate && (
-                  <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">{errors.startDate}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">
+                    {errors.startDate}
+                  </p>
                 )}
               </div>
               <div>
@@ -486,7 +513,9 @@ export default function NewGroupBuyPage() {
                   className={`w-full px-5 py-4 bg-white/5 border rounded-2xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-purple-500/50 transition-all text-white inverted-scheme-icon ${errors.endDate ? "border-red-500/50" : "border-white/10"}`}
                 />
                 {errors.endDate && (
-                  <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">{errors.endDate}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2 px-1">
+                    {errors.endDate}
+                  </p>
                 )}
               </div>
             </div>
@@ -499,7 +528,9 @@ export default function NewGroupBuyPage() {
           <div className="flex items-center justify-between mb-8">
             <div>
               <h2 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-1 flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">stacked_bar_chart</span>
+                <span className="material-symbols-outlined text-sm">
+                  stacked_bar_chart
+                </span>
                 03. Pricing Milestones
               </h2>
               <p className="text-[10px] font-black text-white/40 uppercase tracking-widest">
@@ -539,7 +570,9 @@ export default function NewGroupBuyPage() {
                         Tier Milestone {index + 1}
                       </span>
                       {index === 0 && (
-                        <p className="text-[8px] font-black text-purple-400 uppercase tracking-widest mt-0.5">MINIMUM UNLOCK THRESHOLD</p>
+                        <p className="text-[8px] font-black text-purple-400 uppercase tracking-widest mt-0.5">
+                          MINIMUM UNLOCK THRESHOLD
+                        </p>
                       )}
                     </div>
                   </div>
@@ -548,7 +581,9 @@ export default function NewGroupBuyPage() {
                       onClick={() => removeTier(index)}
                       className="w-8 h-8 rounded-lg bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-all flex items-center justify-center"
                     >
-                      <span className="material-symbols-outlined text-sm">close</span>
+                      <span className="material-symbols-outlined text-sm">
+                        close
+                      </span>
                     </button>
                   )}
                 </div>
@@ -591,7 +626,9 @@ export default function NewGroupBuyPage() {
                       Discounted Price
                     </label>
                     <div className="relative">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 text-xs font-black">$</span>
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 text-xs font-black">
+                        Rs
+                      </span>
                       <input
                         type="number"
                         min="0"
@@ -618,9 +655,13 @@ export default function NewGroupBuyPage() {
                   tier.discountedPrice &&
                   form.basePrice && (
                     <div className="mt-6 flex items-center gap-2 p-3 bg-emerald-500/5 border border-emerald-500/10 rounded-xl">
-                      <span className="material-symbols-outlined text-sm text-emerald-400">check_circle</span>
+                      <span className="material-symbols-outlined text-sm text-emerald-400">
+                        check_circle
+                      </span>
                       <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
-                        AT {tier.minQuantity} UNITS → ${tier.discountedPrice} PER UNIT ({tier.discountPercent}% OFF)
+                        AT {tier.minQuantity} UNITS →{" "}
+                        {formatPKR(tier.discountedPrice)} PER UNIT (
+                        {tier.discountPercent}% OFF)
                       </p>
                     </div>
                   )}
@@ -649,7 +690,9 @@ export default function NewGroupBuyPage() {
           <div className="bg-gradient-to-br from-purple-600/10 to-indigo-600/10 border border-purple-500/20 rounded-[2.5rem] p-8 relative overflow-hidden">
             <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/20 blur-[100px] pointer-events-none" />
             <h2 className="text-[10px] font-black text-purple-400 uppercase tracking-widest mb-8 flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">auto_awesome</span>
+              <span className="material-symbols-outlined text-sm">
+                auto_awesome
+              </span>
               Manufacturer Preview
             </h2>
             <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
@@ -675,16 +718,25 @@ export default function NewGroupBuyPage() {
                 </p>
                 <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="p-4 bg-white/5 rounded-2xl border border-white/10">
-                    <p className="text-[9px] font-black text-white/20 uppercase tracking-widest mb-1">Base Price</p>
-                    <p className="text-xl font-black text-white">${form.basePrice || "—"}</p>
+                    <p className="text-[9px] font-black text-white/20 uppercase tracking-widest mb-1">
+                      Base Price
+                    </p>
+                    <p className="text-xl font-black text-white">
+                      {form.basePrice ? formatPKR(form.basePrice) : "—"}
+                    </p>
                   </div>
                   {form.tiers
                     .filter((t) => t.minQuantity && t.discountedPrice)
                     .map((t, i) => (
-                      <div key={i} className="p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/20">
-                        <p className="text-[9px] font-black text-emerald-400/40 uppercase tracking-widest mb-1">Tier {i + 1} Target</p>
+                      <div
+                        key={i}
+                        className="p-4 bg-emerald-500/5 rounded-2xl border border-emerald-500/20"
+                      >
+                        <p className="text-[9px] font-black text-emerald-400/40 uppercase tracking-widest mb-1">
+                          Tier {i + 1} Target
+                        </p>
                         <p className="text-xl font-black text-emerald-400">
-                          {t.minQuantity} units → ${t.discountedPrice}
+                          {t.minQuantity} units → {formatPKR(t.discountedPrice)}
                         </p>
                       </div>
                     ))}
@@ -710,7 +762,9 @@ export default function NewGroupBuyPage() {
             {saving ? (
               <span className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
             ) : (
-              <span className="material-symbols-outlined text-lg">rocket_launch</span>
+              <span className="material-symbols-outlined text-lg">
+                rocket_launch
+              </span>
             )}
             Publish Group Buy Campaign
           </button>

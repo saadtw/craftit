@@ -1,6 +1,7 @@
 import connectDB from "@/lib/mongodb";
 import Notification from "@/models/Notification";
 import User from "@/models/User";
+import { formatPKR } from "@/lib/currency";
 
 /**
  * Central helper to create notifications.
@@ -181,7 +182,7 @@ export const notify = {
       type: "bid_received",
       title: "New bid received",
       message: `${manufacturerName} has placed a bid on your RFQ.`,
-      link: `/customer/rfqs/${rfqId}/bids`,
+      link: `/bids/${bidId}#chat`,
       relatedType: "bid",
       relatedId: bidId,
     }),
@@ -214,7 +215,7 @@ export const notify = {
       type: "bid_updated",
       title: "Bid updated",
       message: `${manufacturerName} has updated their bid. Review the new terms.`,
-      link: `/customer/rfqs/${rfqId}/bids`,
+      link: `/bids/${bidId}#chat`,
       relatedType: "bid",
       relatedId: bidId,
     }),
@@ -222,7 +223,14 @@ export const notify = {
   // Messages
   // contextId: for order context = orderId; for bid context = bidId
   // extraContextId: for bid context = rfqId (to build a precise deep-link)
-  newMessage: (recipientId, contextId, senderName, contextType, isCustomer = true, extraContextId = null) =>
+  newMessage: (
+    recipientId,
+    contextId,
+    senderName,
+    contextType,
+    isCustomer = true,
+    extraContextId = null,
+  ) =>
     createNotification({
       userId: recipientId,
       type: "new_message",
@@ -230,11 +238,7 @@ export const notify = {
       message: `${senderName} sent you a message.`,
       link:
         contextType === "bid"
-          ? isCustomer
-            ? extraContextId
-              ? `/customer/rfqs/${extraContextId}/bids`
-              : `/customer/rfqs`
-            : `/manufacturer/bids/${contextId}`
+          ? `/bids/${contextId}#chat`
           : isCustomer
             ? `/customer/orders/${contextId}`
             : `/manufacturer/orders/${contextId}`,
@@ -299,7 +303,12 @@ export const notify = {
       relatedId: groupBuyId,
     }),
 
-  groupBuyTierReached: (manufacturerId, groupBuyId, tierNumber, discountPercent) =>
+  groupBuyTierReached: (
+    manufacturerId,
+    groupBuyId,
+    tierNumber,
+    discountPercent,
+  ) =>
     createNotification({
       userId: manufacturerId,
       type: "group_buy_tier_reached",
@@ -332,11 +341,13 @@ export const notify = {
       relatedId: groupBuyId,
     }),
 
-
-
-
   // Product Q&A
-  questionCustomerReply: (recipientId, productId, productName, isManufacturer) =>
+  questionCustomerReply: (
+    recipientId,
+    productId,
+    productName,
+    isManufacturer,
+  ) =>
     createNotification({
       userId: recipientId,
       type: "question_customer_reply",
@@ -375,7 +386,7 @@ export const notify = {
       userId: manufacturerId,
       type: "payment_received",
       title: "Payment received",
-      message: `Payment of $${amount} for order #${orderNumber} has been released to your account.`,
+      message: `Payment of ${formatPKR(amount)} for order #${orderNumber} has been released to your account.`,
       link: `/manufacturer/orders/${orderId}`,
       relatedType: "order",
       relatedId: orderId,
@@ -386,7 +397,7 @@ export const notify = {
       userId: customerId,
       type: "payment_refunded",
       title: "Refund processed",
-      message: `A refund of $${amount} for order #${orderNumber} has been processed.`,
+      message: `A refund of ${formatPKR(amount)} for order #${orderNumber} has been processed.`,
       link: `/customer/orders/${orderId}`,
       relatedType: "order",
       relatedId: orderId,
@@ -399,7 +410,9 @@ export const notify = {
       type: "dispute_opened",
       title: "Dispute opened",
       message: `A dispute has been opened for order #${orderNumber}.`,
-      link: isCustomer ? `/customer/orders/${orderNumber}/dispute` : `/manufacturer/disputes/${disputeId}`,
+      link: isCustomer
+        ? `/customer/orders/${orderNumber}/dispute`
+        : `/manufacturer/disputes/${disputeId}`,
       relatedType: "dispute",
       relatedId: disputeId,
     }),
@@ -426,10 +439,18 @@ export const notify = {
       }),
     ]),
 
-  disputeResolved: (customerId, manufacturerId, disputeId, resolution, orderNumber) => {
+  disputeResolved: (
+    customerId,
+    manufacturerId,
+    disputeId,
+    resolution,
+    orderNumber,
+  ) => {
     const isRefund = resolution === "refund_customer";
-    const text = isRefund ? "resolved with a refund" : "resolved in favor of the manufacturer";
-    
+    const text = isRefund
+      ? "resolved with a refund"
+      : "resolved in favor of the manufacturer";
+
     return Promise.all([
       createNotification({
         userId: customerId,
@@ -457,7 +478,7 @@ export const notify = {
       userId: customerId,
       type: "payment_release_requested",
       title: "Payment Release Requested",
-      message: `The manufacturer has requested a payment release of $${amount} for order #${orderNumber}. Please review and approve.`,
+      message: `The manufacturer has requested a payment release of ${formatPKR(amount)} for order #${orderNumber}. Please review and approve.`,
       link: `/customer/orders/${orderId}`,
       relatedType: "order",
       relatedId: orderId,
@@ -468,7 +489,7 @@ export const notify = {
       userId: manufacturerId,
       type: "payment_release_approved",
       title: "Payment Release Approved",
-      message: `The customer has approved your payment release request of $${amount} for order #${orderNumber}.`,
+      message: `The customer has approved your payment release request of ${formatPKR(amount)} for order #${orderNumber}.`,
       link: `/manufacturer/orders/${orderId}`,
       relatedType: "order",
       relatedId: orderId,
@@ -479,19 +500,25 @@ export const notify = {
       userId: manufacturerId,
       type: "payment_release_rejected",
       title: "Payment Release Rejected",
-      message: `The customer has rejected your payment release request of $${amount} for order #${orderNumber}.`,
+      message: `The customer has rejected your payment release request of ${formatPKR(amount)} for order #${orderNumber}.`,
       link: `/manufacturer/orders/${orderId}`,
       relatedType: "order",
       relatedId: orderId,
     }),
 
-  paymentReleaseAutoApproved: (customerId, manufacturerId, orderId, orderNumber, amount) =>
+  paymentReleaseAutoApproved: (
+    customerId,
+    manufacturerId,
+    orderId,
+    orderNumber,
+    amount,
+  ) =>
     Promise.all([
       createNotification({
         userId: customerId,
         type: "payment_release_auto_approved",
         title: "Payment Release Auto-Approved",
-        message: `The payment release of $${amount} for order #${orderNumber} has been automatically approved after 72 hours.`,
+        message: `The payment release of ${formatPKR(amount)} for order #${orderNumber} has been automatically approved after 72 hours.`,
         link: `/customer/orders/${orderId}`,
         relatedType: "order",
         relatedId: orderId,
@@ -500,7 +527,7 @@ export const notify = {
         userId: manufacturerId,
         type: "payment_release_auto_approved",
         title: "Payment Release Auto-Approved",
-        message: `The payment release of $${amount} for order #${orderNumber} has been automatically approved after 72 hours.`,
+        message: `The payment release of ${formatPKR(amount)} for order #${orderNumber} has been automatically approved after 72 hours.`,
         link: `/manufacturer/orders/${orderId}`,
         relatedType: "order",
         relatedId: orderId,

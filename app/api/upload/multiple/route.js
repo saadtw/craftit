@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { resolveRequestSession } from "@/lib/requestAuth";
 import { uploadToStorage } from "@/lib/storage";
+import path from "path";
+
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
+const IMAGE_MAX_SIZE = 10 * 1024 * 1024;
 
 // POST /api/upload/multiple — upload multiple files to Supabase Storage
 export async function POST(request) {
@@ -30,6 +34,25 @@ export async function POST(request) {
 
     for (const file of files) {
       try {
+        const fileName = file?.name?.toLowerCase?.() || "";
+        const ext = path.extname(fileName).toLowerCase();
+
+        if (!IMAGE_EXTENSIONS.includes(ext)) {
+          errors.push({
+            filename: file?.name || "unknown",
+            error: `Invalid file extension. Allowed: ${IMAGE_EXTENSIONS.join(", ")}`,
+          });
+          continue;
+        }
+
+        if (file.size > IMAGE_MAX_SIZE) {
+          errors.push({
+            filename: file?.name || "unknown",
+            error: `File too large. Max size: ${IMAGE_MAX_SIZE / 1024 / 1024}MB`,
+          });
+          continue;
+        }
+
         const bytes = await file.arrayBuffer();
         const buffer = Buffer.from(bytes);
 

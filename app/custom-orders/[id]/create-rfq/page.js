@@ -91,7 +91,7 @@ export default function CreateRFQ() {
       } finally {
       setLoading(false);
     }
-  }, [params.id, router]);
+  }, [params.id, router, toast]);
 
   const fetchEligibleManufacturers = useCallback(async (searchTerm = "") => {
     setManufacturersLoading(true);
@@ -118,7 +118,7 @@ export default function CreateRFQ() {
     } finally {
       setManufacturersLoading(false);
     }
-  }, []);
+  }, [toast]);
 
   useEffect(() => {
     if (status === "unauthenticated") {

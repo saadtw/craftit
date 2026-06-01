@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import RFQ from "@/models/RFQ";
+import "@/models/CustomOrder";
+import "@/models/User";
 import { bidComparisonService } from "@/services/bidComparisonService";
 import { resolveRequestSession } from "@/lib/requestAuth";
 

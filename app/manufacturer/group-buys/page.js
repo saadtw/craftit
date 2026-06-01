@@ -19,6 +19,7 @@ import RevenueIcon from "@/assets/revenue.png";
 import OrdersIcon from "@/assets/orders.png";
 import PaymentsIcon from "@/assets/payments.png";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
@@ -207,7 +208,9 @@ export default function ManufacturerGroupBuysPage() {
             href="/manufacturer/group-buys/new"
             className="px-6 py-3 bg-gradient-to-r from-purple-600/70 to-indigo-600/70 border border-purple-500/20 text-white/80 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:from-purple-600/90 hover:to-indigo-600/90 hover:text-white hover:border-purple-500/40 transition-all flex items-center justify-center gap-2"
           >
-            <span className="material-symbols-outlined text-sm">rocket_launch</span>
+            <span className="material-symbols-outlined text-sm">
+              rocket_launch
+            </span>
             Launch New Campaign
           </Link>
         </div>
@@ -218,7 +221,12 @@ export default function ManufacturerGroupBuysPage() {
             <div className="bg-[#0c0c11] rounded-[19px] p-5 h-full">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center shrink-0">
-                  <Image src={ActiveCampaignIcon} alt="" width={26} height={26} />
+                  <Image
+                    src={ActiveCampaignIcon}
+                    alt=""
+                    width={26}
+                    height={26}
+                  />
                 </div>
                 <p className="text-[9px] font-bold uppercase tracking-[0.18em] text-white/40">
                   Active Campaigns
@@ -263,7 +271,7 @@ export default function ManufacturerGroupBuysPage() {
                 </p>
               </div>
               <p className="text-2xl font-black text-white tracking-tighter">
-                ${stats.totalRevenuePotential.toLocaleString()}
+                {formatPKR(stats.totalRevenuePotential)}
               </p>
               <p className="text-[10px] text-white/20 mt-1.5 font-medium uppercase tracking-wider">
                 Targeted yield
@@ -271,7 +279,6 @@ export default function ManufacturerGroupBuysPage() {
             </div>
           </div>
         </div>
-
 
         {/* Filters */}
         <div className="bg-white/[0.03] border border-white/10 rounded-2xl px-5 py-3 flex items-center gap-4 flex-wrap relative z-20">
@@ -322,8 +329,20 @@ export default function ManufacturerGroupBuysPage() {
               onClick={() => setSortOpen((o) => !o)}
               className="flex items-center gap-2 bg-white/5 border border-purple-500/20 text-white/70 rounded-xl pl-4 pr-3 py-1.5 text-[9px] font-black uppercase tracking-widest hover:border-purple-500/40 hover:text-white transition-all"
             >
-              <span>{{ newest: "Newest", ending_soon: "Ending Soon", participants: "Most Participants" }[sort]}</span>
-              <span className={`material-symbols-outlined text-sm transition-transform duration-200 ${sortOpen ? "rotate-180" : ""}`}>expand_more</span>
+              <span>
+                {
+                  {
+                    newest: "Newest",
+                    ending_soon: "Ending Soon",
+                    participants: "Most Participants",
+                  }[sort]
+                }
+              </span>
+              <span
+                className={`material-symbols-outlined text-sm transition-transform duration-200 ${sortOpen ? "rotate-180" : ""}`}
+              >
+                expand_more
+              </span>
             </button>
             {sortOpen && (
               <div className="absolute right-0 top-full mt-2 z-50 bg-[#0f0f14] border border-purple-500/20 rounded-2xl overflow-hidden shadow-[0_8px_32px_rgba(0,0,0,0.5)] min-w-[160px]">
@@ -367,17 +386,26 @@ export default function ManufacturerGroupBuysPage() {
         ) : groupBuys.length === 0 ? (
           <div className="py-20 text-center px-8 flex flex-col items-center">
             <div className="w-48 h-48">
-              <Lottie animationData={NotFoundAnimation} loop={true} autoplay={true} />
+              <Lottie
+                animationData={NotFoundAnimation}
+                loop={true}
+                autoplay={true}
+              />
             </div>
-            <h3 className="text-2xl font-black text-white mb-2 -mt-4">No campaigns found</h3>
+            <h3 className="text-2xl font-black text-white mb-2 -mt-4">
+              No campaigns found
+            </h3>
             <p className="text-white/20 text-sm max-w-xs mx-auto mb-8 uppercase font-bold tracking-widest">
-              Create your first group buy campaign to start accepting bulk orders.
+              Create your first group buy campaign to start accepting bulk
+              orders.
             </p>
             <Link
               href="/manufacturer/group-buys/new"
               className="px-6 py-3 bg-gradient-to-r from-purple-600/70 to-indigo-600/70 border border-purple-500/20 text-white/80 text-[10px] font-black uppercase tracking-widest rounded-2xl hover:from-purple-600/90 hover:to-indigo-600/90 hover:text-white hover:border-purple-500/40 transition-all flex items-center gap-2"
             >
-              <span className="material-symbols-outlined text-sm">rocket_launch</span>
+              <span className="material-symbols-outlined text-sm">
+                rocket_launch
+              </span>
               Launch New Campaign
             </Link>
           </div>
@@ -453,7 +481,9 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center opacity-20">
-              <span className="material-symbols-outlined text-3xl">inventory_2</span>
+              <span className="material-symbols-outlined text-3xl">
+                inventory_2
+              </span>
             </div>
           )}
           {has3DModel && (
@@ -494,7 +524,12 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
           <div className="mt-4 bg-white/5 border border-white/5 rounded-xl p-3">
             <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-widest mb-2">
               <span className="text-white/40">
-                Tier 1: <span className="text-white">{gb.currentQuantity}</span> / <span className="text-white/20">{tier1?.minQuantity || "—"}</span> units
+                Tier 1: <span className="text-white">{gb.currentQuantity}</span>{" "}
+                /{" "}
+                <span className="text-white/20">
+                  {tier1?.minQuantity || "—"}
+                </span>{" "}
+                units
               </span>
               <span className="text-purple-400">{progress}%</span>
             </div>
@@ -509,31 +544,69 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
           {/* Stats Row */}
           <div className="flex items-center gap-4 mt-4 flex-wrap">
             <div className="flex items-center gap-3">
-              <Image src={TotalUsersIcon} alt="" width={30} height={30} className="shrink-0" />
+              <Image
+                src={TotalUsersIcon}
+                alt=""
+                width={30}
+                height={30}
+                className="shrink-0"
+              />
               <div className="flex flex-col">
-                <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Participants</span>
-                <span className="text-xs font-black text-white">{gb.currentParticipantCount}</span>
+                <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">
+                  Participants
+                </span>
+                <span className="text-xs font-black text-white">
+                  {gb.currentParticipantCount}
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Image src={OrdersIcon} alt="" width={30} height={30} className="shrink-0" />
+              <Image
+                src={OrdersIcon}
+                alt=""
+                width={30}
+                height={30}
+                className="shrink-0"
+              />
               <div className="flex flex-col">
-                <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Units Sold</span>
-                <span className="text-xs font-black text-white">{gb.currentQuantity}</span>
+                <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">
+                  Units Sold
+                </span>
+                <span className="text-xs font-black text-white">
+                  {gb.currentQuantity}
+                </span>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Image src={RevenueIcon} alt="" width={30} height={30} className="shrink-0" />
+              <Image
+                src={RevenueIcon}
+                alt=""
+                width={30}
+                height={30}
+                className="shrink-0"
+              />
               <div className="flex flex-col">
-                <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Potential Revenue</span>
-                <span className="text-xs font-black text-emerald-400">${revenuePotential.toLocaleString()}</span>
+                <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">
+                  Potential Revenue
+                </span>
+                <span className="text-xs font-black text-emerald-400">
+                  {formatPKR(revenuePotential)}
+                </span>
               </div>
             </div>
             {["active", "paused"].includes(gb.status) && (
               <div className="flex items-center gap-3">
-                <Image src={TimerIcon} alt="" width={30} height={30} className="shrink-0 animate-pulse" />
+                <Image
+                  src={TimerIcon}
+                  alt=""
+                  width={30}
+                  height={30}
+                  className="shrink-0 animate-pulse"
+                />
                 <div className="flex flex-col">
-                  <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">Time Left</span>
+                  <span className="text-[9px] font-black text-white/20 uppercase tracking-widest">
+                    Time Left
+                  </span>
                   <span className="text-xs font-black text-orange-400">
                     <TimeRemaining endDate={gb.endDate} />
                   </span>
@@ -545,7 +618,9 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
               href={`/manufacturer/group-buys/${gb._id}`}
               className="ml-auto px-4 py-2 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest text-white/50 hover:bg-white/10 hover:text-white transition-all flex items-center gap-1.5"
             >
-              <span className="material-symbols-outlined text-sm">open_in_new</span>
+              <span className="material-symbols-outlined text-sm">
+                open_in_new
+              </span>
               View Report
             </Link>
           </div>
@@ -553,7 +628,7 @@ function GroupBuyCard({ gb, onAction, onCancel, actionLoading }) {
       </div>
 
       {/* Actions */}
-      {(["scheduled", "active", "paused"].includes(gb.status)) && (
+      {["scheduled", "active", "paused"].includes(gb.status) && (
         <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/5 relative z-10">
           {["scheduled", "active", "paused"].includes(gb.status) && (
             <Link

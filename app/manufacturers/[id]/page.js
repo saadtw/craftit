@@ -9,6 +9,7 @@ import Image from "next/image";
 import LogoutButton from "@/components/LogoutButton";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { fetchWithCache } from "@/lib/clientCache";
+import { formatPKR } from "@/lib/currency";
 
 function ManufacturerSidebar({ active, session }) {
   const navItems = [
@@ -548,7 +549,7 @@ export default function ManufacturerPublicProfilePage() {
 
                             <div className="mt-3 flex items-center justify-between">
                               <span className="text-base font-black text-[#eb9728]">
-                                ${product.price?.toLocaleString()}
+                                {formatPKR(product.price)}
                               </span>
                               <span className="text-xs text-white/35">
                                 MOQ: {product.moq}

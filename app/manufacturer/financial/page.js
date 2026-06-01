@@ -7,6 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { formatPKR } from "@/lib/currency";
 
 export default function ManufacturerFinancialPage() {
   const router = useRouter();
@@ -111,7 +112,7 @@ export default function ManufacturerFinancialPage() {
               Total Revenue
             </p>
             <p className="text-3xl font-black text-white">
-              ${totalRevenue.toLocaleString()}
+              {formatPKR(totalRevenue)}
             </p>
             <p className="text-xs text-white/20 mt-1.5 font-medium">
               {completedOrders.length} completed orders
@@ -125,7 +126,7 @@ export default function ManufacturerFinancialPage() {
               Pending Release
             </p>
             <p className="text-3xl font-black text-[#eb9728]">
-              ${pendingRevenue.toLocaleString()}
+              {formatPKR(pendingRevenue)}
             </p>
             <p className="text-xs text-[#eb9728]/40 mt-1.5 font-medium">
               {pendingPaymentOrders.length} orders in progress
@@ -139,7 +140,7 @@ export default function ManufacturerFinancialPage() {
               Refunds Issued
             </p>
             <p className="text-3xl font-black text-white/80">
-              ${refundedAmount.toLocaleString()}
+              {formatPKR(refundedAmount)}
             </p>
             <p className="text-xs text-white/20 mt-1.5 font-medium">
               {refundedOrders.length} refunded orders
@@ -250,7 +251,7 @@ export default function ManufacturerFinancialPage() {
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right font-black text-white">
-                      ${order.totalPrice?.toLocaleString()}
+                      {formatPKR(order.totalPrice)}
                     </td>
                   </tr>
                 ))}

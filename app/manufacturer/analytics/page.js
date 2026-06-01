@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Image from "next/image";
+import { formatPKR } from "@/lib/currency";
 
 // ASSETS
 import OrdersIcon from "@/assets/orders.png";
@@ -168,7 +169,7 @@ export default function ManufacturerAnalyticsPage() {
         {/* KPI row */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
             <StatCard label="Total Orders" value={data.orders.length} icon={OrdersIcon} />
-            <StatCard label="Total Revenue" value={`$${data.totalRevenue.toLocaleString()}`} icon={RevenueIcon} />
+            <StatCard label="Total Revenue" value={formatPKR(data.totalRevenue)} icon={RevenueIcon} />
             <StatCard label="Bid Win Rate" value={`${data.bidAcceptanceRate}%`} icon={BidsIcon} />
             <StatCard 
                 label="Avg. Rating" 
@@ -192,7 +193,7 @@ export default function ManufacturerAnalyticsPage() {
                 >
                   <span className="text-[10px] text-white/30 font-medium group-hover:text-[#eb9728] transition-colors">
                     {m.value > 0
-                      ? `$${m.value >= 1000 ? (m.value / 1000).toFixed(1) + "k" : m.value}`
+                      ? formatPKR(m.value)
                       : ""}
                   </span>
                   <div

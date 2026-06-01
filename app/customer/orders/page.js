@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_COLORS = {
   pending_acceptance:
@@ -331,7 +332,7 @@ function CustomerOrderCard({ order, onRefresh }) {
             </div>
 
             <span className="shrink-0 text-lg font-black text-[#eb9728]">
-              ${order.totalPrice?.toLocaleString() || "—"}
+              {formatPKR(order.totalPrice)}
             </span>
           </div>
 

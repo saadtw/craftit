@@ -8,8 +8,9 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ChatBox from "@/components/chat/ChatBox";
 import { getTrackingUrl } from "@/lib/carriers";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_COLORS = {
   pending_acceptance:
@@ -65,7 +66,7 @@ function CustomerOrderDetailPageContent() {
         setPaymentSchedule(data.paymentSchedule || null);
         if (data.order.reviewed) setReviewSubmitted(true);
       } else {
-        }
+      }
     } catch (err) {
       console.error(err);
     } finally {
@@ -161,11 +162,14 @@ function CustomerOrderDetailPageContent() {
   const handleResolvePaymentRelease = async (releaseId, action) => {
     setActionLoading(true);
     try {
-      const res = await fetch(`/api/orders/${id}/payment-release/${releaseId}`, {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action }),
-      });
+      const res = await fetch(
+        `/api/orders/${id}/payment-release/${releaseId}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action }),
+        },
+      );
       const data = await res.json();
       if (data.success) {
         await fetchOrder();
@@ -191,7 +195,9 @@ function CustomerOrderDetailPageContent() {
       const data = await res.json();
       if (data.success) {
         await fetchOrder();
-        toast.success("Production acknowledged! Manufacturer has been notified.");
+        toast.success(
+          "Production acknowledged! Manufacturer has been notified.",
+        );
       } else {
         toast.error(data.error || "Failed to acknowledge production");
       }
@@ -216,7 +222,11 @@ function CustomerOrderDetailPageContent() {
       const data = await res.json();
       if (data.success) {
         await fetchOrder();
-        toast.error(confirm ? "Milestone confirmed!" : "Milestone disputed. Please contact support.");
+        toast.error(
+          confirm
+            ? "Milestone confirmed!"
+            : "Milestone disputed. Please contact support.",
+        );
       } else {
         toast.error(data.error || "Failed to update milestone status");
       }
@@ -322,8 +332,6 @@ function CustomerOrderDetailPageContent() {
                 and available actions.
               </p>
             </div>
-
-
           </div>
         </section>
 
@@ -347,7 +355,7 @@ function CustomerOrderDetailPageContent() {
                 <InfoItem label="Quantity" value={`${order.quantity} units`} />
                 <InfoItem
                   label="Total Price"
-                  value={`$${order.totalPrice?.toLocaleString()}`}
+                  value={formatPKR(order.totalPrice)}
                   amber
                 />
                 <InfoItem
@@ -432,11 +440,11 @@ function CustomerOrderDetailPageContent() {
                   3D Model
                 </h2>
                 <div className="overflow-hidden rounded-xl border border-white/10 bg-white/[0.02]">
-                  <Editor3DWrapper
+                  <ModelViewerPreview
                     modelUrl={orderModel3D.url}
-                    initialAnnotations={orderModel3D.annotations}
-                    initialCameraState={orderModel3D.cameraState}
-                    readOnly={true}
+                    annotations={orderModel3D.annotations || []}
+                    measurements={orderModel3D.measurements || []}
+                    height="100%"
                   />
                   <div className="mt-3 flex items-center justify-between gap-3 p-3 bg-white/[0.03] border-t border-white/8">
                     <p className="text-sm text-white/60 truncate">
@@ -559,18 +567,23 @@ function CustomerOrderDetailPageContent() {
                                   Completed{" "}
                                   {new Date(m.completedAt).toLocaleDateString()}
                                 </p>
-                                
-                                {m.customerStatus === "awaiting_confirmation" && (
+
+                                {m.customerStatus ===
+                                  "awaiting_confirmation" && (
                                   <div className="flex gap-2">
                                     <button
-                                      onClick={() => handleMilestoneConfirm(m._id, true)}
+                                      onClick={() =>
+                                        handleMilestoneConfirm(m._id, true)
+                                      }
                                       disabled={actionLoading}
                                       className="rounded-lg bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-50"
                                     >
                                       Confirm Complete
                                     </button>
                                     <button
-                                      onClick={() => handleMilestoneConfirm(m._id, false)}
+                                      onClick={() =>
+                                        handleMilestoneConfirm(m._id, false)
+                                      }
                                       disabled={actionLoading}
                                       className="rounded-lg bg-red-500/20 px-3 py-1 text-xs font-bold text-red-300 hover:bg-red-500/30 disabled:opacity-50"
                                     >
@@ -578,17 +591,21 @@ function CustomerOrderDetailPageContent() {
                                     </button>
                                   </div>
                                 )}
-                                
+
                                 {m.customerStatus === "confirmed" && (
                                   <p className="text-xs text-blue-400 flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[14px]">verified</span>
+                                    <span className="material-symbols-outlined text-[14px]">
+                                      verified
+                                    </span>
                                     Confirmed by you
                                   </p>
                                 )}
-                                
+
                                 {m.customerStatus === "disputed" && (
                                   <p className="text-xs text-red-400 flex items-center gap-1">
-                                    <span className="material-symbols-outlined text-[14px]">error</span>
+                                    <span className="material-symbols-outlined text-[14px]">
+                                      error
+                                    </span>
                                     Disputed
                                   </p>
                                 )}
@@ -641,10 +658,15 @@ function CustomerOrderDetailPageContent() {
               <div className="space-y-3">
                 {order.status === "awaiting_production_ack" && (
                   <div className="p-4 mb-4 rounded-xl border border-blue-500/30 bg-blue-500/10 text-center animate-pulse-subtle">
-                    <span className="material-symbols-outlined text-blue-400 mb-2 text-3xl">verified</span>
-                    <h3 className="text-white font-bold mb-1">Production Ready</h3>
+                    <span className="material-symbols-outlined text-blue-400 mb-2 text-3xl">
+                      verified
+                    </span>
+                    <h3 className="text-white font-bold mb-1">
+                      Production Ready
+                    </h3>
                     <p className="text-white/60 text-xs mb-4">
-                      The group buy is complete! Acknowledge below to begin manufacturing.
+                      The group buy is complete! Acknowledge below to begin
+                      manufacturing.
                     </p>
                     <button
                       onClick={handleProductionAck}
@@ -754,12 +776,15 @@ function CustomerOrderDetailPageContent() {
                 </div>
 
                 <div className="min-w-0">
-                  <p className="truncate text-sm font-bold text-white">
+                  <Link
+                    href={`/manufacturers/${order.manufacturerId?._id}`}
+                    className="block truncate text-sm font-bold text-white hover:text-[#eb9728] transition-colors"
+                  >
                     {order.manufacturerId?.businessName ||
                       order.manufacturerId?.name}
-                  </p>
+                  </Link>
                   <p className="truncate text-xs text-white/35">
-                    {order.manufacturerId?.email}
+                    Manufacturer profile
                   </p>
                 </div>
               </div>
@@ -844,35 +869,49 @@ function CustomerOrderDetailPageContent() {
         {paymentReleases.length > 0 && (
           <section className="mt-6 rounded-[24px] border border-white/8 bg-[#0c0c11] p-5 sm:p-6">
             <h2 className="mb-5 text-lg font-black text-white flex items-center gap-2">
-              <span className="material-symbols-outlined text-[#eb9728]">payments</span>
+              <span className="material-symbols-outlined text-[#eb9728]">
+                payments
+              </span>
               Payment Release Requests
             </h2>
             <div className="space-y-4">
-              {paymentReleases.map(pr => (
-                <div key={pr._id} className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              {paymentReleases.map((pr) => (
+                <div
+                  key={pr._id}
+                  className="p-4 rounded-xl bg-white/[0.03] border border-white/10 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
+                >
                   <div className="flex-1">
-                    <p className="text-xl font-black text-white mb-1">${pr.amount.toLocaleString()}</p>
+                    <p className="text-xl font-black text-white mb-1">
+                      {formatPKR(pr.amount)}
+                    </p>
                     <p className="text-sm text-white/60 mb-3">{pr.reason}</p>
-                    <span className={`inline-block px-3 py-1 text-xs font-bold rounded-full border ${pr.status === 'approved' || pr.status === 'auto_approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : pr.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/30' : 'bg-[#eb9728]/10 text-[#eb9728] border-[#eb9728]/30'}`}>
+                    <span
+                      className={`inline-block px-3 py-1 text-xs font-bold rounded-full border ${pr.status === "approved" || pr.status === "auto_approved" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : pr.status === "rejected" ? "bg-red-500/10 text-red-400 border-red-500/30" : "bg-[#eb9728]/10 text-[#eb9728] border-[#eb9728]/30"}`}
+                    >
                       {pr.status.replace("_", " ")}
                     </span>
                     {pr.status === "pending" && (
                       <p className="text-xs text-[#eb9728] mt-2">
-                        Expires (Auto-Approve): {new Date(pr.expiresAt).toLocaleString()}
+                        Expires (Auto-Approve):{" "}
+                        {new Date(pr.expiresAt).toLocaleString()}
                       </p>
                     )}
                   </div>
                   {pr.status === "pending" && (
                     <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto mt-4 sm:mt-0">
                       <button
-                        onClick={() => handleResolvePaymentRelease(pr._id, "approve")}
+                        onClick={() =>
+                          handleResolvePaymentRelease(pr._id, "approve")
+                        }
                         disabled={actionLoading}
                         className="px-6 py-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-xl disabled:opacity-50 transition-colors"
                       >
                         Approve
                       </button>
                       <button
-                        onClick={() => handleResolvePaymentRelease(pr._id, "reject")}
+                        onClick={() =>
+                          handleResolvePaymentRelease(pr._id, "reject")
+                        }
                         disabled={actionLoading}
                         className="px-6 py-2 border border-white/10 bg-white/5 hover:bg-white/10 text-white font-bold rounded-xl disabled:opacity-50 transition-colors"
                       >
@@ -1103,7 +1142,9 @@ function TimelineItem({ label, date, error = false }) {
 
 export default function CustomerOrderDetailPage() {
   return (
-    <Suspense fallback={<GlobalLoader fullScreen text="Loading order details..." />}>
+    <Suspense
+      fallback={<GlobalLoader fullScreen text="Loading order details..." />}
+    >
       <CustomerOrderDetailPageContent />
     </Suspense>
   );

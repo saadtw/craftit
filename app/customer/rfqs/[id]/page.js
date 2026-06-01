@@ -5,10 +5,11 @@ import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
-import Script from "next/script";
+import Link from "next/link";
 import Image from "next/image";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 export default function CustomerRFQDetails() {
   const params = useParams();
@@ -19,6 +20,7 @@ export default function CustomerRFQDetails() {
 
   const [rfq, setRfq] = useState(null);
   const [bids, setBids] = useState([]);
+  const [acceptedOrder, setAcceptedOrder] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const fetchRFQ = useCallback(async () => {
@@ -36,6 +38,7 @@ export default function CustomerRFQDetails() {
       const data = await response.json();
       if (data.success && data.rfq) {
         setRfq(data.rfq);
+        setAcceptedOrder(data.acceptedOrder || null);
         if (data.bids) setBids(data.bids);
       } else {
         toast.error("Error loading RFQ: " + (data.error || "Unknown error"));
@@ -45,7 +48,7 @@ export default function CustomerRFQDetails() {
       } finally {
       setLoading(false);
     }
-  }, [rfqId, router]);
+  }, [rfqId, router, toast]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -149,6 +152,20 @@ export default function CustomerRFQDetails() {
       class: "bg-[#eb9728]/10 border-[#eb9728]/20 text-[#eb9728]",
     },
   };
+  const model3D = rfq.customOrderId?.model3D;
+  const images = rfq.customOrderId?.images || [];
+  const artifactFiles = [
+    model3D?.url && {
+      label: model3D.filename || "3D model",
+      url: model3D.url,
+      type: "3D Model",
+    },
+    ...images.map((img, idx) => ({
+      label: img.filename || `Reference image ${idx + 1}`,
+      url: img.url,
+      type: "Image",
+    })),
+  ].filter(Boolean);
 
   return (
     <>
@@ -189,7 +206,7 @@ export default function CustomerRFQDetails() {
               },
               {
                 label: "Min Bid Threshold",
-                value: `$${rfq.minBidThreshold || 0}`,
+                value: formatPKR(rfq.minBidThreshold || 0),
                 icon: "payments",
                 accent: false,
               },
@@ -250,7 +267,7 @@ export default function CustomerRFQDetails() {
                     },
                     rfq.customOrderId.budget && {
                       label: "Budget",
-                      value: `$${rfq.customOrderId.budget}`,
+                      value: formatPKR(rfq.customOrderId.budget),
                       icon: "payments",
                     },
                     rfq.customOrderId.deadline && {
@@ -330,41 +347,110 @@ export default function CustomerRFQDetails() {
                 )}
 
                 {/* 3D Model */}
-                {rfq.customOrderId.model3D && (
+                {model3D?.url && (
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-3">
                       3D Model
                     </p>
                     <div className="rounded-xl overflow-hidden border border-white/8 bg-white/[0.02]">
-                      <Editor3DWrapper
-                        modelUrl={rfq.customOrderId.model3D.url}
-                        initialAnnotations={rfq.customOrderId.model3D.annotations}
-                        initialCameraState={rfq.customOrderId.model3D.cameraState}
-                        readOnly={true}
-                      />
+                      <div className="aspect-video">
+                        <ModelViewerPreview
+                          modelUrl={model3D.url}
+                          annotations={model3D.annotations || []}
+                          measurements={model3D.measurements || []}
+                          height="100%"
+                        />
+                      </div>
+                      <div className="flex items-center justify-between gap-3 border-t border-white/8 bg-white/[0.03] p-3">
+                        <p className="truncate text-sm font-semibold text-white/60">
+                          {model3D.filename || "Attached 3D model"}
+                        </p>
+                        <a
+                          href={model3D.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-lg bg-[#eb9728]/10 px-3 py-1.5 text-xs font-bold text-[#eb9728] hover:bg-[#eb9728]/20"
+                        >
+                          Download
+                        </a>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {(acceptedOrder || artifactFiles.length > 0) && (
+                  <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">
+                          Artifacts
+                        </p>
+                        <p className="mt-1 text-xs text-white/40">
+                          Files attached to this RFQ
+                        </p>
+                      </div>
+                      {acceptedOrder && (
+                        <Link
+                          href={`/customer/orders/${acceptedOrder._id}`}
+                          className="rounded-xl border border-emerald-500/20 bg-emerald-500/10 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-emerald-300 hover:bg-emerald-500/20"
+                        >
+                          View Order {acceptedOrder.orderNumber}
+                        </Link>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                      {artifactFiles.map((file) => (
+                        <a
+                          key={file.url}
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-[#0c0c11] px-4 py-3 hover:border-[#eb9728]/30"
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-xs font-bold text-white/75">
+                              {file.label}
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white/25">
+                              {file.type}
+                            </span>
+                          </span>
+                          <span className="material-symbols-outlined text-sm text-[#eb9728]">
+                            download
+                          </span>
+                        </a>
+                      ))}
                     </div>
                   </div>
                 )}
 
                 {/* Images */}
-                {rfq.customOrderId.images?.length > 0 && (
+                {images.length > 0 && (
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-3">
                       Images
                     </p>
-                    <div className="grid grid-cols-3 gap-3">
-                      {rfq.customOrderId.images.map((img, idx) => (
+                    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                      {images.map((img, idx) => (
                         <div
                           key={idx}
-                          className="relative h-44 rounded-xl overflow-hidden border border-white/8"
+                          className="group relative h-44 rounded-xl overflow-hidden border border-white/8"
                         >
                           <Image
                             src={img.url}
                             alt={`Image ${idx + 1}`}
                             fill
-                            className="object-cover"
+                            className="object-cover transition-transform duration-500 group-hover:scale-105"
                             sizes="33vw"
                           />
+                          <a
+                            href={img.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="absolute bottom-3 right-3 rounded-lg border border-white/10 bg-black/60 px-3 py-1.5 text-[9px] font-black uppercase tracking-widest text-white/80 backdrop-blur-md hover:text-[#eb9728]"
+                          >
+                            Download
+                          </a>
                         </div>
                       ))}
                     </div>
@@ -438,7 +524,7 @@ export default function CustomerRFQDetails() {
                                 Bid Amount
                               </p>
                               <p className="text-2xl font-black text-[#eb9728]">
-                                ${bid.amount}
+                                {formatPKR(bid.amount)}
                               </p>
                             </div>
                             <div>

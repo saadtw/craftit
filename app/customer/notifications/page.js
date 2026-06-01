@@ -93,7 +93,17 @@ export default function CustomerNotificationsPage() {
     setNotifications((prev) =>
       prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)),
     );
-    setUnreadCount((c) => Math.max(0, c - 1));
+    setUnreadCount((c) => {
+      const next = Math.max(0, c - 1);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("notifications:updated", {
+            detail: { unreadCount: next },
+          }),
+        );
+      }
+      return next;
+    });
   };
 
   const markAllRead = async () => {
@@ -102,29 +112,51 @@ export default function CustomerNotificationsPage() {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
     setMarkingAll(false);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("notifications:updated", {
+          detail: { unreadCount: 0 },
+        }),
+      );
+    }
   };
 
   const handleClick = async (notif) => {
     if (!notif.isRead) await markRead(notif._id);
-    
+
     let targetLink = notif.link;
 
     // Repair logic for broken legacy/seed links
-    if (!targetLink || targetLink === "/dashboard" || targetLink === "/chat" || targetLink.includes("/manufacturer/")) {
+    if (
+      !targetLink ||
+      targetLink === "/dashboard" ||
+      targetLink === "/chat" ||
+      targetLink.includes("/manufacturer/")
+    ) {
       if (notif.relatedType === "order" && notif.relatedId) {
         targetLink = `/customer/orders/${notif.relatedId}`;
       } else if (notif.relatedType === "dispute" && notif.relatedId) {
         targetLink = `/customer/orders`; // or specific dispute if exists
+      } else if (notif.relatedType === "bid" && notif.relatedId) {
+        targetLink = `/bids/${notif.relatedId}#chat`;
       } else if (notif.relatedType === "rfq" && notif.relatedId) {
         targetLink = `/customer/rfqs`;
       } else if (notif.type === "new_message" && notif.relatedId) {
-        targetLink = `/customer/orders/${notif.relatedId}`;
+        targetLink =
+          notif.relatedType === "bid"
+            ? `/bids/${notif.relatedId}#chat`
+            : `/customer/orders/${notif.relatedId}`;
       } else {
         // Default fallbacks
         if (notif.type.includes("order")) targetLink = "/customer/orders";
-        else if (notif.type.includes("bid") || notif.type.includes("rfq")) targetLink = "/customer/rfqs";
+        else if (notif.type.includes("bid") || notif.type.includes("rfq"))
+          targetLink = "/customer/rfqs";
         else targetLink = "/customer/dashboard";
       }
+    }
+
+    if (targetLink?.startsWith("/bids/") && !targetLink.includes("#chat")) {
+      targetLink = `${targetLink}#chat`;
     }
 
     if (targetLink) router.push(targetLink);

@@ -51,7 +51,6 @@ export default function DraftModelEditorPage() {
     if (!raw) {
       // No draft data — the user navigated here directly. Send them back.
       // We intentionally set state here to trigger the deferred redirect effect below.
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- redirect is deferred to next effect so sessionStorage read completes first
       setShouldRedirect(true);
       return;
     }
