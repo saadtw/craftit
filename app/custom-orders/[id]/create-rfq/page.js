@@ -1,4 +1,4 @@
-﻿// app/custom-orders/[id]/create-rfq/page.js
+// app/custom-orders/[id]/create-rfq/page.js
 "use client";
 
 import GlobalLoader from "@/components/ui/GlobalLoader";
@@ -212,10 +212,7 @@ export default function CreateRFQ() {
   if (status === "loading" || loading) {
     return (
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-          <GlobalLoader text="Loading..." />
-        </div>
+        <GlobalLoader text="Loading..." />
       </div>
     );
   }
@@ -468,8 +465,7 @@ export default function CreateRFQ() {
                 {/* Manufacturer List */}
                 <div className="max-h-56 overflow-y-auto rounded-xl border border-white/8 bg-[#050507] divide-y divide-white/5">
                   {manufacturersLoading ? (
-                    <div className="flex items-center justify-center py-8 gap-2">
-                      <div className="h-5 w-5 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
+                    <div className="flex items-center justify-center py-8">
                       <GlobalLoader text="Loading manufacturers..." />
                     </div>
                   ) : availableManufacturers.length === 0 ? (

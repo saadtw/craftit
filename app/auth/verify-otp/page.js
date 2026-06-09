@@ -116,7 +116,7 @@ function VerifyOtpContent() {
     }
   }, [otp, email, router]);
 
-  // Auto-submit when all 6 digits are entered
+  // Auto-submit when all 8 digits are entered
   useEffect(() => {
     if (otp.every((d) => d !== "")) {
       handleVerify();
@@ -158,12 +158,32 @@ function VerifyOtpContent() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8">
+    <div className="flex min-h-screen items-center justify-center bg-[#0B011D] p-4 font-sans relative overflow-hidden">
+      {/* Background glows */}
+      <div className="absolute top-[-10%] left-[-10%] h-[300px] w-[300px] rounded-full bg-purple-600/10 blur-[100px]" />
+      <div className="absolute bottom-[-10%] right-[-10%] h-[300px] w-[300px] rounded-full bg-amber-600/10 blur-[100px]" />
+
+      {/* Back to login */}
+      <Link
+        href="/auth/login"
+        className="absolute top-4 left-4 md:top-6 md:left-6 z-50 flex items-center gap-1.5 text-[8px] font-bold uppercase tracking-[0.3em] text-slate-500 hover:text-purple-400 transition-all group"
+      >
+        <div className="w-6 h-6 rounded-full bg-linear-to-tr from-purple-600 to-indigo-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
+          <span className="material-symbols-outlined text-white text-[9px]">
+            arrow_back
+          </span>
+        </div>
+        Back to Login
+      </Link>
+
+      {/* Card */}
+      <div className="relative w-full max-w-sm overflow-hidden rounded-[24px] border border-purple-500/30 bg-white/2 backdrop-blur-3xl z-10 text-white shadow-[0_0_50px_rgba(168,85,247,0.15)] p-8">
+
+        {/* Header */}
         <div className="text-center mb-8">
-          <div className="w-14 h-14 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <div className="w-14 h-14 rounded-full bg-purple-600/20 border border-purple-500/30 flex items-center justify-center mx-auto mb-4">
             <svg
-              className="w-7 h-7 text-blue-600"
+              className="w-7 h-7 text-purple-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -171,31 +191,37 @@ function VerifyOtpContent() {
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
-                strokeWidth={2}
+                strokeWidth={1.5}
                 d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
               />
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Check your email</h1>
-          <p className="text-gray-500 mt-2 text-sm">
+          <span className="text-[9px] font-bold text-amber-500 uppercase tracking-[0.3em]">
+            Craftit
+          </span>
+          <h1 className="text-2xl font-black tracking-tight mt-1 leading-none">
+            Check your email
+          </h1>
+          <p className="text-slate-400 mt-2 text-xs">
             We sent an 8-digit code to{" "}
-            <span className="font-medium text-gray-800">
+            <span className="font-semibold text-slate-200">
               {email || "your email"}
             </span>
           </p>
         </div>
 
+        {/* Optional email input if not in query */}
         {!emailFromQuery && (
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email address
+            <label className="text-[9px] font-bold uppercase tracking-widest text-slate-500 mb-1 block ml-1">
+              Email Address
             </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
-              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full rounded-xl border border-white/10 bg-white/5 p-2.5 text-xs outline-none focus:border-purple-500 transition-all placeholder:text-slate-600 text-white"
             />
           </div>
         )}
@@ -220,62 +246,60 @@ function VerifyOtpContent() {
                   .slice(0, 8);
                 handleOtpChange(i, pasted);
               }}
-              className="w-12 h-14 text-center text-xl font-bold border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500 transition-colors"
+              className="w-10 h-12 text-center text-lg font-bold border border-white/10 bg-white/5 rounded-xl focus:outline-none focus:border-purple-500 transition-all text-white"
             />
           ))}
         </div>
 
+        {/* Error / Success */}
         {error && (
-          <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg px-4 py-3 text-sm mb-4">
+          <p className="text-[9px] text-red-400 bg-red-500/10 p-2 rounded-lg border border-red-500/20 mb-4 text-center">
             {error}
-          </div>
+          </p>
         )}
         {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 rounded-lg px-4 py-3 text-sm mb-4">
+          <p className="text-[9px] text-green-400 bg-green-500/10 p-2 rounded-lg border border-green-500/20 mb-4 text-center">
             {success}
-          </div>
+          </p>
         )}
 
+        {/* Verify button */}
         <button
           onClick={handleVerify}
           disabled={loading || otp.join("").length !== 8}
-          className="w-full bg-blue-600 text-white font-semibold py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="w-full rounded-xl bg-purple-600 py-2.5 text-xs font-black text-white shadow-lg transition-all hover:bg-purple-500 active:scale-[0.98] tracking-widest uppercase disabled:opacity-40 disabled:cursor-not-allowed"
         >
           {loading ? "Verifying..." : "Verify Email"}
         </button>
 
-        <div className="mt-4 text-center text-sm text-gray-500">
+        {/* Expiry */}
+        <div className="mt-4 text-center text-xs text-slate-500">
           {expiryCountdown > 0 ? (
             <span>
               Code expires in{" "}
-              <span className="font-medium text-gray-700">
+              <span className="font-semibold text-slate-300">
                 {formatTime(expiryCountdown)}
               </span>
             </span>
           ) : (
-            <span className="text-red-500">Code has expired.</span>
+            <span className="text-red-400">Code has expired.</span>
           )}
         </div>
 
-        <div className="mt-4 text-center text-sm">
-          <span className="text-gray-500">Didn&apos;t receive it? </span>
+        {/* Resend */}
+        <div className="mt-3 text-center text-xs">
+          <span className="text-slate-500">Didn&apos;t receive it? </span>
           {resendCooldown > 0 ? (
-            <span className="text-gray-400">Resend in {resendCooldown}s</span>
+            <span className="text-slate-600">Resend in {resendCooldown}s</span>
           ) : (
             <button
               onClick={handleResend}
               disabled={resendLoading}
-              className="text-blue-600 font-medium hover:underline disabled:opacity-50"
+              className="text-purple-400 font-semibold hover:text-purple-300 disabled:opacity-50 transition-colors"
             >
               {resendLoading ? "Sending..." : "Resend code"}
             </button>
           )}
-        </div>
-
-        <div className="mt-6 text-center text-sm text-gray-500">
-          <Link href="/auth/login" className="text-blue-600 hover:underline">
-            Back to login
-          </Link>
         </div>
       </div>
     </div>
@@ -284,7 +308,7 @@ function VerifyOtpContent() {
 
 export default function VerifyOtpPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center">Loading...</div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-[#0B011D] text-white text-xs">Loading...</div>}>
       <VerifyOtpContent />
     </Suspense>
   );

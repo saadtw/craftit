@@ -235,8 +235,7 @@ export default function ManufacturerRFQsPage() {
 
               {loading ? (
                 <div className="py-20 flex flex-col items-center justify-center gap-5 bg-white/[0.02] rounded-[3rem] border-2 border-dashed border-white/5">
-                  <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Fetching live market data...</p>
+                  <GlobalLoader text="Fetching live market data..." />
                 </div>
               ) : rfqs.length === 0 ? (
                 <div className="py-32 text-center bg-white/[0.02] rounded-[3rem] border-2 border-dashed border-white/5">

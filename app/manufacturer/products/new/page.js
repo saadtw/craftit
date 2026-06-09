@@ -1019,8 +1019,10 @@ export default function NewProductPage() {
                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-3">
                       3D Configuration Model
                     </label>
-                    <div className="p-8 bg-white/[0.02] border-2 border-purple-500/20 rounded-[2rem] flex flex-col items-center text-center">
-                      {form.model3D?.url ? (
+                    <div className="p-8 bg-white/[0.02] border-2 border-purple-500/20 rounded-[2rem] flex flex-col items-center text-center w-full">
+                      {modelUploading ? (
+                        <GlobalLoader text="Processing 3D Model... Converting & optimising — this may take a minute" />
+                      ) : form.model3D?.url ? (
                         <div className="w-full space-y-6">
                           <div className="aspect-video w-full rounded-2xl border-2 border-purple-500/40 overflow-hidden bg-[#0B011D]">
                             <ModelViewerPreview 
@@ -1029,7 +1031,7 @@ export default function NewProductPage() {
                               measurements={form.model3D.measurements || []}
                             />
                           </div>
-                          <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
+                          <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10 w-full">
                             <div className="text-left">
                               <p className="text-[10px] font-black uppercase tracking-widest text-white truncate max-w-[200px]">{form.model3D.filename}</p>
                               <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-1">Ready for annotation</p>
@@ -1054,13 +1056,9 @@ export default function NewProductPage() {
                           className="flex flex-col items-center gap-4 group"
                         >
                           <div className="w-16 h-16 rounded-2xl bg-purple-600/10 border-2 border-purple-500/30 flex items-center justify-center text-purple-400 group-hover:scale-110 group-hover:border-purple-500 transition-all">
-                            {modelUploading ? (
-                              <span className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                            ) : (
-                              <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-                              </svg>
-                            )}
+                            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
                           </div>
                           <div>
                             <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white">Upload 3D Engine Assets</p>

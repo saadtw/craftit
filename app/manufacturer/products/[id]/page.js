@@ -461,8 +461,7 @@ export default function ProductDetailPage() {
 
               {qaLoading ? (
                 <div className="py-10 flex flex-col items-center justify-center gap-4">
-                  <div className="w-8 h-8 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Syncing Question Database...</p>
+                  <GlobalLoader text="Syncing Question Database..." />
                 </div>
               ) : visibleQaItems.length === 0 ? (
                 <div className="py-20 text-center border-2 border-dashed border-white/5 rounded-[2rem] bg-white/[0.01]">

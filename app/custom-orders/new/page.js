@@ -326,10 +326,7 @@ const handleEditorSave = async (payload) => {
   if (status === "loading") {
     return (
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-          <GlobalLoader text="Loading..." />
-        </div>
+        <GlobalLoader text="Loading..." />
       </div>
     );
   }
@@ -372,7 +369,6 @@ const handleEditorSave = async (payload) => {
         {/* Source Context Loading */}
         {sourceContext.isLoading && (
           <div className="flex items-center gap-3 px-4 py-3.5 rounded-xl border border-blue-500/20 bg-blue-500/8">
-            <div className="h-4 w-4 rounded-full border-2 border-blue-400/30 border-t-blue-400 animate-spin shrink-0" />
             <GlobalLoader text="Loading product/manufacturer details..." />
           </div>
         )}
@@ -849,10 +845,7 @@ export default function NewCustomOrder() {
     <Suspense
       fallback={
         <div className="min-h-screen bg-[#050507] flex items-center justify-center">
-          <div className="flex flex-col items-center gap-4">
-            <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-            <GlobalLoader text="Loading..." />
-          </div>
+          <GlobalLoader text="Loading..." />
         </div>
       }
     >
