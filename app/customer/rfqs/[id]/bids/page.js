@@ -5,15 +5,12 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const MAX_COMPARE_BIDS = 3;
 
 function formatCurrency(value) {
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(value || 0);
+  return formatPKR(value);
 }
 
 function getScoreBand(score) {
@@ -64,6 +61,7 @@ export default function BidComparisonPage() {
   const { data: session, status } = useSession();
   const toast = useToast();
   const [bids, setBids] = useState([]);
+  const [rfq, setRfq] = useState(null);
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
   const [selectedBidIds, setSelectedBidIds] = useState([]);
@@ -74,6 +72,7 @@ export default function BidComparisonPage() {
       const data = await res.json();
       if (res.ok) {
         setBids(data.bids || []);
+        setRfq(data.rfq || null);
         setAnalysis(data.analysis);
       } else {
         toast.error(data.error || "Failed to fetch bids");
@@ -83,7 +82,7 @@ export default function BidComparisonPage() {
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [params.id, toast]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -192,6 +191,13 @@ export default function BidComparisonPage() {
             Back to RFQ
           </button>
         </div>
+
+        {/* Analysis Stats */}
+        {rfq?.status === "active" && bids.some((bid) => bid.status === "pending") && (
+          <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm font-bold text-amber-200">
+            The previous manufacturer cancelled the order. You can accept another bid below.
+          </div>
+        )}
 
         {/* Analysis Stats */}
         {analysis && (

@@ -4,14 +4,30 @@ import GlobalLoader from "@/components/ui/GlobalLoader";
 import { Suspense, useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
+import Image from "next/image";
 import { useToast } from "@/components/ui/ToastProvider";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
+import { formatPKR } from "@/lib/currency";
 
 function formatCurrency(value) {
-  if (!value) return "-";
-  return `$${Number(value).toLocaleString()}`;
+  return formatPKR(value);
+}
+
+const MODEL_EXTENSIONS = [".stl", ".obj", ".gltf", ".glb"];
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".webp"];
+const MAX_MODEL_SIZE = 50 * 1024 * 1024;
+const MAX_IMAGE_SIZE = 10 * 1024 * 1024;
+
+function getFileExtension(fileName) {
+  const idx = fileName.lastIndexOf(".");
+  return idx >= 0 ? fileName.slice(idx).toLowerCase() : "";
+}
+
+function formatFileSize(bytes) {
+  const mb = bytes / 1024 / 1024;
+  return `${mb.toFixed(1)}MB`;
 }
 
 function NewCustomOrderContent() {
@@ -49,12 +65,10 @@ function NewCustomOrderContent() {
     capabilityNotes: "",
   });
 
-  const [model3D, setModel3D] = useState(null);
-  const [images, setImages] = useState([]);
+  const [pendingModel, setPendingModel] = useState(null);
+  const [pendingImages, setPendingImages] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [isEditorOpen, setIsEditorOpen] = useState(false);
-  const [baseModelUrl, setBaseModelUrl] = useState(null);
 
   const customizationChoices = useMemo(() => {
     const allowed = sourceContext.allowedCustomizationTypes;
@@ -210,60 +224,67 @@ function NewCustomOrderContent() {
   const handle3DUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setUploading(true);
-    try {
-      const uploadData = new FormData();
-      uploadData.append("file", file);
-      uploadData.append("type", "3d-model");
-      const response = await fetch("/api/upload", {
-        method: "POST",
-        body: uploadData,
-      });
-      const data = await response.json();
-      if (data.success) {
-        setBaseModelUrl(data.file.url);
-        setModel3D(data.file);
-        setIsEditorOpen(true);
-      } else toast.error("Upload failed: " + data.error);
-    } catch (error) {
-      toast.error("Upload error: " + error.message);
-    } finally {
-      setUploading(false);
+    const ext = getFileExtension(file.name || "");
+    if (!MODEL_EXTENSIONS.includes(ext)) {
+      toast.error(
+        `Invalid model type. Allowed: ${MODEL_EXTENSIONS.join(", ")}`,
+      );
+      return;
     }
+    if (file.size > MAX_MODEL_SIZE) {
+      toast.error(
+        `Model too large. Max size is ${formatFileSize(MAX_MODEL_SIZE)}.`,
+      );
+      return;
+    }
+
+    if (pendingModel?.previewUrl) {
+      URL.revokeObjectURL(pendingModel.previewUrl);
+    }
+    const previewUrl = URL.createObjectURL(file);
+    setPendingModel({ file, previewUrl });
   };
 
-const handleEditorSave = async (payload) => {
-    const { modelUrl: newModelUrl, annotations, cameraState } = payload || {};
-    // The Vite editor handles its own upload and sends back the new URL.
-    // We just merge it into local state (no DB record yet — saved with form submission).
-    setModel3D((prev) => ({
-      ...prev,
-      url: newModelUrl || prev?.url,
-      annotations: Array.isArray(annotations) ? annotations : [],
-      cameraState: cameraState || null,
-    }));
-    setIsEditorOpen(false);
+  const removeModel = () => {
+    if (pendingModel?.previewUrl) {
+      URL.revokeObjectURL(pendingModel.previewUrl);
+    }
+    setPendingModel(null);
+  };
+
+  const removeImage = (index) => {
+    setPendingImages((prev) => {
+      const next = [...prev];
+      const [removed] = next.splice(index, 1);
+      if (removed?.previewUrl) URL.revokeObjectURL(removed.previewUrl);
+      return next;
+    });
   };
 
   const handleImageUpload = async (e) => {
     const files = Array.from(e.target.files || []);
     if (!files.length) return;
-    setUploading(true);
-    try {
-      const uploadData = new FormData();
-      files.forEach((file) => uploadData.append("files", file));
-      uploadData.append("folder", "images");
-      const response = await fetch("/api/upload/multiple", {
-        method: "POST",
-        body: uploadData,
-      });
-      const data = await response.json();
-      if (data.success) setImages((prev) => [...prev, ...data.files]);
-      else toast.error("Upload failed: " + data.error);
-    } catch (error) {
-      toast.error("Upload error: " + error.message);
-    } finally {
-      setUploading(false);
+
+    const validFiles = [];
+    for (const file of files) {
+      const ext = getFileExtension(file.name || "");
+      if (!IMAGE_EXTENSIONS.includes(ext)) {
+        toast.error(
+          `${file.name} has an invalid type. Allowed: ${IMAGE_EXTENSIONS.join(", ")}`,
+        );
+        continue;
+      }
+      if (file.size > MAX_IMAGE_SIZE) {
+        toast.error(
+          `${file.name} is too large. Max size is ${formatFileSize(MAX_IMAGE_SIZE)}.`,
+        );
+        continue;
+      }
+      validFiles.push({ file, previewUrl: URL.createObjectURL(file) });
+    }
+
+    if (validFiles.length) {
+      setPendingImages((prev) => [...prev, ...validFiles]);
     }
   };
 
@@ -290,14 +311,57 @@ const handleEditorSave = async (payload) => {
       }
     }
     setLoading(true);
+    setUploading(true);
     try {
+      let uploadedModel = null;
+      let uploadedImages = [];
+
+      if (pendingModel?.file) {
+        const uploadData = new FormData();
+        uploadData.append("file", pendingModel.file);
+        uploadData.append("type", "3d-model");
+        const response = await fetch("/api/upload", {
+          method: "POST",
+          body: uploadData,
+        });
+        const data = await response.json();
+        if (!data.success) {
+          toast.error("Upload failed: " + data.error);
+          return;
+        }
+        uploadedModel = data.file;
+      }
+
+      if (pendingImages.length > 0) {
+        const uploadData = new FormData();
+        pendingImages.forEach((item) => uploadData.append("files", item.file));
+        uploadData.append("folder", "images");
+        const response = await fetch("/api/upload/multiple", {
+          method: "POST",
+          body: uploadData,
+        });
+        const data = await response.json();
+        if (!data.success) {
+          toast.error("Upload failed: " + data.error);
+          return;
+        }
+        uploadedImages = data.files || [];
+        if (data.errors?.length) {
+          toast.error("Some images failed to upload. Please review them.");
+        }
+        if (!uploadedImages.length) {
+          toast.error("All image uploads failed. Please try again.");
+          return;
+        }
+      }
+
       const response = await fetch("/api/custom-orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           ...formData,
-          model3D,
-          images,
+          model3D: uploadedModel,
+          images: uploadedImages,
           status: "draft",
           budget: formData.budget ? Number(formData.budget) : undefined,
           quantity,
@@ -314,6 +378,7 @@ const handleEditorSave = async (payload) => {
     } catch (error) {
       toast.error("Error: " + error.message);
     } finally {
+      setUploading(false);
       setLoading(false);
     }
   };
@@ -358,6 +423,23 @@ const handleEditorSave = async (payload) => {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {/* Header */}
         <div>
+          {sourceContext.sourceType === "product_customization" &&
+            sourceContext.sourceProductId && (
+              <button
+                type="button"
+                onClick={() =>
+                  router.push(
+                    `/customer/products/${sourceContext.sourceProductId}`,
+                  )
+                }
+                className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 text-[10px] font-bold text-white/60 hover:text-white hover:bg-white/10 mb-4 transition-colors"
+              >
+                <span className="material-symbols-outlined text-[14px]">
+                  arrow_back
+                </span>
+                Back to Product
+              </button>
+            )}
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#eb9728] mb-1">
             New Request
           </p>
@@ -399,13 +481,37 @@ const handleEditorSave = async (payload) => {
                 {sourceContext.sourceType === "product_customization" &&
                   sourceContext.product && (
                     <>
+                      <div className="flex gap-4 items-start mb-4">
+                        {sourceContext.product.images?.[0]?.url && (
+                          <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-[#eb9728]/20 shrink-0">
+                            <img
+                              src={sourceContext.product.images[0].url}
+                              alt={sourceContext.product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1">
+                          <h3 className="text-sm font-bold text-[#eb9728]/90">
+                            {sourceContext.product.name}
+                          </h3>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {sourceContext.product.category && (
+                              <span className="px-2 py-0.5 rounded border border-[#eb9728]/20 bg-[#eb9728]/10 text-[9px] font-bold text-[#eb9728]/70">
+                                {sourceContext.product.category}
+                              </span>
+                            )}
+                            {sourceContext.product.specifications?.material && (
+                              <span className="px-2 py-0.5 rounded border border-[#eb9728]/20 bg-[#eb9728]/10 text-[9px] font-bold text-[#eb9728]/70">
+                                Material:{" "}
+                                {sourceContext.product.specifications.material}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
                       <div className="grid grid-cols-2 gap-3">
                         {[
-                          {
-                            label: "Product",
-                            value: sourceContext.product.name,
-                            icon: "inventory_2",
-                          },
                           {
                             label: "Manufacturer",
                             value:
@@ -445,8 +551,33 @@ const handleEditorSave = async (payload) => {
                             </div>
                           ))}
                       </div>
+                      {sourceContext.allowedCustomizationTypes?.length > 0 && (
+                        <div className="mt-3">
+                          <p className="text-[10px] font-bold uppercase text-[#eb9728]/50 mb-2">
+                            Allowed Customizations
+                          </p>
+                          <div className="flex flex-wrap gap-1.5">
+                            {sourceContext.allowedCustomizationTypes.map(
+                              (typeId) => {
+                                const label =
+                                  customizationChoices.find(
+                                    (t) => t.id === typeId,
+                                  )?.label || typeId;
+                                return (
+                                  <span
+                                    key={typeId}
+                                    className="px-2 py-1 rounded-md border border-[#eb9728]/30 bg-[#eb9728]/10 text-[9px] font-bold text-[#eb9728]/80"
+                                  >
+                                    {label}
+                                  </span>
+                                );
+                              },
+                            )}
+                          </div>
+                        </div>
+                      )}
                       {sourceContext.capabilityNotes && (
-                        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-[#eb9728]/15 bg-[#eb9728]/5">
+                        <div className="flex items-start gap-2 px-3 py-2.5 rounded-xl border border-[#eb9728]/15 bg-[#eb9728]/5 mt-3">
                           <span className="material-symbols-outlined text-[14px] text-[#eb9728]/60 shrink-0 mt-0.5">
                             note
                           </span>
@@ -539,7 +670,7 @@ const handleEditorSave = async (payload) => {
                 )}
               </div>
               <div>
-                <label className={labelClass}>Budget ($)</label>
+                <label className={labelClass}>Budget (PKR)</label>
                 <input
                   type="number"
                   name="budget"
@@ -681,8 +812,8 @@ const handleEditorSave = async (payload) => {
             {/* 3D Model */}
             <div>
               <label className={labelClass}>3D Model</label>
-              
-              {!model3D ? (
+
+              {!pendingModel ? (
                 <label className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-6 cursor-pointer hover:border-[#eb9728]/30 hover:bg-white/[0.04] transition-all group">
                   <span className="material-symbols-outlined text-3xl text-white/20 group-hover:text-[#eb9728]/50 transition-colors">
                     view_in_ar
@@ -691,7 +822,8 @@ const handleEditorSave = async (payload) => {
                     Click to upload 3D model
                   </p>
                   <p className="text-[11px] text-white/20">
-                    .stl, .obj, .gltf, .glb
+                    .stl, .obj, .gltf, .glb · Max{" "}
+                    {formatFileSize(MAX_MODEL_SIZE)}
                   </p>
                   <input
                     type="file"
@@ -708,26 +840,30 @@ const handleEditorSave = async (payload) => {
                         check_circle
                       </span>
                       <p className="text-[11px] font-semibold text-emerald-400">
-                        {model3D.filename || "Model Uploaded"}
+                        {pendingModel.file?.name || "Model Selected"}
                       </p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setIsEditorOpen(true)}
-                      className="px-3 py-1.5 text-xs font-bold text-[#eb9728] bg-[#eb9728]/10 rounded-lg hover:bg-[#eb9728]/20 transition-colors"
+                      onClick={removeModel}
+                      className="px-3 py-1.5 text-xs font-bold text-red-300 bg-red-500/10 rounded-lg hover:bg-red-500/20 transition-colors"
                     >
-                      Edit 3D Model
+                      Remove
                     </button>
                   </div>
                   <div className="p-4">
-                    <div className="rounded-xl overflow-hidden border border-white/8 bg-white/[0.02]">
-                      <Editor3DWrapper
-                        modelUrl={model3D.url}
-                        initialAnnotations={model3D.annotations}
-                        initialCameraState={model3D.cameraState}
-                        readOnly={true}
+                    <div className="aspect-video overflow-hidden rounded-xl border border-white/8 bg-white/[0.02]">
+                      <ModelViewerPreview
+                        modelUrl={pendingModel.previewUrl}
+                        annotations={[]}
+                        measurements={[]}
+                        height="100%"
                       />
                     </div>
+                    <p className="mt-3 text-[11px] text-white/35">
+                      Uploads happen when you create the order. You can edit the
+                      model after submission.
+                    </p>
                   </div>
                 </div>
               )}
@@ -744,7 +880,9 @@ const handleEditorSave = async (payload) => {
                   Click to upload images
                 </p>
                 <p className="text-[11px] text-white/20">
-                  .jpg, .jpeg, .png, .webp — multiple allowed
+                  .jpg, .jpeg, .png, .webp — max{" "}
+                  {formatFileSize(MAX_IMAGE_SIZE)}
+                  each
                 </p>
                 <input
                   type="file"
@@ -754,19 +892,36 @@ const handleEditorSave = async (payload) => {
                   className="hidden"
                 />
               </label>
-              {images.length > 0 && (
-                <div className="mt-2 space-y-1.5">
-                  {images.map((img, idx) => (
+              {pendingImages.length > 0 && (
+                <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {pendingImages.map((img, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/8"
+                      className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/[0.03] p-2.5"
                     >
-                      <span className="material-symbols-outlined text-[15px] text-emerald-400">
-                        check_circle
-                      </span>
-                      <p className="text-[11px] font-semibold text-emerald-400">
-                        {img.filename}
+                      {img.previewUrl && (
+                        <div className="relative h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-white/[0.05]">
+                          <Image
+                            src={img.previewUrl}
+                            alt={img.file?.name || "Reference image"}
+                            fill
+                            className="object-cover"
+                          />
+                        </div>
+                      )}
+                      <p className="min-w-0 flex-1 truncate text-[11px] font-semibold text-white/70">
+                        {img.file?.name}
                       </p>
+                      <button
+                        type="button"
+                        onClick={() => removeImage(idx)}
+                        className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/35 hover:bg-red-500/10 hover:text-red-300"
+                        aria-label={`Remove ${img.file?.name || "image"}`}
+                      >
+                        <span className="material-symbols-outlined text-[16px]">
+                          close
+                        </span>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -806,36 +961,6 @@ const handleEditorSave = async (payload) => {
           </button>
         </form>
       </main>
-      {isEditorOpen && baseModelUrl && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-          <div className="w-full max-w-6xl max-h-[90vh] bg-[#0c0c11] rounded-[24px] border border-white/10 overflow-hidden flex flex-col shadow-2xl">
-            <div className="flex justify-between items-center p-5 border-b border-white/10 bg-white/[0.02]">
-              <h3 className="text-lg font-black text-white flex items-center gap-2">
-                <span className="material-symbols-outlined text-[#eb9728]">
-                  view_in_ar
-                </span>
-                Edit 3D Model
-              </h3>
-              <button
-                onClick={() => setIsEditorOpen(false)}
-                className="text-white/50 hover:text-white transition-colors"
-              >
-                <span className="material-symbols-outlined">close</span>
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto p-6">
-              <Editor3DWrapper
-                modelUrl={baseModelUrl}
-                initialAnnotations={model3D?.annotations}
-                initialCameraState={model3D?.cameraState}
-                onSave={handleEditorSave}
-                onCancel={() => setIsEditorOpen(false)}
-                readOnly={false}
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

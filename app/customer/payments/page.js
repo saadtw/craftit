@@ -5,6 +5,7 @@ import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
+import { formatPKR } from "@/lib/currency";
 import Link from "next/link";
 
 const STATUS_COLORS = {
@@ -89,7 +90,7 @@ export default function CustomerPaymentsPage() {
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <SummaryCard
             label="Total Spent"
-            value={`$${totalSpent.toLocaleString()}`}
+            value={formatPKR(totalSpent)}
             sub={`${orders.filter((o) => o.paymentStatus === "captured").length} completed payments`}
             icon="payments"
             accent
@@ -97,7 +98,7 @@ export default function CustomerPaymentsPage() {
 
           <SummaryCard
             label="Total Refunded"
-            value={`$${totalRefunded.toLocaleString()}`}
+            value={formatPKR(totalRefunded)}
             sub={`${
               orders.filter((o) =>
                 ["refunded", "partially_refunded"].includes(o.paymentStatus),
@@ -185,7 +186,7 @@ export default function CustomerPaymentsPage() {
 
                     <div className="shrink-0 text-right">
                       <p className="font-black text-white">
-                        ${order.totalPrice?.toLocaleString()}
+                        {formatPKR(order.totalPrice)}
                       </p>
                       <span
                         className={`mt-1 inline-flex rounded-full px-2 py-0.5 text-[10px] font-bold ${
@@ -204,7 +205,7 @@ export default function CustomerPaymentsPage() {
         </section>
 
         <p className="text-center text-xs text-white/35">
-          Payment processing powered by Stripe. All amounts in USD.
+          Payment processing powered by Stripe. All amounts in PKR.
         </p>
       </main>
     </div>

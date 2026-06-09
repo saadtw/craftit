@@ -1,7 +1,16 @@
 import ManufacturerSidebar from "@/components/ManufacturerSidebar";
 import ManufacturerNavbar from "@/components/ManufacturerNavbar";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default function ManufacturerLayout({ children }) {
+export default async function ManufacturerLayout({ children }) {
+  const session = await getServerSession(authOptions);
+
+  if (session?.user?.needsPasswordSetup) {
+    redirect("/auth/setup-password");
+  }
+
   return (
     <div className="h-screen flex flex-col overflow-hidden bg-[#050507] text-white">
       <ManufacturerNavbar />

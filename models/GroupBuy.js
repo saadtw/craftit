@@ -28,6 +28,14 @@ const ParticipantSchema = new mongoose.Schema(
       enum: ["authorized", "captured", "refunded"],
       default: "authorized",
     },
+    status: {
+      type: String,
+      enum: ["authorized", "capture_failed", "paid", "cancelled"],
+      default: "authorized",
+    },
+    captureAttemptedAt: { type: Date },
+    captureFailedAt: { type: Date },
+    captureRetryDeadline: { type: Date },
     joinedAt: { type: Date, default: Date.now },
     orderId: { type: mongoose.Schema.Types.ObjectId, ref: "Order" }, // set on completion
   },
@@ -71,6 +79,11 @@ const GroupBuySchema = new mongoose.Schema(
     },
 
     minParticipants: { type: Number, default: 1 },
+    minimumViableQuantity: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
     maxParticipants: Number, // optional cap
 
     startDate: { type: Date, required: true },
@@ -82,7 +95,16 @@ const GroupBuySchema = new mongoose.Schema(
 
     status: {
       type: String,
-      enum: ["scheduled", "active", "paused", "completed", "cancelled"],
+      enum: [
+        "scheduled",
+        "active",
+        "paused",
+        "payment_processing",
+        "mvq_review",
+        "completed",
+        "cancelled",
+        "failed",
+      ],
       default: "scheduled",
     },
 
@@ -97,6 +119,7 @@ const GroupBuySchema = new mongoose.Schema(
     completedAt: Date,
     cancelledAt: Date,
     cancelReason: String,
+    mvqReviewExpiresAt: Date,
   },
   { timestamps: true },
 );
@@ -114,8 +137,7 @@ GroupBuySchema.methods.syncStatus = function () {
     this.status = "active";
   }
   if (["active", "paused"].includes(this.status) && now >= this.endDate) {
-    this.status = "completed";
-    this.completedAt = now;
+    this.status = "payment_processing";
   }
 };
 

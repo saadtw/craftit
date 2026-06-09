@@ -36,6 +36,8 @@ import profile from "@/assets/Profile.png";
 import location from "@/assets/location.png";
 import production from "@/assets/Production.png";
 import security from "@/assets/security.png";
+import googleLogo from "@/assets/google.png";
+import { supabase } from "@/lib/supabase";
 
 export default function ManufacturerSignup() {
   const router = useRouter();
@@ -62,6 +64,18 @@ export default function ManufacturerSignup() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const handleGoogleOAuth = async () => {
+    setError("");
+    const redirectTo = `${window.location.origin}/auth/supabase-callback?flow=manufacturer`;
+    const { error: oauthError } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo },
+    });
+    if (oauthError) {
+      setError(oauthError.message || "Google sign-in failed.");
+    }
+  };
 
   const sectionCompletion = [
     Boolean(
@@ -822,6 +836,28 @@ export default function ManufacturerSignup() {
                   <ChevronRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
+              <div className="relative my-8 max-w-sm mx-auto">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/10"></div>
+                </div>
+                <div className="relative flex justify-center text-[9px] uppercase tracking-widest font-bold">
+                  <span className="px-4 bg-[#050507] text-slate-500">
+                    Or continue with
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleGoogleOAuth}
+                  className="flex items-center justify-center gap-3 bg-white/3 border border-white/10 py-3 px-8 rounded-xl text-[10px] font-bold uppercase tracking-widest hover:bg-white/10 transition-all active:scale-95"
+                >
+                  <Image src={googleLogo} width={16} height={16} alt="google" />
+                  Google
+                </button>
+              </div>
+
               <p className="text-center text-xs text-slate-500 font-bold uppercase tracking-widest mt-6">
                 Already a partner?{" "}
                 <Link

@@ -8,10 +8,12 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_COLORS = {
-  pending_acceptance:
+  confirmed:
     "bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20",
+  cancellation_requested: "bg-red-500/10 text-red-300 border border-red-500/20",
   accepted: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
   in_production: "bg-purple-500/10 text-purple-300 border border-purple-500/20",
   completed: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
@@ -20,7 +22,8 @@ const STATUS_COLORS = {
 };
 
 const STATUS_LABELS = {
-  pending_acceptance: "Pending Acceptance",
+  confirmed: "Confirmed",
+  cancellation_requested: "Cancellation Requested",
   accepted: "Accepted",
   in_production: "In Production",
   completed: "Completed",
@@ -101,9 +104,9 @@ export default function CustomerOrdersPage() {
   const filterTabs = [
     { key: "all", label: "All", count: stats.total },
     {
-      key: "pending_acceptance",
-      label: "Pending",
-      count: stats.pending_acceptance,
+      key: "confirmed",
+      label: "Confirmed",
+      count: stats.confirmed,
     },
     { key: "accepted", label: "Accepted", count: stats.accepted },
     {
@@ -140,7 +143,7 @@ export default function CustomerOrdersPage() {
         <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
           {[
             { label: "Total", value: stats.total || 0 },
-            { label: "Pending", value: stats.pending_acceptance || 0 },
+            { label: "Confirmed", value: stats.confirmed || 0 },
             { label: "Accepted", value: stats.accepted || 0 },
             { label: "In Production", value: stats.in_production || 0 },
             { label: "Completed", value: stats.completed || 0 },
@@ -331,7 +334,7 @@ function CustomerOrderCard({ order, onRefresh }) {
             </div>
 
             <span className="shrink-0 text-lg font-black text-[#eb9728]">
-              ${order.totalPrice?.toLocaleString() || "—"}
+              {formatPKR(order.totalPrice)}
             </span>
           </div>
 
@@ -382,7 +385,7 @@ function CustomerOrderCard({ order, onRefresh }) {
             View Details
           </button>
 
-          {order.status === "pending_acceptance" && (
+          {order.status === "confirmed" && (
             <button
               onClick={handleCancel}
               disabled={cancelling}

@@ -3,6 +3,7 @@ import connectDB from "@/lib/mongodb";
 import PaymentReleaseRequest from "@/models/PaymentReleaseRequest";
 import Order from "@/models/Order";
 import User from "@/models/User";
+import EscrowTransaction from "@/models/EscrowTransaction";
 import getStripe from "@/lib/stripe";
 import { notify } from "@/services/notificationService";
 
@@ -43,24 +44,42 @@ export async function GET(request) {
         const manufacturer = await User.findById(release.manufacturerId);
         if (!manufacturer) throw new Error("Manufacturer not found");
 
-        // Execute Stripe Transfer
-        if (process.env.STRIPE_SECRET_KEY) {
-          if (!manufacturer.stripeConnectAccountId) {
-            throw new Error("Manufacturer has no Stripe Connect account");
+        if (manufacturer.stripeConnectAccountId && process.env.STRIPE_SECRET_KEY) {
+          try {
+            const stripe = getStripe();
+            const transfer = await stripe.transfers.create({
+              amount: Math.round(release.amount * 100),
+              currency: "usd",
+              destination: manufacturer.stripeConnectAccountId,
+              transfer_group: release.orderId.toString(),
+            });
+            release.transferId = transfer.id;
+            release.payoutMethod = "stripe_connect";
+            order.paymentStatus = "released";
+            await EscrowTransaction.create({
+              orderId: order._id,
+              customerId: order.customerId,
+              manufacturerId: order.manufacturerId,
+              amount: release.amount,
+              type: "released",
+              reference: transfer.id,
+            });
+          } catch (stripeErr) {
+            console.error(
+              "Auto-approve transfer failed, queuing for manual payout:",
+              stripeErr.message,
+            );
+            release.payoutMethod = "manual";
+            order.paymentStatus = "release_requested";
           }
-
-          const stripe = getStripe();
-          const transfer = await stripe.transfers.create({
-            amount: Math.round(release.amount * 100),
-            currency: "usd",
-            destination: manufacturer.stripeConnectAccountId,
-          });
-
-          release.transferId = transfer.id;
+        } else {
+          release.payoutMethod = "manual";
+          order.paymentStatus = "release_requested";
         }
 
         release.status = "auto_approved";
         release.resolvedAt = now;
+        await order.save();
         await release.save();
 
         // Notify both parties

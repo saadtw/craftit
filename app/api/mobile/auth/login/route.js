@@ -1,7 +1,7 @@
-import bcrypt from "bcryptjs";
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
+import { supabaseAdmin } from "@/lib/supabase";
 import {
   appendRefreshToken,
   buildAuthUser,
@@ -28,9 +28,7 @@ export async function POST(request) {
       );
     }
 
-    const user = await User.findOne({ email }).select(
-      "+password +twoFactorCodeToken +twoFactorCodeExpires +mobileRefreshTokens",
-    );
+    const user = await User.findOne({ email }).select("+mobileRefreshTokens");
 
     if (!user) {
       return NextResponse.json(
@@ -53,19 +51,36 @@ export async function POST(request) {
       );
     }
 
-    const validPassword = await bcrypt.compare(password, user.password);
-    if (!validPassword) {
+    const { data: supabaseData, error: signInError } =
+      await supabaseAdmin.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+    if (signInError) {
+      if (/email not confirmed/i.test(signInError.message || "")) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Please verify your email before logging in",
+            code: "EMAIL_NOT_VERIFIED",
+          },
+          { status: 403 },
+        );
+      }
+
       return NextResponse.json(
         { success: false, message: "Invalid credentials" },
         { status: 401 },
       );
     }
 
-    if (!user.isEmailVerified) {
+    if (!user.isEmailVerified && !supabaseData?.user?.email_confirmed_at) {
       return NextResponse.json(
         {
           success: false,
           message: "Please verify your email before logging in",
+          code: "EMAIL_NOT_VERIFIED",
         },
         { status: 403 },
       );
@@ -73,6 +88,15 @@ export async function POST(request) {
 
     if (user.twoFactorEnabled) {
       if (!twoFactorCode) {
+        const { error: otpError } = await supabaseAdmin.auth.signInWithOtp({
+          email,
+          options: { shouldCreateUser: false },
+        });
+
+        if (otpError) {
+          console.error("Mobile 2FA OTP send error:", otpError);
+        }
+
         return NextResponse.json(
           {
             success: false,
@@ -83,14 +107,13 @@ export async function POST(request) {
         );
       }
 
-      const { hashToken } = await import("@/lib/token");
-      const hashedCode = hashToken(twoFactorCode);
-      const isCodeValid =
-        user.twoFactorCodeToken === hashedCode &&
-        user.twoFactorCodeExpires &&
-        user.twoFactorCodeExpires > new Date();
+      const { error: otpVerifyError } = await supabaseAdmin.auth.verifyOtp({
+        email,
+        token: twoFactorCode,
+        type: "magiclink",
+      });
 
-      if (!isCodeValid) {
+      if (otpVerifyError) {
         return NextResponse.json(
           {
             success: false,
@@ -100,9 +123,11 @@ export async function POST(request) {
           { status: 401 },
         );
       }
+    }
 
-      user.twoFactorCodeToken = undefined;
-      user.twoFactorCodeExpires = undefined;
+    if (!user.isEmailVerified && supabaseData?.user?.email_confirmed_at) {
+      user.isEmailVerified = true;
+      user.emailVerifiedAt = supabaseData.user.email_confirmed_at;
     }
 
     user.lastLogin = new Date();

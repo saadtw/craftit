@@ -3,7 +3,6 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
-import Order from "@/models/Order";
 import { resolveRequestSession } from "@/lib/requestAuth";
 import getStripe from "@/lib/stripe";
 import { notify } from "@/services/notificationService";
@@ -41,10 +40,7 @@ export async function POST(request, context) {
       try {
         const stripe = getStripe();
         const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-        if (
-          paymentIntent.status !== "requires_capture" &&
-          paymentIntent.status !== "succeeded"
-        ) {
+        if (paymentIntent.status !== "requires_capture") {
           return NextResponse.json(
             { error: "Invalid payment status: " + paymentIntent.status },
             { status: 400 },
@@ -116,28 +112,6 @@ export async function POST(request, context) {
     let remainingBalance = 0;
     let paymentStatus = "authorized";
 
-    if (groupBuy.joinHoldPercent !== undefined) {
-      heldAmount = totalPrice * (groupBuy.joinHoldPercent / 100);
-      remainingBalance = totalPrice - heldAmount;
-    }
-
-    if (isStripeEnabled() && paymentIntentId) {
-      try {
-        const stripe = getStripe();
-        if (heldAmount > 0) {
-          await stripe.paymentIntents.capture(paymentIntentId, {
-            amount_to_capture: Math.round(heldAmount * 100),
-          });
-          paymentStatus = "captured";
-        }
-      } catch (captureErr) {
-        return NextResponse.json(
-          { error: "Payment capture failed: " + captureErr.message },
-          { status: 400 }
-        );
-      }
-    }
-
     // Add participant
     groupBuy.participants.push({
       customerId: session.user.id,
@@ -147,6 +121,7 @@ export async function POST(request, context) {
       heldAmount,
       remainingBalance,
       paymentStatus,
+      status: "authorized",
       paymentIntentId,
     });
 
@@ -185,34 +160,15 @@ export async function POST(request, context) {
 
     // Automatically complete if maxParticipants reached
     if (groupBuy.maxParticipants && groupBuy.currentParticipantCount >= groupBuy.maxParticipants) {
-      groupBuy.status = "completed";
-      groupBuy.completedAt = new Date();
+      groupBuy.status = "payment_processing";
       groupBuy.endDate = new Date();
       await groupBuy.save();
-
-      const productName = groupBuy.title || "Group Buy";
-      for (let i = 0; i < groupBuy.participants.length; i++) {
-        const participant = groupBuy.participants[i];
-        try {
-          const order = await Order.create({
-            orderType: "group_buy",
-            groupBuyId: groupBuy._id,
-            productId: groupBuy.productId,
-            customerId: participant.customerId,
-            manufacturerId: groupBuy.manufacturerId,
-            quantity: participant.quantity,
-            unitPrice: participant.unitPrice,
-            totalPrice: participant.totalPrice,
-            status: participant.remainingBalance > 0 ? "awaiting_production_ack" : "accepted",
-            paymentStatus: participant.remainingBalance > 0 ? "authorized" : "captured",
-          });
-          groupBuy.participants[i].orderId = order._id;
-          notify.groupBuyCompleted(participant.customerId, groupBuy._id, productName);
-        } catch (orderErr) {
-          console.error("Failed to create order for participant:", orderErr);
-        }
-      }
-      await groupBuy.save();
+      notify.groupBuyTierReached(
+        groupBuy.manufacturerId,
+        groupBuy._id,
+        groupBuy.currentTierIndex + 1,
+        groupBuy.tiers[groupBuy.currentTierIndex]?.discountPercent || 0,
+      );
     }
 
     return NextResponse.json({

@@ -4,9 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
 import Product from "@/models/Product";
-import Order from "@/models/Order";
 import { resolveRequestSession } from "@/lib/requestAuth";
-import { notify } from "@/services/notificationService";
 
 // GET  /api/group-buys - List group buys
 // Manufacturer sees their own; public/customer sees active ones
@@ -48,48 +46,15 @@ export async function GET(request) {
       { status: "scheduled", startDate: { $lte: now } },
       { $set: { status: "active" } },
     );
-    
-    // Auto-complete ended campaigns
-    const endedCampaigns = await GroupBuy.find({
-      status: { $in: ["active", "paused"] },
-      endDate: { $lte: now },
-    });
 
-    for (const groupBuy of endedCampaigns) {
-      groupBuy.status = "completed";
-      groupBuy.completedAt = now;
-
-      const productName = groupBuy.title || "Group Buy";
-      for (let i = 0; i < groupBuy.participants.length; i++) {
-        const participant = groupBuy.participants[i];
-        
-        // Create order
-        const order = await Order.create({
-          orderType: "group_buy",
-          groupBuyId: groupBuy._id,
-          productId: groupBuy.productId,
-          customerId: participant.customerId,
-          manufacturerId: groupBuy.manufacturerId,
-          quantity: participant.quantity,
-          unitPrice: participant.unitPrice,
-          totalPrice: participant.totalPrice,
-          status: participant.remainingBalance > 0 ? "awaiting_production_ack" : "accepted",
-          paymentStatus: participant.remainingBalance > 0 ? "authorized" : "captured",
-        });
-
-        // Save orderId to participant
-        groupBuy.participants[i].orderId = order._id;
-
-        // Notify
-        notify.groupBuyCompleted(
-          participant.customerId,
-          groupBuy._id,
-          productName,
-        );
-      }
-      await groupBuy.save();
-    }
-
+    // Ended campaigns are handed to /api/cron/complete-group-buys for capture/order creation.
+    await GroupBuy.updateMany(
+      {
+        status: { $in: ["active", "paused"] },
+        endDate: { $lte: now },
+      },
+      { $set: { status: "payment_processing" } },
+    );
     let sortObj = {};
     switch (sort) {
       case "ending_soon":
@@ -99,7 +64,7 @@ export async function GET(request) {
         sortObj = { createdAt: -1 };
         break;
       case "participants":
-        sortObj = { currentParticipantCount: -1 };
+        sortObj = { currentQuantity: -1 };
         break;
       case "discount":
         sortObj = { "tiers.0.discountPercent": -1 };
@@ -181,6 +146,7 @@ export async function POST(request) {
       basePrice,
       tiers,
       minParticipants,
+      minimumViableQuantity,
       maxParticipants,
       startDate,
       endDate,
@@ -272,6 +238,7 @@ export async function POST(request) {
       basePrice,
       tiers: tiersWithNumbers,
       minParticipants: minParticipants || 1,
+      minimumViableQuantity: minimumViableQuantity || 0,
       maxParticipants: maxParticipants || undefined,
       startDate: start,
       endDate: end,

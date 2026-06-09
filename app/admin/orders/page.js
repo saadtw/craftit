@@ -12,7 +12,8 @@ import { FiSearch, FiAlertTriangle } from "react-icons/fi";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const STATUS_STYLES = {
-  pending_acceptance: { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20", dot: "bg-yellow-400" },
+  confirmed: { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20", dot: "bg-yellow-400" },
+  cancellation_requested: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20", dot: "bg-red-400" },
   accepted: { bg: "bg-sky-500/10", text: "text-sky-400", border: "border-sky-500/20", dot: "bg-sky-400" },
   in_production: { bg: "bg-violet-500/10", text: "text-violet-400", border: "border-violet-500/20", dot: "bg-violet-400" },
   shipped: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20", dot: "bg-blue-400" },
@@ -113,7 +114,8 @@ export default function AdminOrdersPage() {
               </SelectTrigger>
               <SelectContent className="bg-[#020617]/95 backdrop-blur-xl border border-white/10 text-white rounded-xl shadow-2xl p-1">
                 <SelectItem value="all" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">All Statuses</SelectItem>
-                <SelectItem value="pending_acceptance" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Pending Acceptance</SelectItem>
+                <SelectItem value="confirmed" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Confirmed</SelectItem>
+                <SelectItem value="cancellation_requested" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Cancellation Requested</SelectItem>
                 <SelectItem value="accepted" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Accepted</SelectItem>
                 <SelectItem value="in_production" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">In Production</SelectItem>
                 <SelectItem value="shipped" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Shipped</SelectItem>

@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
@@ -656,7 +657,7 @@ function ProductCard({
         <div className="flex items-center justify-between mt-4">
           <div>
             <p className="text-xl font-black text-white tracking-tighter">
-              ${product.price?.toLocaleString()}
+              {formatPKR(product.price)}
             </p>
             <p className="text-[9px] font-black uppercase tracking-widest text-white/30">MOQ: {product.moq}</p>
           </div>

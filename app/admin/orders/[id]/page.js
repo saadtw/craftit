@@ -9,7 +9,8 @@ import Link from "next/link";
 import { FiArrowLeft, FiPackage, FiTruck, FiCheckCircle, FiClock, FiAlertCircle } from "react-icons/fi";
 
 const STATUS_STYLES = {
-  pending_acceptance: { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20", dot: "bg-yellow-400" },
+  confirmed: { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20", dot: "bg-yellow-400" },
+  cancellation_requested: { bg: "bg-red-500/10", text: "text-red-400", border: "border-red-500/20", dot: "bg-red-400" },
   accepted: { bg: "bg-sky-500/10", text: "text-sky-400", border: "border-sky-500/20", dot: "bg-sky-400" },
   in_production: { bg: "bg-violet-500/10", text: "text-violet-400", border: "border-violet-500/20", dot: "bg-violet-400" },
   shipped: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20", dot: "bg-blue-400" },
@@ -76,13 +77,14 @@ export default function AdminOrderDetailPage() {
   }
 
   const timelineSteps = [
-    { key: "pending_acceptance", label: "Order Placed" },
+    { key: "confirmed", label: "Confirmed" },
     { key: "accepted", label: "Accepted" },
     { key: "in_production", label: "In Production" },
     { key: "shipped", label: "Shipped" },
+    { key: "delivered", label: "Delivered" },
     { key: "completed", label: "Completed" },
   ];
-  const statusOrder = ["pending_acceptance", "accepted", "in_production", "shipped", "completed"];
+  const statusOrder = ["confirmed", "accepted", "in_production", "shipped", "delivered", "completed"];
   const currentIdx = statusOrder.indexOf(order.status);
   const statusStyle = STATUS_STYLES[order.status] || STATUS_STYLES.cancelled;
 

@@ -113,7 +113,6 @@ export default function EditProductPage() {
     } catch (e) {
       // Corrupted sessionStorage — fall through to server fetch
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // intentionally empty — run once on mount
 
   // ── Effect 2: Server fetch when auth is ready and session was not restored ──
@@ -192,7 +191,10 @@ export default function EditProductPage() {
     sessionStorage.setItem(DRAFT_MODEL_KEY, JSON.stringify(form.model3D));
     // Store the product ID so model-editor can directly save annotations to MongoDB
     sessionStorage.setItem("modelEditorProductId", id);
-    sessionStorage.setItem("modelEditorReturnUrl", `/manufacturer/products/${id}/edit`);
+    sessionStorage.setItem(
+      "modelEditorReturnUrl",
+      `/manufacturer/products/${id}/edit`,
+    );
     router.push("/manufacturer/products/model-editor");
   };
 
@@ -308,7 +310,7 @@ export default function EditProductPage() {
     setModelUploading(false);
   };
 
-const handleModelEditorSave = async (payload) => {
+  const handleModelEditorSave = async (payload) => {
     setModelUploading(true);
     try {
       const { modelUrl: newModelUrl, annotations, cameraState } = payload || {};
@@ -346,7 +348,7 @@ const handleModelEditorSave = async (payload) => {
     } finally {
       setModelUploading(false);
     }
-};
+  };
 
   const addTag = () => {
     const t = tagInput.trim().toLowerCase();
@@ -461,7 +463,11 @@ const handleModelEditorSave = async (payload) => {
       if (data.success) {
         setLastSaved(new Date());
         setForm((prev) => ({ ...prev, currentStatus: data.product.status }));
-        if (Number(form.stock) > 0 && form.currentStatus === "out_of_stock" && !publishNow) {
+        if (
+          Number(form.stock) > 0 &&
+          form.currentStatus === "out_of_stock" &&
+          !publishNow
+        ) {
           setShowRestockNotice(true);
         } else {
           setShowRestockNotice(false);
@@ -488,8 +494,18 @@ const handleModelEditorSave = async (payload) => {
               href={`/manufacturer/products/${id}`}
               className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 border border-white/10 text-white/40 hover:text-white hover:bg-white/10 transition-all"
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </Link>
             <div>
@@ -497,7 +513,9 @@ const handleModelEditorSave = async (payload) => {
                 Edit Product
               </h1>
               <div className="flex items-center gap-3 mt-1">
-                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">Configuration Studio</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30">
+                  Configuration Studio
+                </p>
                 {lastSaved && (
                   <>
                     <span className="w-1 h-1 rounded-full bg-emerald-500/40" />
@@ -525,7 +543,9 @@ const handleModelEditorSave = async (payload) => {
               {saving && (
                 <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
               )}
-              {form.currentStatus === "active" ? "Update Product" : "Publish Product"}
+              {form.currentStatus === "active"
+                ? "Update Product"
+                : "Publish Product"}
             </button>
           </div>
         </div>
@@ -534,13 +554,16 @@ const handleModelEditorSave = async (payload) => {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 pb-8">
           <div className="relative flex items-center justify-between">
             <div className="absolute left-0 top-1/2 -translate-y-1/2 w-full h-[2px] bg-white/5" />
-            <div 
+            <div
               className="absolute left-0 top-1/2 -translate-y-1/2 h-[2px] bg-purple-500 transition-all duration-500 shadow-[0_0_10px_rgba(168,85,247,0.5)]"
               style={{ width: `${((step - 1) / (STEPS.length - 1)) * 100}%` }}
             />
 
             {STEPS.map((s, i) => (
-              <div key={s.id} className="relative z-10 flex flex-col items-center">
+              <div
+                key={s.id}
+                className="relative z-10 flex flex-col items-center"
+              >
                 <button
                   onClick={() => setStep(s.id)}
                   className={`group flex flex-col items-center gap-3 transition-all ${
@@ -557,16 +580,30 @@ const handleModelEditorSave = async (payload) => {
                     }`}
                   >
                     {s.id < step ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={3}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     ) : (
                       s.id
                     )}
                   </div>
-                  <span 
+                  <span
                     className={`text-[9px] font-black uppercase tracking-[0.2em] transition-all duration-500 ${
-                      step === s.id ? "text-white" : s.id < step ? "text-emerald-400" : "text-white/20"
+                      step === s.id
+                        ? "text-white"
+                        : s.id < step
+                          ? "text-emerald-400"
+                          : "text-white/20"
                     }`}
                   >
                     {s.label}
@@ -584,12 +621,23 @@ const handleModelEditorSave = async (payload) => {
           <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-[1.5rem] px-6 py-4 flex items-center justify-between gap-4 backdrop-blur-md">
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-400">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={3}
+                    d="M5 13l4 4L19 7"
+                  />
                 </svg>
               </div>
               <p className="text-[10px] font-black uppercase tracking-widest text-emerald-400">
-                Stock replenished — Mark as Active to make it visible to customers.
+                Stock replenished — Mark as Active to make it visible to
+                customers.
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -603,8 +651,18 @@ const handleModelEditorSave = async (payload) => {
                 onClick={() => setShowRestockNotice(false)}
                 className="text-emerald-500/40 hover:text-emerald-500 transition-colors"
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-4 h-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -637,11 +695,15 @@ const handleModelEditorSave = async (payload) => {
                       value={form.name}
                       onChange={(e) => setField("name", e.target.value)}
                       className={`w-full px-5 py-3.5 bg-white/[0.03] border-2 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10 transition-all ${
-                        errors.name ? "border-red-500/50 bg-red-500/5" : "border-purple-500/20"
+                        errors.name
+                          ? "border-red-500/50 bg-red-500/5"
+                          : "border-purple-500/20"
                       }`}
                     />
                     {errors.name && (
-                      <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2">{errors.name}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2">
+                        {errors.name}
+                      </p>
                     )}
                   </div>
 
@@ -654,11 +716,15 @@ const handleModelEditorSave = async (payload) => {
                       onChange={(e) => setField("description", e.target.value)}
                       rows={5}
                       className={`w-full px-5 py-3.5 bg-white/[0.03] border-2 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10 resize-none transition-all ${
-                        errors.description ? "border-red-500/50 bg-red-500/5" : "border-purple-500/20"
+                        errors.description
+                          ? "border-red-500/50 bg-red-500/5"
+                          : "border-purple-500/20"
                       }`}
                     />
                     {errors.description && (
-                      <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2">{errors.description}</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-red-400 mt-2">
+                        {errors.description}
+                      </p>
                     )}
                   </div>
 
@@ -670,7 +736,10 @@ const handleModelEditorSave = async (payload) => {
                       <CustomDropdown
                         value={form.category}
                         onChange={(val) => setField("category", val)}
-                        options={[{ value: "", label: "Select Category" }, ...CATEGORIES.map(c => ({ value: c, label: c }))]}
+                        options={[
+                          { value: "", label: "Select Category" },
+                          ...CATEGORIES.map((c) => ({ value: c, label: c })),
+                        ]}
                         placeholder="Select Category"
                       />
                     </div>
@@ -681,7 +750,9 @@ const handleModelEditorSave = async (payload) => {
                       <input
                         type="text"
                         value={form.subCategory}
-                        onChange={(e) => setField("subCategory", e.target.value)}
+                        onChange={(e) =>
+                          setField("subCategory", e.target.value)
+                        }
                         className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10 transition-all"
                       />
                     </div>
@@ -705,10 +776,13 @@ const handleModelEditorSave = async (payload) => {
                 <div className="grid grid-cols-2 gap-6">
                   <div>
                     <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">
-                      Unit Price (USD) <span className="text-purple-400">*</span>
+                      Unit Price (PKR){" "}
+                      <span className="text-purple-400">*</span>
                     </label>
                     <div className="relative">
-                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-xs font-black">$</span>
+                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-xs font-black">
+                        Rs
+                      </span>
                       <input
                         type="number"
                         min="0"
@@ -716,7 +790,9 @@ const handleModelEditorSave = async (payload) => {
                         value={form.price}
                         onChange={(e) => setField("price", e.target.value)}
                         className={`w-full pl-10 pr-5 py-3.5 bg-white/[0.03] border-2 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10 transition-all ${
-                          errors.price ? "border-red-500/50" : "border-purple-500/20"
+                          errors.price
+                            ? "border-red-500/50"
+                            : "border-purple-500/20"
                         }`}
                       />
                     </div>
@@ -731,7 +807,9 @@ const handleModelEditorSave = async (payload) => {
                       value={form.moq}
                       onChange={(e) => setField("moq", e.target.value)}
                       className={`w-full px-5 py-3.5 bg-white/[0.03] border-2 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10 transition-all ${
-                        errors.moq ? "border-red-500/50" : "border-purple-500/20"
+                        errors.moq
+                          ? "border-red-500/50"
+                          : "border-purple-500/20"
                       }`}
                     />
                   </div>
@@ -767,28 +845,52 @@ const handleModelEditorSave = async (payload) => {
                       type="checkbox"
                       id="customization"
                       checked={form.customizationOptions}
-                      onChange={(e) => setField("customizationOptions", e.target.checked)}
+                      onChange={(e) =>
+                        setField("customizationOptions", e.target.checked)
+                      }
                       className="w-6 h-6 rounded-lg bg-white/5 border-2 border-purple-500/30 checked:bg-purple-600 checked:border-purple-400 transition-all appearance-none cursor-pointer"
                     />
                     {form.customizationOptions && (
-                      <svg className="w-4 h-4 text-white absolute left-1 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={4} d="M5 13l4 4L19 7" />
+                      <svg
+                        className="w-4 h-4 text-white absolute left-1 pointer-events-none"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={4}
+                          d="M5 13l4 4L19 7"
+                        />
                       </svg>
                     )}
                   </div>
-                  <label htmlFor="customization" className="flex-1 cursor-pointer">
-                    <span className="block text-xs font-black uppercase tracking-widest text-white">This product supports customization</span>
-                    <span className="block text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">Customers can request modifications or custom specs</span>
+                  <label
+                    htmlFor="customization"
+                    className="flex-1 cursor-pointer"
+                  >
+                    <span className="block text-xs font-black uppercase tracking-widest text-white">
+                      This product supports customization
+                    </span>
+                    <span className="block text-[10px] font-black uppercase tracking-widest text-white/30 mt-1">
+                      Customers can request modifications or custom specs
+                    </span>
                   </label>
                 </div>
 
                 {form.customizationOptions && (
                   <div className="space-y-6 p-8 bg-purple-600/5 rounded-3xl border-2 border-purple-500/20 animate-in zoom-in-95 duration-300">
                     <div>
-                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-3">Allowed Customization Types</p>
+                      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-3">
+                        Allowed Customization Types
+                      </p>
                       <div className="flex flex-wrap gap-2">
                         {CUSTOMIZATION_TYPE_OPTIONS.map((type) => {
-                          const isSelected = form.customizationCapabilities.allowedTypes.includes(type.id);
+                          const isSelected =
+                            form.customizationCapabilities.allowedTypes.includes(
+                              type.id,
+                            );
                           return (
                             <button
                               key={type.id}
@@ -815,48 +917,82 @@ const handleModelEditorSave = async (payload) => {
             {step === 3 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="border-l-4 border-purple-600 pl-6">
-                  <h2 className="text-2xl font-black tracking-tight uppercase text-white">Specifications</h2>
-                  <p className="text-sm text-white/40 mt-1">Physical and technical details about your product.</p>
+                  <h2 className="text-2xl font-black tracking-tight uppercase text-white">
+                    Specifications
+                  </h2>
+                  <p className="text-sm text-white/40 mt-1">
+                    Physical and technical details about your product.
+                  </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-6">
                   <div className="col-span-2">
-                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Primary Material</label>
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">
+                      Primary Material
+                    </label>
                     <CustomDropdown
                       value={form.specifications.material}
-                      onChange={(val) => setField("specifications.material", val)}
-                      options={[{ value: "", label: "Select Material" }, ...MATERIALS.map(m => ({ value: m, label: m }))]}
+                      onChange={(val) =>
+                        setField("specifications.material", val)
+                      }
+                      options={[
+                        { value: "", label: "Select Material" },
+                        ...MATERIALS.map((m) => ({ value: m, label: m })),
+                      ]}
                       placeholder="Select Material"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Dimensions (L × W × H)</label>
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">
+                      Dimensions (L × W × H)
+                    </label>
                     <div className="flex items-center gap-2">
                       <div className="relative flex-1">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20">L</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20">
+                          L
+                        </span>
                         <input
                           type="number"
                           value={form.specifications.dimensions.length}
-                          onChange={(e) => setField("specifications.dimensions.length", e.target.value)}
+                          onChange={(e) =>
+                            setField(
+                              "specifications.dimensions.length",
+                              e.target.value,
+                            )
+                          }
                           className="w-full pl-8 pr-4 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white transition-all"
                         />
                       </div>
                       <div className="relative flex-1">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20">W</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20">
+                          W
+                        </span>
                         <input
                           type="number"
                           value={form.specifications.dimensions.width}
-                          onChange={(e) => setField("specifications.dimensions.width", e.target.value)}
+                          onChange={(e) =>
+                            setField(
+                              "specifications.dimensions.width",
+                              e.target.value,
+                            )
+                          }
                           className="w-full pl-8 pr-4 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white transition-all"
                         />
                       </div>
                       <div className="relative flex-1">
-                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20">H</span>
+                        <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[10px] font-black text-white/20">
+                          H
+                        </span>
                         <input
                           type="number"
                           value={form.specifications.dimensions.height}
-                          onChange={(e) => setField("specifications.dimensions.height", e.target.value)}
+                          onChange={(e) =>
+                            setField(
+                              "specifications.dimensions.height",
+                              e.target.value,
+                            )
+                          }
                           className="w-full pl-8 pr-4 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white transition-all"
                         />
                       </div>
@@ -865,13 +1001,17 @@ const handleModelEditorSave = async (payload) => {
 
                   <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Unit</label>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">
+                        Unit
+                      </label>
                       <div className="flex gap-2">
                         {["cm", "inch", "mm"].map((u) => (
                           <button
                             key={u}
                             type="button"
-                            onClick={() => setField("specifications.dimensions.unit", u)}
+                            onClick={() =>
+                              setField("specifications.dimensions.unit", u)
+                            }
                             className={`flex-1 py-3.5 text-[10px] font-black uppercase tracking-widest rounded-2xl border transition-all ${
                               form.specifications.dimensions.unit === u
                                 ? "bg-purple-600 text-white border-purple-400"
@@ -884,24 +1024,32 @@ const handleModelEditorSave = async (payload) => {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Weight (kg)</label>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">
+                        Weight (kg)
+                      </label>
                       <input
                         type="number"
                         value={form.specifications.weight}
-                        onChange={(e) => setField("specifications.weight", e.target.value)}
+                        onChange={(e) =>
+                          setField("specifications.weight", e.target.value)
+                        }
                         className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white transition-all"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Available Colors</label>
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">
+                      Available Colors
+                    </label>
                     <div className="flex gap-2">
                       <input
                         type="text"
                         value={colorInput}
                         onChange={(e) => setColorInput(e.target.value)}
-                        onKeyDown={(e) => e.key === "Enter" && addColor(colorInput)}
+                        onKeyDown={(e) =>
+                          e.key === "Enter" && addColor(colorInput)
+                        }
                         placeholder="Add color..."
                         className="flex-1 px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white transition-all"
                       />
@@ -916,9 +1064,17 @@ const handleModelEditorSave = async (payload) => {
                     {form.specifications.color.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-4">
                         {form.specifications.color.map((c) => (
-                          <span key={c} className="flex items-center gap-2 px-4 py-2 bg-purple-600/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-widest rounded-xl">
+                          <span
+                            key={c}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-widest rounded-xl"
+                          >
                             {c}
-                            <button onClick={() => removeColor(c)} className="hover:text-white transition-colors">✕</button>
+                            <button
+                              onClick={() => removeColor(c)}
+                              className="hover:text-white transition-colors"
+                            >
+                              ✕
+                            </button>
                           </span>
                         ))}
                       </div>
@@ -928,31 +1084,54 @@ const handleModelEditorSave = async (payload) => {
 
                 <div className="p-8 bg-white/[0.02] border-2 border-purple-500/20 rounded-[2rem] space-y-6">
                   <div className="flex items-center gap-3 text-white/20 mb-2">
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4a2 2 0 012-2m16 0h-2M4 13H6" />
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 012 2v4a2 2 0 01-2 2H4a2 2 0 01-2-2v-4a2 2 0 012-2m16 0h-2M4 13H6"
+                      />
                     </svg>
-                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">Shipping Details</span>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em]">
+                      Shipping Details
+                    </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-6">
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Shipping Weight (kg)</label>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">
+                        Shipping Weight (kg)
+                      </label>
                       <input
                         type="number"
                         value={form.shippingWeight}
-                        onChange={(e) => setField("shippingWeight", e.target.value)}
+                        onChange={(e) =>
+                          setField("shippingWeight", e.target.value)
+                        }
                         className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white transition-all"
                       />
                     </div>
                     <div>
-                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">Shipping Dimensions</label>
+                      <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2.5">
+                        Shipping Dimensions
+                      </label>
                       <div className="grid grid-cols-3 gap-2">
                         {["length", "width", "height"].map((dim) => (
                           <input
                             key={dim}
                             type="number"
                             value={form.shippingDimensions[dim]}
-                            onChange={(e) => setField(`shippingDimensions.${dim}`, e.target.value)}
+                            onChange={(e) =>
+                              setField(
+                                `shippingDimensions.${dim}`,
+                                e.target.value,
+                              )
+                            }
                             placeholder={dim[0].toUpperCase()}
                             className="w-full px-3 py-3.5 bg-white/[0.03] border-2 border-purple-500/10 rounded-xl text-white text-xs placeholder:text-white/5 focus:outline-none focus:border-purple-500/40 transition-all"
                           />
@@ -968,22 +1147,38 @@ const handleModelEditorSave = async (payload) => {
             {step === 4 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="border-l-4 border-purple-600 pl-6">
-                  <h2 className="text-2xl font-black tracking-tight uppercase text-white">Product Media</h2>
-                  <p className="text-sm text-white/40 mt-1">Visual assets and 3D configuration models.</p>
+                  <h2 className="text-2xl font-black tracking-tight uppercase text-white">
+                    Product Media
+                  </h2>
+                  <p className="text-sm text-white/40 mt-1">
+                    Visual assets and 3D configuration models.
+                  </p>
                 </div>
 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-4">Product Gallery</label>
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-4">
+                      Product Gallery
+                    </label>
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       {form.images.map((img, idx) => (
-                        <div key={idx} className="relative aspect-square rounded-[2rem] overflow-hidden border-2 border-purple-500/20 group">
-                          <Image src={img.url} alt="" fill className="object-cover" />
+                        <div
+                          key={idx}
+                          className="relative aspect-square rounded-[2rem] overflow-hidden border-2 border-purple-500/20 group"
+                        >
+                          <Image
+                            src={img.url}
+                            alt=""
+                            fill
+                            className="object-cover"
+                          />
                           <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-all flex flex-col items-center justify-center gap-2">
                             <button
                               onClick={() => setPrimaryImage(idx)}
                               className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest rounded-lg transition-all ${
-                                img.isPrimary ? "bg-emerald-500 text-white" : "bg-white/10 text-white hover:bg-white/20"
+                                img.isPrimary
+                                  ? "bg-emerald-500 text-white"
+                                  : "bg-white/10 text-white hover:bg-white/20"
                               }`}
                             >
                               {img.isPrimary ? "Main Cover" : "Set Primary"}
@@ -1002,18 +1197,39 @@ const handleModelEditorSave = async (payload) => {
                         className="aspect-square rounded-[2rem] border-2 border-dashed border-purple-500/20 bg-white/5 hover:bg-white/10 transition-all flex flex-col items-center justify-center gap-3 group"
                       >
                         <div className="w-10 h-10 rounded-full bg-purple-600/10 flex items-center justify-center text-purple-400 group-hover:scale-110 transition-transform">
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M12 4v16m8-8H4" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={3}
+                              d="M12 4v16m8-8H4"
+                            />
                           </svg>
                         </div>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Add Image</span>
+                        <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                          Add Image
+                        </span>
                       </button>
                     </div>
-                    <input ref={imageInputRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => handleImageUpload(e.target.files)} />
+                    <input
+                      ref={imageInputRef}
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e.target.files)}
+                    />
                   </div>
 
                   <div className="pt-8 border-t border-white/5">
-                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-4">3D Configuration Model</label>
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-4">
+                      3D Configuration Model
+                    </label>
                     {modelUploading ? (
                       <div className="w-full py-12 rounded-[2rem] border-2 border-purple-500/30 bg-white/5 flex flex-col items-center justify-center gap-4">
                         <GlobalLoader text="Processing 3D Model... Converting & optimising — this may take a minute" />
@@ -1030,14 +1246,29 @@ const handleModelEditorSave = async (payload) => {
                           </div>
                           <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
                             <div className="text-left">
-                              <p className="text-[10px] font-black uppercase tracking-widest text-white truncate max-w-[200px]">{form.model3D.filename}</p>
-                              <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-1">Ready for annotation</p>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-white truncate max-w-[200px]">
+                                {form.model3D.filename}
+                              </p>
+                              <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mt-1">
+                                Ready for annotation
+                              </p>
                             </div>
                             <div className="flex gap-2">
-                              <button onClick={handleOpenModelEditor} className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-500 shadow-[0_0_15px_rgba(147,51,234,0.3)] transition-all">
+                              <button
+                                onClick={handleOpenModelEditor}
+                                className="px-5 py-2.5 bg-purple-600 text-white rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-purple-500 shadow-[0_0_15px_rgba(147,51,234,0.3)] transition-all"
+                              >
                                 Annotate Model
                               </button>
-                              <button onClick={() => setForm((prev) => ({ ...prev, model3D: null }))} className="px-5 py-2.5 bg-white/5 text-white/40 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-400 transition-all">
+                              <button
+                                onClick={() =>
+                                  setForm((prev) => ({
+                                    ...prev,
+                                    model3D: null,
+                                  }))
+                                }
+                                className="px-5 py-2.5 bg-white/5 text-white/40 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-400 transition-all"
+                              >
                                 Replace
                               </button>
                             </div>
@@ -1050,17 +1281,37 @@ const handleModelEditorSave = async (payload) => {
                         className="w-full py-12 rounded-[2rem] border-2 border-dashed border-purple-500/20 bg-white/5 hover:bg-white/10 transition-all flex flex-col items-center justify-center gap-4 group"
                       >
                         <div className="w-16 h-16 rounded-2xl bg-purple-600/10 flex items-center justify-center text-purple-400 group-hover:rotate-12 transition-transform">
-                          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                          <svg
+                            className="w-8 h-8"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                            />
                           </svg>
                         </div>
                         <div className="text-center">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-white">Upload 3D Engine Asset</p>
-                          <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mt-1">Supports .GLB, .OBJ, .STL (Max 50MB)</p>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white">
+                            Upload 3D Engine Asset
+                          </p>
+                          <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mt-1">
+                            Supports .GLB, .OBJ, .STL (Max 50MB)
+                          </p>
                         </div>
                       </button>
                     )}
-                    <input ref={modelInputRef} type="file" accept=".glb,.obj,.stl,.gltf" className="hidden" onChange={(e) => handleModelUpload(e.target.files?.[0])} />
+                    <input
+                      ref={modelInputRef}
+                      type="file"
+                      accept=".glb,.obj,.stl,.gltf"
+                      className="hidden"
+                      onChange={(e) => handleModelUpload(e.target.files?.[0])}
+                    />
                   </div>
                 </div>
               </div>
@@ -1070,30 +1321,52 @@ const handleModelEditorSave = async (payload) => {
             {step === 5 && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="border-l-4 border-purple-600 pl-6">
-                  <h2 className="text-2xl font-black tracking-tight uppercase text-white">SEO & Discovery</h2>
-                  <p className="text-sm text-white/40 mt-1">Optimize how your product appears in search results.</p>
+                  <h2 className="text-2xl font-black tracking-tight uppercase text-white">
+                    SEO & Discovery
+                  </h2>
+                  <p className="text-sm text-white/40 mt-1">
+                    Optimize how your product appears in search results.
+                  </p>
                 </div>
 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-3">Discovery Tags</label>
+                    <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-3">
+                      Discovery Tags
+                    </label>
                     <div className="flex gap-3">
                       <input
                         type="text"
                         value={tagInput}
                         onChange={(e) => setTagInput(e.target.value)}
-                        onKeyDown={(e) => (e.key === "Enter" || e.key === ",") && (e.preventDefault(), addTag())}
+                        onKeyDown={(e) =>
+                          (e.key === "Enter" || e.key === ",") &&
+                          (e.preventDefault(), addTag())
+                        }
                         placeholder="Type and press Enter..."
                         className="flex-1 px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10 transition-all"
                       />
-                      <button onClick={addTag} className="px-6 py-3.5 bg-white/5 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-white/10">Add</button>
+                      <button
+                        onClick={addTag}
+                        className="px-6 py-3.5 bg-white/5 text-white text-[10px] font-black uppercase tracking-widest rounded-2xl hover:bg-white/10"
+                      >
+                        Add
+                      </button>
                     </div>
                     {form.tags.length > 0 && (
                       <div className="flex flex-wrap gap-2 mt-4">
                         {form.tags.map((tag) => (
-                          <span key={tag} className="flex items-center gap-2 px-4 py-2 bg-purple-600/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-widest rounded-xl">
+                          <span
+                            key={tag}
+                            className="flex items-center gap-2 px-4 py-2 bg-purple-600/10 border border-purple-500/20 text-purple-400 text-[10px] font-black uppercase tracking-widest rounded-xl"
+                          >
                             #{tag}
-                            <button onClick={() => removeTag(tag)} className="hover:text-white transition-colors">✕</button>
+                            <button
+                              onClick={() => removeTag(tag)}
+                              className="hover:text-white transition-colors"
+                            >
+                              ✕
+                            </button>
                           </span>
                         ))}
                       </div>
@@ -1103,7 +1376,9 @@ const handleModelEditorSave = async (payload) => {
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-8 border-t border-white/5">
                     <div className="space-y-6">
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2">SEO Title Override</label>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2">
+                          SEO Title Override
+                        </label>
                         <input
                           type="text"
                           value={form.seoTitle}
@@ -1113,10 +1388,14 @@ const handleModelEditorSave = async (payload) => {
                         />
                       </div>
                       <div>
-                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2">SEO Meta Description</label>
+                        <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/50 mb-2">
+                          SEO Meta Description
+                        </label>
                         <textarea
                           value={form.seoDescription}
-                          onChange={(e) => setField("seoDescription", e.target.value)}
+                          onChange={(e) =>
+                            setField("seoDescription", e.target.value)
+                          }
                           maxLength={160}
                           rows={4}
                           className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white resize-none transition-all"
@@ -1124,12 +1403,20 @@ const handleModelEditorSave = async (payload) => {
                       </div>
                     </div>
                     <div className="p-6 bg-[#0B011D] rounded-[2rem] border-2 border-purple-500/30">
-                      <p className="text-[10px] font-black uppercase tracking-widest text-purple-400/60 mb-4">Live Search Preview</p>
+                      <p className="text-[10px] font-black uppercase tracking-widest text-purple-400/60 mb-4">
+                        Live Search Preview
+                      </p>
                       <div className="space-y-2">
-                        <p className="text-indigo-400 text-lg font-black line-clamp-1">{form.seoTitle || form.name || "Product Title"}</p>
-                        <p className="text-emerald-400/60 text-[10px] font-medium truncate">https://craftit.ai/products/{id}</p>
+                        <p className="text-indigo-400 text-lg font-black line-clamp-1">
+                          {form.seoTitle || form.name || "Product Title"}
+                        </p>
+                        <p className="text-emerald-400/60 text-[10px] font-medium truncate">
+                          https://craftit.ai/products/{id}
+                        </p>
                         <p className="text-white/40 text-xs line-clamp-3 font-medium leading-relaxed">
-                          {form.seoDescription || form.description || "The product description will appear here as the meta snippet for search engine indexing..."}
+                          {form.seoDescription ||
+                            form.description ||
+                            "The product description will appear here as the meta snippet for search engine indexing..."}
                         </p>
                       </div>
                     </div>
@@ -1148,13 +1435,16 @@ const handleModelEditorSave = async (payload) => {
             onClick={prevStep}
             disabled={step === 1}
             className={`px-10 py-4 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl transition-all ${
-              step === 1 ? "opacity-20 cursor-not-allowed text-white" : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
+              step === 1
+                ? "opacity-20 cursor-not-allowed text-white"
+                : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
             }`}
           >
             ← Previous
           </button>
           <div className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20">
-            Step {step} <span className="mx-2 text-white/5">/</span> {STEPS.length}
+            Step {step} <span className="mx-2 text-white/5">/</span>{" "}
+            {STEPS.length}
           </div>
           {step < 5 ? (
             <button
@@ -1162,8 +1452,18 @@ const handleModelEditorSave = async (payload) => {
               className="px-10 py-4 text-[10px] font-black uppercase tracking-[0.2em] bg-white text-[#050507] rounded-2xl hover:bg-white/90 transition-all shadow-[0_0_30px_rgba(255,255,255,0.1)] flex items-center gap-3 group"
             >
               Continue
-              <svg className="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              <svg
+                className="w-4 h-4 group-hover:translate-x-1 transition-transform"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={3}
+                  d="M14 5l7 7m0 0l-7 7m7-7H3"
+                />
               </svg>
             </button>
           ) : (
@@ -1184,11 +1484,12 @@ const handleModelEditorSave = async (payload) => {
 function CustomDropdown({ value, options, onChange, placeholder }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const selectedOption = options.find(opt => opt.value === value);
+  const selectedOption = options.find((opt) => opt.value === value);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target))
+        setIsOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -1202,8 +1503,18 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
         className="flex items-center justify-between w-full px-5 py-3.5 text-[10px] font-black uppercase tracking-widest bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl hover:bg-white/[0.08] transition-all text-white group"
       >
         <span className="truncate">{selectedOption?.label || placeholder}</span>
-        <svg className={`w-4 h-4 text-white/20 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        <svg
+          className={`w-4 h-4 text-white/20 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
@@ -1219,7 +1530,9 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
                   setIsOpen(false);
                 }}
                 className={`w-full px-5 py-2 text-left text-[10px] font-black uppercase tracking-widest transition-all ${
-                  value === opt.value ? "bg-purple-600 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  value === opt.value
+                    ? "bg-purple-600 text-white"
+                    : "text-white/60 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 {opt.label}

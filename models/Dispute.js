@@ -56,7 +56,14 @@ const DisputeSchema = new mongoose.Schema(
 
     desiredResolution: {
       type: String,
-      enum: ["full_refund", "partial_refund", "replacement", "other"],
+      enum: [
+        "full_refund",
+        "partial_refund",
+        "replacement",
+        "other",
+        "release_payment",
+        "partial_release",
+      ],
       required: true,
     },
 
@@ -76,7 +83,12 @@ const DisputeSchema = new mongoose.Schema(
     },
     resolution: {
       type: String,
-      enum: ["refund_customer", "side_with_manufacturer", "partial_resolution"],
+      enum: [
+        "refund_customer",
+        "side_with_manufacturer",
+        "partial_resolution",
+        "release_payment",
+      ],
     },
     resolutionAmount: Number,
     resolutionMessage: String,

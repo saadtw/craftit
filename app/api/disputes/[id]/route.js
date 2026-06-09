@@ -4,6 +4,7 @@ import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Dispute from "@/models/Dispute";
 import Order from "@/models/Order";
+import EscrowTransaction from "@/models/EscrowTransaction";
 import { notify } from "@/services/notificationService";
 import { resolveRequestSession } from "@/lib/requestAuth";
 import getStripe from "@/lib/stripe";
@@ -155,22 +156,40 @@ export async function PATCH(request, { params }) {
           order.status = "cancelled";
           order.paymentStatus = "refunded";
           if (resolutionAmount) order.refundAmount = resolutionAmount;
-        } else if (resolution === "side_with_manufacturer") {
-          // Release held funds to manufacturer via Stripe Connect
-          try {
-            const manufacturer = await mongoose.model("User").findById(order.manufacturerId);
-            if (stripe && manufacturer?.stripeConnectAccountId && order.paymentIntentId && order.paymentStatus === "captured") {
-              const amountToTransfer = resolutionAmount || order.totalPrice;
-              await stripe.transfers.create({
+        } else if (
+          resolution === "side_with_manufacturer" ||
+          resolution === "release_payment"
+        ) {
+          const manufacturer = await mongoose
+            .model("User")
+            .findById(order.manufacturerId)
+            .select("stripeConnectAccountId");
+          const amountToTransfer = resolutionAmount || order.totalPrice;
+
+          if (manufacturer?.stripeConnectAccountId && order.paymentIntentId && stripe) {
+            try {
+              const transfer = await stripe.transfers.create({
                 amount: Math.round(amountToTransfer * 100),
                 currency: "usd",
                 destination: manufacturer.stripeConnectAccountId,
                 transfer_group: order._id.toString(),
               });
+              order.paymentStatus = "released";
+              await EscrowTransaction.create({
+                orderId: order._id,
+                customerId: order.customerId,
+                manufacturerId: order.manufacturerId,
+                amount: amountToTransfer,
+                type: "released",
+                reference: transfer.id,
+                createdBy: session.user.id,
+              });
+            } catch (stripeError) {
+              console.error("Dispute transfer failed, queueing for admin payout:", stripeError.message);
+              order.paymentStatus = "release_requested";
             }
-          } catch (stripeError) {
-            console.error("Stripe transfer failed:", stripeError);
-            return NextResponse.json({ error: "Stripe transfer failed: " + stripeError.message }, { status: 500 });
+          } else {
+            order.paymentStatus = "release_requested";
           }
 
           order.status = "completed";

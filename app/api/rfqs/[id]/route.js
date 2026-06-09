@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import RFQ from "@/models/RFQ";
 import Bid from "@/models/Bid";
+import Order from "@/models/Order";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
@@ -33,6 +34,7 @@ export async function GET(request, context) {
       })
       .populate("customerId", "name email phone")
       .populate("acceptedBidId")
+      .populate("sourceProductId", "name images category specifications")
       .lean();
 
     if (!rfq) {
@@ -95,10 +97,22 @@ export async function GET(request, context) {
         .lean();
     }
 
+    const acceptedOrder =
+      rfq.status === "bid_accepted" || rfq.acceptedBidId
+        ? await Order.findOne({ rfqId: id })
+            .select(
+              "orderNumber status totalPrice designFiles productDetails manufacturerId customerId bidId createdAt",
+            )
+            .populate("manufacturerId", "name businessName")
+            .populate("bidId", "amount timeline")
+            .lean()
+        : null;
+
     return NextResponse.json({
       success: true,
       rfq,
       bids,
+      acceptedOrder,
     });
   } catch (error) {
     return NextResponse.json({ error: error.message }, { status: 500 });

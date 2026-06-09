@@ -71,16 +71,17 @@ const OrderSchema = new mongoose.Schema(
     status: {
       type: String,
       enum: [
-        "pending_acceptance",
-        "awaiting_production_ack",
+        "confirmed",
+        "cancellation_requested",
         "accepted",
         "in_production",
         "shipped",
+        "delivered",
         "completed",
         "cancelled",
         "disputed",
       ],
-      default: "pending_acceptance",
+      default: "confirmed",
     },
 
     // Production Milestones
@@ -113,6 +114,9 @@ const OrderSchema = new mongoose.Schema(
         "pending",
         "authorized",
         "captured",
+        "held_in_escrow",
+        "release_requested",
+        "released",
         "refunded",
         "partially_refunded",
       ],
@@ -137,6 +141,12 @@ const OrderSchema = new mongoose.Schema(
     trackingNumber: String,
     estimatedDeliveryDate: Date,
     actualDeliveryDate: Date,
+    deliveredAt: Date,
+    deliveryConfirmedBy: {
+      type: String,
+      enum: ["customer", "auto"],
+    },
+    disputeWindowClosedAt: Date,
 
     // Special Requirements
     specialRequirements: String,
@@ -144,6 +154,13 @@ const OrderSchema = new mongoose.Schema(
 
     // Timestamps
     manufacturerAcceptedAt: Date,
+    cancellationWindowExpiresAt: { type: Date, default: null },
+    cancellationRequestedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      default: null,
+    },
+    productionAcknowledgedAt: { type: Date, default: null },
     rejectedAt: Date,
     rejectionReason: String,
     cancelledAt: Date,

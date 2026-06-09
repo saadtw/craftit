@@ -1,72 +1,52 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import { resolveRequestSession } from "@/lib/requestAuth";
 import { notify } from "@/services/notificationService";
 
 // POST /api/orders/[id]/production-ack
-// Customer acknowledges the start of production and pays remaining balance.
+// Manufacturer optionally acknowledges production start for bid-created orders.
 export async function POST(request, context) {
   const { id } = await context.params;
 
   try {
     const session = await resolveRequestSession(request);
-    if (!session || session.user.role !== "customer") {
+    if (!session || session.user.role !== "manufacturer") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectDB();
 
-    const order = await Order.findById(id).populate("manufacturerId");
+    const order = await Order.findById(id);
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
-    if (order.customerId.toString() !== session.user.id) {
+    if (order.manufacturerId.toString() !== session.user.id) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (order.orderType !== "group_buy") {
+    if (order.status !== "confirmed") {
       return NextResponse.json(
-        { error: "Production acknowledgment is only for group buy orders" },
-        { status: 400 }
+        { error: "Only confirmed bid orders can be marked as production started" },
+        { status: 400 },
       );
     }
 
-    if (order.status !== "awaiting_production_ack") {
-      return NextResponse.json(
-        { error: "Order is not awaiting production acknowledgment" },
-        { status: 400 }
-      );
-    }
-
-    // In a real flow, the customer would have already paid the remaining balance
-    // via a PaymentIntent on the frontend, and passed the new paymentIntentId here.
-    // For now, we simply update the status.
-    const body = await request.json().catch(() => ({}));
-
-    order.status = "accepted";
-    // We could store the secondary paymentIntentId if passed:
-    if (body.remainingPaymentIntentId) {
-      order.paymentIntentId = body.remainingPaymentIntentId; // or store in a separate field
-      order.paymentStatus = "captured";
-    }
-
+    order.status = "in_production";
+    order.productionAcknowledgedAt = new Date();
     await order.save();
 
-    // Notify manufacturer that customer acknowledged production
-    notify.orderAccepted(
-      order.manufacturerId._id,
+    await notify.productionStarted(
+      order.customerId,
       order._id,
-      order.orderNumber
+      order.orderNumber,
     );
 
     return NextResponse.json({
       success: true,
-      message: "Production acknowledged successfully",
-      status: order.status,
+      message: "Production start recorded",
+      order,
     });
   } catch (error) {
     console.error("Production ack POST error:", error);

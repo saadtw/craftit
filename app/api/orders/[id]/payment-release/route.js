@@ -3,6 +3,7 @@ import { resolveRequestSession } from "@/lib/requestAuth";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import PaymentReleaseRequest from "@/models/PaymentReleaseRequest";
+import EscrowTransaction from "@/models/EscrowTransaction";
 import { notify } from "@/services/notificationService";
 
 export async function POST(request, context) {
@@ -25,23 +26,15 @@ export async function POST(request, context) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
-    if (order.paymentStatus !== "captured" && order.paymentStatus !== "authorized") {
+    if (
+      !["captured", "held_in_escrow", "authorized", "release_requested"].includes(
+        order.paymentStatus,
+      )
+    ) {
       return NextResponse.json(
         { error: "Payment has not been captured yet or is invalid." },
         { status: 400 }
       );
-    }
-
-    // Block release requests if manufacturer hasn't completed Stripe Connect onboarding
-    if (process.env.STRIPE_SECRET_KEY) {
-      const User = (await import("@/models/User")).default;
-      const manufacturer = await User.findById(session.user.id).select("stripeConnectAccountId");
-      if (!manufacturer?.stripeConnectAccountId) {
-        return NextResponse.json(
-          { error: "You must complete Stripe onboarding before requesting payment release." },
-          { status: 400 }
-        );
-      }
     }
 
     const { amount, reason, proofUrls } = await request.json();
@@ -85,6 +78,18 @@ export async function POST(request, context) {
       proofUrls: proofUrls || [],
       status: "pending",
       expiresAt,
+    });
+
+    order.paymentStatus = "release_requested";
+    await order.save();
+
+    await EscrowTransaction.create({
+      orderId: order._id,
+      customerId: order.customerId,
+      manufacturerId: order.manufacturerId,
+      amount: release.amount,
+      type: "release_requested",
+      reference: release._id.toString(),
     });
 
     // Notify customer

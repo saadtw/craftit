@@ -4,6 +4,7 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import User from "@/models/User";
 import PaymentReleaseRequest from "@/models/PaymentReleaseRequest";
+import EscrowTransaction from "@/models/EscrowTransaction";
 import { notify } from "@/services/notificationService";
 import getStripe from "@/lib/stripe";
 
@@ -51,35 +52,39 @@ export async function PATCH(request, context) {
     const manufacturer = await User.findById(release.manufacturerId);
 
     if (action === "approve") {
-      // Create Stripe transfer
-      if (process.env.STRIPE_SECRET_KEY) {
-        if (!manufacturer.stripeConnectAccountId) {
-          return NextResponse.json(
-            { error: "Manufacturer has not configured their Stripe Connect account." },
-            { status: 400 }
-          );
-        }
-
+      if (process.env.STRIPE_SECRET_KEY && manufacturer?.stripeConnectAccountId) {
         try {
           const stripe = getStripe();
           const transfer = await stripe.transfers.create({
             amount: Math.round(release.amount * 100),
             currency: "usd",
             destination: manufacturer.stripeConnectAccountId,
+            transfer_group: order._id.toString(),
           });
           release.transferId = transfer.id;
+          release.payoutMethod = "stripe_connect";
+          order.paymentStatus = "released";
+          await EscrowTransaction.create({
+            orderId: order._id,
+            customerId: order.customerId,
+            manufacturerId: order.manufacturerId,
+            amount: release.amount,
+            type: "released",
+            reference: transfer.id,
+          });
         } catch (stripeErr) {
           console.error("Stripe transfer failed:", stripeErr);
-          return NextResponse.json(
-            { error: "Stripe transfer failed: " + stripeErr.message },
-            { status: 500 }
-          );
+          release.payoutMethod = "manual";
+          order.paymentStatus = "release_requested";
         }
+      } else {
+        release.payoutMethod = "manual";
+        order.paymentStatus = "release_requested";
       }
 
       release.status = "approved";
       release.resolvedAt = new Date();
-      await release.save();
+      await Promise.all([release.save(), order.save()]);
 
       // Notify manufacturer
       await notify.paymentReleaseApproved?.(

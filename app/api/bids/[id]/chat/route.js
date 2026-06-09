@@ -7,6 +7,7 @@ import Conversation from "@/models/Chat";
 import ChatMessage from "@/models/ChatMessage";
 import { resolveRequestSession } from "@/lib/requestAuth";
 import { notify } from "@/services/notificationService";
+import { publish } from "@/lib/chatEmitter";
 
 // Verify the user is a participant in this bid, return the bid if so
 async function getAccessibleBid(bidId, session) {
@@ -185,6 +186,8 @@ export async function POST(request, context) {
       isOtherCustomer,
       isOtherCustomer ? rfqId : null,
     );
+
+    publish(`bid:${id}`, { type: "message", message: newMessage });
 
     return NextResponse.json({ success: true, message: newMessage });
   } catch (error) {

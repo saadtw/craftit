@@ -34,6 +34,7 @@ export default function CustomerMainNavbar() {
 
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [loggingOut, setLoggingOut] = useState(false);
+  const [unreadNotifs, setUnreadNotifs] = useState(0);
   const dropdownRef = useRef(null);
 
   const handleLogout = async () => {
@@ -51,6 +52,47 @@ export default function CustomerMainNavbar() {
     document.addEventListener("mousedown", handleClick);
     return () => document.removeEventListener("mousedown", handleClick);
   }, []);
+
+  const refreshUnread = useRef(null);
+  useEffect(() => {
+    if (!session?.user?.id) return;
+
+    refreshUnread.current = () => {
+      fetch("/api/notifications?unread=true&limit=1")
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.unreadCount !== undefined) setUnreadNotifs(d.unreadCount);
+        })
+        .catch(() => {});
+    };
+
+    const safeRefresh = () => {
+      if (document.visibilityState !== "visible") return;
+      refreshUnread.current();
+    };
+
+    safeRefresh();
+    const interval = setInterval(safeRefresh, 60000);
+
+    const handleUpdate = (event) => {
+      const nextUnread = event?.detail?.unreadCount;
+      if (typeof nextUnread === "number") {
+        setUnreadNotifs(nextUnread);
+        return;
+      }
+      safeRefresh();
+    };
+    window.addEventListener("notifications:updated", handleUpdate);
+    window.addEventListener("focus", handleUpdate);
+    document.addEventListener("visibilitychange", handleUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("notifications:updated", handleUpdate);
+      window.removeEventListener("focus", handleUpdate);
+      document.removeEventListener("visibilitychange", handleUpdate);
+    };
+  }, [session?.user?.id]);
 
   const initials = session?.user?.name
     ?.split(" ")
@@ -113,12 +155,19 @@ export default function CustomerMainNavbar() {
             href="/customer/notifications"
             className="h-11 w-11 rounded-full bg-white/[0.04] border border-white/10 text-white flex items-center justify-center hover:bg-white/[0.07] hover:border-[#eb9728] transition-colors"
           >
-            <Image
-              src={NotificationIcon}
-              alt="Notifications"
-              width={24}
-              height={24}
-            />
+            <div className="relative">
+              <Image
+                src={NotificationIcon}
+                alt="Notifications"
+                width={24}
+                height={24}
+              />
+              {unreadNotifs > 0 && (
+                <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-[#eb9728] text-[10px] font-black text-white rounded-full flex items-center justify-center border-2 border-[#0B011D]">
+                  {unreadNotifs > 9 ? "9+" : unreadNotifs}
+                </span>
+              )}
+            </div>
           </Link>
 
           {/* Profile Dropdown Container */}

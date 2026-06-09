@@ -9,6 +9,7 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    "craftit-3d-editor/dist/**",
     "next-env.d.ts",
     // Files with encoding or other issues:
     "merge_temp_bids.js",

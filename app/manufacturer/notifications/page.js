@@ -37,7 +37,8 @@ const TYPE_COLORS = {
   dispute_opened: "text-orange-400 bg-orange-500/10 border-orange-500/20",
   dispute_resolved: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
   payment_received: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-  verification_approved: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+  verification_approved:
+    "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
   verification_rejected: "text-red-400 bg-red-500/10 border-red-500/20",
   default: "text-white/40 bg-white/5 border-white/10",
 };
@@ -84,7 +85,17 @@ export default function ManufacturerNotificationsPage() {
     setNotifications((prev) =>
       prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)),
     );
-    setUnreadCount((c) => Math.max(0, c - 1));
+    setUnreadCount((c) => {
+      const next = Math.max(0, c - 1);
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(
+          new CustomEvent("notifications:updated", {
+            detail: { unreadCount: next },
+          }),
+        );
+      }
+      return next;
+    });
   };
 
   const markAllRead = async () => {
@@ -93,30 +104,48 @@ export default function ManufacturerNotificationsPage() {
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
     setMarkingAll(false);
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("notifications:updated", {
+          detail: { unreadCount: 0 },
+        }),
+      );
+    }
   };
 
   const handleClick = async (notif) => {
     if (!notif.isRead) await markRead(notif._id);
-    
+
     let targetLink = notif.link;
 
     // Repair logic for broken legacy/seed links
-    if (!targetLink || targetLink === "/dashboard" || targetLink === "/chat" || targetLink.includes("/customer/") || targetLink.includes("/manufacturer/bids/") || !targetLink.startsWith("/")) {
+    if (
+      !targetLink ||
+      targetLink === "/dashboard" ||
+      targetLink === "/chat" ||
+      targetLink.includes("/customer/") ||
+      !targetLink.startsWith("/")
+    ) {
       if (notif.relatedType === "order" && notif.relatedId) {
         targetLink = `/manufacturer/orders/${notif.relatedId}`;
       } else if (notif.relatedType === "dispute" && notif.relatedId) {
         targetLink = `/manufacturer/disputes/${notif.relatedId}`;
       } else if (notif.relatedType === "rfq" && notif.relatedId) {
         targetLink = `/manufacturer/rfqs/${notif.relatedId}`;
-      } else if (notif.relatedType === "bid" || targetLink?.includes("/bids/")) {
-        targetLink = `/manufacturer/bids`; // No detail page exists for bids
+      } else if (notif.relatedType === "bid" && notif.relatedId) {
+        targetLink = `/bids/${notif.relatedId}#chat`;
       } else if (notif.type === "new_message" && notif.relatedId) {
-        targetLink = `/manufacturer/orders/${notif.relatedId}`; // Order chats use order ID
+        targetLink =
+          notif.relatedType === "bid"
+            ? `/bids/${notif.relatedId}#chat`
+            : `/manufacturer/orders/${notif.relatedId}`; // Order chats use order ID
       } else {
         // Default fallbacks
         if (notif.type?.includes("order")) targetLink = "/manufacturer/orders";
-        else if (notif.type?.includes("bid") || notif.type?.includes("rfq")) targetLink = "/manufacturer/rfqs";
-        else if (notif.type?.includes("dispute")) targetLink = "/manufacturer/disputes";
+        else if (notif.type?.includes("bid") || notif.type?.includes("rfq"))
+          targetLink = "/manufacturer/rfqs";
+        else if (notif.type?.includes("dispute"))
+          targetLink = "/manufacturer/disputes";
         else targetLink = "/manufacturer/dashboard";
       }
     }
@@ -124,6 +153,10 @@ export default function ManufacturerNotificationsPage() {
     // Final sanity check: ensure leading slash
     if (targetLink && !targetLink.startsWith("/")) {
       targetLink = "/" + targetLink;
+    }
+
+    if (targetLink?.startsWith("/bids/") && !targetLink.includes("#chat")) {
+      targetLink = `${targetLink}#chat`;
     }
 
     if (targetLink) router.push(targetLink);
@@ -169,7 +202,9 @@ export default function ManufacturerNotificationsPage() {
                   disabled={markingAll}
                   className="flex items-center gap-2 px-4 py-2 bg-white/[0.03] border border-white/10 rounded-xl text-[11px] font-bold uppercase tracking-widest text-white/40 hover:text-white hover:bg-purple-500/10 hover:border-purple-500/30 transition-all disabled:opacity-50 group"
                 >
-                  <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">done_all</span>
+                  <span className="material-symbols-outlined text-lg group-hover:scale-110 transition-transform">
+                    done_all
+                  </span>
                   <span>Mark all as read</span>
                 </button>
               </>
@@ -185,7 +220,9 @@ export default function ManufacturerNotificationsPage() {
               </span>
             </div>
             <GlobalNoResults text="No notifications yet" />
-            <p className="text-sm text-white/20 mt-2">We&apos;ll notify you when something important happens.</p>
+            <p className="text-sm text-white/20 mt-2">
+              We&apos;ll notify you when something important happens.
+            </p>
           </div>
         ) : (
           <div className="space-y-10">
@@ -233,7 +270,9 @@ export default function ManufacturerNotificationsPage() {
                               )}
                             </p>
                           </div>
-                          <p className={`text-sm leading-relaxed line-clamp-2 transition-colors ${notif.isRead ? "text-white/40" : "text-white/60"}`}>
+                          <p
+                            className={`text-sm leading-relaxed line-clamp-2 transition-colors ${notif.isRead ? "text-white/40" : "text-white/60"}`}
+                          >
                             {notif.message}
                           </p>
                         </div>

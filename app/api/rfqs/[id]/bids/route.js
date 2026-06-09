@@ -3,6 +3,8 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import RFQ from "@/models/RFQ";
+import "@/models/CustomOrder";
+import "@/models/User";
 import { bidComparisonService } from "@/services/bidComparisonService";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
@@ -24,7 +26,7 @@ export async function GET(request, context) {
         path: "customOrderId",
         select: "title description model3D images",
       })
-      .select("customerId rfqNumber customOrderId")
+      .select("customerId rfqNumber customOrderId status")
       .lean();
     if (!rfq) {
       return NextResponse.json({ error: "RFQ not found" }, { status: 404 });

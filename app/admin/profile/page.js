@@ -22,6 +22,12 @@ export default function AdminProfilePage() {
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState("");
 
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
+  const [twoFactorLoading, setTwoFactorLoading] = useState(true);
+  const [twoFactorSaving, setTwoFactorSaving] = useState(false);
+  const [twoFactorError, setTwoFactorError] = useState("");
+  const [twoFactorSuccess, setTwoFactorSuccess] = useState("");
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/login");
@@ -42,6 +48,49 @@ export default function AdminProfilePage() {
         .finally(() => setUserLoading(false));
     }
   }, [status, session, router, user]);
+
+  useEffect(() => {
+    let active = true;
+    async function loadTwoFactorSettings() {
+      setTwoFactorLoading(true);
+      setTwoFactorError("");
+      try {
+        const res = await fetch("/api/auth/2fa/settings");
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+          throw new Error(data.message || "Failed to load 2FA settings");
+        }
+        if (active) setTwoFactorEnabled(!!data.twoFactorEnabled);
+      } catch (err) {
+        if (active) setTwoFactorError(err.message || "Failed to load 2FA settings");
+      } finally {
+        if (active) setTwoFactorLoading(false);
+      }
+    }
+    loadTwoFactorSettings();
+    return () => { active = false; };
+  }, []);
+
+  const handleTwoFactorToggle = async () => {
+    setTwoFactorSaving(true);
+    setTwoFactorError("");
+    setTwoFactorSuccess("");
+    try {
+      const res = await fetch("/api/auth/2fa/settings", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ enabled: !twoFactorEnabled }),
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error(data.message || "Failed to update 2FA settings");
+      setTwoFactorEnabled(!!data.twoFactorEnabled);
+      setTwoFactorSuccess(data.message || (data.twoFactorEnabled ? "2FA enabled" : "2FA disabled"));
+    } catch (err) {
+      setTwoFactorError(err.message || "Failed to update 2FA settings");
+    } finally {
+      setTwoFactorSaving(false);
+    }
+  };
 
   const hasLocalPassword = Boolean(user?.hasLocalPassword);
 
@@ -150,26 +199,50 @@ export default function AdminProfilePage() {
             <section className="bg-white/[0.02] border border-white/5 rounded-3xl overflow-hidden backdrop-blur-md">
               <div className="px-6 py-4 border-b border-white/5 flex items-center justify-between bg-white/[0.01]">
                 <div className="flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_#10b981]" />
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981]" />
                   <h2 className="font-bold text-[10px] text-white uppercase tracking-[0.2em]">
-                    Security Protocol
+                    Two-Factor Auth
                   </h2>
                 </div>
               </div>
               <div className="p-6">
-                <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                    <FiShield className="text-emerald-400 w-4 h-4" />
+                <div className="flex flex-col gap-4">
+                  {twoFactorError && (
+                    <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-xl flex items-center gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+                      <p className="text-red-400 text-[10px] font-bold uppercase tracking-widest">{twoFactorError}</p>
+                    </div>
+                  )}
+                  {twoFactorSuccess && (
+                    <div className="p-3 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-center gap-3">
+                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                      <p className="text-emerald-400 text-[10px] font-bold uppercase tracking-widest">{twoFactorSuccess}</p>
+                    </div>
+                  )}
+                  <div className="flex items-start gap-4">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                      <FiShield className="text-emerald-400 w-4 h-4" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-white text-sm font-bold tracking-wide">Email-based 2FA</p>
+                      <p className="text-slate-400 text-xs mt-1.5 leading-relaxed">
+                        A 6-digit code will be sent to {session?.user?.email} during login.
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="text-white text-sm font-bold tracking-wide">
-                      Two-Factor Auth
-                    </p>
-                    <p className="text-slate-400 text-xs mt-1.5 leading-relaxed">
-                      2FA enforcement is strictly configured at the
-                      infrastructure level for all active administrative
-                      accounts.
-                    </p>
+                  <div className="mt-2 flex justify-end">
+                    <button
+                      type="button"
+                      disabled={twoFactorLoading || twoFactorSaving}
+                      onClick={handleTwoFactorToggle}
+                      className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                        twoFactorEnabled
+                          ? "bg-red-500/10 border border-red-500/20 text-red-400 hover:bg-red-500/20"
+                          : "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 hover:bg-emerald-500/20 shadow-lg shadow-emerald-500/10"
+                      } ${twoFactorLoading || twoFactorSaving ? "opacity-50 cursor-not-allowed" : ""}`}
+                    >
+                      {twoFactorLoading ? "Loading..." : twoFactorSaving ? "Saving..." : twoFactorEnabled ? "Disable 2FA" : "Enable 2FA"}
+                    </button>
                   </div>
                 </div>
               </div>

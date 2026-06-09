@@ -7,8 +7,8 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import Editor3DWrapper from "../../../../modules/components/Editor3DWrapper";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_STYLES = {
   active: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
@@ -113,7 +113,7 @@ export default function GroupBuyDetailPage() {
   const exportParticipants = () => {
     if (!groupBuy?.participants?.length) return;
     const rows = [
-      ["Participant #", "Quantity", "Unit Price", "Total", "Joined At"],
+      ["Participant #", "Quantity", "Unit Price (PKR)", "Total", "Joined At"],
       ...groupBuy.participants.map((p, i) => [
         i + 1,
         p.quantity,
@@ -189,7 +189,9 @@ export default function GroupBuyDetailPage() {
                   href={`/manufacturer/group-buys/${id}/edit`}
                   className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/70 hover:bg-white/10 hover:text-white transition-all flex items-center gap-2"
                 >
-                  <span className="material-symbols-outlined text-sm">edit</span>
+                  <span className="material-symbols-outlined text-sm">
+                    edit
+                  </span>
                   Edit Campaign
                 </Link>
               )}
@@ -235,7 +237,10 @@ export default function GroupBuyDetailPage() {
                     href={`/manufacturer/products/${product?._id}`}
                     className="text-[10px] font-black text-purple-400 uppercase tracking-widest hover:text-purple-300 transition-colors flex items-center gap-1"
                   >
-                    View product <span className="material-symbols-outlined text-sm">arrow_forward</span>
+                    View product{" "}
+                    <span className="material-symbols-outlined text-sm">
+                      arrow_forward
+                    </span>
                   </Link>
                 </div>
                 <div className="flex flex-col md:flex-row gap-8">
@@ -251,7 +256,9 @@ export default function GroupBuyDetailPage() {
                       </div>
                     ) : (
                       <div className="w-full h-full flex items-center justify-center opacity-20">
-                        <span className="material-symbols-outlined text-6xl">inventory_2</span>
+                        <span className="material-symbols-outlined text-6xl">
+                          inventory_2
+                        </span>
                       </div>
                     )}
                   </div>
@@ -265,7 +272,7 @@ export default function GroupBuyDetailPage() {
                       </span>
                       {hasProductModel3D && (
                         <span className="px-3 py-1 bg-purple-500/20 border border-purple-500/30 rounded-full text-[10px] font-black uppercase tracking-widest text-purple-400">
-                          3D INTERACTIVE
+                          3D MODEL
                         </span>
                       )}
                     </div>
@@ -274,28 +281,19 @@ export default function GroupBuyDetailPage() {
                         {groupBuy.description}
                       </p>
                     )}
+                    {product?._id && (
+                      <Link
+                        href={`/manufacturer/products/${product._id}`}
+                        className="mt-4 inline-flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-[#eb9728] hover:text-amber-400"
+                      >
+                        View product
+                        <span className="material-symbols-outlined text-[12px]">
+                          open_in_new
+                        </span>
+                      </Link>
+                    )}
                   </div>
                 </div>
-
-                {hasProductModel3D && (
-                  <div className="mt-8 pt-8 border-t border-white/5">
-                    <div className="flex items-center justify-between mb-6">
-                      <h4 className="text-[10px] font-black text-white/20 uppercase tracking-widest flex items-center gap-2">
-                        <span className="material-symbols-outlined text-sm">view_in_ar</span>
-                        Interactive 3D Preview
-                      </h4>
-                    </div>
-                    <div className="rounded-3xl overflow-hidden border border-white/10 bg-[#050507]">
-                      <Editor3DWrapper
-                        modelUrl={product.model3D.url}
-                        initialAnnotations={product.model3D.annotations || []}
-                        initialCameraState={product.model3D.cameraState || null}
-                        readOnly={true}
-                        onSave={() => {}}
-                      />
-                    </div>
-                  </div>
-                )}
               </div>
             </div>
 
@@ -320,46 +318,70 @@ export default function GroupBuyDetailPage() {
                     <div
                       key={i}
                       className={`p-6 rounded-3xl border transition-all ${
-                        isActive 
-                        ? "bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.1)]" 
-                        : isUnlocked 
-                          ? "bg-white/5 border-white/20" 
-                          : "bg-white/[0.02] border-white/5 opacity-40"
+                        isActive
+                          ? "bg-emerald-500/10 border-emerald-500/30 shadow-[0_0_30px_rgba(16,185,129,0.1)]"
+                          : isUnlocked
+                            ? "bg-white/5 border-white/20"
+                            : "bg-white/[0.02] border-white/5 opacity-40"
                       }`}
                     >
                       <div className="flex items-center justify-between mb-6">
                         <div className="flex items-center gap-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs ${
-                            isUnlocked ? "bg-emerald-500 text-white" : "bg-white/5 text-white/20 border border-white/10"
-                          }`}>
-                            {isUnlocked ? <span className="material-symbols-outlined text-sm">check</span> : i + 1}
+                          <div
+                            className={`w-10 h-10 rounded-xl flex items-center justify-center font-black text-xs ${
+                              isUnlocked
+                                ? "bg-emerald-500 text-white"
+                                : "bg-white/5 text-white/20 border border-white/10"
+                            }`}
+                          >
+                            {isUnlocked ? (
+                              <span className="material-symbols-outlined text-sm">
+                                check
+                              </span>
+                            ) : (
+                              i + 1
+                            )}
                           </div>
                           <div>
-                            <p className="text-xs font-black text-white uppercase tracking-widest">Tier {i + 1}</p>
+                            <p className="text-xs font-black text-white uppercase tracking-widest">
+                              Tier {i + 1}
+                            </p>
                             {isActive && (
-                              <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mt-0.5">CURRENTLY ACTIVE</p>
+                              <p className="text-[9px] font-black text-emerald-400 uppercase tracking-widest mt-0.5">
+                                CURRENTLY ACTIVE
+                              </p>
                             )}
                           </div>
                         </div>
                         <div className="text-right">
                           <p className="text-xl font-black text-white tracking-tighter">
-                            ${tier.discountedPrice}
+                            {formatPKR(tier.discountedPrice)}
                           </p>
                           <p className="text-[10px] font-black text-emerald-400 uppercase tracking-widest">
                             {tier.discountPercent}% OFF
                           </p>
                         </div>
                       </div>
-                      
+
                       <div className="space-y-3">
                         <div className="flex items-center justify-between text-[9px] font-black uppercase tracking-[0.2em]">
-                          <span className="text-white/20">Target: {tier.minQuantity} units</span>
-                          <span className={isUnlocked ? "text-emerald-400" : "text-white/40"}>{progress}%</span>
+                          <span className="text-white/20">
+                            Target: {tier.minQuantity} units
+                          </span>
+                          <span
+                            className={
+                              isUnlocked ? "text-emerald-400" : "text-white/40"
+                            }
+                          >
+                            {progress}%
+                          </span>
                         </div>
                         <div className="h-2 bg-white/5 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full transition-all duration-1000 ${
-                              isUnlocked ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]" : "bg-white/10"
+                              isUnlocked
+                                ? "bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                                : "bg-white/10"
                             }`}
                             style={{ width: `${progress}%` }}
                           />
@@ -373,7 +395,11 @@ export default function GroupBuyDetailPage() {
               {nextTier && (
                 <div className="mt-8 p-4 bg-white/[0.02] border border-white/5 rounded-2xl text-center">
                   <p className="text-[10px] font-black text-white/20 uppercase tracking-[0.2em]">
-                    <span className="text-purple-400">{nextTier.minQuantity - groupBuy.currentQuantity} MORE UNITS</span> UNTIL TIER {groupBuy.currentTierIndex + 2}
+                    <span className="text-purple-400">
+                      {nextTier.minQuantity - groupBuy.currentQuantity} MORE
+                      UNITS
+                    </span>{" "}
+                    UNTIL TIER {groupBuy.currentTierIndex + 2}
                   </p>
                 </div>
               )}
@@ -395,7 +421,9 @@ export default function GroupBuyDetailPage() {
                     onClick={exportParticipants}
                     className="px-5 py-2.5 bg-white/5 border border-white/10 rounded-xl text-[10px] font-black uppercase tracking-widest text-white/70 hover:bg-white/10 hover:text-white transition-all flex items-center gap-2"
                   >
-                    <span className="material-symbols-outlined text-sm">download</span>
+                    <span className="material-symbols-outlined text-sm">
+                      download
+                    </span>
                     Export CSV
                   </button>
                 )}
@@ -403,7 +431,9 @@ export default function GroupBuyDetailPage() {
 
               {!groupBuy.participants?.length ? (
                 <div className="text-center py-16 bg-white/[0.02] rounded-3xl border border-dashed border-white/10">
-                  <span className="material-symbols-outlined text-4xl text-white/10 mb-4">group_off</span>
+                  <span className="material-symbols-outlined text-4xl text-white/10 mb-4">
+                    group_off
+                  </span>
                   <p className="text-[10px] font-black text-white/20 uppercase tracking-widest">
                     No active participants yet
                   </p>
@@ -414,29 +444,50 @@ export default function GroupBuyDetailPage() {
                     <thead>
                       <tr className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20 border-b border-white/5">
                         <th className="text-left py-4 px-4 font-black">#</th>
-                        <th className="text-left py-4 px-4 font-black">Participant ID</th>
-                        <th className="text-left py-4 px-4 font-black">Joined At</th>
-                        <th className="text-center py-4 px-4 font-black">Quantity</th>
-                        <th className="text-right py-4 px-4 font-black">Unit Price</th>
+                        <th className="text-left py-4 px-4 font-black">
+                          Participant ID
+                        </th>
+                        <th className="text-left py-4 px-4 font-black">
+                          Joined At
+                        </th>
+                        <th className="text-center py-4 px-4 font-black">
+                          Quantity
+                        </th>
+                        <th className="text-right py-4 px-4 font-black">
+                          Unit Price
+                        </th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-white/5">
                       {groupBuy.participants.map((p, i) => (
-                        <tr key={i} className="group hover:bg-white/[0.02] transition-colors">
+                        <tr
+                          key={i}
+                          className="group hover:bg-white/[0.02] transition-colors"
+                        >
                           <td className="py-4 px-4">
-                            <span className="text-[10px] font-black text-white/20">{i + 1}</span>
+                            <span className="text-[10px] font-black text-white/20">
+                              {i + 1}
+                            </span>
                           </td>
                           <td className="py-4 px-4">
-                            <span className="text-xs font-black text-white/70">PRT-{i + 1001}</span>
+                            <span className="text-xs font-black text-white/70">
+                              PRT-{i + 1001}
+                            </span>
                           </td>
                           <td className="py-4 px-4">
-                            <span className="text-xs font-bold text-white/40">{new Date(p.joinedAt).toLocaleDateString()}</span>
+                            <span className="text-xs font-bold text-white/40">
+                              {new Date(p.joinedAt).toLocaleDateString()}
+                            </span>
                           </td>
                           <td className="py-4 px-4 text-center">
-                            <span className="px-3 py-1 bg-white/5 rounded-lg text-xs font-black text-white">{p.quantity}</span>
+                            <span className="px-3 py-1 bg-white/5 rounded-lg text-xs font-black text-white">
+                              {p.quantity}
+                            </span>
                           </td>
                           <td className="py-4 px-4 text-right">
-                            <span className="text-xs font-black text-emerald-400">${p.unitPrice || groupBuy.basePrice}</span>
+                            <span className="text-xs font-black text-emerald-400">
+                              {formatPKR(p.unitPrice || groupBuy.basePrice)}
+                            </span>
                           </td>
                         </tr>
                       ))}
@@ -455,8 +506,12 @@ export default function GroupBuyDetailPage() {
                 <div className="absolute -top-24 -right-24 w-48 h-48 bg-white/20 blur-[60px] rounded-full group-hover:scale-150 transition-transform duration-1000" />
                 <div className="relative z-10">
                   <h3 className="text-[10px] font-black text-white/50 uppercase tracking-widest mb-6 flex items-center gap-2">
-                    <span className="material-symbols-outlined text-sm">schedule</span>
-                    {groupBuy.status === "scheduled" ? "LAUNCH COUNTDOWN" : "TIME REMAINING"}
+                    <span className="material-symbols-outlined text-sm">
+                      schedule
+                    </span>
+                    {groupBuy.status === "scheduled"
+                      ? "LAUNCH COUNTDOWN"
+                      : "TIME REMAINING"}
                   </h3>
                   <div className="text-4xl font-black tracking-tighter text-white drop-shadow-lg">
                     <Countdown
@@ -470,11 +525,15 @@ export default function GroupBuyDetailPage() {
                   <div className="mt-8 space-y-3 pt-6 border-t border-white/10">
                     <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-white/40">
                       <span>START DATE</span>
-                      <span className="text-white">{new Date(groupBuy.startDate).toLocaleDateString()}</span>
+                      <span className="text-white">
+                        {new Date(groupBuy.startDate).toLocaleDateString()}
+                      </span>
                     </div>
                     <div className="flex justify-between items-center text-[9px] font-black uppercase tracking-widest text-white/40">
                       <span>EXPIRY DATE</span>
-                      <span className="text-white">{new Date(groupBuy.endDate).toLocaleDateString()}</span>
+                      <span className="text-white">
+                        {new Date(groupBuy.endDate).toLocaleDateString()}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -484,7 +543,9 @@ export default function GroupBuyDetailPage() {
             {/* Performance Stats */}
             <div className="bg-white/[0.03] border border-white/10 rounded-[2.5rem] p-8 relative overflow-hidden">
               <h3 className="text-[10px] font-black text-white/20 uppercase tracking-widest mb-8 flex items-center gap-2">
-                <span className="material-symbols-outlined text-sm">insights</span>
+                <span className="material-symbols-outlined text-sm">
+                  insights
+                </span>
                 Campaign Performance
               </h3>
               <div className="space-y-6">
@@ -493,34 +554,47 @@ export default function GroupBuyDetailPage() {
                     label: "Active Participants",
                     value: groupBuy.currentParticipantCount,
                     icon: "groups",
-                    color: "text-blue-400"
+                    color: "text-blue-400",
                   },
-                  { 
-                    label: "Total Units Sold", 
+                  {
+                    label: "Total Units Sold",
                     value: groupBuy.currentQuantity,
                     icon: "inventory",
-                    color: "text-purple-400"
+                    color: "text-purple-400",
                   },
                   {
                     label: "Current Price Point",
-                    value: `$${groupBuy.currentDiscountedPrice || groupBuy.basePrice}`,
+                    value: formatPKR(
+                      groupBuy.currentDiscountedPrice || groupBuy.basePrice,
+                    ),
                     icon: "tag",
-                    color: "text-[#eb9728]"
+                    color: "text-[#eb9728]",
                   },
                   {
                     label: "Estimated Revenue",
-                    value: `$${revenuePotential.toLocaleString()}`,
+                    value: formatPKR(revenuePotential),
                     icon: "payments",
-                    color: "text-emerald-400"
+                    color: "text-emerald-400",
                   },
                 ].map((s) => (
-                  <div key={s.label} className="flex items-center gap-4 group/item">
-                    <div className={`w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center ${s.color} group-hover/item:scale-110 transition-transform`}>
-                      <span className="material-symbols-outlined text-lg">{s.icon}</span>
+                  <div
+                    key={s.label}
+                    className="flex items-center gap-4 group/item"
+                  >
+                    <div
+                      className={`w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center ${s.color} group-hover/item:scale-110 transition-transform`}
+                    >
+                      <span className="material-symbols-outlined text-lg">
+                        {s.icon}
+                      </span>
                     </div>
                     <div>
-                      <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">{s.label}</p>
-                      <p className="text-lg font-black text-white tracking-tight">{s.value}</p>
+                      <p className="text-[9px] font-black text-white/20 uppercase tracking-widest">
+                        {s.label}
+                      </p>
+                      <p className="text-lg font-black text-white tracking-tight">
+                        {s.value}
+                      </p>
                     </div>
                   </div>
                 ))}
@@ -534,16 +608,29 @@ export default function GroupBuyDetailPage() {
               </h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center p-3 bg-white/5 rounded-2xl border border-white/10">
-                  <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">BASE PRICE</span>
-                  <span className="text-sm font-black text-white">${groupBuy.basePrice}</span>
+                  <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+                    BASE PRICE
+                  </span>
+                  <span className="text-sm font-black text-white">
+                    {formatPKR(groupBuy.basePrice)}
+                  </span>
                 </div>
                 {groupBuy.tiers.map((t, i) => (
-                  <div key={i} className={`flex justify-between items-center p-3 rounded-2xl border transition-all ${
-                    groupBuy.currentTierIndex >= i ? "bg-emerald-500/10 border-emerald-500/20" : "bg-white/[0.02] border-white/5"
-                  }`}>
-                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">TIER {i + 1} ({t.minQuantity}+)</span>
-                    <span className={`text-sm font-black ${groupBuy.currentTierIndex >= i ? "text-emerald-400" : "text-white/60"}`}>
-                      ${t.discountedPrice}
+                  <div
+                    key={i}
+                    className={`flex justify-between items-center p-3 rounded-2xl border transition-all ${
+                      groupBuy.currentTierIndex >= i
+                        ? "bg-emerald-500/10 border-emerald-500/20"
+                        : "bg-white/[0.02] border-white/5"
+                    }`}
+                  >
+                    <span className="text-[10px] font-black text-white/40 uppercase tracking-widest">
+                      TIER {i + 1} ({t.minQuantity}+)
+                    </span>
+                    <span
+                      className={`text-sm font-black ${groupBuy.currentTierIndex >= i ? "text-emerald-400" : "text-white/60"}`}
+                    >
+                      {formatPKR(t.discountedPrice)}
                     </span>
                   </div>
                 ))}
@@ -557,12 +644,20 @@ export default function GroupBuyDetailPage() {
               </h3>
               <div className="space-y-4">
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-white/40 font-bold uppercase tracking-widest text-[9px]">Min Participants</span>
-                  <span className="font-black text-white">{groupBuy.minParticipants}</span>
+                  <span className="text-white/40 font-bold uppercase tracking-widest text-[9px]">
+                    Min Participants
+                  </span>
+                  <span className="font-black text-white">
+                    {groupBuy.minParticipants}
+                  </span>
                 </div>
                 <div className="flex justify-between items-center text-xs">
-                  <span className="text-white/40 font-bold uppercase tracking-widest text-[9px]">Max Participants</span>
-                  <span className="font-black text-white">{groupBuy.maxParticipants || "UNLIMITED"}</span>
+                  <span className="text-white/40 font-bold uppercase tracking-widest text-[9px]">
+                    Max Participants
+                  </span>
+                  <span className="font-black text-white">
+                    {groupBuy.maxParticipants || "UNLIMITED"}
+                  </span>
                 </div>
               </div>
             </div>

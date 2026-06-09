@@ -501,16 +501,19 @@ function SecurityTab({ user }) {
                   : "bg-[#eb9728] text-black hover:bg-[#d4871f]"
               } ${twoFactorLoading || twoFactorSaving ? "opacity-50 cursor-not-allowed" : ""}`}
             >
-              {twoFactorLoading
-                ? <GlobalLoader text="Loading..." /> : twoFactorSaving
-                  ? "Saving..."
-                  : twoFactorEnabled
-                    ? "Disable 2FA"
-                    : "Enable 2FA"}
+              {twoFactorLoading ? (
+                <GlobalLoader text="Loading..." />
+              ) : twoFactorSaving ? (
+                "Saving..."
+              ) : twoFactorEnabled ? (
+                "Disable 2FA"
+              ) : (
+                "Enable 2FA"
+              )}
             </button>
           </div>
           <p className="text-[11px] text-white/25">
-            Verification codes expire after 10 minutes.
+            Verification codes expire based on your Supabase auth settings.
           </p>
         </div>
       </Section>
@@ -577,7 +580,7 @@ function SecurityTab({ user }) {
           </div>
           <button
             type="button"
-            onClick={() => {}}  /* Contact support@craftit.com to deactivate */
+            onClick={() => {}} /* Contact support@craftit.com to deactivate */
             className="px-4 py-2 text-sm font-bold text-red-400 border border-red-500/20 bg-red-500/10 rounded-xl hover:bg-red-500/20 transition-all"
           >
             Deactivate
@@ -588,88 +591,7 @@ function SecurityTab({ user }) {
   );
 }
 
-// ─── NOTIFICATIONS TAB ────────────────────────────────────────────────────────
-function NotificationsTab() {
-  const [prefs, setPrefs] = useState({
-    orderUpdates: true,
-    rfqBids: true,
-    groupBuys: true,
-    marketing: false,
-  });
-
-  const toggle = (key) => setPrefs((p) => ({ ...p, [key]: !p[key] }));
-
-  const items = [
-    {
-      key: "orderUpdates",
-      label: "Order Updates",
-      desc: "Status changes, shipping, delivery confirmations.",
-    },
-    {
-      key: "rfqBids",
-      label: "RFQ & Bids",
-      desc: "New bids, bid updates, and awarded notifications.",
-    },
-    {
-      key: "groupBuys",
-      label: "Group Buys",
-      desc: "Tier unlocks, campaign endings, and new group buys.",
-    },
-    {
-      key: "marketing",
-      label: "Promotions & News",
-      desc: "Product announcements, special offers, and Craftit updates.",
-    },
-  ];
-
-  return (
-    <div className="space-y-4">
-      <Section
-        title="Email Notifications"
-        desc="Choose what emails you receive from Craftit."
-      >
-        <div className="divide-y divide-white/5">
-          {items.map((item) => (
-            <div
-              key={item.key}
-              className="flex items-center justify-between py-4 last:pb-0 first:pt-0"
-            >
-              <div>
-                <p className="text-sm font-semibold text-white/85">
-                  {item.label}
-                </p>
-                <p className="text-xs text-white/35 mt-0.5">{item.desc}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => toggle(item.key)}
-                className={`relative w-11 h-6 rounded-full transition-colors duration-200 shrink-0 ml-4 ${
-                  prefs[item.key] ? "bg-[#eb9728]" : "bg-white/10"
-                }`}
-              >
-                <span
-                  className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200 ${
-                    prefs[item.key] ? "translate-x-5" : "translate-x-0"
-                  }`}
-                />
-              </button>
-            </div>
-          ))}
-        </div>
-      </Section>
-
-      <div className="rounded-2xl border border-[#eb9728]/20 bg-[#eb9728]/5 px-5 py-4 flex items-start gap-3">
-        <span className="material-symbols-outlined text-[#eb9728] text-lg shrink-0 mt-0.5">
-          info
-        </span>
-        <p className="text-sm text-[#eb9728]/80">
-          Notification preferences will be saved in a future update. Changes
-          here are previewed only.
-        </p>
-      </div>
-    </div>
-  );
-}
+// Notifications tab removed until email notifications are implemented.
 
 function CustomerSettingsPageContent() {
   const router = useRouter();
@@ -719,7 +641,6 @@ function CustomerSettingsPageContent() {
     { key: "profile", label: "Profile", icon: "manage_accounts" },
     { key: "payment", label: "Payment Methods", icon: "credit_card" },
     { key: "security", label: "Security", icon: "lock" },
-    { key: "notifications", label: "Notifications", icon: "notifications" },
   ];
 
   const initials =
@@ -794,7 +715,6 @@ function CustomerSettingsPageContent() {
         )}
         {activeTab === "payment" && <PaymentMethodsTab user={user} />}
         {activeTab === "security" && <SecurityTab user={user} />}
-        {activeTab === "notifications" && <NotificationsTab />}
       </main>
     </div>
   );
@@ -802,11 +722,7 @@ function CustomerSettingsPageContent() {
 
 export default function CustomerSettingsPage() {
   return (
-    <Suspense
-      fallback={
-        <GlobalLoader fullScreen text="Loading ..." />
-      }
-    >
+    <Suspense fallback={<GlobalLoader fullScreen text="Loading ..." />}>
       <CustomerSettingsPageContent />
     </Suspense>
   );

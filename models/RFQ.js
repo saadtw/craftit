@@ -78,6 +78,9 @@ const RFQSchema = new mongoose.Schema(
     isPartRFQ: { type: Boolean, default: false },
     partId: { type: mongoose.Schema.Types.ObjectId },
     parentOrderId: { type: mongoose.Schema.Types.ObjectId, ref: 'CustomOrder' },
+
+    isProductCustomization: { type: Boolean, default: false },
+    sourceProductId: { type: mongoose.Schema.Types.ObjectId, ref: 'Product' },
   },
   { timestamps: true },
 );

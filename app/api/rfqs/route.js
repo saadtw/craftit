@@ -8,7 +8,7 @@ import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";
 import { resolveRequestSession } from "@/lib/requestAuth";
-import { notify } from "@/services/notificationService";
+import { notify, createNotification } from "@/services/notificationService";
 
 // GET /api/rfqs - List RFQs (for manufacturers)
 export async function GET(request) {
@@ -96,6 +96,7 @@ export async function GET(request) {
       })
       .populate("customerId", "name email")
       .populate("acceptedBidId")
+      .populate("sourceProductId", "name images category")
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
@@ -185,7 +186,40 @@ export async function POST(request) {
     let broadcastToAll = body.broadcastToAll !== false;
     const linkedManufacturerId = customOrder.sourceManufacturerId?.toString();
 
-    if (linkedManufacturerId && body.broadcastToAll === undefined) {
+    const isProductCustomization =
+      customOrder.sourceType === "product_customization";
+    const sourceProductId = isProductCustomization
+      ? customOrder.sourceProductId
+      : undefined;
+
+    if (isProductCustomization) {
+      if (!linkedManufacturerId) {
+        return NextResponse.json(
+          {
+            error: "Linked manufacturer is required for product customization",
+          },
+          { status: 400 },
+        );
+      }
+
+      const extraTargets = targetManufacturers.filter(
+        (id) => id !== linkedManufacturerId,
+      );
+
+      if (body.broadcastToAll === true || extraTargets.length > 0) {
+        return NextResponse.json(
+          {
+            error:
+              "Product customization RFQs must target only the original manufacturer",
+          },
+          { status: 400 },
+        );
+      }
+
+      broadcastToAll = false;
+      targetManufacturers.length = 0;
+      targetManufacturers.push(linkedManufacturerId);
+    } else if (linkedManufacturerId && body.broadcastToAll === undefined) {
       // Product-linked and direct-manufacturer requests default to scoped RFQs.
       broadcastToAll = false;
     }
@@ -241,6 +275,8 @@ export async function POST(request) {
       minBidThreshold: body.minBidThreshold || 0,
       targetManufacturers: finalTargetManufacturers,
       broadcastToAll,
+      isProductCustomization,
+      sourceProductId,
     });
 
     customOrder.rfqId = rfq._id;
@@ -257,7 +293,19 @@ export async function POST(request) {
 
     // P1-C: Notify manufacturers about the new RFQ
     const rfqTitle = customOrder.title || "Custom Order";
-    if (broadcastToAll) {
+    if (isProductCustomization) {
+      for (const mfrId of finalTargetManufacturers) {
+        createNotification({
+          userId: mfrId,
+          type: "product_customization_rfq",
+          title: "Customization Request for Your Product",
+          message: `A customer wants to customize "${rfqTitle}". Review and bid.`,
+          link: `/manufacturer/rfqs/${rfq._id}`,
+          relatedType: "rfq",
+          relatedId: rfq._id,
+        });
+      }
+    } else if (broadcastToAll) {
       // Notify all verified active manufacturers (fire-and-forget, errors swallowed)
       const allManufacturers = await User.find({
         role: "manufacturer",

@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { fetchWithCache } from "@/lib/clientCache";
+import { formatPKR } from "@/lib/currency";
 
 function useCountdown(endDate) {
   const calc = useCallback(() => {
@@ -123,11 +124,11 @@ function GroupBuyCard({ gb }) {
 
           <div className="mb-4 flex items-end gap-2">
             <span className="text-2xl font-black text-white">
-              ${displayPrice.toFixed(2)}
+              {formatPKR(displayPrice)}
             </span>
             {activeTier && (
               <span className="text-sm text-white/30 line-through">
-                ${gb.basePrice.toFixed(2)}
+                {formatPKR(gb.basePrice)}
               </span>
             )}
             <span className="ml-auto text-xs text-white/35">/unit</span>
@@ -136,10 +137,10 @@ function GroupBuyCard({ gb }) {
           <div>
             <div className="mb-2 flex justify-between text-xs">
               <span className="font-semibold text-white/70">
-                {gb.currentParticipantCount} joined
+                {gb.currentQuantity} / {maxQty} units
               </span>
               <span className="text-white/40">
-                {gb.currentQuantity} / {maxQty} units
+                {gb.currentParticipantCount} participants
               </span>
             </div>
 

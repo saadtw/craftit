@@ -50,46 +50,208 @@ export async function GET(request) {
       if (maxMoq !== Infinity) query.moq.$lte = maxMoq;
     }
 
+    let products, total;
+
     if (search) {
-      query.$text = { $search: search };
-    }
+      const trimmedSearch = search.trim();
+      const searchLower = trimmedSearch.toLowerCase();
+      const escapedSearch = trimmedSearch.replace(
+        /[.*+?^${}()|[\]\\]/g,
+        "\\$&",
+      );
+      const searchRegex = new RegExp(escapedSearch, "i");
 
-    let sortObj = {};
-    switch (sort) {
-      case "newest":
-        sortObj = { createdAt: -1 };
-        break;
-      case "price_asc":
-        sortObj = { price: 1 };
-        break;
-      case "price_desc":
-        sortObj = { price: -1 };
-        break;
-      case "popular":
-        sortObj = { views: -1 };
-        break;
-      case "top_rated":
-        sortObj = { averageRating: -1 };
-        break;
-      case "most_ordered":
-        sortObj = { totalOrders: -1 };
-        break;
-      default:
-        sortObj = { createdAt: -1 };
-    }
+      const buildPipeline = (matchQuery) => [
+        { $match: matchQuery },
+        {
+          $addFields: {
+            relevanceScore: {
+              $add: [
+                {
+                  $cond: [{ $eq: [{ $toLower: "$name" }, searchLower] }, 8, 0],
+                },
+                {
+                  $cond: [
+                    {
+                      $regexMatch: {
+                        input: "$name",
+                        regex: escapedSearch,
+                        options: "i",
+                      },
+                    },
+                    5,
+                    0,
+                  ],
+                },
+                {
+                  $cond: [
+                    {
+                      $gt: [
+                        {
+                          $size: {
+                            $filter: {
+                              input: { $ifNull: ["$tags", []] },
+                              as: "t",
+                              cond: {
+                                $regexMatch: {
+                                  input: "$t",
+                                  regex: escapedSearch,
+                                  options: "i",
+                                },
+                              },
+                            },
+                          },
+                        },
+                        0,
+                      ],
+                    },
+                    3,
+                    0,
+                  ],
+                },
+                {
+                  $cond: [
+                    {
+                      $regexMatch: {
+                        input: { $ifNull: ["$description", ""] },
+                        regex: escapedSearch,
+                        options: "i",
+                      },
+                    },
+                    2,
+                    0,
+                  ],
+                },
+              ],
+            },
+          },
+        },
+      ];
 
-    const [products, total] = await Promise.all([
-      Product.find(query)
-        .populate(
-          "manufacturerId",
-          "name businessName businessLogo verificationStatus location stats",
-        )
-        .sort(sortObj)
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      Product.countDocuments(query),
-    ]);
+      let aggSortObj = {};
+      switch (sort) {
+        case "newest":
+          aggSortObj = { relevanceScore: -1, createdAt: -1 };
+          break;
+        case "price_asc":
+          aggSortObj = { relevanceScore: -1, price: 1 };
+          break;
+        case "price_desc":
+          aggSortObj = { relevanceScore: -1, price: -1 };
+          break;
+        case "popular":
+          aggSortObj = { relevanceScore: -1, views: -1 };
+          break;
+        case "top_rated":
+          aggSortObj = { relevanceScore: -1, averageRating: -1 };
+          break;
+        case "most_ordered":
+          aggSortObj = { relevanceScore: -1, totalOrders: -1 };
+          break;
+        case "relevance":
+        default:
+          aggSortObj = { relevanceScore: -1 };
+      }
+
+      const runAggregation = async (pipeline) => {
+        const [aggProducts, totalResults] = await Promise.all([
+          Product.aggregate([
+            ...pipeline,
+            { $sort: aggSortObj },
+            { $skip: skip },
+            { $limit: limit },
+            {
+              $lookup: {
+                from: "users",
+                localField: "manufacturerId",
+                foreignField: "_id",
+                as: "manufacturerId",
+              },
+            },
+            {
+              $unwind: {
+                path: "$manufacturerId",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+          ]),
+          Product.aggregate([...pipeline, { $count: "total" }]),
+        ]);
+
+        const mapped = aggProducts.map((p) => {
+          if (p.manufacturerId) {
+            p.manufacturerId = {
+              _id: p.manufacturerId._id,
+              name: p.manufacturerId.name,
+              businessName: p.manufacturerId.businessName,
+              businessLogo: p.manufacturerId.businessLogo,
+              verificationStatus: p.manufacturerId.verificationStatus,
+              location: p.manufacturerId.location,
+              stats: p.manufacturerId.stats,
+            };
+          }
+          return p;
+        });
+
+        return {
+          products: mapped,
+          total: totalResults[0] ? totalResults[0].total : 0,
+        };
+      };
+
+      const baseRegexQuery = {
+        ...query,
+        $or: [
+          { name: searchRegex },
+          { description: searchRegex },
+          { tags: searchRegex },
+        ],
+      };
+
+      const regexPipeline = buildPipeline(baseRegexQuery);
+      const result = await runAggregation(regexPipeline);
+      products = result.products;
+      total = result.total;
+    } else {
+      let sortObj = {};
+      switch (sort) {
+        case "newest":
+          sortObj = { createdAt: -1 };
+          break;
+        case "price_asc":
+          sortObj = { price: 1 };
+          break;
+        case "price_desc":
+          sortObj = { price: -1 };
+          break;
+        case "popular":
+          sortObj = { views: -1 };
+          break;
+        case "top_rated":
+          sortObj = { averageRating: -1 };
+          break;
+        case "most_ordered":
+          sortObj = { totalOrders: -1 };
+          break;
+        default:
+          sortObj = { createdAt: -1 };
+      }
+
+      const results = await Promise.all([
+        Product.find(query)
+          .populate(
+            "manufacturerId",
+            "name businessName businessLogo verificationStatus location stats",
+          )
+          .sort(sortObj)
+          .skip(skip)
+          .limit(limit)
+          .lean(),
+        Product.countDocuments(query),
+      ]);
+      products = results[0];
+      total = results[1];
+    }
 
     // Attach wishlist flag if customer is logged in
     let wishlistIds = new Set();

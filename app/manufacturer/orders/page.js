@@ -8,9 +8,11 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_COLORS = {
-  pending_acceptance: "bg-amber-500/10 border-amber-500/20 text-amber-400",
+  confirmed: "bg-amber-500/10 border-amber-500/20 text-amber-400",
+  cancellation_requested: "bg-red-500/10 border-red-500/20 text-red-400",
   accepted: "bg-blue-500/10 border-blue-500/20 text-blue-400",
   in_production: "bg-purple-500/10 border-purple-500/20 text-purple-400",
   completed: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
@@ -19,7 +21,8 @@ const STATUS_COLORS = {
 };
 
 const STATUS_LABELS = {
-  pending_acceptance: "Pending",
+  confirmed: "Confirmed",
+  cancellation_requested: "Cancellation Requested",
   accepted: "Accepted",
   in_production: "Production",
   completed: "Completed",
@@ -35,7 +38,7 @@ const TYPE_LABELS = {
 
 const FILTER_TABS = [
   { key: "all", label: "All Orders" },
-  { key: "pending_acceptance", label: "Pending" },
+  { key: "confirmed", label: "Confirmed" },
   { key: "accepted", label: "Accepted" },
   { key: "in_production", label: "In Production" },
   { key: "completed", label: "Completed" },
@@ -239,7 +242,7 @@ export default function ManufacturerOrdersPage() {
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 py-2">
           {[
             { label: "TOTAL", value: stats.total || 0, color: "text-white" },
-            { label: "PENDING", value: stats.pending_acceptance || 0, color: "text-amber-400" },
+            { label: "CONFIRMED", value: stats.confirmed || 0, color: "text-amber-400" },
             { label: "ACCEPTED", value: stats.accepted || 0, color: "text-blue-400" },
             { label: "PRODUCTION", value: stats.in_production || 0, color: "text-purple-400" },
             { label: "COMPLETED", value: stats.completed || 0, color: "text-emerald-400" },
@@ -359,6 +362,7 @@ export default function ManufacturerOrdersPage() {
                   key={order._id}
                   order={order}
                   onRefresh={handleRefresh}
+                  toast={toast}
                 />
               ))}
             </div>
@@ -397,7 +401,7 @@ export default function ManufacturerOrdersPage() {
 
 // ── Order Card ────────────────────────────────────────────────────────────────
 
-function OrderCard({ order, onRefresh }) {
+function OrderCard({ order, onRefresh, toast }) {
   const [accepting, setAccepting] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const has3DModel = Boolean(
@@ -410,16 +414,15 @@ function OrderCard({ order, onRefresh }) {
   const handleQuickAccept = async () => {
     setAccepting(true);
     try {
-      const res = await fetch(`/api/orders/${order._id}/status`, {
-        method: "PUT",
+      const res = await fetch(`/api/orders/${order._id}/production-ack`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: "accepted" }),
       });
       const data = await res.json();
       if (data.success) onRefresh();
-      else toast.error(data.error || "Failed to accept order");
+      else toast.error(data.error || "Failed to start production");
     } catch {
-      toast.error("Error accepting order");
+      toast.error("Error starting production");
     } finally {
       setAccepting(false);
     }
@@ -430,19 +433,16 @@ function OrderCard({ order, onRefresh }) {
     if (reason === null) return;
     setRejecting(true);
     try {
-      const res = await fetch(`/api/orders/${order._id}/status`, {
-        method: "PUT",
+      const res = await fetch(`/api/orders/${order._id}/manufacturer-cancel`, {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          status: "cancelled",
-          rejectionReason: reason || "Rejected by manufacturer",
-        }),
+        body: JSON.stringify({ reason: reason || "Unable to fulfil this order" }),
       });
       const data = await res.json();
       if (data.success) onRefresh();
-      else toast.error(data.error || "Failed to reject order");
+      else toast.error(data.error || "Failed to request cancellation");
     } catch {
-      toast.error("Error rejecting order");
+      toast.error("Error requesting cancellation");
     } finally {
       setRejecting(false);
     }
@@ -529,7 +529,7 @@ function OrderCard({ order, onRefresh }) {
 
             <div className="flex flex-col items-end gap-2 shrink-0">
               <span className="text-2xl font-black text-white tracking-tighter">
-                ${order.totalPrice?.toLocaleString() || "—"}
+                {order.totalPrice ? formatPKR(order.totalPrice) : "-"}
               </span>
               {order.estimatedDeliveryDate && (
                 <div className="flex items-center gap-1.5 px-3 py-1 bg-white/[0.05] border border-purple-500/30 rounded-full">
@@ -574,7 +574,7 @@ function OrderCard({ order, onRefresh }) {
           View Full Details
         </Link>
 
-        {order.status === "pending_acceptance" && (
+        {order.status === "confirmed" && (
           <div className="flex items-center gap-3 ml-auto">
             <button
               onClick={handleQuickAccept}

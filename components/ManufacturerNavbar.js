@@ -15,7 +15,6 @@ import LogoutIcon from "@/assets/logout.png";
 import messageIcon from "@/assets/message.png";
 import supportIcon from "@/assets/support.png";
 
-
 export default function ManufacturerNavbar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
@@ -30,14 +29,45 @@ export default function ManufacturerNavbar() {
     await signOut({ callbackUrl: "/auth/login" });
   };
 
+  const refreshUnread = useRef(null);
   useEffect(() => {
     if (!session?.user?.id) return;
-    fetch("/api/notifications?unread=true&limit=1")
-      .then((r) => r.json())
-      .then((d) => {
-        if (d.unreadCount !== undefined) setUnreadNotifs(d.unreadCount);
-      })
-      .catch(() => {});
+
+    refreshUnread.current = () => {
+      fetch("/api/notifications?unread=true&limit=1")
+        .then((r) => r.json())
+        .then((d) => {
+          if (d.unreadCount !== undefined) setUnreadNotifs(d.unreadCount);
+        })
+        .catch(() => {});
+    };
+
+    const safeRefresh = () => {
+      if (document.visibilityState !== "visible") return;
+      refreshUnread.current();
+    };
+
+    safeRefresh();
+    const interval = setInterval(safeRefresh, 60000);
+
+    const handleUpdate = (event) => {
+      const nextUnread = event?.detail?.unreadCount;
+      if (typeof nextUnread === "number") {
+        setUnreadNotifs(nextUnread);
+        return;
+      }
+      safeRefresh();
+    };
+    window.addEventListener("notifications:updated", handleUpdate);
+    window.addEventListener("focus", handleUpdate);
+    document.addEventListener("visibilitychange", handleUpdate);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener("notifications:updated", handleUpdate);
+      window.removeEventListener("focus", handleUpdate);
+      document.removeEventListener("visibilitychange", handleUpdate);
+    };
   }, [session?.user?.id]);
 
   useEffect(() => {
@@ -57,33 +87,45 @@ export default function ManufacturerNavbar() {
     .slice(0, 2)
     .toUpperCase();
 
-  const displayName = session?.user?.businessName || session?.user?.name || "Manufacturer";
+  const displayName =
+    session?.user?.businessName || session?.user?.name || "Manufacturer";
 
   return (
     <header className="sticky top-0 z-40 border-b border-white/10 bg-[#0B011D]/70 backdrop-blur-xl">
       <div className="max-w-[1800px] mx-auto px-4 sm:px-8 h-[74px] flex items-center justify-between gap-8">
-        
         {/* LEFT: Logo & Portal Identity */}
         <div className="flex items-center gap-4 shrink-0">
-          <Link href="/manufacturer/dashboard" className="flex items-center gap-3">
+          <Link
+            href="/manufacturer/dashboard"
+            className="flex items-center gap-3"
+          >
             <Logo className="h-9 w-9 text-[#eb9728]" />
             <div className="flex flex-col leading-none">
-              <span className="text-xl font-black tracking-tighter text-white">CRAFTIT</span>
-              <span className="text-[10px] font-bold text-[#eb9728] uppercase tracking-[0.2em] mt-0.5">Manufacturer Portal</span>
+              <span className="text-xl font-black tracking-tighter text-white">
+                CRAFTIT
+              </span>
+              <span className="text-[10px] font-bold text-[#eb9728] uppercase tracking-[0.2em] mt-0.5">
+                Manufacturer Portal
+              </span>
             </div>
           </Link>
         </div>
 
         {/* RIGHT: Action Buttons & Profile */}
         <div className="flex items-center gap-4 shrink-0 ml-auto">
-
           {/* Messages Button */}
           <Link
             href="/manufacturer/messages"
             className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/[0.04] border border-white/10 text-sm font-bold text-white/70 hover:bg-white/[0.08] hover:text-white transition-all group"
           >
             <div className="relative">
-              <Image src={messageIcon} alt="" width={22} height={22} className="opacity-60 group-hover:opacity-100" />
+              <Image
+                src={messageIcon}
+                alt=""
+                width={22}
+                height={22}
+                className="opacity-60 group-hover:opacity-100"
+              />
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-[#eb9728] rounded-full animate-pulse" />
             </div>
             <span>Messages</span>
@@ -95,7 +137,13 @@ export default function ManufacturerNavbar() {
             className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/[0.04] border border-white/10 text-sm font-bold text-white/70 hover:bg-white/[0.08] hover:text-white transition-all group"
           >
             <div className="relative">
-              <Image src={NotificationIcon} alt="" width={22} height={22} className="opacity-60 group-hover:opacity-100" />
+              <Image
+                src={NotificationIcon}
+                alt=""
+                width={22}
+                height={22}
+                className="opacity-60 group-hover:opacity-100"
+              />
               {unreadNotifs > 0 && (
                 <span className="absolute -top-1.5 -right-1.5 min-w-[18px] h-[18px] px-1 bg-purple-600 text-[10px] font-black text-white rounded-full flex items-center justify-center border-2 border-[#0B011D]">
                   {unreadNotifs > 9 ? "9+" : unreadNotifs}
@@ -111,7 +159,9 @@ export default function ManufacturerNavbar() {
           {/* Profile Dropdown Container */}
           <div className="relative" ref={dropdownRef}>
             <button
-              onClick={() => status === "authenticated" && setIsProfileOpen(!isProfileOpen)}
+              onClick={() =>
+                status === "authenticated" && setIsProfileOpen(!isProfileOpen)
+              }
               disabled={status === "loading"}
               className={`w-[50px] h-[50px] rounded-full p-[2.5px] transition-all ${
                 status === "loading"
@@ -133,8 +183,12 @@ export default function ManufacturerNavbar() {
               <div className="absolute right-0 top-16 p-[1.5px] bg-gradient-to-tr from-[#eb9728] to-purple-600 rounded-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] z-50 animate-in fade-in zoom-in-95 duration-200">
                 <div className="w-64 bg-[#0a0a0c] rounded-[calc(1.5rem-1.5px)] py-3 overflow-hidden">
                   <div className="px-5 py-3 border-b border-white/5 mb-2">
-                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-1">Authenticated As</p>
-                    <p className="text-sm font-bold text-white truncate">{displayName}</p>
+                    <p className="text-[10px] font-bold text-white/30 uppercase tracking-[0.2em] mb-1">
+                      Authenticated As
+                    </p>
+                    <p className="text-sm font-bold text-white truncate">
+                      {displayName}
+                    </p>
                     {session?.user?.verificationStatus === "verified" ? (
                       <p className="text-[10px] font-medium text-[#eb9728] mt-1 flex items-center gap-1">
                         <span className="w-1.5 h-1.5 rounded-full bg-[#eb9728] animate-pulse" />
@@ -154,9 +208,21 @@ export default function ManufacturerNavbar() {
                   </div>
 
                   {[
-                    { href: "/manufacturer/dashboard", icon: DashboardIcon, label: "Dashboard" },
-                    { href: "/manufacturer/settings", icon: SettingsIcon, label: "Account Settings" },
-                    { href: "/manufacturer/support", icon: supportIcon, label: "Help & Support" },
+                    {
+                      href: "/manufacturer/dashboard",
+                      icon: DashboardIcon,
+                      label: "Dashboard",
+                    },
+                    {
+                      href: "/manufacturer/settings",
+                      icon: SettingsIcon,
+                      label: "Account Settings",
+                    },
+                    {
+                      href: "/manufacturer/support",
+                      icon: supportIcon,
+                      label: "Help & Support",
+                    },
                   ].map((item) => (
                     <Link
                       key={item.href}
@@ -164,7 +230,13 @@ export default function ManufacturerNavbar() {
                       onClick={() => setIsProfileOpen(false)}
                       className="flex items-center gap-3 px-5 py-3 text-sm text-white/70 hover:bg-white/5 hover:text-white transition-colors"
                     >
-                      <Image src={item.icon} alt="" width={20} height={20} className="opacity-50" />
+                      <Image
+                        src={item.icon}
+                        alt=""
+                        width={20}
+                        height={20}
+                        className="opacity-50"
+                      />
                       <span className="font-semibold">{item.label}</span>
                     </Link>
                   ))}
@@ -176,7 +248,13 @@ export default function ManufacturerNavbar() {
                     disabled={loggingOut}
                     className="flex items-center gap-3 px-5 py-3 text-sm w-full text-left hover:bg-red-500/10 transition-colors group"
                   >
-                    <Image src={LogoutIcon} alt="" width={20} height={20} className="group-hover:scale-110 transition-transform" />
+                    <Image
+                      src={LogoutIcon}
+                      alt=""
+                      width={20}
+                      height={20}
+                      className="group-hover:scale-110 transition-transform"
+                    />
                     <span className="text-red-400 font-bold">
                       {loggingOut ? "Signing out..." : "Sign Out"}
                     </span>

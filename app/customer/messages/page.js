@@ -112,7 +112,10 @@ export default function CustomerMessagesPage() {
   };
 
   const hasActiveFilters =
-    Boolean(searchQuery) || statusFilter !== "all" || contextFilter !== "all" || unreadOnly;
+    Boolean(searchQuery) ||
+    statusFilter !== "all" ||
+    contextFilter !== "all" ||
+    unreadOnly;
 
   if (status === "loading" || initialLoading) {
     return <GlobalLoader fullScreen text="Loading messages..." />;
@@ -287,7 +290,7 @@ export default function CustomerMessagesPage() {
                   key={thread.conversationId}
                   href={
                     thread.contextType === "bid"
-                      ? `/customer/rfqs/${thread.rfqId}/bids`
+                      ? `/bids/${thread.bidId}#chat`
                       : `/customer/orders/${thread.orderId}`
                   }
                 >

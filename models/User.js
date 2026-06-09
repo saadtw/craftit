@@ -270,6 +270,12 @@ const UserSchema = new mongoose.Schema(
       default: false,
     },
 
+    // For OAuth users who need to set a password
+    needsPasswordSetup: {
+      type: Boolean,
+      default: false,
+    },
+
     // Mobile refresh token sessions (stored hashed, never plaintext)
     mobileRefreshTokens: {
       type: [

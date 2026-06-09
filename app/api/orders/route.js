@@ -79,12 +79,14 @@ export async function GET(request) {
     const allOrders = await Order.find(query).lean();
     const stats = {
       total: allOrders.length,
-      pending_acceptance: allOrders.filter(
-        (o) => o.status === "pending_acceptance",
+      confirmed: allOrders.filter((o) => o.status === "confirmed").length,
+      cancellation_requested: allOrders.filter(
+        (o) => o.status === "cancellation_requested",
       ).length,
       accepted: allOrders.filter((o) => o.status === "accepted").length,
       in_production: allOrders.filter((o) => o.status === "in_production")
         .length,
+      delivered: allOrders.filter((o) => o.status === "delivered").length,
       completed: allOrders.filter((o) => o.status === "completed").length,
       cancelled: allOrders.filter((o) => o.status === "cancelled").length,
       disputed: allOrders.filter((o) => o.status === "disputed").length,

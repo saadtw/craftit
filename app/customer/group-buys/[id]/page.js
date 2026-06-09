@@ -1,4 +1,3 @@
-
 // app/customer/group-buys/[id]/page.js
 "use client";
 
@@ -8,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
+import { formatPKR } from "@/lib/currency";
 
 function useCountdown(endDate) {
   const calc = useCallback(() => {
@@ -133,7 +133,7 @@ function TierProgress({ tiers, currentQuantity, currentTierIndex }) {
 
                 <div className="mt-3 border-t border-white/8 pt-3">
                   <p className="text-sm font-bold text-white">
-                    ${tier.discountedPrice.toFixed(2)}
+                    {formatPKR(tier.discountedPrice)}
                   </p>
                   <p className="mt-1 text-[10px] text-white/35">
                     {tier.minQuantity}+ units
@@ -228,12 +228,34 @@ export default function GroupBuyDetailPage() {
       const res = await fetch(`/api/group-buys/${id}/join`, {
         method: isEditing ? "PATCH" : "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ quantity }),
+        body: JSON.stringify({ quantity: Number(quantity) || 1 }),
       });
 
       const data = await res.json();
 
       if (res.ok && data.success) {
+        const nextQuantity = Number(quantity) || 1;
+        const prevQuantity = Number(myParticipation?.quantity) || 0;
+        const deltaQuantity = isEditing
+          ? nextQuantity - prevQuantity
+          : nextQuantity;
+        setGroupBuy((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            currentQuantity: Math.max(
+              0,
+              (prev.currentQuantity || 0) + deltaQuantity,
+            ),
+            currentParticipantCount:
+              (prev.currentParticipantCount || 0) + (hasJoined ? 0 : 1),
+          };
+        });
+        setHasJoined(true);
+        setMyParticipation((prev) => ({
+          ...prev,
+          quantity: nextQuantity,
+        }));
         setSuccess(
           isEditing
             ? `Quantity updated to ${quantity} unit${quantity > 1 ? "s" : ""}.`
@@ -314,13 +336,17 @@ export default function GroupBuyDetailPage() {
   }
 
   const displayPrice = groupBuy.currentDiscountedPrice ?? groupBuy.basePrice;
+  const productHref = groupBuy.productId?._id
+    ? `/customer/products/${groupBuy.productId._id}`
+    : null;
   const isActive = groupBuy.status === "active";
   const isFull =
     groupBuy.maxParticipants &&
     groupBuy.currentParticipantCount >= groupBuy.maxParticipants;
 
   const estimatedUnitPrice = (() => {
-    const projectedQty = groupBuy.currentQuantity + (hasJoined ? 0 : quantity);
+    const projectedQty =
+      groupBuy.currentQuantity + (hasJoined ? 0 : Number(quantity) || 1);
     let price = groupBuy.basePrice;
     for (let i = groupBuy.tiers.length - 1; i >= 0; i--) {
       if (projectedQty >= groupBuy.tiers[i].minQuantity) {
@@ -362,7 +388,13 @@ export default function GroupBuyDetailPage() {
         <section className="grid grid-cols-1 gap-6 lg:grid-cols-[1.65fr_0.85fr]">
           <div className="space-y-6">
             <div className="overflow-hidden rounded-[30px] border border-white/10 bg-[#0c0c11]">
-              <div className="relative h-[320px] sm:h-[420px]">
+              <Link
+                href={productHref || "#"}
+                aria-disabled={!productHref}
+                className={`relative block h-[320px] sm:h-[420px] ${
+                  productHref ? "cursor-pointer" : "pointer-events-none"
+                }`}
+              >
                 {groupBuy.productId?.images?.[0]?.url ? (
                   <Image
                     src={groupBuy.productId.images[0].url}
@@ -410,8 +442,16 @@ export default function GroupBuyDetailPage() {
                         groupBuy.manufacturerId?.name}
                     </span>
                   </p>
+                  {productHref && (
+                    <span className="mt-4 inline-flex items-center gap-1.5 rounded-xl border border-white/10 bg-white/[0.08] px-3 py-2 text-[10px] font-black uppercase tracking-widest text-white/75">
+                      View Product
+                      <span className="material-symbols-outlined text-[13px]">
+                        arrow_forward
+                      </span>
+                    </span>
+                  )}
                 </div>
-              </div>
+              </Link>
 
               {groupBuy.description && (
                 <div className="border-t border-white/8 p-5 sm:p-6">
@@ -494,11 +534,11 @@ export default function GroupBuyDetailPage() {
               <div className="mb-5">
                 <div className="flex items-baseline gap-2">
                   <span className="text-4xl font-black text-[#eb9728]">
-                    ${displayPrice.toFixed(2)}
+                    {formatPKR(displayPrice)}
                   </span>
                   {groupBuy.currentTierIndex >= 0 && (
                     <span className="text-base text-white/30 line-through">
-                      ${groupBuy.basePrice.toFixed(2)}
+                      {formatPKR(groupBuy.basePrice)}
                     </span>
                   )}
                 </div>
@@ -552,13 +592,15 @@ export default function GroupBuyDetailPage() {
                     <div className="flex justify-between">
                       <span className="font-medium">Locked price:</span>
                       <span className="font-black text-white">
-                        ${myParticipation.unitPrice?.toFixed(2)}/unit
+                        {formatPKR(myParticipation.unitPrice)}/unit
                       </span>
                     </div>
                     <div className="flex justify-between border-t border-[#eb9728]/10 pt-2.5">
-                      <span className="font-medium text-[#eb9728]/70">Your total:</span>
+                      <span className="font-medium text-[#eb9728]/70">
+                        Your total:
+                      </span>
                       <span className="font-black text-[#eb9728]">
-                        ${myParticipation.totalPrice?.toFixed(2)}
+                        {formatPKR(myParticipation.totalPrice)}
                       </span>
                     </div>
                     <div className="flex justify-between text-[10px] opacity-40">
@@ -664,7 +706,9 @@ export default function GroupBuyDetailPage() {
               </label>
               <div className="flex items-center gap-3">
                 <button
-                  onClick={() => setQuantity((q) => Math.max(1, q - 1))}
+                  onClick={() =>
+                    setQuantity((q) => Math.max(1, (Number(q) || 1) - 1))
+                  }
                   className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-xl font-bold text-white/65 hover:text-white transition-all hover:bg-white/5 active:scale-95"
                 >
                   −
@@ -674,13 +718,21 @@ export default function GroupBuyDetailPage() {
                   min="1"
                   value={quantity}
                   onChange={(e) => {
-                    const val = parseInt(e.target.value);
+                    const next = e.target.value;
+                    if (next === "") {
+                      setQuantity("");
+                      return;
+                    }
+                    const val = parseInt(next, 10);
                     if (!isNaN(val)) setQuantity(Math.max(1, val));
+                  }}
+                  onBlur={() => {
+                    if (!quantity || Number(quantity) < 1) setQuantity(1);
                   }}
                   className="w-20 bg-transparent text-center text-2xl font-black text-white focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                 />
                 <button
-                  onClick={() => setQuantity((q) => q + 1)}
+                  onClick={() => setQuantity((q) => (Number(q) || 0) + 1)}
                   className="flex h-11 w-11 items-center justify-center rounded-xl border border-white/10 bg-white/[0.03] text-xl font-bold text-white/65 hover:text-white transition-all hover:bg-white/5 active:scale-95"
                 >
                   +
@@ -692,7 +744,7 @@ export default function GroupBuyDetailPage() {
               <div className="flex justify-between text-white/45">
                 <span>Estimated unit price</span>
                 <span className="font-bold text-white">
-                  ${estimatedUnitPrice.toFixed(2)}
+                  {formatPKR(estimatedUnitPrice)}
                 </span>
               </div>
               <div className="flex justify-between text-white/45">
@@ -702,7 +754,7 @@ export default function GroupBuyDetailPage() {
               <div className="flex justify-between border-t border-white/8 pt-3">
                 <span className="font-bold text-white">Estimated total</span>
                 <span className="text-lg font-black text-[#eb9728]">
-                  ${(estimatedUnitPrice * quantity).toFixed(2)}
+                  {formatPKR(estimatedUnitPrice * (Number(quantity) || 1))}
                 </span>
               </div>
               <p className="mt-1 text-[10px] text-white/35">
@@ -739,7 +791,13 @@ export default function GroupBuyDetailPage() {
                 disabled={joining}
                 className="flex-1 rounded-xl bg-[#eb9728] py-3 text-sm font-bold text-white hover:bg-amber-500 disabled:opacity-60"
               >
-                {joining ? (isEditing ? "Updating…" : "Joining…") : (isEditing ? "Confirm Update" : "Confirm & Join")}
+                {joining
+                  ? isEditing
+                    ? "Updating…"
+                    : "Joining…"
+                  : isEditing
+                    ? "Confirm Update"
+                    : "Confirm & Join"}
               </button>
             </div>
           </div>

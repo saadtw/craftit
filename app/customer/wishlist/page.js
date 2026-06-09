@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
+import { formatPKR } from "@/lib/currency";
 
 export default function CustomerWishlistPage() {
   const router = useRouter();
@@ -172,7 +173,7 @@ export default function CustomerWishlistPage() {
                         </p>
                         <div className="flex items-center justify-between">
                           <span className="text-lg font-black text-[#eb9728]">
-                            ${item.price?.toLocaleString()}
+                            {formatPKR(item.price)}
                           </span>
                           <Link
                             href={`/customer/products/${item._id}`}

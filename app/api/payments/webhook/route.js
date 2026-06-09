@@ -3,6 +3,7 @@ import getStripe from "@/lib/stripe";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import GroupBuy from "@/models/GroupBuy";
+import EscrowTransaction from "@/models/EscrowTransaction";
 
 /**
  * POST /api/payments/webhook
@@ -76,6 +77,19 @@ export async function POST(request) {
         release.status = "approved";
         release.resolvedAt = new Date();
         await release.save();
+        const order = await Order.findById(release.orderId);
+        if (order) {
+          order.paymentStatus = "released";
+          await order.save();
+          await EscrowTransaction.create({
+            orderId: order._id,
+            customerId: order.customerId,
+            manufacturerId: order.manufacturerId,
+            amount: release.amount,
+            type: "released",
+            reference: transfer.id,
+          });
+        }
       }
       break;
     }

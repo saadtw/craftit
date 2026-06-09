@@ -138,7 +138,7 @@ export async function POST(request) {
       unitPrice,
       totalPrice,
       timeline: product.leadTime || null,
-      status: "pending_acceptance",
+      status: "confirmed",
       // Payment fields — paymentIntentId is optional for demo/no-Stripe flow
       paymentIntentId: paymentIntentId || undefined,
       paymentStatus: paymentIntentId ? "authorized" : "pending",

@@ -10,8 +10,9 @@ import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import ManufacturerNavbar from "@/components/ManufacturerNavbar";
 import ManufacturerSidebar from "@/components/ManufacturerSidebar";
 import CustomerSidebar from "@/components/CustomerSidebar";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 function StatusBadge({ status }) {
   const styles = {
@@ -25,19 +26,20 @@ function StatusBadge({ status }) {
     <span
       className={`px-3 py-1.5 rounded-full text-[11px] font-bold border ${styles[status] || "bg-white/5 border-white/10 text-white/40"}`}
     >
-      {status === "under_consideration" ? "PENDING" : status?.toUpperCase()?.replace(/_/g, " ")}
+      {status === "under_consideration"
+        ? "PENDING"
+        : status?.toUpperCase()?.replace(/_/g, " ")}
     </span>
   );
 }
 
-function ChatPanel({ bidId, session, bidStatus }) {
+function ChatPanel({ bidId, session, bidStatus, toast }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
   const [loadingChat, setLoadingChat] = useState(true);
   const scrollRef = useRef(null);
   const lastTimestampRef = useRef(null);
-  const pollingRef = useRef(null);
   const isClosed = bidStatus === "withdrawn" || bidStatus === "rejected";
 
   const scrollToBottom = useCallback(() => {
@@ -102,10 +104,46 @@ function ChatPanel({ bidId, session, bidStatus }) {
   );
 
   useEffect(() => {
+    const refreshVisible = () => {
+      if (document.visibilityState === "visible") fetchMessages(false);
+    };
+
     fetchMessages(true);
-    pollingRef.current = setInterval(() => fetchMessages(false), 5000);
-    return () => clearInterval(pollingRef.current);
-  }, [fetchMessages]);
+    if (!isClosed) {
+      const stream = new EventSource(`/api/bids/${bidId}/chat/stream`);
+      stream.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type !== "message" || !data.message) return;
+
+          setMessages((prev) => {
+            if (prev.some((m) => String(m._id) === String(data.message._id))) {
+              return prev;
+            }
+            return [...prev, data.message];
+          });
+          lastTimestampRef.current = data.message.createdAt;
+
+          if (document.visibilityState === "visible") {
+            fetchMessages(false);
+          }
+        } catch (_) {}
+      };
+
+      window.addEventListener("focus", refreshVisible);
+      document.addEventListener("visibilitychange", refreshVisible);
+      return () => {
+        stream.close();
+        window.removeEventListener("focus", refreshVisible);
+        document.removeEventListener("visibilitychange", refreshVisible);
+      };
+    }
+
+    return () => {
+      window.removeEventListener("focus", refreshVisible);
+      document.removeEventListener("visibilitychange", refreshVisible);
+    };
+  }, [bidId, fetchMessages, isClosed]);
 
   useEffect(() => {
     scrollToBottom();
@@ -261,6 +299,7 @@ export default function BidDetailsPage() {
     }
   }, []);
   const [accepting, setAccepting] = useState(false);
+  const [showAcceptConfirm, setShowAcceptConfirm] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
 
   const [updateForm, setUpdateForm] = useState({
@@ -286,13 +325,14 @@ export default function BidDetailsPage() {
           warrantyInfo: data.bid.warrantyInfo || "",
           paymentTerms: data.bid.paymentTerms || "",
         });
-      } else toast.error("Error loading bid: " + (data.error || "Unknown error"));
+      } else
+        toast.error("Error loading bid: " + (data.error || "Unknown error"));
     } catch (_) {
       toast.error("Error loading bid");
     } finally {
       setLoading(false);
     }
-  }, [params.id]);
+  }, [params.id, toast]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -355,7 +395,7 @@ export default function BidDetailsPage() {
   };
 
   const handleAcceptBid = async () => {
-    if (!confirm("Accept this bid? This will close the RFQ.")) return;
+    setShowAcceptConfirm(false);
     setAccepting(true);
     try {
       const res = await fetch(`/api/rfqs/${bid.rfqId._id}/accept-bid`, {
@@ -446,8 +486,7 @@ export default function BidDetailsPage() {
 
   const bidOpen =
     bid.status !== "accepted" &&
-    bid.status !== "withdrawn" &&
-    bid.status !== "rejected";
+    bid.status !== "withdrawn";
   const rfqActive = bid.rfqId?.status === "active";
   const canEdit = isManufacturer && bid.status === "pending";
   const canWithdraw =
@@ -477,6 +516,14 @@ export default function BidDetailsPage() {
         <StatusBadge status={bid.status} />
       </div>
 
+      {isManufacturer && (
+        <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-sm font-bold text-amber-200">
+          {bid.status === "accepted"
+            ? "This bid was accepted and converted into an order."
+            : "This bid is a binding commitment if accepted by the customer."}
+        </div>
+      )}
+
       {/* Manufacturer Info — customer only */}
       {isCustomer && (
         <div className="rounded-2xl border border-white/8 bg-[#0c0c11] p-5">
@@ -486,10 +533,12 @@ export default function BidDetailsPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <p className="text-base font-bold text-white/85">
-                  {bid.manufacturerId?.businessName ||
-                    bid.manufacturerId?.name}
-                </p>
+                <Link
+                  href={`/manufacturers/${bid.manufacturerId?._id}`}
+                  className="text-base font-bold text-white/85 hover:text-[#eb9728] transition-colors"
+                >
+                  {bid.manufacturerId?.businessName || bid.manufacturerId?.name}
+                </Link>
                 {bid.manufacturerId?.verificationStatus === "verified" && (
                   <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-bold text-emerald-400">
                     <span className="material-symbols-outlined text-[11px]">
@@ -499,9 +548,7 @@ export default function BidDetailsPage() {
                   </span>
                 )}
               </div>
-              <p className="text-sm text-white/35">
-                {bid.manufacturerId?.email}
-              </p>
+              <p className="text-sm text-white/35">Manufacturer profile</p>
             </div>
             {bid.manufacturerId?.stats && (
               <div className="flex gap-4 shrink-0">
@@ -549,7 +596,7 @@ export default function BidDetailsPage() {
             <form onSubmit={handleUpdateBid} className="space-y-4">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className={labelClass}>Bid Amount ($) *</label>
+                  <label className={labelClass}>Bid Amount (PKR) *</label>
                   <input
                     type="number"
                     value={updateForm.amount}
@@ -662,7 +709,7 @@ export default function BidDetailsPage() {
                     Bid Amount
                   </p>
                   <p className="text-3xl font-black text-[#eb9728]">
-                    ${bid.amount?.toLocaleString()}
+                    {formatPKR(bid.amount)}
                   </p>
                 </div>
                 <div className="rounded-xl border border-white/8 bg-white/[0.03] p-4">
@@ -693,7 +740,7 @@ export default function BidDetailsPage() {
                                 {key}
                               </p>
                               <p className="text-sm font-bold text-white/70">
-                                ${bid.costBreakdown[key].toLocaleString()}
+                                {formatPKR(bid.costBreakdown[key])}
                               </p>
                             </div>
                           ) : null,
@@ -812,11 +859,11 @@ export default function BidDetailsPage() {
             </h2>
           </div>
           <div className="p-6">
-            <Editor3DWrapper
+            <ModelViewerPreview
               modelUrl={bidModel3D.url}
-              initialAnnotations={bidModel3D.annotations}
-              initialCameraState={bidModel3D.cameraState}
-              readOnly={true}
+              annotations={bidModel3D.annotations || []}
+              measurements={bidModel3D.measurements || []}
+              height="100%"
             />
             <div className="mt-3 flex items-center justify-between gap-3 p-3 bg-white/[0.03] rounded-lg border border-white/8">
               <p className="text-sm text-white/60 truncate">
@@ -836,7 +883,10 @@ export default function BidDetailsPage() {
       )}
 
       {/* Chat */}
-      <div id="chat-section" className="rounded-2xl border border-white/8 bg-[#0c0c11] overflow-hidden">
+      <div
+        id="chat-section"
+        className="rounded-2xl border border-white/8 bg-[#0c0c11] overflow-hidden"
+      >
         <div className="px-6 py-4 border-b border-white/8">
           <h2 className="text-base font-bold text-white">
             Chat with {isManufacturer ? "Customer" : "Manufacturer"}
@@ -851,6 +901,7 @@ export default function BidDetailsPage() {
             bidId={params.id}
             session={session}
             bidStatus={bid.status}
+            toast={toast}
           />
         </div>
       </div>
@@ -869,7 +920,7 @@ export default function BidDetailsPage() {
 
         {canAccept && (
           <button
-            onClick={handleAcceptBid}
+            onClick={() => setShowAcceptConfirm(true)}
             disabled={accepting}
             className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-sm font-bold text-emerald-400 hover:bg-emerald-500/20 disabled:opacity-50 transition-all"
           >
@@ -902,6 +953,35 @@ export default function BidDetailsPage() {
           </button>
         )}
       </div>
+
+      {showAcceptConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-md rounded-2xl border border-white/10 bg-[#0c0c11] p-6 shadow-2xl">
+            <h2 className="text-lg font-black text-white">Accept Proposal?</h2>
+            <p className="mt-2 text-sm leading-6 text-white/50">
+              This will close the RFQ and convert the accepted proposal into an
+              order.
+            </p>
+            <div className="mt-6 flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAcceptConfirm(false)}
+                className="flex-1 rounded-xl border border-white/10 bg-white/[0.04] py-2.5 text-sm font-bold text-white/60 hover:bg-white/[0.07]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleAcceptBid}
+                disabled={accepting}
+                className="flex-1 rounded-xl border border-emerald-500/20 bg-emerald-500/15 py-2.5 text-sm font-bold text-emerald-300 hover:bg-emerald-500/25 disabled:opacity-50"
+              >
+                {accepting ? "Accepting..." : "Accept Proposal"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 
@@ -934,8 +1014,6 @@ export default function BidDetailsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#050507] text-white">
-      {PageContent}
-    </div>
+    <div className="min-h-screen bg-[#050507] text-white">{PageContent}</div>
   );
 }

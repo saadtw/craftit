@@ -36,9 +36,10 @@ export default function ModelViewerPreview({
   // ── Validate URL ──────────────────────────────────────────────────────────
   const isValidUrl = () => {
     if (!modelUrl) return false;
+    if (modelUrl.startsWith("blob:")) return true;
     try {
       const url = new URL(modelUrl);
-      return url.protocol === "https:";
+      return url.protocol === "https:" || url.hostname === "localhost" || url.hostname === "127.0.0.1";
     } catch {
       return false;
     }
@@ -281,6 +282,7 @@ export default function ModelViewerPreview({
       {(!scriptReady || modelLoading) && (
         <div style={{ ...styles.placeholder, position: "absolute", inset: 0, zIndex: 10 }}>
           {poster ? (
+             // eslint-disable-next-line @next/next/no-img-element -- supports blob/local poster URLs for staged model previews.
              <img src={poster} alt="Model Loading" style={{ width: '100%', height: '100%', objectFit: 'cover', opacity: 0.5, position: 'absolute' }} />
           ) : (
             <div style={styles.spinner} />

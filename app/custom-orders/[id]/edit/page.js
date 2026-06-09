@@ -54,9 +54,9 @@ export default function EditCustomOrder() {
         setBaseModelUrl(order.model3D?.url || "");
         setImages(order.images || []);
       } else {
-        }
+      }
     } catch (error) {
-      } finally {
+    } finally {
       setInitialLoading(false);
     }
   }, [params.id]);
@@ -271,7 +271,7 @@ export default function EditCustomOrder() {
                 />
               </div>
               <div>
-                <label className={labelClass}>Budget ($)</label>
+                <label className={labelClass}>Budget (PKR)</label>
                 <input
                   type="number"
                   name="budget"

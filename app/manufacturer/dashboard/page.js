@@ -8,6 +8,7 @@ import GlobalLoader from "@/components/ui/GlobalLoader";
 import Link from "next/link";
 import Image from "next/image";
 import Lottie from "lottie-react";
+import { formatPKR } from "@/lib/currency";
 
 // ASSETS
 import DashboardIcon from "@/assets/Dashboard.png";
@@ -26,7 +27,7 @@ import HomeScreenAnimation from "@/assets/HomeScreenAnimation.json";
 
 // ─── Status helpers ───────────────────────────────────────────────────────────
 const STATUS_COLORS = {
-  pending_acceptance: "bg-amber-500/10 text-amber-500 border border-amber-500/20",
+  confirmed: "bg-amber-500/10 text-amber-500 border border-amber-500/20",
   accepted: "bg-blue-500/10 text-blue-500 border border-blue-500/20",
   in_production: "bg-purple-500/10 text-purple-500 border border-purple-500/20",
   completed: "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20",
@@ -35,7 +36,7 @@ const STATUS_COLORS = {
 };
 
 const STATUS_LABELS = {
-  pending_acceptance: "Pending",
+  confirmed: "Confirmed",
   accepted: "Accepted",
   in_production: "In Production",
   completed: "Completed",
@@ -147,7 +148,7 @@ export default function ManufacturerDashboard() {
         const s = ordersData.stats || {};
         setStats((prev) => ({
           ...prev,
-          pendingOrders: s.pending_acceptance || 0,
+          pendingOrders: s.confirmed || 0,
         }));
       }
 
@@ -272,7 +273,7 @@ export default function ManufacturerDashboard() {
           <StatCard label="Completed" value={stats.completedOrders} icon={DashboardIcon} />
           <StatCard
             label="Revenue"
-            value={`$${stats.revenue >= 1000 ? (stats.revenue / 1000).toFixed(1) + "k" : stats.revenue.toFixed(0)}`}
+            value={formatPKR(stats.revenue)}
             icon={RevenueIcon}
           />
           <StatCard label="Open RFQs" value={stats.activeRfqs} icon={BidsIcon} />
@@ -343,7 +344,7 @@ export default function ManufacturerDashboard() {
                               {STATUS_LABELS[order.status] || order.status}
                             </span>
                           </td>
-                          <td className="px-5 py-3.5 text-sm font-bold text-white">${order.totalPrice?.toLocaleString() || "—"}</td>
+                          <td className="px-5 py-3.5 text-sm font-bold text-white">{order.totalPrice ? formatPKR(order.totalPrice) : "-"}</td>
                           <td className="px-5 py-3.5 text-xs text-white/40">
                             {order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate).toLocaleDateString() : "TBD"}
                           </td>
@@ -386,7 +387,7 @@ export default function ManufacturerDashboard() {
                 <div className="pt-4 border-t border-white/5">
                   <div className="flex items-center justify-between">
                     <span className="text-xs text-white/40">Total Revenue</span>
-                    <span className="text-base font-extrabold text-white">${stats.revenue.toLocaleString()}</span>
+                    <span className="text-base font-extrabold text-white">{formatPKR(stats.revenue)}</span>
                   </div>
                 </div>
               </div>
@@ -410,7 +411,7 @@ export default function ManufacturerDashboard() {
                           <p className="text-sm font-semibold text-white truncate group-hover:text-[#eb9728] transition-colors uppercase tracking-tight">
                             {bid.rfqId?.title || bid.customOrderId?.title || "RFQ Bid"}
                           </p>
-                          <p className="text-[10px] text-white/30 mt-1 font-bold">${bid.bidAmount?.toLocaleString()} · QUOTED</p>
+                          <p className="text-[10px] text-white/30 mt-1 font-bold">{formatPKR(bid.amount || bid.bidAmount)} · QUOTED</p>
                         </div>
                         <span className={`shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider ${
                           bid.status === "accepted" ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20" : 

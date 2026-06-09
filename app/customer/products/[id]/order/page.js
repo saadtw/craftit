@@ -7,6 +7,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
+import { formatPKR } from "@/lib/currency";
 
 export default function PlaceProductOrderPage() {
   const { id } = useParams();
@@ -182,8 +183,6 @@ export default function PlaceProductOrderPage() {
                 sending the order to the manufacturer.
               </p>
             </div>
-
-
           </div>
         </section>
 
@@ -413,17 +412,14 @@ export default function PlaceProductOrderPage() {
               </h3>
 
               <div className="mb-4 space-y-3 text-sm">
-                <PriceRow
-                  label="Unit price"
-                  value={`$${unitPrice.toLocaleString()}`}
-                />
+                <PriceRow label="Unit price" value={formatPKR(unitPrice)} />
                 <PriceRow label="Quantity" value={`${qty || "—"} units`} />
 
                 <div className="border-t border-white/8 pt-3">
                   <div className="flex justify-between font-black">
                     <span className="text-white">Total</span>
                     <span className="text-xl text-[#eb9728]">
-                      {qty > 0 ? `$${totalPrice.toLocaleString()}` : "—"}
+                      {qty > 0 ? formatPKR(totalPrice) : "—"}
                     </span>
                   </div>
                 </div>
