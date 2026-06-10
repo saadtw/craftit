@@ -17,6 +17,16 @@ import DashboardIcon from "@/assets/Dashboard.png";
 
 // ─── Square Stat card with Gradient Border ─────────────────────────────────────
 function StatCard({ label, value, sub, subColor = "text-white/40", icon }) {
+  const valueStr = String(value);
+  let fontSizeClass = "text-xl sm:text-2xl";
+  if (valueStr.length > 12) {
+    fontSizeClass = "text-[11px] sm:text-xs";
+  } else if (valueStr.length > 9) {
+    fontSizeClass = "text-xs sm:text-sm";
+  } else if (valueStr.length > 6) {
+    fontSizeClass = "text-base sm:text-lg";
+  }
+
   return (
     <div className="w-full">
       <div className="relative group h-32 sm:h-36">
@@ -27,7 +37,7 @@ function StatCard({ label, value, sub, subColor = "text-white/40", icon }) {
               <Image src={icon} alt="" width={40} height={40} className="object-contain" />
             </div>
             <p className="text-[10px] font-bold text-white/40 leading-none tracking-widest mb-1.5 uppercase line-clamp-1">{label}</p>
-            <p className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none">{value}</p>
+            <p className={`${fontSizeClass} font-black text-white tracking-tight leading-none`}>{value}</p>
             {sub && <p className={`text-[10px] mt-1.5 font-bold ${subColor} line-clamp-1`}>{sub}</p>}
           </div>
         </div>

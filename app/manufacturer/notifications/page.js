@@ -50,6 +50,7 @@ export default function ManufacturerNotificationsPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
+  const [showOnlyUnread, setShowOnlyUnread] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -85,17 +86,18 @@ export default function ManufacturerNotificationsPage() {
     setNotifications((prev) =>
       prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)),
     );
-    setUnreadCount((c) => {
-      const next = Math.max(0, c - 1);
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("notifications:updated", {
-            detail: { unreadCount: next },
-          }),
-        );
-      }
-      return next;
-    });
+    const next = Math.max(0, unreadCount - 1);
+    setUnreadCount(next);
+    if (next === 0) {
+      setShowOnlyUnread(false);
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("notifications:updated", {
+          detail: { unreadCount: next },
+        }),
+      );
+    }
   };
 
   const markAllRead = async () => {
@@ -103,6 +105,7 @@ export default function ManufacturerNotificationsPage() {
     await fetch("/api/notifications/read-all", { method: "PATCH" });
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
+    setShowOnlyUnread(false);
     setMarkingAll(false);
     if (typeof window !== "undefined") {
       window.dispatchEvent(
@@ -166,7 +169,11 @@ export default function ManufacturerNotificationsPage() {
     return <GlobalLoader fullScreen text="Loading notifications..." />;
   }
 
-  const groupedByDate = notifications.reduce((acc, n) => {
+  const displayedNotifications = showOnlyUnread
+    ? notifications.filter((n) => !n.isRead)
+    : notifications;
+
+  const groupedByDate = displayedNotifications.reduce((acc, n) => {
     const day = new Date(n.createdAt).toLocaleDateString("en-US", {
       weekday: "long",
       month: "short",
@@ -194,9 +201,17 @@ export default function ManufacturerNotificationsPage() {
           <div className="flex items-center gap-3">
             {unreadCount > 0 && (
               <>
-                <span className="px-3 py-1 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-[10px] font-bold uppercase tracking-wider animate-pulse">
-                  {unreadCount} new
-                </span>
+                <button
+                  onClick={() => setShowOnlyUnread(!showOnlyUnread)}
+                  title={showOnlyUnread ? "Show all notifications" : "Show only unread notifications"}
+                  className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider transition-all duration-200 select-none cursor-pointer active:scale-95 ${
+                    showOnlyUnread
+                      ? "bg-[#eb9728] text-white shadow-[0_0_12px_rgba(235,151,40,0.4)] border border-[#eb9728]"
+                      : "bg-[#eb9728]/10 border border-[#eb9728]/20 text-[#eb9728] hover:bg-[#eb9728]/20 animate-pulse"
+                  }`}
+                >
+                  {showOnlyUnread ? "All Notifications" : `${unreadCount} new`}
+                </button>
                 <button
                   onClick={markAllRead}
                   disabled={markingAll}
@@ -212,17 +227,26 @@ export default function ManufacturerNotificationsPage() {
           </div>
         </div>
 
-        {notifications.length === 0 ? (
+        {displayedNotifications.length === 0 ? (
           <div className="bg-white/[0.03] rounded-3xl border-2 border-purple-500/30 text-center py-24 px-8">
             <div className="h-20 w-20 rounded-3xl bg-white/[0.03] border border-white/5 flex items-center justify-center mx-auto mb-6">
               <span className="material-symbols-outlined text-5xl text-white/10">
-                notifications_off
+                {showOnlyUnread ? "notifications" : "notifications_off"}
               </span>
             </div>
-            <GlobalNoResults text="No notifications yet" />
-            <p className="text-sm text-white/20 mt-2">
-              We&apos;ll notify you when something important happens.
-            </p>
+            <GlobalNoResults text={showOnlyUnread ? "No unread notifications" : "No notifications yet"} />
+            {showOnlyUnread ? (
+              <button
+                onClick={() => setShowOnlyUnread(false)}
+                className="mt-4 px-4 py-2 bg-[#eb9728] hover:bg-[#eb9728]/80 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+              >
+                Show All Notifications
+              </button>
+            ) : (
+              <p className="text-sm text-white/20 mt-2">
+                We&apos;ll notify you when something important happens.
+              </p>
+            )}
           </div>
         ) : (
           <div className="space-y-10">

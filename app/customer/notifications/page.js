@@ -58,6 +58,7 @@ export default function CustomerNotificationsPage() {
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
+  const [showOnlyUnread, setShowOnlyUnread] = useState(false);
 
   const fetchNotifications = useCallback(async () => {
     try {
@@ -93,17 +94,18 @@ export default function CustomerNotificationsPage() {
     setNotifications((prev) =>
       prev.map((n) => (n._id === id ? { ...n, isRead: true } : n)),
     );
-    setUnreadCount((c) => {
-      const next = Math.max(0, c - 1);
-      if (typeof window !== "undefined") {
-        window.dispatchEvent(
-          new CustomEvent("notifications:updated", {
-            detail: { unreadCount: next },
-          }),
-        );
-      }
-      return next;
-    });
+    const next = Math.max(0, unreadCount - 1);
+    setUnreadCount(next);
+    if (next === 0) {
+      setShowOnlyUnread(false);
+    }
+    if (typeof window !== "undefined") {
+      window.dispatchEvent(
+        new CustomEvent("notifications:updated", {
+          detail: { unreadCount: next },
+        }),
+      );
+    }
   };
 
   const markAllRead = async () => {
@@ -111,6 +113,7 @@ export default function CustomerNotificationsPage() {
     await fetch("/api/notifications/read-all", { method: "PATCH" });
     setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
     setUnreadCount(0);
+    setShowOnlyUnread(false);
     setMarkingAll(false);
     if (typeof window !== "undefined") {
       window.dispatchEvent(
@@ -166,7 +169,11 @@ export default function CustomerNotificationsPage() {
     return <GlobalLoader fullScreen text="Loading notifications..." />;
   }
 
-  const groupedByDate = notifications.reduce((acc, n) => {
+  const displayedNotifications = showOnlyUnread
+    ? notifications.filter((n) => !n.isRead)
+    : notifications;
+
+  const groupedByDate = displayedNotifications.reduce((acc, n) => {
     const day = new Date(n.createdAt).toLocaleDateString("en-US", {
       weekday: "long",
       month: "short",
@@ -199,35 +206,51 @@ export default function CustomerNotificationsPage() {
 
             <div className="flex items-center gap-3">
               {unreadCount > 0 && (
-                <span className="rounded-full border border-[#eb9728]/20 bg-[#eb9728]/10 px-3 py-1 text-xs font-bold text-[#eb9728]">
-                  {unreadCount} new
-                </span>
-              )}
-
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllRead}
-                  disabled={markingAll}
-                  className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-bold text-white/70 hover:border-[#eb9728]/40 hover:text-[#eb9728] disabled:opacity-50"
-                >
-                  {markingAll ? "Marking..." : "Mark all as read"}
-                </button>
+                <>
+                  <button
+                    onClick={() => setShowOnlyUnread(!showOnlyUnread)}
+                    title={showOnlyUnread ? "Show all notifications" : "Show only unread notifications"}
+                    className={`rounded-full px-3 py-1 text-xs font-bold transition-all duration-200 select-none cursor-pointer active:scale-95 ${
+                      showOnlyUnread
+                        ? "bg-[#eb9728] text-white shadow-[0_0_12px_rgba(235,151,40,0.4)] border border-[#eb9728]"
+                        : "border border-[#eb9728]/20 bg-[#eb9728]/10 text-[#eb9728] hover:bg-[#eb9728]/20"
+                    }`}
+                  >
+                    {showOnlyUnread ? "All Notifications" : `${unreadCount} new`}
+                  </button>
+                  <button
+                    onClick={markAllRead}
+                    disabled={markingAll}
+                    className="rounded-xl border border-white/10 bg-white/[0.03] px-4 py-2 text-sm font-bold text-white/70 hover:border-[#eb9728]/40 hover:text-[#eb9728] disabled:opacity-50 cursor-pointer"
+                  >
+                    {markingAll ? "Marking..." : "Mark all as read"}
+                  </button>
+                </>
               )}
             </div>
           </div>
         </section>
 
-        {notifications.length === 0 ? (
+        {displayedNotifications.length === 0 ? (
           <section className="rounded-[28px] border border-white/8 bg-[#0c0c11] px-6 py-20 text-center">
             <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-[#eb9728]/20 bg-[#eb9728]/10 text-[#eb9728]">
               <span className="material-symbols-outlined text-5xl">
                 notifications
               </span>
             </div>
-            <GlobalNoResults text="No notifications yet" />
-            <p className="mt-2 text-sm text-white/45">
-              You&apos;ll see order updates, messages, and more here.
-            </p>
+            <GlobalNoResults text={showOnlyUnread ? "No unread notifications" : "No notifications yet"} />
+            {showOnlyUnread ? (
+              <button
+                onClick={() => setShowOnlyUnread(false)}
+                className="mt-4 px-4 py-2 bg-[#eb9728] hover:bg-[#eb9728]/80 text-white text-xs font-bold uppercase tracking-wider rounded-xl transition-all cursor-pointer"
+              >
+                Show All Notifications
+              </button>
+            ) : (
+              <p className="mt-2 text-sm text-white/45">
+                You&apos;ll see order updates, messages, and more here.
+              </p>
+            )}
           </section>
         ) : (
           <section className="space-y-6">

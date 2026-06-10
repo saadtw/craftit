@@ -15,6 +15,7 @@ export default function CreateRFQ() {
   const toast = useToast();
   const [customOrder, setCustomOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
   const [manufacturers, setManufacturers] = useState([]);
   const [manufacturersLoading, setManufacturersLoading] = useState(false);
   const [manufacturerSearch, setManufacturerSearch] = useState("");
@@ -61,11 +62,13 @@ export default function CreateRFQ() {
   }, [availableManufacturers, formData.targetManufacturers]);
 
   const fetchCustomOrder = useCallback(async () => {
+    if (redirecting) return;
     try {
       const response = await fetch(`/api/custom-orders/${params.id}`);
       const data = await response.json();
       if (data.success && data.order) {
         if (data.order.rfqId) {
+          setRedirecting(true);
           toast.error(
             "RFQ already created for this order. Redirecting to RFQ details...",
           );
@@ -91,7 +94,7 @@ export default function CreateRFQ() {
       } finally {
       setLoading(false);
     }
-  }, [params.id, router, toast]);
+  }, [params.id, router, toast, redirecting]);
 
   const fetchEligibleManufacturers = useCallback(async (searchTerm = "") => {
     setManufacturersLoading(true);
@@ -211,7 +214,7 @@ export default function CreateRFQ() {
   const labelClass =
     "block text-[10px] font-bold uppercase tracking-[0.18em] text-white/35 mb-2";
 
-  if (status === "loading" || loading) {
+  if (status === "loading" || loading || redirecting) {
     return (
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
         <GlobalLoader text="Loading..." />

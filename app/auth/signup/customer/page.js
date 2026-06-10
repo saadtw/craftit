@@ -68,6 +68,14 @@ export default function CustomerSignup() {
       return;
     }
 
+    if (formData.phone && formData.phone.trim() !== "") {
+      const digits = formData.phone.replace(/\D/g, "");
+      if (digits.length !== 11) {
+        setError("Please enter correct phone number");
+        return;
+      }
+    }
+
     setLoading(true);
 
     try {
@@ -123,7 +131,7 @@ export default function CustomerSignup() {
           </Link>
         </div>
         <div className="flex items-center gap-3">
-          <Logo className="h-8 w-8" />
+          <Logo className="h-8 w-8 text-amber-500" />
           <span className="text-xl font-black tracking-tighter italic uppercase">
             Craftit
           </span>

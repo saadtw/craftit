@@ -25,23 +25,32 @@ function VerifyOtpContent() {
 
   const inputRefs = useRef([]);
 
-  // Expiry countdown
+  // Expiry countdown — dep array is intentionally empty-ish:
+  // the functional updater (prev =>) doesn't need expiryCountdown in deps.
+  // Putting expiryCountdown in deps would restart a new interval every second.
   useEffect(() => {
-    if (expiryCountdown <= 0) return;
     const interval = setInterval(() => {
-      setExpiryCountdown((prev) => Math.max(0, prev - 1));
+      setExpiryCountdown((prev) => {
+        if (prev <= 0) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
     }, 1000);
     return () => clearInterval(interval);
-  }, [expiryCountdown]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);  // run once on mount
 
-  // Resend cooldown
+  // Resend cooldown — same pattern: functional updater avoids stale closure,
+  // so resendCooldown doesn't need to be in deps.
   useEffect(() => {
     if (resendCooldown <= 0) return;
     const interval = setInterval(() => {
       setResendCooldown((prev) => Math.max(0, prev - 1));
     }, 1000);
     return () => clearInterval(interval);
-  }, [resendCooldown]);
+  }, [resendCooldown === 0 ? null : 'active']);  // only restart when cooldown resets
 
   const formatTime = (seconds) => {
     const m = Math.floor(seconds / 60);

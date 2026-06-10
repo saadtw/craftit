@@ -18,7 +18,7 @@ function skinForPathname(pathname) {
   if (B2B_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
     return "b2b";
   }
-  if (pathname === "/") return "marketing";
+  if (pathname === "/") return "landing";
   return "marketing";
 }
 

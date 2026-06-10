@@ -46,6 +46,16 @@ const STATUS_LABELS = {
 
 // ─── Circular Stat card ────────────────────────────────────────────────────────
 function StatCard({ label, value, sub, subColor = "text-white/40", icon }) {
+  const valueStr = String(value);
+  let fontSizeClass = "text-xl sm:text-2xl";
+  if (valueStr.length > 12) {
+    fontSizeClass = "text-[11px] sm:text-xs";
+  } else if (valueStr.length > 9) {
+    fontSizeClass = "text-xs sm:text-sm";
+  } else if (valueStr.length > 6) {
+    fontSizeClass = "text-base sm:text-lg";
+  }
+
   return (
     <div className="flex flex-col items-center gap-3">
       <div className="relative group w-32 h-32 sm:w-40 sm:h-40">
@@ -55,7 +65,7 @@ function StatCard({ label, value, sub, subColor = "text-white/40", icon }) {
               <Image src={icon} alt="" width={40} height={40} className="object-contain" />
             </div>
             <p className="text-[10px] font-bold text-white/40 leading-none tracking-widest mb-1 uppercase line-clamp-1">{label}</p>
-            <p className="text-xl sm:text-2xl font-black text-white tracking-tight leading-none">{value}</p>
+            <p className={`${fontSizeClass} font-black text-white tracking-tight leading-none`}>{value}</p>
             {sub && <p className={`text-[9px] sm:text-[10px] mt-1 font-medium ${subColor} line-clamp-1`}>{sub}</p>}
           </div>
         </div>

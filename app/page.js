@@ -253,7 +253,7 @@ function LandingPageContent() {
           <Link href="/" className="flex items-center gap-3 group">
             <Logo className="h-8 w-8 text-amber-600 transition-transform group-hover:scale-110" />
             <h1 className="text-2xl font-black tracking-tighter text-white">
-              Craftit
+              Craft It
             </h1>
           </Link>
 
@@ -342,7 +342,7 @@ function LandingPageContent() {
 
               <div className="animate-fade-in-up delay-100">
                 <p className="max-w-md text-base text-slate-400 leading-relaxed sm:text-lg">
-                  Craftit is your global marketplace for custom manufacturing.
+                  Craft It is your global marketplace for custom manufacturing.
                   We connect innovators and engineers with the perfect
                   manufacturers to bring your designs to life effortlessly and
                   with precision.
@@ -571,32 +571,20 @@ function LandingPageContent() {
               <div className="flex items-center gap-3">
                 <Logo className="h-8 w-8 text-amber-600" />
                 <span className="text-xl font-black tracking-tighter text-white">
-                  Craftit
+                  Craft It
                 </span>
               </div>
               <p className="max-w-60 text-center text-sm text-slate-500 md:text-left">
-                Customize, Order and Grow Your Business with Craftit - Your
+                Customize, Order and Grow Your Business with Craft It Your
                 Global Manufacturing Marketplace.
               </p>
             </div>
 
             <div className="flex flex-col items-center md:items-end gap-6">
-              <div className="flex flex-wrap justify-center gap-x-8 gap-y-3">
-                {["About", "Contact", "Terms", "Privacy"].map((item) => (
-                  <a
-                    key={item}
-                    className="text-sm font-medium text-slate-400 transition-all hover:-translate-y-px hover:text-purple-400"
-                    href="#"
-                  >
-                    {item}
-                  </a>
-                ))}
-              </div>
-
               <div className="flex items-center gap-4">
                 <div className="hidden h-px w-8 bg-slate-800 md:block" />
                 <p className="text-xs font-medium uppercase tracking-widest text-slate-600">
-                  © 2026 Craftit Inc. <span className="mx-2">/</span> Built for
+                  © 2026 Craft It Inc. <span className="mx-2">/</span> Built for
                   the Future
                 </p>
               </div>
