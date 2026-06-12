@@ -287,6 +287,30 @@ html[data-scroll-skin="marketing"] {
   --scroll-radius: 9999px;
 }
 
+/* --- Landing page: Hide scrollbar --- */
+html[data-scroll-skin="landing"],
+html[data-scroll-skin="landing"] body,
+html[data-scroll-skin="landing"] * {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+html[data-scroll-skin="landing"]::-webkit-scrollbar,
+html[data-scroll-skin="landing"] body::-webkit-scrollbar,
+html[data-scroll-skin="landing"] *::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
+}
+
+html[data-scroll-skin="landing"] *::-webkit-scrollbar-track,
+html[data-scroll-skin="landing"] *::-webkit-scrollbar-thumb {
+  display: none !important;
+  background: transparent !important;
+}
+
+
 html[data-scroll-skin="b2b"] *,
 html[data-scroll-skin="admin"] *,
 html[data-scroll-skin="marketing"] * {

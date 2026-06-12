@@ -77,7 +77,9 @@ export default function CustomerMainNavbar() {
     const handleUpdate = (event) => {
       const nextUnread = event?.detail?.unreadCount;
       if (typeof nextUnread === "number") {
-        setUnreadNotifs(nextUnread);
+        setTimeout(() => {
+          setUnreadNotifs(nextUnread);
+        }, 0);
         return;
       }
       safeRefresh();

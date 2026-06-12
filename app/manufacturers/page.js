@@ -2,6 +2,7 @@
 "use client";
 
 import GlobalNoResults from "@/components/ui/GlobalNoResults";
+import GlobalLoader from "@/components/ui/GlobalLoader";
 import { Suspense, useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
@@ -535,7 +536,7 @@ export default function ManufacturersPage() {
     <Suspense
       fallback={
         <div className="flex min-h-screen items-center justify-center bg-[#050507]">
-          <div className="h-10 w-10 animate-spin rounded-full border-2 border-white/10 border-t-[#eb9728]" />
+          <GlobalLoader text="Loading manufacturers..." />
         </div>
       }
     >

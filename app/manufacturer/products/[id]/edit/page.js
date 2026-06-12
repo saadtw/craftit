@@ -1232,18 +1232,7 @@ export default function EditProductPage() {
                     </label>
                     {modelUploading ? (
                       <div className="w-full py-12 rounded-[2rem] border-2 border-purple-500/30 bg-white/5 flex flex-col items-center justify-center gap-4">
-                        <div
-                          className="h-12 w-12 rounded-full border-2 border-purple-500/20 border-t-purple-500 animate-spin"
-                          aria-hidden
-                        />
-                        <div className="text-center">
-                          <p className="text-[10px] font-black uppercase tracking-widest text-purple-400">
-                            Processing 3D Model...
-                          </p>
-                          <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mt-1">
-                            Converting &amp; optimising — this may take a minute
-                          </p>
-                        </div>
+                        <GlobalLoader text="Processing 3D Model... Converting & optimising — this may take a minute" />
                       </div>
                     ) : form.model3D?.url ? (
                       <div className="p-8 bg-white/[0.02] border-2 border-purple-500/20 rounded-[2rem] flex flex-col items-center text-center">
@@ -1531,7 +1520,7 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
 
       {isOpen && (
         <div className="absolute z-50 w-full mt-2 bg-[#0B011D] border-2 border-purple-500/30 rounded-2xl shadow-[0_10px_40px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-          <div className="max-h-[200px] overflow-y-auto py-2">
+          <div className="max-h-[200px] overflow-y-auto scrollbar-none py-2">
             {options.map((opt) => (
               <button
                 key={opt.value}

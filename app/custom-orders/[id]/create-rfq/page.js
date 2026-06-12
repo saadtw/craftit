@@ -15,6 +15,7 @@ export default function CreateRFQ() {
   const toast = useToast();
   const [customOrder, setCustomOrder] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
   const [manufacturers, setManufacturers] = useState([]);
   const [manufacturersLoading, setManufacturersLoading] = useState(false);
   const [manufacturerSearch, setManufacturerSearch] = useState("");
@@ -61,11 +62,13 @@ export default function CreateRFQ() {
   }, [availableManufacturers, formData.targetManufacturers]);
 
   const fetchCustomOrder = useCallback(async () => {
+    if (redirecting) return;
     try {
       const response = await fetch(`/api/custom-orders/${params.id}`);
       const data = await response.json();
       if (data.success && data.order) {
         if (data.order.rfqId) {
+          setRedirecting(true);
           toast.error(
             "RFQ already created for this order. Redirecting to RFQ details...",
           );
@@ -91,7 +94,7 @@ export default function CreateRFQ() {
       } finally {
       setLoading(false);
     }
-  }, [params.id, router, toast]);
+  }, [params.id, router, toast, redirecting]);
 
   const fetchEligibleManufacturers = useCallback(async (searchTerm = "") => {
     setManufacturersLoading(true);
@@ -211,13 +214,10 @@ export default function CreateRFQ() {
   const labelClass =
     "block text-[10px] font-bold uppercase tracking-[0.18em] text-white/35 mb-2";
 
-  if (status === "loading" || loading) {
+  if (status === "loading" || loading || redirecting) {
     return (
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
-          <GlobalLoader text="Loading..." />
-        </div>
+        <GlobalLoader text="Loading..." />
       </div>
     );
   }
@@ -471,8 +471,7 @@ export default function CreateRFQ() {
                 {/* Manufacturer List */}
                 <div className="max-h-56 overflow-y-auto rounded-xl border border-white/8 bg-[#050507] divide-y divide-white/5">
                   {manufacturersLoading ? (
-                    <div className="flex items-center justify-center py-8 gap-2">
-                      <div className="h-5 w-5 rounded-full border-2 border-white/10 border-t-[#eb9728] animate-spin" />
+                    <div className="flex items-center justify-center py-8">
                       <GlobalLoader text="Loading manufacturers..." />
                     </div>
                   ) : availableManufacturers.length === 0 ? (
