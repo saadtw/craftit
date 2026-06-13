@@ -44,9 +44,11 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
     deadline: "",
     specialRequirements: "",
     annotationIds: [],
+    measurementIds: [],
   });
 
   const availableAnnotations = customOrder?.model3D?.annotations || [];
+  const availableMeasurements = customOrder?.model3D?.measurements || [];
 
   const handleOpenForm = (part = null) => {
     if (part) {
@@ -62,6 +64,7 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
           : "",
         specialRequirements: part.specialRequirements || "",
         annotationIds: part.annotationIds || [],
+        measurementIds: part.measurementIds || [],
       });
       setEditingPart(part._id);
     } else {
@@ -75,6 +78,7 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
         deadline: "",
         specialRequirements: "",
         annotationIds: [],
+        measurementIds: [],
       });
       setEditingPart(null);
     }
@@ -167,6 +171,15 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
       annotationIds: prev.annotationIds.includes(id)
         ? prev.annotationIds.filter((a) => a !== id)
         : [...prev.annotationIds, id],
+    }));
+  };
+
+  const toggleMeasurement = (id) => {
+    setFormData((prev) => ({
+      ...prev,
+      measurementIds: prev.measurementIds.includes(id)
+        ? prev.measurementIds.filter((m) => m !== id)
+        : [...prev.measurementIds, id],
     }));
   };
 
@@ -287,14 +300,28 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
                 )}
 
                 {part.annotationIds && part.annotationIds.length > 0 && (
-                  <p className="text-[10px] text-white/30 mb-4 truncate">
-                    Tagged:{" "}
+                  <p className="text-[10px] text-white/30 mb-2 truncate">
+                    Tagged Annotations:{" "}
                     {part.annotationIds
                       .map(
                         (id) =>
                           availableAnnotations.find((a) => a.id === id)
                             ?.label ||
                           availableAnnotations.find((a) => a.id === id)?.text ||
+                          id,
+                      )
+                      .join(", ")}
+                  </p>
+                )}
+                {part.measurementIds && part.measurementIds.length > 0 && (
+                  <p className="text-[10px] text-white/30 mb-4 truncate">
+                    Tagged Measurements:{" "}
+                    {part.measurementIds
+                      .map(
+                        (id) =>
+                          availableMeasurements.find((m) => m.id === id)
+                            ?.label ||
+                          availableMeasurements.find((m) => m.id === id)?.text ||
                           id,
                       )
                       .join(", ")}
@@ -570,6 +597,26 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
                       className={`px-3 py-1 rounded-full text-[10px] font-bold transition-colors ${formData.annotationIds.includes(anno.id) ? "bg-purple-600/30 border border-purple-500 text-purple-300" : "bg-white/5 border border-white/10 text-white/40"}`}
                     >
                       {anno.label || anno.text || "Tag"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {availableMeasurements.length > 0 && (
+              <div>
+                <label className="block text-[10px] font-bold uppercase text-white/40 mb-2">
+                  Linked Measurements
+                </label>
+                <div className="flex flex-wrap gap-2">
+                  {availableMeasurements.map((meas) => (
+                    <button
+                      type="button"
+                      key={meas.id}
+                      onClick={() => toggleMeasurement(meas.id)}
+                      className={`px-3 py-1 rounded-full text-[10px] font-bold transition-colors ${formData.measurementIds.includes(meas.id) ? "bg-purple-600/30 border border-purple-500 text-purple-300" : "bg-white/5 border border-white/10 text-white/40"}`}
+                    >
+                      {meas.label || meas.text || "Measurement"}
                     </button>
                   ))}
                 </div>

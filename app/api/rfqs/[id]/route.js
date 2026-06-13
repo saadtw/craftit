@@ -30,7 +30,7 @@ export async function GET(request, context) {
       .populate({
         path: "customOrderId",
         select:
-          "title description quantity materialPreferences colorSpecifications deadline budget model3D images specialRequirements",
+          "title description quantity materialPreferences colorSpecifications deadline budget model3D images specialRequirements parts isPartitioned",
       })
       .populate("customerId", "name email phone")
       .populate("acceptedBidId")

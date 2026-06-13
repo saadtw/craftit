@@ -6,10 +6,12 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function CustomOrdersListPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
+  const toast = useToast();
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
@@ -33,6 +35,26 @@ export default function CustomOrdersListPage() {
       setLoading(false);
     }
   }, [filter]);
+
+  const handleDelete = async (orderId) => {
+    if (!window.confirm("Are you sure you want to delete this draft order?")) return;
+    
+    try {
+      const res = await fetch(`/api/custom-orders/${orderId}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        toast.success("Draft order deleted successfully");
+        fetchOrders();
+      } else {
+        toast.error(data.error || "Failed to delete order");
+      }
+    } catch (err) {
+      toast.error("Error deleting order");
+    }
+  };
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -220,12 +242,20 @@ export default function CustomOrdersListPage() {
                     </Link>
 
                     {order.status === "draft" && (
-                      <Link
-                        href={`/custom-orders/${order._id}/edit`}
-                        className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white/80 text-sm font-semibold hover:bg-white/[0.06] hover:text-white transition-all whitespace-nowrap"
-                      >
-                        Edit Draft
-                      </Link>
+                      <>
+                        <Link
+                          href={`/custom-orders/${order._id}/edit`}
+                          className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-white/10 bg-white/[0.03] text-white/80 text-sm font-semibold hover:bg-white/[0.06] hover:text-white transition-all whitespace-nowrap"
+                        >
+                          Edit Draft
+                        </Link>
+                        <button
+                          onClick={() => handleDelete(order._id)}
+                          className="inline-flex items-center justify-center px-4 py-2.5 rounded-xl border border-red-500/20 bg-red-500/10 text-red-400 text-sm font-semibold hover:bg-red-500/20 hover:text-red-300 transition-all whitespace-nowrap"
+                        >
+                          Delete
+                        </button>
+                      </>
                     )}
                   </div>
                 </div>

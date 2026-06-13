@@ -3,6 +3,8 @@ import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import User from "@/models/User";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/products/[id]/public
 // Returns a single active product with manufacturer info.
 // No auth required — used by customer product detail and order pages.

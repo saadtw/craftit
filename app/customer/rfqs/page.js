@@ -171,6 +171,10 @@ export default function CustomerRFQsListPage() {
             <div className="divide-y divide-white/5">
               {rfqs.map((rfq) => {
                 const statusInfo = getStatusInfo(rfq.status);
+                const isPartRFQ = rfq.isPartRFQ;
+                const partData = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.find(p => p._id === rfq.partId) : null;
+                const title = rfq.title || rfq.customOrderId?.title || "RFQ";
+                const description = isPartRFQ && partData ? partData.description : rfq.customOrderId?.description;
                 return (
                   <div
                     key={rfq._id}
@@ -181,7 +185,7 @@ export default function CustomerRFQsListPage() {
                         {/* Title + status */}
                         <div className="flex items-center gap-2.5 mb-3">
                           <h3 className="text-sm font-bold text-white/85 truncate flex items-center gap-2">
-                            {rfq.customOrderId?.title || "RFQ"}
+                            {title}
                             {rfq.customOrderId?.model3D?.url && (
                               <span className="px-1.5 py-0.5 rounded bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20 text-[10px] font-bold">
                                 3D Model
@@ -197,7 +201,7 @@ export default function CustomerRFQsListPage() {
 
                         {/* Description */}
                         <p className="text-[13px] text-white/45 mb-4 line-clamp-2 leading-relaxed">
-                          {rfq.customOrderId?.description || "No description"}
+                          {description || "No description"}
                         </p>
 
                         {/* Meta row */}

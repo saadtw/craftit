@@ -92,7 +92,7 @@ export async function GET(request) {
       .populate({
         path: "customOrderId",
         select:
-          "title description quantity materialPreferences deadline budget model3D images",
+          "title description quantity materialPreferences deadline budget model3D images parts isPartitioned",
       })
       .populate("customerId", "name email")
       .populate("acceptedBidId")

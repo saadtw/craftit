@@ -279,7 +279,7 @@ export default function ManufacturerRFQsPage() {
                             </span>
                           </div>
                           <h3 className="text-base font-black text-white mb-0.5 truncate">
-                            {rfq.customOrderId?.title ||
+                            {rfq.title || rfq.customOrderId?.title ||
                               "Customization Request"}
                           </h3>
                           {rfq.sourceProductId?.name && (
@@ -326,7 +326,15 @@ export default function ManufacturerRFQsPage() {
                 Featured Inquiries
               </h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {rfqs.slice(0, 2).map((rfq) => (
+                {rfqs.slice(0, 2).map((rfq) => {
+                  const isPartRFQ = rfq.isPartRFQ;
+                  const partData = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.find(p => p._id === rfq.partId) : null;
+                  const title = rfq.title || rfq.customOrderId?.title || "Project Inquiry";
+                  const description = isPartRFQ && partData ? partData.description : rfq.customOrderId?.description;
+                  const quantity = isPartRFQ && partData ? partData.quantity : rfq.customOrderId?.quantity;
+                  const budget = isPartRFQ && partData ? partData.budget : rfq.customOrderId?.budget;
+
+                  return (
                   <div
                     key={rfq._id}
                     className="group bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-8 hover:border-purple-500/40 transition-all duration-500 shadow-xl"
@@ -350,10 +358,10 @@ export default function ManufacturerRFQsPage() {
                     </div>
 
                     <h3 className="text-xl font-black tracking-tight text-white mb-3 group-hover:text-purple-400 transition-colors line-clamp-1">
-                      {rfq.customOrderId?.title || "Project Inquiry"}
+                      {title}
                     </h3>
                     <p className="text-sm text-white/40 font-medium line-clamp-2 mb-8 leading-relaxed">
-                      {rfq.customOrderId?.description}
+                      {description}
                     </p>
 
                     <div className="grid grid-cols-2 gap-6 mb-8 pt-6 border-t border-white/5">
@@ -362,7 +370,7 @@ export default function ManufacturerRFQsPage() {
                           Volume
                         </p>
                         <p className="text-sm font-black text-white/80">
-                          {rfq.customOrderId?.quantity || "0"} Units
+                          {quantity || "0"} Units
                         </p>
                       </div>
                       <div>
@@ -370,7 +378,7 @@ export default function ManufacturerRFQsPage() {
                           Budget
                         </p>
                         <p className="text-sm font-black text-emerald-400">
-                          {formatPKR(rfq.customOrderId?.budget)}
+                          {formatPKR(budget)}
                         </p>
                       </div>
                     </div>
@@ -390,7 +398,7 @@ export default function ManufacturerRFQsPage() {
                       </Link>
                     </div>
                   </div>
-                ))}
+                )})}
               </div>
             </section>
 
@@ -412,7 +420,14 @@ export default function ManufacturerRFQsPage() {
                   </p>
                 </div>
               ) : (
-                rfqs.map((rfq) => (
+                rfqs.map((rfq) => {
+                  const isPartRFQ = rfq.isPartRFQ;
+                  const partData = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.find(p => p._id === rfq.partId) : null;
+                  const title = rfq.title || rfq.customOrderId?.title || "Inquiry";
+                  const description = isPartRFQ && partData ? partData.description : rfq.customOrderId?.description;
+                  const quantity = isPartRFQ && partData ? partData.quantity : rfq.customOrderId?.quantity;
+
+                  return (
                   <div
                     key={rfq._id}
                     className="group bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-8 hover:border-purple-500/40 transition-all duration-500 flex flex-col md:flex-row gap-8 items-center"
@@ -448,7 +463,7 @@ export default function ManufacturerRFQsPage() {
                             )}
                           </div>
                           <h3 className="text-2xl font-black tracking-tighter text-white group-hover:text-purple-400 transition-colors uppercase">
-                            {rfq.customOrderId?.title || "Inquiry"}
+                            {title}
                           </h3>
                         </div>
                         <button className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/20 hover:text-purple-400 hover:bg-white/10 transition-all">
@@ -469,7 +484,7 @@ export default function ManufacturerRFQsPage() {
                       </div>
 
                       <p className="text-sm text-white/40 font-medium line-clamp-2 mb-4 leading-relaxed max-w-2xl">
-                        {rfq.customOrderId?.description}
+                        {description}
                       </p>
 
                       {rfq.matchReasons && rfq.matchReasons.length > 0 && (
@@ -491,7 +506,7 @@ export default function ManufacturerRFQsPage() {
                             Volume
                           </p>
                           <p className="text-xs font-black text-white/80">
-                            {rfq.customOrderId?.quantity || "0"} Units
+                            {quantity || "0"} Units
                           </p>
                         </div>
                         <div>
@@ -527,7 +542,7 @@ export default function ManufacturerRFQsPage() {
                       </div>
                     </div>
                   </div>
-                ))
+                )})
               )}
             </section>
           </div>

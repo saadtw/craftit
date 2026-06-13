@@ -37,7 +37,7 @@ export async function PATCH(request, context) {
     }
 
     // Update fields
-    const allowedFields = ['name', 'description', 'quantity', 'material', 'colorSpec', 'budget', 'deadline', 'specialRequirements', 'annotationIds'];
+    const allowedFields = ['name', 'description', 'quantity', 'material', 'colorSpec', 'budget', 'deadline', 'specialRequirements', 'annotationIds', 'measurementIds'];
     allowedFields.forEach(field => {
       if (body[field] !== undefined) {
         part[field] = body[field];

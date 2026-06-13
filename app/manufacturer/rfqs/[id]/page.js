@@ -78,7 +78,20 @@ export default function ManufacturerRFQDetails() {
 
   const isActive = rfq.status === "active";
   const hasBid = !!myBid;
-  const model3D = rfq?.customOrderId?.model3D;
+
+  const isPartRFQ = rfq.isPartRFQ;
+  const partData = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.find(p => p._id === rfq.partId) : null;
+  const siblingRfqs = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.filter(p => p._id !== rfq.partId && p.rfqId) : [];
+
+  let model3D = rfq?.customOrderId?.model3D;
+  if (isPartRFQ && partData && model3D) {
+    model3D = {
+      ...model3D,
+      annotations: (model3D.annotations || []).filter(a => (partData.annotationIds || []).includes(a.id)),
+      measurements: (model3D.measurements || []).filter(m => (partData.measurementIds || []).includes(m.id))
+    };
+  }
+
   const images = rfq?.customOrderId?.images || [];
   const artifactFiles = [
     model3D?.url && {
@@ -120,7 +133,7 @@ export default function ManufacturerRFQDetails() {
             <div>
               <div className="flex items-center gap-3">
                 <h1 className="text-xl font-black tracking-tighter uppercase text-transparent bg-clip-text bg-gradient-to-r from-white via-purple-400 to-indigo-400">
-                  {rfq.customOrderId?.title || "RFQ INQUIRY"}
+                  {isPartRFQ && partData ? partData.name : (rfq.customOrderId?.title || "RFQ INQUIRY")}
                 </h1>
                 <span
                   className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-full border ${STATUS_STYLES[rfq.status] || STATUS_STYLES.active}`}
@@ -200,6 +213,14 @@ export default function ManufacturerRFQDetails() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Detail Streams */}
           <div className="lg:col-span-8 space-y-8">
+            {isPartRFQ && partData && (
+              <div className="bg-purple-500/10 border border-purple-500/20 px-6 py-4 flex items-start gap-3 rounded-2xl">
+                <span className="material-symbols-outlined text-purple-400 mt-0.5">info</span>
+                <p className="text-sm text-purple-300">
+                  <strong>Part-Specific RFQ:</strong> This product is divided into parts. This particular RFQ targets the specific part: <strong>{partData.name}</strong>. The details below reflect the requirements for this specific part.
+                </p>
+              </div>
+            )}
             {(images.length > 0 || model3D?.url) && (
               <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 shadow-2xl overflow-hidden">
                 {images.length > 0 && model3D?.url && (
@@ -349,42 +370,42 @@ export default function ManufacturerRFQDetails() {
             {/* Project Narrative Card */}
             <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-10 shadow-xl">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-6">
-                Technical Scope
+                {isPartRFQ ? "Part Scope" : "Technical Scope"}
               </h3>
               <p className="text-lg font-medium text-white/70 leading-relaxed whitespace-pre-wrap mb-10">
-                {rfq.customOrderId?.description || "No narrative provided."}
+                {(isPartRFQ ? partData?.description : rfq.customOrderId?.description) || "No narrative provided."}
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-8 py-10 border-t border-white/5">
                 {[
                   {
                     label: "Required Volume",
-                    value: `${rfq.customOrderId?.quantity || "N/A"} Units`,
+                    value: `${(isPartRFQ ? partData?.quantity : rfq.customOrderId?.quantity) || "N/A"} Units`,
                   },
                   {
                     label: "Assigned Budget",
-                    value: rfq.customOrderId?.budget
-                      ? formatPKR(rfq.customOrderId.budget)
+                    value: (isPartRFQ ? partData?.budget : rfq.customOrderId?.budget)
+                      ? formatPKR(isPartRFQ ? partData.budget : rfq.customOrderId.budget)
                       : "Confidential",
                   },
                   {
                     label: "Material Constraints",
                     value:
-                      rfq.customOrderId?.materialPreferences?.join(", ") ||
+                      (isPartRFQ ? partData?.material : rfq.customOrderId?.materialPreferences?.join(", ")) ||
                       "Open Specification",
                   },
                   {
                     label: "Temporal Deadline",
-                    value: rfq.customOrderId?.deadline
+                    value: (isPartRFQ ? partData?.deadline : rfq.customOrderId?.deadline)
                       ? new Date(
-                          rfq.customOrderId.deadline,
+                          isPartRFQ ? partData.deadline : rfq.customOrderId.deadline,
                         ).toLocaleDateString()
                       : "Flexible",
                   },
                   {
                     label: "Spectral Data",
                     value:
-                      rfq.customOrderId?.colorSpecifications?.join(", ") ||
+                      (isPartRFQ ? partData?.colorSpec : rfq.customOrderId?.colorSpecifications?.join(", ")) ||
                       "N/A",
                   },
                 ].map((item, i) => (
@@ -402,13 +423,13 @@ export default function ManufacturerRFQDetails() {
                 ))}
               </div>
 
-              {rfq.customOrderId?.specialRequirements && (
+              {(isPartRFQ ? partData?.specialRequirements : rfq.customOrderId?.specialRequirements) && (
                 <div className="mt-8 p-6 bg-white/5 rounded-2xl border border-white/10">
                   <p className="text-[10px] font-black uppercase tracking-widest text-white/20 mb-2">
                     Extended Protocols
                   </p>
                   <p className="text-sm font-medium text-white/60 leading-relaxed italic">
-                    &ldquo;{rfq.customOrderId.specialRequirements}&rdquo;
+                    &ldquo;{isPartRFQ ? partData.specialRequirements : rfq.customOrderId.specialRequirements}&rdquo;
                   </p>
                 </div>
               )}
@@ -461,10 +482,10 @@ export default function ManufacturerRFQDetails() {
               </div>
             )}
 
-            {(acceptedOrder || artifactFiles.length > 0) && (
+            {(acceptedOrder || artifactFiles.length > 0 || siblingRfqs.length > 0) && (
               <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-8 shadow-xl">
                 <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-6">
-                  Order Artifacts
+                  Artifacts & Related Orders
                 </h3>
                 {acceptedOrder ? (
                   <div className="mb-5 rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
@@ -484,29 +505,60 @@ export default function ManufacturerRFQDetails() {
                     an order.
                   </p>
                 )}
-                <div className="space-y-2">
-                  {artifactFiles.map((file) => (
-                    <a
-                      key={file.url}
-                      href={file.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 hover:border-[#eb9728]/30"
-                    >
-                      <span className="min-w-0">
-                        <span className="block truncate text-xs font-bold text-white/75">
-                          {file.label}
+
+                {siblingRfqs.length > 0 && (
+                  <div className="mb-6">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-3">Other Parts RFQs</p>
+                    <div className="space-y-2">
+                      {siblingRfqs.map((sib) => (
+                        <Link
+                          key={sib._id}
+                          href={`/manufacturer/rfqs/${sib.rfqId}`}
+                          className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 hover:border-[#eb9728]/30"
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-xs font-bold text-white/75">
+                              {sib.name}
+                            </span>
+                            <span className="text-[10px] font-black uppercase tracking-widest text-white/25">
+                              Part RFQ
+                            </span>
+                          </span>
+                          <span className="material-symbols-outlined text-sm text-[#eb9728]">
+                            open_in_new
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {artifactFiles.length > 0 && (
+                  <div className="space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/40 mb-3">Attached Files</p>
+                    {artifactFiles.map((file) => (
+                      <a
+                        key={file.url}
+                        href={file.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 hover:border-[#eb9728]/30"
+                      >
+                        <span className="min-w-0">
+                          <span className="block truncate text-xs font-bold text-white/75">
+                            {file.label}
+                          </span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-white/25">
+                            {file.type}
+                          </span>
                         </span>
-                        <span className="text-[10px] font-black uppercase tracking-widest text-white/25">
-                          {file.type}
+                        <span className="material-symbols-outlined text-sm text-[#eb9728]">
+                          download
                         </span>
-                      </span>
-                      <span className="material-symbols-outlined text-sm text-[#eb9728]">
-                        download
-                      </span>
-                    </a>
-                  ))}
-                </div>
+                      </a>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

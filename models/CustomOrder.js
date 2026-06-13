@@ -118,6 +118,7 @@ const CustomOrderSchema = new mongoose.Schema(
         deadline: Date,
         specialRequirements: String,
         annotationIds: [String],
+        measurementIds: [String],
         rfqId: { type: mongoose.Schema.Types.ObjectId, ref: 'RFQ' },
         rfqStatus: {
           type: String,

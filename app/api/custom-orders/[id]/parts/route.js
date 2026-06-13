@@ -63,6 +63,7 @@ export async function POST(request, context) {
       deadline: body.deadline,
       specialRequirements: body.specialRequirements,
       annotationIds: body.annotationIds || [],
+      measurementIds: body.measurementIds || [],
       rfqStatus: 'pending'
     };
 

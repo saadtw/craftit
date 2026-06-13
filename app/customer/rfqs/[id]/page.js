@@ -152,7 +152,20 @@ export default function CustomerRFQDetails() {
       class: "bg-[#eb9728]/10 border-[#eb9728]/20 text-[#eb9728]",
     },
   };
-  const model3D = rfq.customOrderId?.model3D;
+  
+  const isPartRFQ = rfq.isPartRFQ;
+  const partData = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.find(p => p._id === rfq.partId) : null;
+  const siblingRfqs = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.filter(p => p._id !== rfq.partId && p.rfqId) : [];
+
+  let model3D = rfq.customOrderId?.model3D;
+  if (isPartRFQ && partData && model3D) {
+    model3D = {
+      ...model3D,
+      annotations: (model3D.annotations || []).filter(a => (partData.annotationIds || []).includes(a.id)),
+      measurements: (model3D.measurements || []).filter(m => (partData.measurementIds || []).includes(m.id))
+    };
+  }
+
   const images = rfq.customOrderId?.images || [];
   const artifactFiles = [
     model3D?.url && {
@@ -175,10 +188,10 @@ export default function CustomerRFQDetails() {
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#eb9728] mb-1">
-                RFQ Details
+                {isPartRFQ ? "Part RFQ Details" : "RFQ Details"}
               </p>
               <h1 className="text-3xl font-black tracking-tight text-white">
-                {rfq.customOrderId?.title || "RFQ Details"}
+                {isPartRFQ && partData ? partData.name : (rfq.customOrderId?.title || "RFQ Details")}
               </h1>
               <p className="text-sm text-white/35 mt-1">RFQ #{rfq.rfqNumber}</p>
             </div>
@@ -241,19 +254,27 @@ export default function CustomerRFQDetails() {
           {/* Project Details */}
           {rfq.customOrderId && (
             <div className="rounded-2xl border border-white/8 bg-[#0c0c11] overflow-hidden">
+              {isPartRFQ && partData && (
+                <div className="bg-[#eb9728]/10 border-b border-[#eb9728]/20 px-6 py-4 flex items-start gap-3">
+                  <span className="material-symbols-outlined text-[#eb9728] mt-0.5">info</span>
+                  <p className="text-sm text-[#eb9728]">
+                    <strong>Part-Specific RFQ:</strong> This product is divided into parts. This particular RFQ targets the specific part: <strong>{partData.name}</strong>. The details below reflect the requirements for this specific part.
+                  </p>
+                </div>
+              )}
               <div className="px-6 py-5 border-b border-white/8">
                 <h2 className="text-base font-bold text-white">
-                  Project Details
+                  {isPartRFQ ? "Part Details" : "Project Details"}
                 </h2>
               </div>
               <div className="px-6 py-5 space-y-5">
-                {rfq.customOrderId.description && (
+                {(isPartRFQ ? partData?.description : rfq.customOrderId.description) && (
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-2">
                       Description
                     </p>
                     <p className="text-sm text-white/70 leading-relaxed">
-                      {rfq.customOrderId.description}
+                      {isPartRFQ ? partData.description : rfq.customOrderId.description}
                     </p>
                   </div>
                 )}
@@ -262,18 +283,18 @@ export default function CustomerRFQDetails() {
                   {[
                     {
                       label: "Quantity",
-                      value: rfq.customOrderId.quantity,
+                      value: isPartRFQ ? partData?.quantity : rfq.customOrderId.quantity,
                       icon: "inventory_2",
                     },
-                    rfq.customOrderId.budget && {
+                    (isPartRFQ ? partData?.budget : rfq.customOrderId.budget) && {
                       label: "Budget",
-                      value: formatPKR(rfq.customOrderId.budget),
+                      value: formatPKR(isPartRFQ ? partData.budget : rfq.customOrderId.budget),
                       icon: "payments",
                     },
-                    rfq.customOrderId.deadline && {
+                    (isPartRFQ ? partData?.deadline : rfq.customOrderId.deadline) && {
                       label: "Deadline",
                       value: new Date(
-                        rfq.customOrderId.deadline,
+                        isPartRFQ ? partData.deadline : rfq.customOrderId.deadline,
                       ).toLocaleDateString(),
                       icon: "event",
                     },
@@ -299,49 +320,61 @@ export default function CustomerRFQDetails() {
                     ))}
                 </div>
 
-                {rfq.customOrderId.materialPreferences?.length > 0 && (
+                {((isPartRFQ && partData?.material) || (!isPartRFQ && rfq.customOrderId.materialPreferences?.length > 0)) && (
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-2">
                       Materials
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {rfq.customOrderId.materialPreferences.map((m) => (
-                        <span
-                          key={m}
-                          className="px-3 py-1 rounded-full border border-white/10 bg-white/[0.04] text-[11px] font-semibold text-white/60"
-                        >
-                          {m}
+                      {isPartRFQ ? (
+                        <span className="px-3 py-1 rounded-full border border-white/10 bg-white/[0.04] text-[11px] font-semibold text-white/60">
+                          {partData.material}
                         </span>
-                      ))}
+                      ) : (
+                        rfq.customOrderId.materialPreferences.map((m) => (
+                          <span
+                            key={m}
+                            className="px-3 py-1 rounded-full border border-white/10 bg-white/[0.04] text-[11px] font-semibold text-white/60"
+                          >
+                            {m}
+                          </span>
+                        ))
+                      )}
                     </div>
                   </div>
                 )}
 
-                {rfq.customOrderId.colorSpecifications?.length > 0 && (
+                {((isPartRFQ && partData?.colorSpec) || (!isPartRFQ && rfq.customOrderId.colorSpecifications?.length > 0)) && (
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-2">
                       Colors
                     </p>
                     <div className="flex flex-wrap gap-2">
-                      {rfq.customOrderId.colorSpecifications.map((c) => (
-                        <span
-                          key={c}
-                          className="px-3 py-1 rounded-full border border-white/10 bg-white/[0.04] text-[11px] font-semibold text-white/60"
-                        >
-                          {c}
+                      {isPartRFQ ? (
+                        <span className="px-3 py-1 rounded-full border border-white/10 bg-white/[0.04] text-[11px] font-semibold text-white/60">
+                          {partData.colorSpec}
                         </span>
-                      ))}
+                      ) : (
+                        rfq.customOrderId.colorSpecifications.map((c) => (
+                          <span
+                            key={c}
+                            className="px-3 py-1 rounded-full border border-white/10 bg-white/[0.04] text-[11px] font-semibold text-white/60"
+                          >
+                            {c}
+                          </span>
+                        ))
+                      )}
                     </div>
                   </div>
                 )}
 
-                {rfq.customOrderId.specialRequirements && (
+                {(isPartRFQ ? partData?.specialRequirements : rfq.customOrderId.specialRequirements) && (
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-2">
                       Special Requirements
                     </p>
                     <p className="text-sm text-white/60 leading-relaxed whitespace-pre-wrap bg-white/[0.02] border border-white/6 rounded-xl px-4 py-3">
-                      {rfq.customOrderId.specialRequirements}
+                      {isPartRFQ ? partData.specialRequirements : rfq.customOrderId.specialRequirements}
                     </p>
                   </div>
                 )}
@@ -378,15 +411,15 @@ export default function CustomerRFQDetails() {
                   </div>
                 )}
 
-                {(acceptedOrder || artifactFiles.length > 0) && (
+                {(acceptedOrder || artifactFiles.length > 0 || siblingRfqs.length > 0) && (
                   <div className="rounded-2xl border border-white/8 bg-white/[0.02] p-4">
                     <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30">
-                          Artifacts
+                          Artifacts & Related Orders
                         </p>
                         <p className="mt-1 text-xs text-white/40">
-                          Files attached to this RFQ
+                          Files and other parts related to this product
                         </p>
                       </div>
                       {acceptedOrder && (
@@ -398,29 +431,60 @@ export default function CustomerRFQDetails() {
                         </Link>
                       )}
                     </div>
-                    <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                      {artifactFiles.map((file) => (
-                        <a
-                          key={file.url}
-                          href={file.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-[#0c0c11] px-4 py-3 hover:border-[#eb9728]/30"
-                        >
-                          <span className="min-w-0">
-                            <span className="block truncate text-xs font-bold text-white/75">
-                              {file.label}
-                            </span>
-                            <span className="text-[10px] font-black uppercase tracking-widest text-white/25">
-                              {file.type}
-                            </span>
-                          </span>
-                          <span className="material-symbols-outlined text-sm text-[#eb9728]">
-                            download
-                          </span>
-                        </a>
-                      ))}
-                    </div>
+                    {siblingRfqs.length > 0 && (
+                      <div className="mb-4">
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-2">Other Parts RFQs</p>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          {siblingRfqs.map((sib) => (
+                            <Link
+                              key={sib._id}
+                              href={`/customer/rfqs/${sib.rfqId}`}
+                              className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-[#0c0c11] px-4 py-3 hover:border-[#eb9728]/30"
+                            >
+                              <span className="min-w-0">
+                                <span className="block truncate text-xs font-bold text-white/75">
+                                  {sib.name}
+                                </span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/25">
+                                  Part RFQ
+                                </span>
+                              </span>
+                              <span className="material-symbols-outlined text-sm text-[#eb9728]">
+                                open_in_new
+                              </span>
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    {artifactFiles.length > 0 && (
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/30 mb-2">Files</p>
+                        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                          {artifactFiles.map((file) => (
+                            <a
+                              key={file.url}
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-[#0c0c11] px-4 py-3 hover:border-[#eb9728]/30"
+                            >
+                              <span className="min-w-0">
+                                <span className="block truncate text-xs font-bold text-white/75">
+                                  {file.label}
+                                </span>
+                                <span className="text-[10px] font-black uppercase tracking-widest text-white/25">
+                                  {file.type}
+                                </span>
+                              </span>
+                              <span className="material-symbols-outlined text-sm text-[#eb9728]">
+                                download
+                              </span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

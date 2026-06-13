@@ -855,12 +855,22 @@ function NewCustomOrderContent() {
                   </div>
                   <div className="p-4">
                     <div className="aspect-video overflow-hidden rounded-xl border border-white/8 bg-white/[0.02]">
-                      <ModelViewerPreview
-                        modelUrl={pendingModel.previewUrl}
-                        annotations={[]}
-                        measurements={[]}
-                        height="100%"
-                      />
+                      {pendingModel.file?.name?.toLowerCase().match(/\.(glb|gltf)$/) ? (
+                        <ModelViewerPreview
+                          modelUrl={pendingModel.previewUrl}
+                          annotations={[]}
+                          measurements={[]}
+                          height="100%"
+                        />
+                      ) : (
+                        <div className="flex h-full flex-col items-center justify-center p-6 text-center">
+                          <span className="material-symbols-outlined text-4xl text-white/10 mb-3">view_in_ar</span>
+                          <p className="text-sm font-bold text-white/70">Model selected</p>
+                          <p className="text-xs text-white/40 mt-1 max-w-[250px]">
+                            Preview will be available after the order is submitted and the model is processed.
+                          </p>
+                        </div>
+                      )}
                     </div>
                     <p className="mt-3 text-[11px] text-white/35">
                       Uploads happen when you create the order. You can edit the

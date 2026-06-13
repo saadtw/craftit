@@ -86,6 +86,24 @@ export default function CustomOrderReview() {
     }
   };
 
+  const handleDeleteOrder = async () => {
+    if (!window.confirm("Are you sure you want to delete this draft order?")) return;
+    try {
+      const response = await fetch(`/api/custom-orders/${params.id}`, {
+        method: "DELETE",
+      });
+      const data = await response.json();
+      if (data.success) {
+        toast.success("Draft order deleted successfully");
+        router.push("/customer/custom-orders");
+      } else {
+        toast.error("Error: " + data.error);
+      }
+    } catch (error) {
+      toast.error("Error: " + error.message);
+    }
+  };
+
   const handleModelSave = async (payload) => {
     const { modelUrl, annotations, measurements, cameraState } = payload || {};
     if (!customOrder?.model3D?.url) return;
@@ -411,11 +429,13 @@ export default function CustomOrderReview() {
             </div>
           </div>
 
-          {/* Parts Division Panel */}
-          <PartsDivisionPanel
-            customOrder={customOrder}
-            onPartsUpdated={fetchCustomOrder}
-          />
+          {/* Parts Division Panel - Only show for from-scratch custom orders */}
+          {customOrder.sourceType !== "product_customization" && !customOrder.sourceProductId && (
+            <PartsDivisionPanel
+              customOrder={customOrder}
+              onPartsUpdated={fetchCustomOrder}
+            />
+          )}
 
           {/* 3D Model */}
           {customOrder.model3D && (
@@ -570,6 +590,17 @@ export default function CustomOrderReview() {
                     draft
                   </span>
                   Revert to Draft
+                </button>
+              )}
+              {customOrder.status === "draft" && (
+                <button
+                  onClick={handleDeleteOrder}
+                  className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl border border-red-500/20 bg-red-500/10 text-sm font-semibold text-red-400 hover:bg-red-500/20 hover:text-red-300 transition-all"
+                >
+                  <span className="material-symbols-outlined text-[15px]">
+                    delete
+                  </span>
+                  Delete Draft
                 </button>
               )}
             </div>
