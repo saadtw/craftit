@@ -24,6 +24,27 @@ const FILE_TYPES = {
   },
 };
 
+function getGltfExternalDependencies(buffer) {
+  try {
+    const gltf = JSON.parse(buffer.toString("utf8"));
+    const uris = [
+      ...(gltf.buffers || []).map((item) => item?.uri),
+      ...(gltf.images || []).map((item) => item?.uri),
+    ].filter(Boolean);
+
+    return uris.filter((uri) => {
+      const normalized = String(uri).trim().toLowerCase();
+      return (
+        normalized &&
+        !normalized.startsWith("data:") &&
+        !normalized.startsWith("blob:")
+      );
+    });
+  } catch {
+    return null;
+  }
+}
+
 // POST /api/upload
 export async function POST(request) {
   try {
@@ -95,13 +116,13 @@ export async function POST(request) {
     const timestamp = Date.now();
 
     if (fileType === "3d-model") {
-      const isWebReady = ext === ".glb" || ext === ".gltf";
+      const isWebReady = ext === ".glb";
       const isUnderLimit = file.size < 25165824; // 24 MB
 
       if (isWebReady && isUnderLimit) {
         // ── Branch A: Fast-track — no conversion needed ──────────────────
         console.log(
-          "[Upload] FAST-TRACK: skipping converter (web-ready, <24MB)",
+          "[Upload] FAST-TRACK: skipping converter (GLB, <24MB)",
         );
         if (!uploadContentType) uploadContentType = "model/gltf-binary";
 
@@ -123,6 +144,32 @@ export async function POST(request) {
           },
         });
       } else {
+        if (ext === ".gltf") {
+          const externalDeps = getGltfExternalDependencies(buffer);
+          if (externalDeps === null) {
+            return NextResponse.json(
+              {
+                success: false,
+                error:
+                  "Invalid GLTF file. Please upload a valid .glb file or an embedded .gltf file.",
+              },
+              { status: 400 },
+            );
+          }
+
+          if (externalDeps.length > 0) {
+            return NextResponse.json(
+              {
+                success: false,
+                error:
+                  "This .gltf references external .bin or texture files. Please export/upload a single self-contained .glb file.",
+                missingAssets: externalDeps,
+              },
+              { status: 400 },
+            );
+          }
+        }
+
         // ── Branch B: Pipeline — stream file to converter, upload returned GLB ──
         // The converter is a pure transform service: it accepts a file, returns
         // the converted GLB binary. Next.js handles all Supabase uploads.
@@ -134,13 +181,15 @@ export async function POST(request) {
         const converterSecret = process.env.CONVERTER_SECRET;
 
         if (!converterUrl) {
-          console.warn("[Upload] CONVERTER_SERVICE_URL not set — uploading raw file as fallback");
-          const rawPath = `3d-models/raw/${timestamp}-${file.name.replace(/\s+/g, "-")}`;
-          const rawUrl = await uploadToStorage(buffer, rawPath, uploadContentType || "application/octet-stream");
-          return NextResponse.json({
-            success: true,
-            file: { url: rawUrl, filename: file.name, fileSize: buffer.length, type: fileType },
-          });
+          console.warn("[Upload] CONVERTER_SERVICE_URL not set");
+          return NextResponse.json(
+            {
+              success: false,
+              error:
+                "3D model conversion is not configured. Please upload a .glb file or configure CONVERTER_SERVICE_URL.",
+            },
+            { status: 500 },
+          );
         }
 
         // Build multipart payload: send buffer directly to converter
@@ -175,9 +224,14 @@ export async function POST(request) {
           console.log(`[Upload] Pipeline complete. URL: ${finalUrl}`);
         } catch (convErr) {
           console.error("[Upload] Converter error:", convErr.message);
-          console.warn("[Upload] Falling back to raw file upload");
-          const rawPath = `3d-models/raw/${timestamp}-${file.name.replace(/\s+/g, "-")}`;
-          finalUrl = await uploadToStorage(buffer, rawPath, uploadContentType || "application/octet-stream");
+          return NextResponse.json(
+            {
+              success: false,
+              error:
+                "3D model conversion failed. Please upload a self-contained .glb file.",
+            },
+            { status: 422 },
+          );
         }
 
         return NextResponse.json({

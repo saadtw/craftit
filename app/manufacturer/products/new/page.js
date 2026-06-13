@@ -197,13 +197,16 @@ export default function NewProductPage() {
   // Image upload
   const handleImageUpload = async (files) => {
     if (!files.length) return;
+    // Snapshot into a plain array BEFORE resetting the input — the FileList
+    // from e.target.files is live; resetting input.value clears it immediately.
+    const fileArray = Array.from(files);
     setImageUploading(true);
-    // Always reset input so the same file can be selected again on retry
+    // Reset input so the same file can be selected again on retry
     if (imageInputRef.current) imageInputRef.current.value = "";
     try {
       const formData = new FormData();
       formData.append("type", "image");
-      Array.from(files).forEach((f) => formData.append("files", f));
+      fileArray.forEach((f) => formData.append("files", f));
       const res = await fetch("/api/upload/multiple", {
         method: "POST",
         body: formData,
@@ -1241,7 +1244,7 @@ export default function NewProductPage() {
                       <input
                         ref={modelInputRef}
                         type="file"
-                        accept=".glb,.obj,.stl,.gltf"
+                        accept=".glb,.obj,.stl"
                         className="hidden"
                         onChange={(e) => handleModelUpload(e.target.files?.[0])}
                       />

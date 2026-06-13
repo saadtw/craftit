@@ -346,13 +346,34 @@ export default function ProductDetailPage() {
                 <div>
                   <div className="aspect-[16/10] bg-white/[0.02] flex items-center justify-center relative group">
                     {product.images?.length > 0 ? (
-                      <Image
-                        src={product.images[activeImage]?.url}
-                        alt={product.name}
-                        fill
-                        className="object-contain p-4"
-                        sizes="(max-width: 1280px) 100vw, 800px"
-                      />
+                      <>
+                        <Image
+                          src={product.images[activeImage]?.url}
+                          alt={product.name}
+                          fill
+                          className="object-contain p-4"
+                          sizes="(max-width: 1280px) 100vw, 800px"
+                        />
+                        {/* Navigation Arrows */}
+                        {product.images.length > 1 && (
+                          <>
+                            <button
+                              onClick={() => setActiveImage(prev => prev - 1)}
+                              disabled={activeImage === 0}
+                              className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 backdrop-blur-md rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-black/80 hover:scale-110 disabled:opacity-30 disabled:hover:scale-100 transition-all z-20"
+                            >
+                              <span className="material-symbols-outlined text-sm">arrow_back_ios_new</span>
+                            </button>
+                            <button
+                              onClick={() => setActiveImage(prev => prev + 1)}
+                              disabled={activeImage === product.images.length - 1}
+                              className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 backdrop-blur-md rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-black/80 hover:scale-110 disabled:opacity-30 disabled:hover:scale-100 transition-all z-20"
+                            >
+                              <span className="material-symbols-outlined text-sm">arrow_forward_ios</span>
+                            </button>
+                          </>
+                        )}
+                      </>
                     ) : (
                       <div className="text-center">
                         <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-4 text-white/10">
@@ -377,7 +398,7 @@ export default function ProductDetailPage() {
                     )}
                     {/* Image Counter Overlay */}
                     {product.images?.length > 0 && (
-                      <div className="absolute bottom-6 right-6 px-4 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 text-[9px] font-black uppercase tracking-widest text-white/60">
+                      <div className="absolute bottom-6 right-6 px-4 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 text-[9px] font-black uppercase tracking-widest text-white/60 z-20 pointer-events-none">
                         {activeImage + 1} / {product.images?.length || 0}
                       </div>
                     )}

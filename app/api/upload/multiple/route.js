@@ -73,6 +73,20 @@ export async function POST(request) {
       }
     }
 
+    if (uploadedFiles.length === 0) {
+      const firstError = errors[0]?.error || "No files were uploaded";
+      return NextResponse.json(
+        {
+          success: false,
+          error: firstError,
+          message: `Uploaded 0 of ${files.length} files`,
+          files: [],
+          errors,
+        },
+        { status: 500 },
+      );
+    }
+
     return NextResponse.json({
       success: true,
       message: `Uploaded ${uploadedFiles.length} of ${files.length} files`,

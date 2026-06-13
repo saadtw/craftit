@@ -179,10 +179,6 @@ export default function CustomOrderReview() {
 
   return (
     <>
-      <Script
-        type="module"
-        src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.3.0/model-viewer.min.js"
-      />
 
       <div className="min-h-screen bg-[#050507] text-white">
         <CustomerMainNavbar />
@@ -446,7 +442,7 @@ export default function CustomOrderReview() {
                     modelUrl={customOrder.model3D.url}
                     annotations={customOrder.model3D.annotations || []}
                     measurements={customOrder.model3D.measurements || []}
-                    height="100%"
+                    height="480px"
                   />
                 </div>
                 <div className="flex items-center gap-2 mt-3">
@@ -475,25 +471,20 @@ export default function CustomOrderReview() {
               <div className="p-5">
                 <div className="grid grid-cols-3 gap-3">
                   {customOrder.images.map((img, idx) => (
-                    <div
-                      key={idx}
-                      className="relative h-44 rounded-xl overflow-hidden border border-white/8"
-                    >
-                      <Image
-                        src={img.url}
-                        alt={`Image ${idx + 1}`}
-                        fill
-                        className="object-cover"
-                        sizes="33vw"
-                      />
+                    <div key={idx} className="flex flex-col gap-2">
+                      <div className="relative h-44 rounded-xl overflow-hidden border border-white/8">
+                        <Image
+                          src={img.url}
+                          alt={`Image ${idx + 1}`}
+                          fill
+                          className="object-cover"
+                          sizes="33vw"
+                        />
+                      </div>
+                      <p className="text-[11px] text-white/35 px-1 truncate">
+                        {img.filename || `Image ${idx + 1}`}
+                      </p>
                     </div>
-                  ))}
-                </div>
-                <div className="mt-4 space-y-1">
-                  {customOrder.images.map((img, idx) => (
-                    <p key={idx} className="text-[11px] text-white/35">
-                      {img.filename || `Image ${idx + 1}`}
-                    </p>
                   ))}
                 </div>
               </div>

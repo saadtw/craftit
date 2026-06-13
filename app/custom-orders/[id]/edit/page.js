@@ -6,7 +6,6 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
 import { useToast } from "@/components/ui/ToastProvider";
 
 export default function EditCustomOrder() {
@@ -99,43 +98,13 @@ export default function EditCustomOrder() {
       const response = await fetch("/api/upload", { method: "POST", body: fd });
       const data = await response.json();
       if (data.success) {
-        setBaseModelUrl(data.file.url);
-        setIsEditorOpen(true);
+        setModel3D(data.file);
       } else toast.error("Upload failed: " + data.error);
     } catch (error) {
       toast.error("Upload error: " + error.message);
     } finally {
       setUploading(false);
     }
-  };
-
-  const handleEditorSave = async (payload) => {
-    const { modelUrl: newModelUrl, annotations, cameraState } = payload || {};
-    try {
-      // Persist to MongoDB via the models/update API
-      await fetch("/api/models/update", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          resourceId: params.id,
-          resourceType: "customOrder",
-          newModelUrl: newModelUrl || model3D?.url,
-          annotations: Array.isArray(annotations) ? annotations : [],
-          cameraState: cameraState || null,
-        }),
-      });
-    } catch (err) {
-      console.error("[custom-order-editor] DB update failed:", err);
-    }
-
-    // Always update local state regardless of DB result
-    setModel3D((prev) => ({
-      ...prev,
-      url: newModelUrl || prev?.url,
-      annotations: Array.isArray(annotations) ? annotations : [],
-      cameraState: cameraState || null,
-    }));
-    setIsEditorOpen(false);
   };
 
   const handleImageUpload = async (e) => {
@@ -358,67 +327,43 @@ export default function EditCustomOrder() {
             {/* 3D Model */}
             <div>
               <label className={labelClass}>3D Model</label>
-              {!isEditorOpen && (
-                <>
-                  <label className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-6 cursor-pointer hover:border-[#eb9728]/30 hover:bg-white/[0.04] transition-all group">
-                    <span className="material-symbols-outlined text-3xl text-white/20 group-hover:text-[#eb9728]/50 transition-colors">
-                      view_in_ar
-                    </span>
-                    <p className="text-sm text-white/40 group-hover:text-white/60 transition-colors">
-                      Click to upload 3D model
-                    </p>
-                    <p className="text-[11px] text-white/20">
-                      .stl, .obj, .gltf, .glb
-                    </p>
-                    <input
-                      type="file"
-                      accept=".stl,.obj,.gltf,.glb"
-                      onChange={handle3DUpload}
-                      className="hidden"
-                    />
-                  </label>
-                  {model3D && (
-                    <div className="mt-2 flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/8">
-                      <div className="flex items-center gap-2">
-                        <span className="material-symbols-outlined text-[15px] text-emerald-400">
-                          check_circle
-                        </span>
-                        <p className="text-[11px] font-semibold text-emerald-400">
-                          {model3D.filename} ready
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setBaseModelUrl(model3D.url);
-                          setIsEditorOpen(true);
-                        }}
-                        className="px-3 py-1.5 bg-[#eb9728] text-white text-xs rounded-lg font-bold hover:bg-amber-500 transition-colors"
-                      >
-                        Open 3D Editor
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {isEditorOpen && baseModelUrl && (
-                <div className="mt-4 rounded-xl border border-white/10 p-2 bg-white/[0.02]">
-                  <Editor3DWrapper
-                    modelUrl={baseModelUrl}
-                    initialAnnotations={model3D?.annotations}
-                    initialCameraState={model3D?.cameraState}
-                    onSave={handleEditorSave}
+              {!model3D ? (
+                <label className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-6 cursor-pointer hover:border-[#eb9728]/30 hover:bg-white/[0.04] transition-all group">
+                  <span className="material-symbols-outlined text-3xl text-white/20 group-hover:text-[#eb9728]/50 transition-colors">
+                    view_in_ar
+                  </span>
+                  <p className="text-sm text-white/40 group-hover:text-white/60 transition-colors">
+                    Click to upload 3D model
+                  </p>
+                  <p className="text-[11px] text-white/20">
+                    .stl, .obj, .gltf, .glb
+                  </p>
+                  <input
+                    type="file"
+                    accept=".stl,.obj,.gltf,.glb"
+                    onChange={handle3DUpload}
+                    className="hidden"
                   />
-                  <div className="mt-2 flex justify-end">
-                    <button
-                      type="button"
-                      onClick={() => setIsEditorOpen(false)}
-                      className="px-3 py-1.5 bg-white/[0.06] border border-white/10 text-white/60 text-xs rounded-lg font-bold hover:bg-white/[0.1] transition-colors"
-                    >
-                      Close Editor
-                    </button>
+                </label>
+              ) : (
+                <div className="mt-2 flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/8">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <span className="material-symbols-outlined text-[15px] text-emerald-400 shrink-0">
+                      check_circle
+                    </span>
+                    <p className="text-[11px] font-semibold text-emerald-400 truncate">
+                      {model3D.filename || "Model"} ready
+                    </p>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => setModel3D(null)}
+                    className="p-1 text-emerald-400 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">
+                      close
+                    </span>
+                  </button>
                 </div>
               )}
             </div>
@@ -449,14 +394,27 @@ export default function EditCustomOrder() {
                   {images.map((img, idx) => (
                     <div
                       key={idx}
-                      className="flex items-center gap-2 px-3 py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/8"
+                      className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/8"
                     >
-                      <span className="material-symbols-outlined text-[15px] text-emerald-400">
-                        check_circle
-                      </span>
-                      <p className="text-[11px] font-semibold text-emerald-400">
-                        {img.filename}
-                      </p>
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="material-symbols-outlined text-[15px] text-emerald-400 shrink-0">
+                          check_circle
+                        </span>
+                        <p className="text-[11px] font-semibold text-emerald-400 truncate">
+                          {img.filename || `Image ${idx + 1}`}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setImages((prev) => prev.filter((_, i) => i !== idx))
+                        }
+                        className="p-1 text-emerald-400 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">
+                          close
+                        </span>
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -512,358 +470,3 @@ export default function EditCustomOrder() {
     </div>
   );
 }
-// app/custom-orders/[id]/edit/page.js
-// "use client";
-
-// import { useState, useEffect, useCallback } from "react";
-// import { useRouter, useParams } from "next/navigation";
-// import { useSession } from "next-auth/react";
-// import CustomerMainNavbar from "@/components/CustomerMainNavbar";
-
-// export default function EditCustomOrder() {
-//   const router = useRouter();
-//   const params = useParams();
-//   const { data: session, status } = useSession();
-
-//   const [formData, setFormData] = useState({
-//     title: "",
-//     description: "",
-//     quantity: 1,
-//     materialPreferences: [],
-//     colorSpecifications: [],
-//     deadline: "",
-//     specialRequirements: "",
-//     budget: "",
-//   });
-
-//   const [model3D, setModel3D] = useState(null);
-//   const [images, setImages] = useState([]);
-//   const [uploading, setUploading] = useState(false);
-//   const [loading, setLoading] = useState(false);
-//   const [initialLoading, setInitialLoading] = useState(true);
-
-//   const fetchCustomOrder = useCallback(async () => {
-//     try {
-//       const response = await fetch(`/api/custom-orders/${params.id}`);
-//       const data = await response.json();
-
-//       if (data.success && data.order) {
-//         const order = data.order;
-//         setFormData({
-//           title: order.title || "",
-//           description: order.description || "",
-//           quantity: order.quantity || 1,
-//           materialPreferences: order.materialPreferences || [],
-//           colorSpecifications: order.colorSpecifications || [],
-//           deadline: order.deadline ? order.deadline.split("T")[0] : "",
-//           specialRequirements: order.specialRequirements || "",
-//           budget: order.budget || "",
-//         });
-//         setModel3D(order.model3D);
-//         setImages(order.images || []);
-//       } else {
-//         //       }
-//     } catch (error) {
-//       //     } finally {
-//       setInitialLoading(false);
-//     }
-//   }, [params.id]);
-
-//   useEffect(() => {
-//     if (status === "unauthenticated") {
-//       router.push("/auth/login");
-//       return;
-//     }
-//     if (status === "authenticated") {
-//       if (session.user.role !== "customer") {
-//         router.push("/auth/login");
-//         return;
-//       }
-//       fetchCustomOrder();
-//     }
-//   }, [status, session, router, fetchCustomOrder]);
-
-//   const handleChange = (e) => {
-//     const { name, value } = e.target;
-//     setFormData((prev) => ({
-//       ...prev,
-//       [name]: value,
-//     }));
-//   };
-
-//   const handleArrayInput = (e, field) => {
-//     const value = e.target.value;
-//     const array = value
-//       .split(",")
-//       .map((item) => item.trim())
-//       .filter(Boolean);
-//     setFormData((prev) => ({
-//       ...prev,
-//       [field]: array,
-//     }));
-//   };
-
-//   const handle3DUpload = async (e) => {
-//     const file = e.target.files[0];
-//     if (!file) return;
-
-//     setUploading(true);
-
-//     try {
-//       const formData = new FormData();
-//       formData.append("file", file);
-//       formData.append("type", "3d-model");
-
-//       const response = await fetch("/api/upload", {
-//         method: "POST",
-//         body: formData,
-//       });
-
-//       const data = await response.json();
-
-//       if (data.success) {
-//         setModel3D(data.file);
-//       } else {
-//         toast.error("Upload failed: " + data.error);
-//       }
-//     } catch (error) {
-//       toast.error("Upload error: " + error.message);
-//     } finally {
-//       setUploading(false);
-//     }
-//   };
-
-//   const handleImageUpload = async (e) => {
-//     const files = Array.from(e.target.files);
-//     if (!files.length) return;
-
-//     setUploading(true);
-
-//     try {
-//       const formData = new FormData();
-//       files.forEach((file) => formData.append("files", file));
-//       formData.append("folder", "images");
-
-//       const response = await fetch("/api/upload/multiple", {
-//         method: "POST",
-//         body: formData,
-//       });
-
-//       const data = await response.json();
-
-//       if (data.success) {
-//         setImages((prev) => [...prev, ...data.files]);
-//       } else {
-//         toast.error("Upload failed: " + data.error);
-//       }
-//     } catch (error) {
-//       toast.error("Upload error: " + error.message);
-//     } finally {
-//       setUploading(false);
-//     }
-//   };
-
-//   const handleSubmit = async (e) => {
-//     e.preventDefault();
-//     setLoading(true);
-
-//     try {
-//       const response = await fetch(`/api/custom-orders/${params.id}`, {
-//         method: "PUT",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify({
-//           ...formData,
-//           model3D,
-//           images,
-//           budget: formData.budget ? Number(formData.budget) : undefined,
-//           quantity: Number(formData.quantity),
-//         }),
-//       });
-
-//       const data = await response.json();
-
-//       if (data.success) {
-//         //         router.push(`/custom-orders/${params.id}/review`);
-//       } else {
-//         toast.error("Error: " + data.error);
-//       }
-//     } catch (error) {
-//       toast.error("Error: " + error.message);
-//     } finally {
-//       setLoading(false);
-//     }
-//   };
-
-//   if (status === "loading" || initialLoading)
-//     return <GlobalLoader fullScreen text="Loading..." />;
-
-//   if (status === "unauthenticated") {
-//     router.push("/auth/login");
-//     return null;
-//   }
-
-//   return (
-//     <div className="min-h-screen bg-[#f8f7f6]">
-//       <CustomerMainNavbar />
-//       <div className="max-w-4xl mx-auto p-6">
-//         <h1 className="text-3xl font-bold mb-6">Edit Custom Order</h1>
-
-//         <form onSubmit={handleSubmit}>
-//           <div className="mb-4">
-//             <label className="block mb-2 font-semibold">Title *</label>
-//             <input
-//               type="text"
-//               name="title"
-//               value={formData.title}
-//               onChange={handleChange}
-//               className="w-full border p-2 rounded"
-//               required
-//             />
-//           </div>
-
-//           <div className="mb-4">
-//             <label className="block mb-2 font-semibold">Description *</label>
-//             <textarea
-//               name="description"
-//               value={formData.description}
-//               onChange={handleChange}
-//               className="w-full border p-2 rounded h-24"
-//               required
-//             />
-//           </div>
-
-//           <div className="mb-4">
-//             <label className="block mb-2 font-semibold">Quantity *</label>
-//             <input
-//               type="number"
-//               name="quantity"
-//               value={formData.quantity}
-//               onChange={handleChange}
-//               min="1"
-//               className="w-full border p-2 rounded"
-//               required
-//             />
-//           </div>
-
-//           <div className="mb-4">
-//             <label className="block mb-2 font-semibold">
-//               Material Preferences (comma-separated)
-//             </label>
-//             <input
-//               type="text"
-//               placeholder="Aluminum, Steel, Plastic"
-//               value={formData.materialPreferences.join(", ")}
-//               onChange={(e) => handleArrayInput(e, "materialPreferences")}
-//               className="w-full border p-2 rounded"
-//             />
-//           </div>
-
-//           <div className="mb-4">
-//             <label className="block mb-2 font-semibold">
-//               Color Specifications (comma-separated)
-//             </label>
-//             <input
-//               type="text"
-//               placeholder="Black, White, Silver"
-//               value={formData.colorSpecifications.join(", ")}
-//               onChange={(e) => handleArrayInput(e, "colorSpecifications")}
-//               className="w-full border p-2 rounded"
-//             />
-//           </div>
-
-//           <div className="mb-4">
-//             <label className="block mb-2 font-semibold">Deadline</label>
-//             <input
-//               type="date"
-//               name="deadline"
-//               value={formData.deadline}
-//               onChange={handleChange}
-//               className="w-full border p-2 rounded"
-//             />
-//           </div>
-
-//           <div className="mb-4">
-//             <label className="block mb-2 font-semibold">Budget ($)</label>
-//             <input
-//               type="number"
-//               name="budget"
-//               value={formData.budget}
-//               onChange={handleChange}
-//               className="w-full border p-2 rounded"
-//               min="0"
-//             />
-//           </div>
-
-//           <div className="mb-4">
-//             <label className="block mb-2 font-semibold">
-//               Special Requirements
-//             </label>
-//             <textarea
-//               name="specialRequirements"
-//               value={formData.specialRequirements}
-//               onChange={handleChange}
-//               className="w-full border p-2 rounded h-24"
-//             />
-//           </div>
-
-//           <div className="mb-4">
-//             <label className="block mb-2 font-semibold">Upload 3D Model</label>
-//             <input
-//               type="file"
-//               accept=".stl,.obj,.gltf,.glb"
-//               onChange={handle3DUpload}
-//               className="w-full border p-2 rounded"
-//             />
-//             {model3D && (
-//               <div className="mt-2 p-2 bg-green-100 rounded">
-//                 ✓ {model3D.filename} uploaded
-//               </div>
-//             )}
-//           </div>
-
-//           <div className="mb-4">
-//             <label className="block mb-2 font-semibold">Upload Images</label>
-//             <input
-//               type="file"
-//               accept=".jpg,.jpeg,.png,.webp"
-//               multiple
-//               onChange={handleImageUpload}
-//               className="w-full border p-2 rounded"
-//             />
-//             {images.length > 0 && (
-//               <div className="mt-2">
-//                 {images.map((img, idx) => (
-//                   <div key={idx} className="p-2 bg-green-100 rounded mb-1">
-//                     ✓ {img.filename}
-//                   </div>
-//                 ))}
-//               </div>
-//             )}
-//           </div>
-
-//           {uploading && <p className="text-blue-600">Uploading files...</p>}
-
-//           <div className="flex gap-4">
-//             <button
-//               type="button"
-//               onClick={() => router.push(`/custom-orders/${params.id}/review`)}
-//               className="px-6 py-2 bg-gray-500 text-white rounded hover:bg-gray-600"
-//             >
-//               Cancel
-//             </button>
-
-//             <button
-//               type="submit"
-//               disabled={loading || uploading}
-//               className="flex-1 px-6 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:bg-blue-300"
-//             >
-//               {loading ? "Saving..." : "Save Changes"}
-//             </button>
-//           </div>
-//         </form>
-//       </div>
-//     </div>
-//   );
-// }

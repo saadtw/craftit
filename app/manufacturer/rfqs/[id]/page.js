@@ -200,6 +200,152 @@ export default function ManufacturerRFQDetails() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* Detail Streams */}
           <div className="lg:col-span-8 space-y-8">
+            {(images.length > 0 || model3D?.url) && (
+              <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 shadow-2xl overflow-hidden">
+                {images.length > 0 && model3D?.url && (
+                  <div className="flex items-center gap-2 p-4 bg-white/[0.02] border-b border-white/5">
+                    <button
+                      onClick={() => setMediaView("images")}
+                      className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
+                        mediaView === "images"
+                          ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.3)]"
+                          : "text-white/40 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      Image Gallery
+                    </button>
+                    <button
+                      onClick={() => setMediaView("3d")}
+                      className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 ${
+                        mediaView === "3d"
+                          ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.3)]"
+                          : "text-white/40 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      Interactive 3D
+                      {mediaView !== "3d" && (
+                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      )}
+                    </button>
+                  </div>
+                )}
+
+                {mediaView === "images" && (
+                  <div>
+                    <div className="aspect-[16/10] bg-white/[0.02] flex items-center justify-center relative group">
+                      {images.length > 0 ? (
+                        <>
+                          <Image
+                            src={images[activeImage]?.url}
+                            alt="RFQ reference"
+                            fill
+                            className="object-contain p-4"
+                            sizes="(max-width: 1280px) 100vw, 800px"
+                          />
+                          {/* Navigation Arrows */}
+                          {images.length > 1 && (
+                            <>
+                              <button
+                                onClick={() => setActiveImage(prev => prev - 1)}
+                                disabled={activeImage === 0}
+                                className="absolute left-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 backdrop-blur-md rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-black/80 hover:scale-110 disabled:opacity-30 disabled:hover:scale-100 transition-all z-20"
+                              >
+                                <span className="material-symbols-outlined text-sm">arrow_back_ios_new</span>
+                              </button>
+                              <button
+                                onClick={() => setActiveImage(prev => prev + 1)}
+                                disabled={activeImage === images.length - 1}
+                                className="absolute right-6 top-1/2 -translate-y-1/2 w-10 h-10 bg-black/60 backdrop-blur-md rounded-full border border-white/10 flex items-center justify-center text-white hover:bg-black/80 hover:scale-110 disabled:opacity-30 disabled:hover:scale-100 transition-all z-20"
+                              >
+                                <span className="material-symbols-outlined text-sm">arrow_forward_ios</span>
+                              </button>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <div className="text-center">
+                          <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-4 text-white/10">
+                            <svg
+                              className="w-10 h-10"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={1.5}
+                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                              />
+                            </svg>
+                          </div>
+                          <p className="text-[10px] font-black uppercase tracking-widest text-white/20">
+                            No Visual Assets Available
+                          </p>
+                        </div>
+                      )}
+                      {images.length > 0 && (
+                        <div className="absolute bottom-6 right-6 px-4 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 text-[9px] font-black uppercase tracking-widest text-white/60 z-20 pointer-events-none">
+                          {activeImage + 1} / {images.length}
+                        </div>
+                      )}
+                    </div>
+
+                    {images.length > 1 && (
+                      <div className="p-6 bg-white/[0.02] border-t border-white/5">
+                        <div className="flex gap-4 overflow-x-auto py-4 px-6">
+                          {images.map((img, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => setActiveImage(idx)}
+                              className={`shrink-0 w-24 h-24 rounded-[2rem] overflow-hidden border-2 transition-all duration-500 relative group ${
+                                activeImage === idx
+                                  ? "border-purple-500 scale-110 shadow-[0_0_25px_rgba(168,85,247,0.4)] z-10"
+                                  : "border-white/5 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 hover:border-white/20"
+                              }`}
+                            >
+                              <Image
+                                src={img.url}
+                                alt=""
+                                fill
+                                className="object-cover"
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {mediaView === "3d" && model3D?.url && (
+                  <div className="p-6">
+                    <div className="aspect-[16/10] rounded-[2rem] overflow-hidden border-2 border-white/5 bg-black/40">
+                      <ModelViewerPreview
+                        modelUrl={model3D.url}
+                        annotations={model3D.annotations || []}
+                        measurements={model3D.measurements || []}
+                        height="100%"
+                      />
+                    </div>
+                    <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
+                      <p className="truncate text-sm font-bold text-white/60">
+                        {model3D.filename || "Attached 3D model"}
+                      </p>
+                      <a
+                        href={model3D.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="rounded-xl border border-[#eb9728]/20 bg-[#eb9728]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#eb9728] hover:bg-[#eb9728]/20"
+                      >
+                        Download
+                      </a>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Project Narrative Card */}
             <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-10 shadow-xl">
               <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-purple-400 mb-6">
@@ -267,130 +413,7 @@ export default function ManufacturerRFQDetails() {
                 </div>
               )}
             </div>
-            {(images.length > 0 || model3D?.url) && (
-              <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 shadow-2xl overflow-hidden">
-                {images.length > 0 && model3D?.url && (
-                  <div className="flex items-center gap-2 p-4 bg-white/[0.02] border-b border-white/5">
-                    <button
-                      onClick={() => setMediaView("images")}
-                      className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all ${
-                        mediaView === "images"
-                          ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.3)]"
-                          : "text-white/40 hover:text-white hover:bg-white/5"
-                      }`}
-                    >
-                      Image Gallery
-                    </button>
-                    <button
-                      onClick={() => setMediaView("3d")}
-                      className={`px-6 py-2.5 text-[10px] font-black uppercase tracking-widest rounded-xl transition-all flex items-center gap-2 ${
-                        mediaView === "3d"
-                          ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.3)]"
-                          : "text-white/40 hover:text-white hover:bg-white/5"
-                      }`}
-                    >
-                      Interactive 3D
-                      {mediaView !== "3d" && (
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                      )}
-                    </button>
-                  </div>
-                )}
 
-                {mediaView === "images" && (
-                  <div>
-                    <div className="aspect-[16/10] bg-white/[0.02] flex items-center justify-center relative group">
-                      {images.length > 0 ? (
-                        <Image
-                          src={images[activeImage]?.url}
-                          alt="RFQ reference"
-                          fill
-                          className="object-contain p-4"
-                          sizes="(max-width: 1280px) 100vw, 800px"
-                        />
-                      ) : (
-                        <div className="text-center">
-                          <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-4 text-white/10">
-                            <svg
-                              className="w-10 h-10"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={1.5}
-                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                              />
-                            </svg>
-                          </div>
-                          <p className="text-[10px] font-black uppercase tracking-widest text-white/20">
-                            No Visual Assets Available
-                          </p>
-                        </div>
-                      )}
-                      {images.length > 0 && (
-                        <div className="absolute bottom-6 right-6 px-4 py-2 bg-black/60 backdrop-blur-md rounded-xl border border-white/10 text-[9px] font-black uppercase tracking-widest text-white/60">
-                          {activeImage + 1} / {images.length}
-                        </div>
-                      )}
-                    </div>
-
-                    {images.length > 1 && (
-                      <div className="p-6 bg-white/[0.02] border-t border-white/5">
-                        <div className="flex gap-4 overflow-x-auto py-4 px-6">
-                          {images.map((img, idx) => (
-                            <button
-                              key={idx}
-                              onClick={() => setActiveImage(idx)}
-                              className={`shrink-0 w-24 h-24 rounded-[2rem] overflow-hidden border-2 transition-all duration-500 relative group ${
-                                activeImage === idx
-                                  ? "border-purple-500 scale-110 shadow-[0_0_25px_rgba(168,85,247,0.4)] z-10"
-                                  : "border-white/5 opacity-30 grayscale hover:opacity-100 hover:grayscale-0 hover:border-white/20"
-                              }`}
-                            >
-                              <Image
-                                src={img.url}
-                                alt=""
-                                fill
-                                className="object-cover"
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {mediaView === "3d" && model3D?.url && (
-                  <div className="p-6">
-                    <div className="aspect-[16/10] rounded-[2rem] overflow-hidden border-2 border-white/5 bg-black/40">
-                      <ModelViewerPreview
-                        modelUrl={model3D.url}
-                        annotations={model3D.annotations || []}
-                        measurements={model3D.measurements || []}
-                        height="100%"
-                      />
-                    </div>
-                    <div className="mt-4 flex items-center justify-between gap-3 rounded-2xl border border-white/8 bg-white/[0.03] p-4">
-                      <p className="truncate text-sm font-bold text-white/60">
-                        {model3D.filename || "Attached 3D model"}
-                      </p>
-                      <a
-                        href={model3D.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="rounded-xl border border-[#eb9728]/20 bg-[#eb9728]/10 px-4 py-2 text-[10px] font-black uppercase tracking-widest text-[#eb9728] hover:bg-[#eb9728]/20"
-                      >
-                        Download
-                      </a>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
           </div>
 
           {/* Asset Sidebar */}

@@ -80,8 +80,20 @@ export default function EditProductPage() {
   const [errors, setErrors] = useState({});
   const [lastSaved, setLastSaved] = useState(null);
   const [showRestockNotice, setShowRestockNotice] = useState(false);
-  // True when we restored form state from sessionStorage (skip server fetch)
-  const [skipServerFetch, setSkipServerFetch] = useState(false);
+  const [uploadError, setUploadError] = useState(null);
+  // True when we restored form state from sessionStorage (skip server fetch).
+  // Initialized lazily so it reads sessionStorage synchronously on first render,
+  // preventing a race where the server fetch fires before Effect 1 can set the flag.
+  const [skipServerFetch, setSkipServerFetch] = useState(() => {
+    try {
+      return (
+        typeof window !== "undefined" &&
+        !!sessionStorage.getItem("draftProductForm")
+      );
+    } catch {
+      return false;
+    }
+  });
 
   const imageInputRef = useRef();
   const modelInputRef = useRef();
@@ -247,32 +259,45 @@ export default function EditProductPage() {
 
   const handleImageUpload = async (files) => {
     if (!files.length) return;
+    // Snapshot into a plain array BEFORE resetting the input — the FileList
+    // from e.target.files is live; resetting input.value clears it immediately.
+    const fileArray = Array.from(files);
     setImageUploading(true);
+    if (imageInputRef.current) imageInputRef.current.value = "";
     try {
       const formData = new FormData();
       formData.append("type", "image");
-      Array.from(files).forEach((f) => formData.append("files", f));
+      fileArray.forEach((f) => formData.append("files", f));
       const res = await fetch("/api/upload/multiple", {
         method: "POST",
         body: formData,
       });
       const data = await res.json();
-      if (data.success) {
-        const newImgs = data.files.map((f, i) => ({
-          url: f.url,
-          isPrimary: form.images.length === 0 && i === 0,
-        }));
-        setForm((prev) => ({ ...prev, images: [...prev.images, ...newImgs] }));
+      if (!res.ok || !data.success) {
+        throw new Error(data.error || "Image upload failed. Please try again.");
       }
-    } catch (_) {}
-    setImageUploading(false);
+      const newImgs = data.files.map((f, i) => ({
+        url: f.url,
+        isPrimary: form.images.length === 0 && i === 0,
+      }));
+      setForm((prev) => ({ ...prev, images: [...prev.images, ...newImgs] }));
+    } catch (err) {
+      setUploadError(err.message || "Image upload failed. Please try again.");
+    } finally {
+      setImageUploading(false);
+    }
   };
 
   const setPrimaryImage = (idx) => {
-    setForm((prev) => ({
-      ...prev,
-      images: prev.images.map((img, i) => ({ ...img, isPrimary: i === idx })),
-    }));
+    setForm((prev) => {
+      // Move the selected image to index 0 so it shows as 1/N in any carousel.
+      const imgs = prev.images.map((img, i) => ({
+        ...img,
+        isPrimary: i === idx,
+      }));
+      const primary = imgs.splice(idx, 1)[0];
+      return { ...prev, images: [primary, ...imgs] };
+    });
   };
 
   const removeImage = (idx) => {
@@ -287,6 +312,7 @@ export default function EditProductPage() {
   const handleModelUpload = async (file) => {
     if (!file) return;
     setModelUploading(true);
+    if (modelInputRef.current) modelInputRef.current.value = "";
     try {
       const formData = new FormData();
       formData.append("type", "3d-model");
@@ -296,18 +322,26 @@ export default function EditProductPage() {
         body: formData,
       });
       const data = await res.json();
-      if (data.success) {
-        setForm((prev) => ({
-          ...prev,
-          model3D: {
-            url: data.file.url,
-            filename: file.name,
-            fileSize: file.size,
-          },
-        }));
+      if (!res.ok || !data.success) {
+        throw new Error(
+          data.error || "3D model upload failed. Please try again.",
+        );
       }
-    } catch (_) {}
-    setModelUploading(false);
+      setForm((prev) => ({
+        ...prev,
+        model3D: {
+          url: data.file.url,
+          filename: file.name,
+          fileSize: file.size,
+        },
+      }));
+    } catch (err) {
+      setUploadError(
+        err.message || "3D model upload failed. Please try again.",
+      );
+    } finally {
+      setModelUploading(false);
+    }
   };
 
   const handleModelEditorSave = async (payload) => {
@@ -1308,7 +1342,7 @@ export default function EditProductPage() {
                     <input
                       ref={modelInputRef}
                       type="file"
-                      accept=".glb,.obj,.stl,.gltf"
+                      accept=".glb,.obj,.stl"
                       className="hidden"
                       onChange={(e) => handleModelUpload(e.target.files?.[0])}
                     />
@@ -1411,7 +1445,7 @@ export default function EditProductPage() {
                           {form.seoTitle || form.name || "Product Title"}
                         </p>
                         <p className="text-emerald-400/60 text-[10px] font-medium truncate">
-                          https://craftit.ai/products/{id}
+                          https://craftit-nine.vercel.app/products/{id}
                         </p>
                         <p className="text-white/40 text-xs line-clamp-3 font-medium leading-relaxed">
                           {form.seoDescription ||
@@ -1477,6 +1511,44 @@ export default function EditProductPage() {
           )}
         </div>
       </div>
+
+      {uploadError && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div className="bg-[#0B011D] border-2 border-red-500/30 rounded-[2rem] p-8 max-w-md w-full mx-4 shadow-[0_0_60px_rgba(239,68,68,0.15)]">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="w-12 h-12 rounded-2xl bg-red-500/10 flex items-center justify-center text-red-400 flex-shrink-0">
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.538-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <p className="text-[10px] font-black uppercase tracking-[0.2em] text-red-400">
+                  Upload Failed
+                </p>
+                <p className="text-white text-sm font-semibold mt-1">
+                  {uploadError}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setUploadError(null)}
+              className="w-full px-6 py-3 bg-white/5 text-white text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white/10 transition-all border border-white/10"
+            >
+              Close & Try Again
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
