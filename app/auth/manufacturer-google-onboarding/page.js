@@ -44,8 +44,12 @@ export default function ManufacturerGoogleOnboarding() {
     if (status === "unauthenticated") {
       router.replace("/auth/login");
     } else if (status === "authenticated" && session?.user?.role === "manufacturer") {
-      // Already a manufacturer, just redirect to dashboard
-      router.replace("/manufacturer/dashboard");
+      if (session?.user?.needsPasswordSetup) {
+        router.replace("/auth/setup-password");
+      } else {
+        // Already a manufacturer, just redirect to dashboard
+        router.replace("/manufacturer/dashboard");
+      }
     }
   }, [status, session, router]);
 
@@ -101,10 +105,13 @@ export default function ManufacturerGoogleOnboarding() {
       const data = await response.json();
 
       if (data.success) {
-        await update(); // Update session to reflect new role
+        const updatedSession = await update(); // Update session to reflect new role
+        const needsPasswordSetup =
+          updatedSession?.user?.needsPasswordSetup ??
+          session?.user?.needsPasswordSetup;
         
         // Next step is password setup if required
-        if (session?.user?.needsPasswordSetup) {
+        if (needsPasswordSetup) {
           router.replace("/auth/setup-password");
         } else {
           router.replace("/manufacturer/dashboard");

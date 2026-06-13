@@ -484,10 +484,12 @@ function NewCustomOrderContent() {
                       <div className="flex gap-4 items-start mb-4">
                         {sourceContext.product.images?.[0]?.url && (
                           <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-[#eb9728]/20 shrink-0">
-                            <img
+                            <Image
                               src={sourceContext.product.images[0].url}
                               alt={sourceContext.product.name}
-                              className="w-full h-full object-cover"
+                              fill
+                              sizes="80px"
+                              className="object-cover"
                             />
                           </div>
                         )}

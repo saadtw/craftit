@@ -1,7 +1,7 @@
 // app/auth/setup-password/page.js
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession, getSession } from "next-auth/react";
 import Logo from "@/components/CrafitLogo";
@@ -9,6 +9,7 @@ import Logo from "@/components/CrafitLogo";
 export default function SetupPassword() {
   const router = useRouter();
   const { data: session, status, update } = useSession();
+  const refreshedSessionRef = useRef(false);
 
   const [formData, setFormData] = useState({
     password: "",
@@ -43,10 +44,18 @@ export default function SetupPassword() {
   useEffect(() => {
     if (status === "unauthenticated") {
       router.replace("/auth/login");
-    } else if (
-      status === "authenticated" &&
-      !session?.user?.needsPasswordSetup
-    ) {
+      return;
+    }
+
+    if (status !== "authenticated") return;
+
+    if (!refreshedSessionRef.current) {
+      refreshedSessionRef.current = true;
+      update();
+      return;
+    }
+
+    if (!session?.user?.needsPasswordSetup) {
       // Already set password, redirect to dashboard
       const role = session.user.role || "customer";
       if (role === "customer") router.replace("/customer");
@@ -54,7 +63,7 @@ export default function SetupPassword() {
         router.replace("/manufacturer/dashboard");
       else if (role === "admin") router.replace("/admin/dashboard");
     }
-  }, [status, session, router]);
+  }, [status, session, router, update]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -83,8 +92,8 @@ export default function SetupPassword() {
       }
 
       setSuccess(true);
-      await update();
-      const nextSession = await getSession();
+      const updatedSession = await update();
+      const nextSession = updatedSession || (await getSession());
       const role = nextSession?.user?.role || session?.user?.role || "customer";
       if (role === "customer") router.replace("/customer");
       else if (role === "manufacturer")

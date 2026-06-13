@@ -4,13 +4,44 @@ import User from "@/models/User";
 import { supabaseAdmin } from "@/lib/supabase";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
+async function findSupabaseUserByEmail(email) {
+  const normalizedEmail = email?.toLowerCase().trim();
+  if (!normalizedEmail) return null;
+
+  let page = 1;
+  const perPage = 100;
+
+  while (page <= 10) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+      page,
+      perPage,
+    });
+
+    if (error) {
+      console.error("Supabase user lookup error:", error);
+      return null;
+    }
+
+    const users = data?.users || [];
+    const match = users.find(
+      (candidate) => candidate.email?.toLowerCase().trim() === normalizedEmail,
+    );
+
+    if (match) return match;
+    if (users.length < perPage) return null;
+    page += 1;
+  }
+
+  return null;
+}
+
 export async function POST(request) {
   try {
     const session = await resolveRequestSession(request);
 
     if (!session || !session.user) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized" },
+        { success: false, message: "Unauthorized" },
         { status: 401 },
       );
     }
@@ -19,7 +50,7 @@ export async function POST(request) {
 
     if (!password) {
       return NextResponse.json(
-        { success: false, error: "Password is required" },
+        { success: false, message: "Password is required" },
         { status: 400 },
       );
     }
@@ -32,7 +63,7 @@ export async function POST(request) {
       return NextResponse.json(
         {
           success: false,
-          error:
+          message:
             "Password must be at least 8 characters and include upper, lower, and number",
         },
         { status: 400 },
@@ -42,11 +73,11 @@ export async function POST(request) {
     await connectDB();
 
     const user = await User.findById(session.user.id).select(
-      "supabaseId needsPasswordSetup",
+      "email supabaseId needsPasswordSetup",
     );
-    if (!user || !user.supabaseId) {
+    if (!user) {
       return NextResponse.json(
-        { success: false, error: "User not found" },
+        { success: false, message: "User not found" },
         { status: 404 },
       );
     }
@@ -55,10 +86,37 @@ export async function POST(request) {
       return NextResponse.json(
         {
           success: false,
-          error: "Password setup is not required for this account",
+          message: "Password setup is not required for this account",
         },
         { status: 400 },
       );
+    }
+
+    let lookupErr = null;
+
+    if (user.supabaseId) {
+      const { error } = await supabaseAdmin.auth.admin.getUserById(
+        user.supabaseId,
+      );
+      lookupErr = error;
+    }
+
+    if (!user.supabaseId || lookupErr) {
+      const supabaseUser = await findSupabaseUserByEmail(user.email);
+
+      if (!supabaseUser) {
+        console.error("Supabase user lookup failed:", lookupErr);
+        return NextResponse.json(
+          {
+            success: false,
+            message:
+              "Password setup failed because the linked auth account was not found",
+          },
+          { status: 404 },
+        );
+      }
+
+      user.supabaseId = supabaseUser.id;
     }
 
     // Update password in Supabase
@@ -70,7 +128,7 @@ export async function POST(request) {
     if (updateErr) {
       console.error("Supabase password update error:", updateErr);
       return NextResponse.json(
-        { success: false, error: "Password setup failed" },
+        { success: false, message: "Password setup failed" },
         { status: 500 },
       );
     }
@@ -86,7 +144,7 @@ export async function POST(request) {
   } catch (error) {
     console.error("Setup password error:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Password setup failed" },
+      { success: false, message: error.message || "Password setup failed" },
       { status: 500 },
     );
   }

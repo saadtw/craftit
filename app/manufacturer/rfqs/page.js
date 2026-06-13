@@ -260,10 +260,12 @@ export default function ManufacturerRFQsPage() {
                         {/* Product thumbnail */}
                         {rfq.sourceProductId?.images?.[0]?.url && (
                           <div className="relative w-20 h-20 rounded-2xl overflow-hidden border border-[#eb9728]/20 shrink-0">
-                            <img
+                            <Image
                               src={rfq.sourceProductId.images[0].url}
                               alt=""
-                              className="w-full h-full object-cover"
+                              fill
+                              className="object-cover"
+                              sizes="80px"
                             />
                           </div>
                         )}

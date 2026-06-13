@@ -5,7 +5,6 @@ import { Suspense, useState, useEffect, useRef, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
-const OTP_EXPIRY_SECONDS = 15 * 60; // 15 minutes
 const RESEND_COOLDOWN_SECONDS = 60;
 
 function VerifyOtpContent() {
@@ -21,42 +20,15 @@ function VerifyOtpContent() {
   const [loading, setLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const [resendCooldown, setResendCooldown] = useState(0);
-  const [expiryCountdown, setExpiryCountdown] = useState(OTP_EXPIRY_SECONDS);
-
   const inputRefs = useRef([]);
 
-  // Expiry countdown — dep array is intentionally empty-ish:
-  // the functional updater (prev =>) doesn't need expiryCountdown in deps.
-  // Putting expiryCountdown in deps would restart a new interval every second.
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setExpiryCountdown((prev) => {
-        if (prev <= 0) {
-          clearInterval(interval);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-    return () => clearInterval(interval);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);  // run once on mount
-
-  // Resend cooldown — same pattern: functional updater avoids stale closure,
-  // so resendCooldown doesn't need to be in deps.
   useEffect(() => {
     if (resendCooldown <= 0) return;
-    const interval = setInterval(() => {
+    const timeout = setTimeout(() => {
       setResendCooldown((prev) => Math.max(0, prev - 1));
     }, 1000);
-    return () => clearInterval(interval);
-  }, [resendCooldown === 0 ? null : 'active']);  // only restart when cooldown resets
-
-  const formatTime = (seconds) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m}:${s.toString().padStart(2, "0")}`;
-  };
+    return () => clearTimeout(timeout);
+  }, [resendCooldown]);
 
   const handleOtpChange = (index, value) => {
     // Accept paste of full 8 digits
@@ -153,7 +125,6 @@ function VerifyOtpContent() {
         setError(data.message);
       } else {
         setResendCooldown(RESEND_COOLDOWN_SECONDS);
-        setExpiryCountdown(OTP_EXPIRY_SECONDS);
         setOtp(["", "", "", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
         setSuccess("A new code has been sent to your email.");
@@ -281,22 +252,8 @@ function VerifyOtpContent() {
           {loading ? "Verifying..." : "Verify Email"}
         </button>
 
-        {/* Expiry */}
-        <div className="mt-4 text-center text-xs text-slate-500">
-          {expiryCountdown > 0 ? (
-            <span>
-              Code expires in{" "}
-              <span className="font-semibold text-slate-300">
-                {formatTime(expiryCountdown)}
-              </span>
-            </span>
-          ) : (
-            <span className="text-red-400">Code has expired.</span>
-          )}
-        </div>
-
         {/* Resend */}
-        <div className="mt-3 text-center text-xs">
+        <div className="mt-4 text-center text-xs">
           <span className="text-slate-500">Didn&apos;t receive it? </span>
           {resendCooldown > 0 ? (
             <span className="text-slate-600">Resend in {resendCooldown}s</span>
