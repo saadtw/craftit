@@ -78,6 +78,8 @@ export default function CustomerHomePage() {
         ? `/api/products/suggested?limit=8&recentIds=${recentIds.join(",")}`
         : "/api/products/suggested?limit=8";
 
+      const safeFetch = (p) => p.catch(err => ({ success: false, error: err }));
+
       const [
         suggestedData,
         recentData,
@@ -85,19 +87,23 @@ export default function CustomerHomePage() {
         groupBuysData,
         manufacturersData,
       ] = await Promise.all([
-        fetchWithCache(suggestedPath, 60000),
-        recentIds.length
-          ? fetchWithCache(
-              `/api/products/recently-viewed?ids=${recentIds.join(",")}`,
-              60000,
-            )
-          : Promise.resolve({ success: true, products: [] }),
-        fetchWithCache("/api/products/public?sort=popular&limit=6", 180000),
-        fetchWithCache(
-          "/api/group-buys/public?sort=participants&limit=4",
-          120000,
+        safeFetch(fetchWithCache(suggestedPath, 60000)),
+        safeFetch(
+          recentIds.length
+            ? fetchWithCache(
+                `/api/products/recently-viewed?ids=${recentIds.join(",")}`,
+                60000,
+              )
+            : Promise.resolve({ success: true, products: [] })
         ),
-        fetchWithCache("/api/manufacturers/public?sort=rating&limit=4", 300000),
+        safeFetch(fetchWithCache("/api/products/public?sort=popular&limit=6", 180000)),
+        safeFetch(
+          fetchWithCache(
+            "/api/group-buys/public?sort=participants&limit=4",
+            120000,
+          )
+        ),
+        safeFetch(fetchWithCache("/api/manufacturers/public?sort=rating&limit=4", 300000)),
       ]);
 
       setSuggestedProducts(

@@ -44,7 +44,15 @@ export async function POST(request) {
 
     // Verify current password by attempting a sign-in against Supabase
     if (currentPassword) {
-      const { error: signInErr } = await supabaseAdmin.auth.signInWithPassword({
+      // Create a fresh client so we don't mutate global server state
+      const { createClient } = require("@supabase/supabase-js");
+      const tempSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+        { auth: { persistSession: false } }
+      );
+
+      const { error: signInErr } = await tempSupabase.auth.signInWithPassword({
         email: session.user.email,
         password: currentPassword,
       });

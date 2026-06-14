@@ -51,8 +51,16 @@ export async function POST(request) {
       );
     }
 
+    // Create a fresh client so we don't mutate global server state
+    const { createClient } = require("@supabase/supabase-js");
+    const tempSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      { auth: { persistSession: false } }
+    );
+
     const { data: supabaseData, error: signInError } =
-      await supabaseAdmin.auth.signInWithPassword({
+      await tempSupabase.auth.signInWithPassword({
         email,
         password,
       });
@@ -88,7 +96,7 @@ export async function POST(request) {
 
     if (user.twoFactorEnabled) {
       if (!twoFactorCode) {
-        const { error: otpError } = await supabaseAdmin.auth.signInWithOtp({
+        const { error: otpError } = await tempSupabase.auth.signInWithOtp({
           email,
           options: { shouldCreateUser: false },
         });
@@ -107,7 +115,7 @@ export async function POST(request) {
         );
       }
 
-      const { error: otpVerifyError } = await supabaseAdmin.auth.verifyOtp({
+      const { error: otpVerifyError } = await tempSupabase.auth.verifyOtp({
         email,
         token: twoFactorCode,
         type: "magiclink",

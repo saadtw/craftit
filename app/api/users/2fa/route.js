@@ -39,8 +39,16 @@ export async function POST(request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Create a fresh client so we don't mutate global server state
+    const { createClient } = require("@supabase/supabase-js");
+    const tempSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      { auth: { persistSession: false } }
+    );
+
     // Verify password against Supabase
-    const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
+    const { data: authData, error: authError } = await tempSupabase.auth.signInWithPassword({
       email: user.email,
       password: password,
     });
@@ -77,8 +85,16 @@ export async function DELETE(request) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
+    // Create a fresh client so we don't mutate global server state
+    const { createClient } = require("@supabase/supabase-js");
+    const tempSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+      { auth: { persistSession: false } }
+    );
+
     // Verify password against Supabase
-    const { data: authData, error: authError } = await supabaseAdmin.auth.signInWithPassword({
+    const { data: authData, error: authError } = await tempSupabase.auth.signInWithPassword({
       email: user.email,
       password: password,
     });

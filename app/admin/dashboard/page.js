@@ -31,14 +31,22 @@ export default function AdminDashboard() {
 
   const fetchDashboardData = useCallback(async () => {
     try {
+      const safeFetch = (url) => fetch(url).catch(err => ({ ok: false, error: err }));
+      const safeJson = async (res) => {
+        if (!res || !res.ok) return { success: false };
+        try { return await res.json(); } catch (err) { return { success: false, error: err }; }
+      };
+
       const [statsRes, logRes] = await Promise.all([
-        fetch("/api/admin/stats"),
-        fetch("/api/admin/activity-log?limit=10"),
+        safeFetch("/api/admin/stats"),
+        safeFetch("/api/admin/activity-log?limit=10"),
       ]);
-      const statsData = await statsRes.json();
-      const logData = await logRes.json();
-      setStats(statsData.stats || statsData);
-      if (Array.isArray(logData.logs)) setActivityLog(logData.logs);
+      
+      const statsData = await safeJson(statsRes);
+      const logData = await safeJson(logRes);
+      
+      setStats(statsData.stats || statsData || {});
+      if (logData && Array.isArray(logData.logs)) setActivityLog(logData.logs);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
     } finally {

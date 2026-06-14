@@ -470,7 +470,9 @@ export default function CustomOrderReview() {
                     attach_file
                   </span>
                   <p className="text-[11px] text-white/35">
-                    {customOrder.model3D.filename}
+                    {customOrder.model3D.url?.endsWith(".glb")
+                      ? customOrder.model3D.filename.replace(/\.[^.]+$/, "") + ".glb"
+                      : customOrder.model3D.filename}
                   </p>
                 </div>
               </div>

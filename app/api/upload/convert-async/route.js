@@ -57,8 +57,9 @@ export async function POST(request) {
     const supabaseBase = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const inputUrl = `${supabaseBase}/storage/v1/object/public/craftit-uploads/${storagePath}`;
 
-    // Derive the output path
-    const baseName = storagePath.split("/").pop().replace(/\.[^.]+$/, "");
+    // Derive filenames
+    const fileNameWithExt = storagePath.split("/").pop(); // e.g. "1234-model.stl"
+    const baseName = fileNameWithExt.replace(/\.[^.]+$/, ""); // e.g. "1234-model"
     const timestamp = Date.now();
     const outputPath = `3d-models/converted/${timestamp}-${baseName}.glb`;
 
@@ -71,8 +72,8 @@ export async function POST(request) {
 
     // 2. Prepare FormData for the Converter Service (v2 expects multipart/form-data)
     const formData = new FormData();
-    formData.append("file", rawBlob, baseName);
-    formData.append("original_filename", baseName);
+    formData.append("file", rawBlob, fileNameWithExt);
+    formData.append("original_filename", fileNameWithExt);
 
     // 3. Call the converter microservice
     const cleanBaseUrl = converterUrl.replace(/\/convert\/?$/, "").replace(/\/+$/, "");

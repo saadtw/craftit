@@ -866,19 +866,19 @@ function SecurityTab({ user }) {
 // ─── VERIFICATION TAB ─────────────────────────────────────────────────────────
 function VerificationTab({ user }) {
   const [files, setFiles] = useState([]);
-  const [docType, setDocType] = useState("business_license");
   const [uploading, setUploading] = useState(false);
-  const [uploaded, setUploaded] = useState(false);
   const [error, setError] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
 
   const isVerified = user?.verificationStatus === "verified";
-  const submittedDocsCount = Array.isArray(
-    user?.verificationDocuments?.documents,
-  )
-    ? user.verificationDocuments.documents.length
-    : 0;
-  const isPending =
-    user?.verificationStatus === "unverified" && submittedDocsCount > 0;
+  const previouslySubmittedDocs = Array.isArray(user?.verificationDocuments?.documents)
+    ? user.verificationDocuments.documents
+    : [];
+  const submittedDocsCount = previouslySubmittedDocs.length;
+  const docStatus = user?.verificationDocuments?.verificationStatus;
+  const reviewNotes = user?.verificationDocuments?.reviewNotes || user?.verificationDocuments?.rejectionReason;
+  const isResubmissionRequired = docStatus === "resubmission_required";
+  const isPending = user?.verificationStatus === "unverified" && submittedDocsCount > 0 && !isResubmissionRequired;
 
   const handleUpload = async (e) => {
     e.preventDefault();
@@ -888,6 +888,7 @@ function VerificationTab({ user }) {
     }
     setUploading(true);
     setError("");
+    setSuccessMsg("");
     try {
       const uploadedDocs = [];
       for (const file of files) {
@@ -903,20 +904,23 @@ function VerificationTab({ user }) {
           url,
           filename: file.name,
           fileSize: file.size,
-          type: docType, // Pass the selected document classification to the backend
+          type: "other", // Default to "other" to remove friction for the manufacturer
         });
       }
 
       const res = await fetch("/api/verification-documents", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ documents: uploadedDocs, docType }),
+        body: JSON.stringify({ documents: uploadedDocs, docType: "other" }),
       });
       const data = await res.json();
       if (!data.success)
         throw new Error(data.error || data.message || "Submission failed");
-      setUploaded(true);
+      
+      setSuccessMsg("Documents successfully uploaded and submitted for review.");
       setFiles([]);
+      // Reload page to reflect new documents from backend
+      window.location.reload();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -944,6 +948,22 @@ function VerificationTab({ user }) {
             </p>
           </div>
         </div>
+      ) : isResubmissionRequired ? (
+        <div className="bg-red-500/10 border border-red-500/20 rounded-[2rem] p-6 flex items-center gap-6 backdrop-blur-md">
+          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-red-500 to-rose-500 flex items-center justify-center shadow-lg shadow-red-500/20 shrink-0">
+            <span className="material-symbols-outlined text-white text-2xl font-black">
+              error
+            </span>
+          </div>
+          <div>
+            <p className="text-sm font-black text-white uppercase tracking-widest">
+              Information Requested
+            </p>
+            <p className="text-xs text-white/40 mt-1.5 font-medium leading-relaxed">
+              The verification authority has requested additional information to process your credentials.
+            </p>
+          </div>
+        </div>
       ) : (
         <div className="bg-amber-500/10 border border-amber-500/20 rounded-[2rem] p-6 flex items-center gap-6 backdrop-blur-md">
           <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-amber-500 to-orange-500 flex items-center justify-center shadow-lg shadow-amber-500/20 shrink-0">
@@ -962,6 +982,16 @@ function VerificationTab({ user }) {
             </p>
           </div>
         </div>
+      )}
+
+      {/* Administrator Feedback */}
+      {reviewNotes && (
+        <Section title="Administrator Feedback" className="!bg-red-500/5 !border-red-500/30">
+          <div className="flex items-start gap-3">
+            <span className="material-symbols-outlined text-red-400 mt-0.5 shrink-0">feedback</span>
+            <p className="text-sm text-red-200/80 whitespace-pre-wrap leading-relaxed">{reviewNotes}</p>
+          </div>
+        </Section>
       )}
 
       {/* What verification unlocks */}
@@ -1011,123 +1041,118 @@ function VerificationTab({ user }) {
         </div>
       </Section>
 
+      {/* Previously Submitted Documents */}
+      {previouslySubmittedDocs.length > 0 && (
+        <Section title="Previously Submitted">
+          <div className="space-y-3">
+            {previouslySubmittedDocs.map((doc, idx) => (
+              <div
+                key={idx}
+                className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/5 rounded-xl"
+              >
+                <div className="flex items-center gap-4 overflow-hidden">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                    <span className="material-symbols-outlined text-emerald-400">
+                      description
+                    </span>
+                  </div>
+                  <div className="truncate">
+                    <p className="text-sm font-bold text-white truncate">
+                      {doc.filename || "Verification Document"}
+                    </p>
+                    <p className="text-[10px] text-emerald-400 uppercase tracking-widest font-black mt-0.5">
+                      Submitted
+                    </p>
+                  </div>
+                </div>
+                <a
+                  href={doc.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-4 py-2 rounded-lg bg-white/5 hover:bg-white/10 text-white text-xs font-black uppercase tracking-widest transition-colors shrink-0"
+                >
+                  View
+                </a>
+              </div>
+            ))}
+          </div>
+        </Section>
+      )}
+
       {/* Upload form */}
       {!isVerified && (
         <Section
-          title="Identity Synchronization"
-          desc="Authorized formats: PDF, JPG, PNG. Max 10MB per stream."
+          title={previouslySubmittedDocs.length > 0 ? "Upload Additional Documents" : "Identity Synchronization"}
+          desc="Authorized formats: PDF, JPG, PNG. Max 10MB per stream. You may select multiple files at once."
         >
-          {uploaded ? (
-            <div className="py-12 text-center flex flex-col items-center">
-              <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
-                <span className="material-symbols-outlined text-3xl text-emerald-400">
-                  check_circle
-                </span>
-              </div>
-              <p className="text-sm font-black text-white uppercase tracking-widest">
-                Data Stream Submitted
-              </p>
-              <p className="text-xs text-white/30 mt-2 font-medium max-w-xs">
-                Our verification nodes will audit your documents within 1–3
-                business cycles.
-              </p>
-              <button
-                onClick={() => setUploaded(false)}
-                className="mt-6 text-[10px] font-black uppercase tracking-widest text-purple-400 hover:text-purple-300 transition-colors"
-              >
-                Sync Additional Documents
-              </button>
-            </div>
-          ) : (
-            <form onSubmit={handleUpload} className="space-y-8">
-              <Alert type="error" message={error} />
-              <div>
-                <Label>Document Classification</Label>
-                <div className="relative group">
-                  <select
-                    value={docType}
-                    onChange={(e) => setDocType(e.target.value)}
-                    className="w-full px-5 py-4 bg-white/5 border border-white/10 rounded-2xl text-sm font-bold text-white focus:outline-none focus:border-purple-500/50 appearance-none transition-all cursor-pointer"
-                  >
-                    <option value="business_license" className="bg-[#050507]">
-                      Business License
-                    </option>
-                    <option value="tax_registration" className="bg-[#050507]">
-                      Tax Registration
-                    </option>
-                    <option value="certification" className="bg-[#050507]">
-                      Industry Certification (ISO, etc.)
-                    </option>
-                    <option value="identity" className="bg-[#050507]">
-                      Owner Identity Document
-                    </option>
-                    <option value="insurance" className="bg-[#050507]">
-                      Insurance Certificate
-                    </option>
-                    <option value="bank_verification" className="bg-[#050507]">
-                      Bank Verification
-                    </option>
-                    <option value="other" className="bg-[#050507]">
-                      Other Metadata
-                    </option>
-                  </select>
-                  <span className="absolute right-5 top-1/2 -translate-y-1/2 material-symbols-outlined text-white/20 pointer-events-none transition-transform group-hover:translate-y-[-40%]">
-                    expand_more
+          <form onSubmit={handleUpload} className="space-y-8">
+            {error && <Alert type="error" message={error} />}
+            {successMsg && <Alert type="success" message={successMsg} />}
+            
+            <div>
+              <Label>Metadata Stream Selection (Business License, Tax Registration, Identity, etc.)</Label>
+              <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-white/5 rounded-[2rem] cursor-pointer bg-white/[0.02] hover:bg-white/[0.04] hover:border-purple-500/30 transition-all group mt-2">
+                <div className="w-16 h-16 rounded-2xl bg-purple-500/5 border border-purple-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                  <span className="material-symbols-outlined text-3xl text-purple-500/40 group-hover:text-purple-400 transition-colors">
+                    cloud_upload
                   </span>
                 </div>
-              </div>
-              <div>
-                <Label>Metadata Stream Selection</Label>
-                <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed border-white/5 rounded-[2rem] cursor-pointer bg-white/[0.02] hover:bg-white/[0.04] hover:border-purple-500/30 transition-all group">
-                  <div className="w-16 h-16 rounded-2xl bg-purple-500/5 border border-purple-500/10 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
-                    <span className="material-symbols-outlined text-3xl text-purple-500/40 group-hover:text-purple-400 transition-colors">
-                      cloud_upload
+                <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
+                  {files.length > 0
+                    ? `${files.length} file${files.length > 1 ? "s" : ""} staged for upload`
+                    : "Select or Drop Documents"}
+                </span>
+                <span className="text-[9px] font-black text-white/10 uppercase tracking-widest mt-2">
+                  PDF, JPG, PNG — MAX 10MB PER BLOB
+                </span>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  multiple
+                  onChange={(e) => setFiles(Array.from(e.target.files))}
+                  className="hidden"
+                />
+              </label>
+
+              {/* Display staged files before upload */}
+              {files.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {files.map((file, i) => (
+                    <div key={i} className="flex items-center gap-3 p-3 bg-white/5 rounded-xl border border-white/5">
+                      <span className="material-symbols-outlined text-purple-400">description</span>
+                      <span className="text-sm font-medium text-white truncate">{file.name}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-4">
+              <button
+                type="submit"
+                disabled={uploading || files.length === 0}
+                className={`flex items-center gap-2 px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg ${
+                  uploading || files.length === 0
+                    ? "bg-purple-600/30 text-white/30 cursor-not-allowed border border-white/5"
+                    : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 shadow-purple-500/20 active:scale-95"
+                }`}
+              >
+                {uploading ? (
+                  <>
+                    <span className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    Syncing {files.length} File{files.length > 1 ? "s" : ""}…
+                  </>
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-sm font-black">
+                      publish
                     </span>
-                  </div>
-                  <span className="text-[10px] font-black uppercase tracking-widest text-white/40">
-                    {files.length > 0
-                      ? `${files.length} file${files.length > 1 ? "s" : ""} staged`
-                      : "Initialize Document Upload"}
-                  </span>
-                  <span className="text-[9px] font-black text-white/10 uppercase tracking-widest mt-2">
-                    PDF, JPG, PNG — MAX 10MB PER BLOB
-                  </span>
-                  <input
-                    type="file"
-                    accept=".pdf,.jpg,.jpeg,.png"
-                    multiple
-                    onChange={(e) => setFiles(Array.from(e.target.files))}
-                    className="hidden"
-                  />
-                </label>
-              </div>
-              <div className="flex justify-end pt-4">
-                <button
-                  type="submit"
-                  disabled={uploading || files.length === 0}
-                  className={`flex items-center gap-2 px-8 py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest text-white transition-all shadow-lg ${
-                    uploading || files.length === 0
-                      ? "bg-purple-600/30 text-white/30 cursor-not-allowed border border-white/5"
-                      : "bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 shadow-purple-500/20 active:scale-95"
-                  }`}
-                >
-                  {uploading ? (
-                    <>
-                      <span className="w-3.5 h-3.5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                      Syncing…
-                    </>
-                  ) : (
-                    <>
-                      <span className="material-symbols-outlined text-sm font-black">
-                        publish
-                      </span>
-                      Submit Documents
-                    </>
-                  )}
-                </button>
-              </div>
-            </form>
-          )}
+                    Submit Documents
+                  </>
+                )}
+              </button>
+            </div>
+          </form>
         </Section>
       )}
     </div>

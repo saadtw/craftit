@@ -122,21 +122,27 @@ export default function ManufacturerDashboard() {
 
   const fetchDashboardData = useCallback(async () => {
     try {
+      const safeFetch = (url) => fetch(url).catch(err => ({ ok: false, error: err }));
+      const safeJson = async (res) => {
+        if (!res || !res.ok) return { success: false };
+        try { return await res.json(); } catch (err) { return { success: false, error: err }; }
+      };
+
       const [meRes, ordersRes, rfqsRes, bidsRes, gbRes] = await Promise.all([
-        fetch("/api/auth/me"),
-        fetch("/api/orders?limit=5"),
-        fetch("/api/rfqs?status=open&limit=1"),
-        fetch("/api/bids?limit=4"),
-        fetch("/api/group-buys?status=active&limit=1"),
+        safeFetch("/api/auth/me"),
+        safeFetch("/api/orders?limit=5"),
+        safeFetch("/api/rfqs?status=open&limit=1"),
+        safeFetch("/api/bids?limit=4"),
+        safeFetch("/api/group-buys?status=active&limit=1"),
       ]);
 
       const [meData, ordersData, rfqsData, bidsData, gbData] =
         await Promise.all([
-          meRes.json(),
-          ordersRes.json(),
-          rfqsRes.json(),
-          bidsRes.json(),
-          gbRes.json(),
+          safeJson(meRes),
+          safeJson(ordersRes),
+          safeJson(rfqsRes),
+          safeJson(bidsRes),
+          safeJson(gbRes),
         ]);
 
       if (meData.success) {

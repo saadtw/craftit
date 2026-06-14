@@ -366,6 +366,12 @@ function NewCustomOrderContent() {
     }
   };
 
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.push("/auth/login");
+    }
+  }, [status, router]);
+
   const inputClass =
     "w-full bg-white/[0.04] border border-white/10 rounded-xl px-4 py-3 text-sm text-white placeholder:text-white/25 focus:outline-none focus:border-[#eb9728]/40 focus:bg-white/[0.06] transition-all";
   const labelClass =
@@ -379,8 +385,9 @@ function NewCustomOrderContent() {
     );
   }
 
+
+
   if (status === "unauthenticated") {
-    router.push("/auth/login");
     return null;
   }
 
