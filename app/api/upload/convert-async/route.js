@@ -62,32 +62,61 @@ export async function POST(request) {
     const timestamp = Date.now();
     const outputPath = `3d-models/converted/${timestamp}-${baseName}.glb`;
 
-    // Call the converter microservice
+    // 1. Download the raw file from Supabase Storage
+    const rawFileRes = await fetch(inputUrl);
+    if (!rawFileRes.ok) {
+      return NextResponse.json({ success: false, error: "Failed to download raw file from storage" }, { status: 400 });
+    }
+    const rawBlob = await rawFileRes.blob();
+
+    // 2. Prepare FormData for the Converter Service (v2 expects multipart/form-data)
+    const formData = new FormData();
+    formData.append("file", rawBlob, baseName);
+    formData.append("original_filename", baseName);
+
+    // 3. Call the converter microservice
     const converterRes = await fetch(`${converterUrl}/convert`, {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${converterSecret}`,
       },
-      body: JSON.stringify({
-        input_url: inputUrl,
-        output_path: outputPath,
-        supabase_url: process.env.NEXT_PUBLIC_SUPABASE_URL,
-        supabase_secret_key: process.env.SUPABASE_SECRET_KEY,
-      }),
+      body: formData,
     });
 
-    const converterData = await converterRes.json();
-
-    if (!converterRes.ok || !converterData.success) {
-      console.error("[ConvertAsync] Converter failed:", converterData.error);
+    if (!converterRes.ok) {
+      let errorText = "Conversion failed";
+      try {
+        const errorJson = await converterRes.json();
+        errorText = errorJson.detail || errorText;
+      } catch (e) {
+        errorText = `HTTP ${converterRes.status}`;
+      }
+      console.error("[ConvertAsync] Converter failed:", errorText);
       return NextResponse.json(
-        { success: false, error: converterData.error || "Conversion failed" },
+        { success: false, error: errorText },
         { status: 502 }
       );
     }
 
-    const finalUrl = converterData.url;
+    // 4. The converter returns the binary GLB data directly
+    const glbBuffer = await converterRes.arrayBuffer();
+
+    // 5. Upload the converted GLB back to Supabase Storage
+    const { supabaseAdmin } = await import("@/lib/supabase");
+    const { data: uploadData, error: uploadError } = await supabaseAdmin.storage
+      .from("craftit-uploads")
+      .upload(outputPath, glbBuffer, {
+        contentType: "model/gltf-binary",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      console.error("[ConvertAsync] Failed to upload GLB to Supabase:", uploadError.message);
+      return NextResponse.json({ success: false, error: "Failed to upload converted file" }, { status: 500 });
+    }
+
+    const { data: publicUrlData } = supabaseAdmin.storage.from("craftit-uploads").getPublicUrl(outputPath);
+    const finalUrl = publicUrlData.publicUrl;
 
     // Optionally patch the MongoDB document with the converted model URL
     if (resourceId && resourceType && RESOURCE_MODELS[resourceType]) {
@@ -106,7 +135,6 @@ export async function POST(request) {
     }
 
     // Cleanup the raw input file from Supabase so only the converted file remains
-    const { supabaseAdmin } = await import("@/lib/supabase");
     const { error: deleteError } = await supabaseAdmin.storage
       .from("craftit-uploads")
       .remove([storagePath]);
