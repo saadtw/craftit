@@ -827,6 +827,12 @@ export default function ManufacturerSignup() {
                 </Label>
               </div>
 
+              {error && (
+                <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs font-bold uppercase tracking-wider text-center">
+                  {error}
+                </div>
+              )}
+
               <div className="flex justify-center">
                 <Button
                   disabled={loading}

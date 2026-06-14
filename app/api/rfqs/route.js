@@ -4,6 +4,7 @@ import connectDB from "@/lib/mongodb";
 import RFQ from "@/models/RFQ";
 import CustomOrder from "@/models/CustomOrder";
 import User from "@/models/User";
+import Product from "@/models/Product";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/lib/auth";
 import mongoose from "mongoose";

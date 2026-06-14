@@ -28,7 +28,7 @@ export default function Editor3DWrapper({
   useEffect(() => {
     const handleMessage = (event) => {
       // Security check: ensure message comes from our editor
-      if (!event.origin.startsWith(EDITOR_URL)) return;
+      if (!event.origin.startsWith(EDITOR_URL.replace(/\/$/, ""))) return;
 
       if (event.data?.type === "EDITOR_READY") {
         setIsReady(true);

@@ -5,6 +5,7 @@ import connectDB from "@/lib/mongodb";
 import Bid from "@/models/Bid";
 import RFQ from "@/models/RFQ";
 import User from "@/models/User";
+import CustomOrder from "@/models/CustomOrder";
 import { notify } from "@/services/notificationService";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
