@@ -8,7 +8,6 @@ import Image from "next/image";
 import { useToast } from "@/components/ui/ToastProvider";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
-import { getSupabaseClient } from "@/lib/supabaseClient";
 import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import { uploadFileDirect } from "@/lib/uploadDirect";
 import { formatPKR } from "@/lib/currency";

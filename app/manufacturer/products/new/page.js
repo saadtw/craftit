@@ -11,7 +11,6 @@ import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useToast } from "@/components/ui/ToastProvider";
 import { uploadFileDirect } from "@/lib/uploadDirect";
-import { ALL_CAPABILITIES, ALL_MATERIALS } from "@/lib/constants";
 
 // Key shared between this page and the dedicated model-editor route
 const DRAFT_MODEL_KEY = "draftModel3D";
