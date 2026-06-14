@@ -7,6 +7,7 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
+import { uploadFileDirect } from "@/lib/uploadDirect";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
 import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import GlobalLoader from "@/components/ui/GlobalLoader";
@@ -265,18 +266,12 @@ export default function EditProductPage() {
     setImageUploading(true);
     if (imageInputRef.current) imageInputRef.current.value = "";
     try {
-      const formData = new FormData();
-      formData.append("type", "image");
-      fileArray.forEach((f) => formData.append("files", f));
-      const res = await fetch("/api/upload/multiple", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Image upload failed. Please try again.");
+      const uploadedFiles = [];
+      for (const file of fileArray) {
+        const data = await uploadFileDirect(file, "image");
+        uploadedFiles.push(data.file || data);
       }
-      const newImgs = data.files.map((f, i) => ({
+      const newImgs = uploadedFiles.map((f, i) => ({
         url: f.url,
         isPrimary: form.images.length === 0 && i === 0,
       }));
@@ -314,23 +309,11 @@ export default function EditProductPage() {
     setModelUploading(true);
     if (modelInputRef.current) modelInputRef.current.value = "";
     try {
-      const formData = new FormData();
-      formData.append("type", "3d-model");
-      formData.append("file", file);
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(
-          data.error || "3D model upload failed. Please try again.",
-        );
-      }
+      const data = await uploadFileDirect(file, "3d-model");
       setForm((prev) => ({
         ...prev,
         model3D: {
-          url: data.file.url,
+          url: data.url || data.file?.url,
           filename: file.name,
           fileSize: file.size,
         },

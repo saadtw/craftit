@@ -172,15 +172,16 @@ function ChipSelector({ options, selected, onChange }) {
   );
 }
 
+import { uploadFileDirect } from "@/lib/uploadDirect";
+
 // ─── Image upload helper ──────────────────────────────────────────────────────
 async function uploadFile(file, fileType = "image") {
-  const formData = new FormData();
-  formData.append("file", file);
-  formData.append("type", fileType);
-  const res = await fetch("/api/upload", { method: "POST", body: formData });
-  const data = await res.json();
-  if (!data.success) throw new Error(data.error || "Upload failed");
-  return data.file?.url;
+  try {
+    const result = await uploadFileDirect(file, fileType);
+    return result.url;
+  } catch (error) {
+    throw new Error(error.message || "Upload failed");
+  }
 }
 
 // ─── BUSINESS PROFILE TAB ────────────────────────────────────────────────────
@@ -902,6 +903,7 @@ function VerificationTab({ user }) {
           url,
           filename: file.name,
           fileSize: file.size,
+          type: docType, // Pass the selected document classification to the backend
         });
       }
 

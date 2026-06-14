@@ -105,6 +105,18 @@ export async function POST(request) {
       }
     }
 
+    // Cleanup the raw input file from Supabase so only the converted file remains
+    const { supabaseAdmin } = await import("@/lib/supabase");
+    const { error: deleteError } = await supabaseAdmin.storage
+      .from("craftit-uploads")
+      .remove([storagePath]);
+
+    if (deleteError) {
+      console.warn("[ConvertAsync] Failed to cleanup raw file:", deleteError.message);
+    } else {
+      console.log(`[ConvertAsync] Cleaned up raw file: ${storagePath}`);
+    }
+
     return NextResponse.json({ success: true, url: finalUrl, path: outputPath });
   } catch (error) {
     console.error("[ConvertAsync] Unexpected error:", error);

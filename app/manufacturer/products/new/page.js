@@ -10,6 +10,8 @@ import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
 import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useToast } from "@/components/ui/ToastProvider";
+import { uploadFileDirect } from "@/lib/uploadDirect";
+import { ALL_CAPABILITIES, ALL_MATERIALS } from "@/lib/constants";
 
 // Key shared between this page and the dedicated model-editor route
 const DRAFT_MODEL_KEY = "draftModel3D";
@@ -204,18 +206,12 @@ export default function NewProductPage() {
     // Reset input so the same file can be selected again on retry
     if (imageInputRef.current) imageInputRef.current.value = "";
     try {
-      const formData = new FormData();
-      formData.append("type", "image");
-      fileArray.forEach((f) => formData.append("files", f));
-      const res = await fetch("/api/upload/multiple", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(data.error || "Image upload failed. Please try again.");
+      const uploadedFiles = [];
+      for (const file of fileArray) {
+        const data = await uploadFileDirect(file, "image");
+        uploadedFiles.push(data.file);
       }
-      const newImgs = data.files.map((f, i) => ({
+      const newImgs = uploadedFiles.map((f, i) => ({
         url: f.url,
         isPrimary: form.images.length === 0 && i === 0,
       }));
@@ -247,22 +243,8 @@ export default function NewProductPage() {
   const handleModelUpload = async (file) => {
     if (!file) return;
     setModelUploading(true);
-    // Always reset input so the same file can be re-selected on retry
-    if (modelInputRef.current) modelInputRef.current.value = "";
     try {
-      const formData = new FormData();
-      formData.append("type", "3d-model");
-      formData.append("file", file);
-      const res = await fetch("/api/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok || !data.success) {
-        throw new Error(
-          data.error || "3D model upload failed. Please try again.",
-        );
-      }
+      const data = await uploadFileDirect(file, "3d-model");
       setForm((prev) => ({
         ...prev,
         model3D: {

@@ -7,6 +7,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { useToast } from "@/components/ui/ToastProvider";
+import { uploadFileDirect } from "@/lib/uploadDirect";
 
 export default function EditCustomOrder() {
   const router = useRouter();
@@ -87,19 +88,14 @@ export default function EditCustomOrder() {
     setFormData((prev) => ({ ...prev, [field]: array }));
   };
 
+  // ...
   const handle3DUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
     setUploading(true);
     try {
-      const fd = new FormData();
-      fd.append("file", file);
-      fd.append("type", "3d-model");
-      const response = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await response.json();
-      if (data.success) {
-        setModel3D(data.file);
-      } else toast.error("Upload failed: " + data.error);
+      const data = await uploadFileDirect(file, "3d-model");
+      setModel3D(data);
     } catch (error) {
       toast.error("Upload error: " + error.message);
     } finally {
@@ -112,16 +108,12 @@ export default function EditCustomOrder() {
     if (!files.length) return;
     setUploading(true);
     try {
-      const fd = new FormData();
-      files.forEach((file) => fd.append("files", file));
-      fd.append("folder", "images");
-      const response = await fetch("/api/upload/multiple", {
-        method: "POST",
-        body: fd,
-      });
-      const data = await response.json();
-      if (data.success) setImages((prev) => [...prev, ...data.files]);
-      else toast.error("Upload failed: " + data.error);
+      const uploadedFiles = [];
+      for (const file of files) {
+        const data = await uploadFileDirect(file, "image");
+        uploadedFiles.push(data);
+      }
+      setImages((prev) => [...prev, ...uploadedFiles]);
     } catch (error) {
       toast.error("Upload error: " + error.message);
     } finally {

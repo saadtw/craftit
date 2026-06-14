@@ -109,8 +109,9 @@ export async function POST(request) {
     };
 
     if (existing) {
-      // Replace documents on resubmission (don't just append)
-      existing.documents = sanitizedDocuments;
+      // Append documents instead of replacing so users can submit multiple doc types
+      const existingDocs = existing.documents || [];
+      existing.documents = [...existingDocs, ...sanitizedDocuments];
       existing.verificationStatus = "pending";
       existing.reviewedBy = undefined;
       existing.reviewedAt = undefined;
