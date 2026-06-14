@@ -204,7 +204,9 @@ export async function POST(request) {
         let finalUrl;
         try {
           console.log(`[Upload] Sending ${buffer.length} bytes to converter...`);
-          const converterRes = await fetch(`${converterUrl}/convert`, {
+          // Strip any trailing slashes from converterUrl to prevent 404s (e.g. from /convert/convert or //convert)
+          const cleanBaseUrl = converterUrl.replace(/\/convert\/?$/, "").replace(/\/+$/, "");
+          const converterRes = await fetch(`${cleanBaseUrl}/convert`, {
             method: "POST",
             headers: { Authorization: `Bearer ${converterSecret}` },
             // Do NOT set Content-Type — fetch sets the multipart boundary automatically

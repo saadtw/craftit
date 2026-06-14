@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import GroupBuy from "@/models/GroupBuy";
+import Product from "@/models/Product";
+import User from "@/models/User";
 import { resolveRequestSession } from "@/lib/requestAuth";
 import mongoose from "mongoose";
 

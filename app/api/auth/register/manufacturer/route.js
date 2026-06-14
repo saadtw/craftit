@@ -72,7 +72,7 @@ export async function POST(request) {
     }
 
     // 1. Create the user in Supabase using the anon client so it sends the verification email
-    const { data: supaData, error: supaError } = await supabase.auth.signUp({
+    let { data: supaData, error: supaError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
       options: {
@@ -91,46 +91,71 @@ export async function POST(request) {
       );
     }
 
-    // 2. Create the profile in MongoDB (no password stored here)
-    const user = await User.create({
-      supabaseId: supaData.user.id,
-      role: "manufacturer",
-      name,
-      email: normalizedEmail,
-      phone,
-      businessName,
-      contactPerson: contactPerson || name,
-      businessEmail: businessEmail || email,
-      businessPhone: businessPhone || phone,
-      businessRegistrationNumber,
-      businessAddress,
-      businessDescription,
-      manufacturingCapabilities: manufacturingCapabilities || [],
-      materialsAvailable: materialsAvailable || [],
-      minOrderQuantity,
-      productionCapacity,
-      leadTimeDays,
-      customizationCapabilities: customizationCapabilities || [],
-      budgetRange,
-      location,
-      certifications: certifications || [],
-      verificationStatus: "unverified",
-      isActive: true,
-      isEmailVerified: false,
-    });
+    // If Supabase returns null user (e.g. email enumeration protection when user already exists)
+    if (!supaData?.user) {
+      const { data: adminData } = await supabaseAdmin.auth.admin.listUsers();
+      const existingSupaUser = adminData?.users?.find((u) => u.email === normalizedEmail);
+      if (existingSupaUser) {
+        supaData = { user: existingSupaUser };
+      } else {
+        return NextResponse.json(
+          { success: false, message: "Registration failed. Please try again." },
+          { status: 400 }
+        );
+      }
+    }
 
-    // Create verification document if documents provided
-    if (documents && documents.length > 0) {
-      await VerificationDocument.create({
-        manufacturerId: user._id,
-        documents: documents.map((doc) => ({
-          type: doc.type,
-          url: doc.url,
-          filename: doc.filename,
-          fileSize: doc.fileSize,
-        })),
-        verificationStatus: "pending",
+    let user;
+    try {
+      // 2. Create the profile in MongoDB (no password stored here)
+      user = await User.create({
+        supabaseId: supaData.user.id,
+        role: "manufacturer",
+        name,
+        email: normalizedEmail,
+        phone,
+        businessName,
+        contactPerson: contactPerson || name,
+        businessEmail: businessEmail || email,
+        businessPhone: businessPhone || phone,
+        businessRegistrationNumber,
+        businessAddress,
+        businessDescription,
+        manufacturingCapabilities: manufacturingCapabilities || [],
+        materialsAvailable: materialsAvailable || [],
+        minOrderQuantity,
+        productionCapacity,
+        leadTimeDays,
+        customizationCapabilities: customizationCapabilities || [],
+        budgetRange,
+        location,
+        certifications: certifications || [],
+        verificationStatus: "unverified",
+        isActive: true,
+        isEmailVerified: false,
       });
+
+      // Create verification document if documents provided
+      if (documents && documents.length > 0) {
+        await VerificationDocument.create({
+          manufacturerId: user._id,
+          documents: documents.map((doc) => ({
+            type: doc.type,
+            url: doc.url,
+            filename: doc.filename,
+            fileSize: doc.fileSize,
+          })),
+          verificationStatus: "pending",
+        });
+      }
+    } catch (dbError) {
+      // Rollback Supabase user if MongoDB creation failed
+      try {
+        await supabaseAdmin.auth.admin.deleteUser(supaData.user.id);
+      } catch (rollbackError) {
+        console.error("Failed to rollback Supabase user:", rollbackError);
+      }
+      throw dbError; // Pass to outer catch
     }
 
     return NextResponse.json(
