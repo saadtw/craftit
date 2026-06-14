@@ -185,7 +185,7 @@ export async function PUT(request, context) {
     const updated = await Product.findByIdAndUpdate(
       id,
       { $set: updateData },
-      { new: true, runValidators: true, strict: false },
+      { returnDocument: "after", runValidators: true, strict: false },
     ).lean();
 
     return NextResponse.json({ success: true, product: updated });

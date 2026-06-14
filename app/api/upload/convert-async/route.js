@@ -75,7 +75,8 @@ export async function POST(request) {
     formData.append("original_filename", baseName);
 
     // 3. Call the converter microservice
-    const converterRes = await fetch(`${converterUrl}/convert`, {
+    const cleanBaseUrl = converterUrl.replace(/\/convert\/?$/, "").replace(/\/+$/, "");
+    const converterRes = await fetch(`${cleanBaseUrl}/convert`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${converterSecret}`,

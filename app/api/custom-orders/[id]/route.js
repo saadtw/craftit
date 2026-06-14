@@ -108,7 +108,7 @@ export async function PUT(request, context) {
     });
 
     const updatedOrder = await CustomOrder.findByIdAndUpdate(id, updateData, {
-      new: true,
+      returnDocument: "after",
       runValidators: true,
     });
 

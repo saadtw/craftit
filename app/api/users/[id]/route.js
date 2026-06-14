@@ -215,7 +215,7 @@ export async function PATCH(request, { params }) {
     const user = await User.findByIdAndUpdate(
       userId,
       { $set: update },
-      { new: true, runValidators: true },
+      { returnDocument: "after", runValidators: true },
     ).select("-password");
 
     if (!user) {

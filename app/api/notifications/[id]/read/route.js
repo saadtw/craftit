@@ -26,7 +26,7 @@ export async function PATCH(request, context) {
     const notification = await Notification.findOneAndUpdate(
       { _id: id, userId: session.user.id },
       { isRead: true, readAt: new Date() },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!notification) {
