@@ -58,6 +58,14 @@ const CustomOrderSchema = new mongoose.Schema(
       },
     ],
 
+    files: [
+      {
+        url: String,
+        filename: String,
+        fileSize: Number,
+      }
+    ],
+
     specialRequirements: String,
     budget: {
       type: Number,
@@ -124,6 +132,23 @@ const CustomOrderSchema = new mongoose.Schema(
           url: String,
           filename: String,
           fileSize: Number,
+          thumbnailUrl: String,
+          annotations: [mongoose.Schema.Types.Mixed],
+          measurements: [mongoose.Schema.Types.Mixed],
+          cameraState: {
+            position: { x: Number, y: Number, z: Number },
+            target: { x: Number, y: Number, z: Number },
+            zoom: Number,
+          },
+          dimensions: {
+            length: Number,
+            width: Number,
+            height: Number,
+            unit: {
+              type: String,
+              default: "mm",
+            },
+          },
         },
         images: [
           {

@@ -94,6 +94,7 @@ export async function PUT(request, context) {
       "deadline",
       "model3D",
       "images",
+      "files",
       "specialRequirements",
       "budget",
       "items",
@@ -161,6 +162,9 @@ export async function DELETE(request, context) {
     const urlsToClean = [];
     if (order.images?.length > 0) {
       urlsToClean.push(...order.images.map(i => i.url || i.file?.url).filter(Boolean));
+    }
+    if (order.files?.length > 0) {
+      urlsToClean.push(...order.files.map(f => f.url || f.file?.url).filter(Boolean));
     }
     if (order.model3D?.url) urlsToClean.push(order.model3D.url);
     else if (order.model3D?.file?.url) urlsToClean.push(order.model3D.file.url);

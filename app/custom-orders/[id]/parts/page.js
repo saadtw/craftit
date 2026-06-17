@@ -6,7 +6,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import GlobalLoader from "@/components/ui/GlobalLoader";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 
 const STATUS_BADGES = {
   pending: "bg-white/5 border border-white/10 text-white/40",
@@ -75,12 +75,13 @@ export default function PartsOverviewPage() {
                     3D Model Overview
                   </h2>
                 </div>
-                <div className="p-4 bg-white/[0.02]">
-                  <Editor3DWrapper
+                <div className="aspect-square bg-white/[0.02]">
+                  <ModelViewerPreview
+                    key={customOrder.model3D.url}
                     modelUrl={customOrder.model3D.url}
-                    initialAnnotations={customOrder.model3D.annotations}
-                    initialCameraState={customOrder.model3D.cameraState}
-                    readOnly={true}
+                    annotations={customOrder.model3D.annotations || []}
+                    measurements={customOrder.model3D.measurements || []}
+                    height="100%"
                   />
                 </div>
               </div>

@@ -20,6 +20,7 @@ export default function SetupPassword() {
   const [success, setSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(true);
 
   const passwordRules = useMemo(() => {
     const value = formData.password;
@@ -51,11 +52,11 @@ export default function SetupPassword() {
 
     if (!refreshedSessionRef.current) {
       refreshedSessionRef.current = true;
-      update();
+      update().finally(() => setIsUpdating(false));
       return;
     }
 
-    if (!session?.user?.needsPasswordSetup) {
+    if (!isUpdating && !session?.user?.needsPasswordSetup) {
       // Already set password, redirect to dashboard
       const role = session.user.role || "customer";
       if (role === "customer") router.replace("/customer");
@@ -63,7 +64,7 @@ export default function SetupPassword() {
         router.replace("/manufacturer/dashboard");
       else if (role === "admin") router.replace("/admin/dashboard");
     }
-  }, [status, session, router, update]);
+  }, [status, session, router, update, isUpdating]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -107,7 +108,7 @@ export default function SetupPassword() {
     }
   };
 
-  if (status === "loading" || success) {
+  if (status === "loading" || success || isUpdating) {
     return (
       <div className="min-h-screen bg-[#0B011D] flex items-center justify-center">
         <div className="w-8 h-8 border-4 border-purple-500 border-t-transparent rounded-full animate-spin" />

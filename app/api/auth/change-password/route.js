@@ -34,7 +34,7 @@ export async function POST(request) {
 
     await connectDB();
 
-    const user = await User.findById(session.user.id).select("supabaseId");
+    const user = await User.findById(session.user.id).select("supabaseId email");
     if (!user || !user.supabaseId) {
       return NextResponse.json(
         { success: false, error: "User not found" },
@@ -53,7 +53,7 @@ export async function POST(request) {
       );
 
       const { error: signInErr } = await tempSupabase.auth.signInWithPassword({
-        email: session.user.email,
+        email: user.email,
         password: currentPassword,
       });
 

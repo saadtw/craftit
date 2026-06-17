@@ -69,7 +69,7 @@ export async function GET(request) {
       })
       .populate({
         path: "manufacturerId",
-       select: "businessName name businessLogo",
+        select: "businessName name businessLogo",
       })
       .sort(sortObj)
       .skip(skip)

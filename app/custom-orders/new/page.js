@@ -68,6 +68,7 @@ function NewCustomOrderContent() {
 
   const [pendingModel, setPendingModel] = useState(null);
   const [pendingImages, setPendingImages] = useState([]);
+  const [pendingFiles, setPendingFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
 
@@ -289,6 +290,23 @@ function NewCustomOrderContent() {
     }
   };
 
+  const removeFile = (index) => {
+    setPendingFiles((prev) => {
+      const next = [...prev];
+      next.splice(index, 1);
+      return next;
+    });
+  };
+
+  const handleFileUpload = async (e) => {
+    const files = Array.from(e.target.files || []);
+    if (!files.length) return;
+    const validFiles = files.map(file => ({ file }));
+    if (validFiles.length) {
+      setPendingFiles((prev) => [...prev, ...validFiles]);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (sourceContext.error) {
@@ -316,6 +334,7 @@ function NewCustomOrderContent() {
     try {
       let uploadedModel = null;
       let uploadedImages = [];
+      let uploadedFiles = [];
 
       if (pendingModel?.file) {
         try {
@@ -338,6 +357,18 @@ function NewCustomOrderContent() {
         }
       }
 
+      if (pendingFiles.length > 0) {
+        try {
+          for (const item of pendingFiles) {
+            const data = await uploadFileDirect(item.file, "document");
+            uploadedFiles.push(data);
+          }
+        } catch (error) {
+          toast.error("Some file uploads failed: " + error.message);
+          return;
+        }
+      }
+
       const response = await fetch("/api/custom-orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -345,6 +376,7 @@ function NewCustomOrderContent() {
           ...formData,
           model3D: uploadedModel,
           images: uploadedImages,
+          files: uploadedFiles,
           status: "draft",
           budget: formData.budget ? Number(formData.budget) : undefined,
           quantity,
@@ -922,6 +954,56 @@ function NewCustomOrderContent() {
                       >
                         <span className="material-symbols-outlined text-[16px]">
                           close
+                        </span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Files */}
+            <div>
+              <label className={labelClass}>Documents / Specs</label>
+              <label className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-6 cursor-pointer hover:border-[#eb9728]/30 hover:bg-white/[0.04] transition-all group">
+                <span className="material-symbols-outlined text-3xl text-white/20 group-hover:text-[#eb9728]/50 transition-colors">
+                  upload_file
+                </span>
+                <p className="text-sm text-white/40 group-hover:text-white/60 transition-colors">
+                  Click to upload files
+                </p>
+                <p className="text-[11px] text-white/20">
+                  Any relevant documents or specifications
+                </p>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+              {pendingFiles.length > 0 && (
+                <div className="mt-3 space-y-2">
+                  {pendingFiles.map((fileObj, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/[0.03]"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-purple-400 text-[18px]">
+                          description
+                        </span>
+                        <span className="text-xs text-white/80 font-medium truncate max-w-[200px]">
+                          {fileObj.file?.name}
+                        </span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeFile(idx)}
+                        className="text-white/40 hover:text-red-400"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">
+                          delete
                         </span>
                       </button>
                     </div>

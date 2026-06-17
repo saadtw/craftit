@@ -34,15 +34,20 @@ export default function CustomOrderReview() {
   const [loading, setLoading] = useState(true);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isSavingModel, setIsSavingModel] = useState(false);
+  const [fetchError, setFetchError] = useState("");
 
   const fetchCustomOrder = useCallback(async () => {
     try {
       const response = await fetch(`/api/custom-orders/${params.id}`);
       const data = await response.json();
       if (data.success && data.order) setCustomOrder(data.order);
-      else alert("Error loading order: " + (data.error || "Unknown error"));
+      else {
+        toast.error("Error loading order: " + (data.error || "Unknown error"));
+        setFetchError(data.error || "Unknown error");
+      }
     } catch (error) {
-      alert("Error loading order: " + error.message);
+      toast.error("Error loading order: " + error.message);
+      setFetchError(error.message);
     } finally {
       setLoading(false);
     }
@@ -164,14 +169,17 @@ export default function CustomOrderReview() {
     return null;
   }
 
-  if (!customOrder) {
+  if (fetchError || !customOrder) {
     return (
       <div className="min-h-screen bg-[#050507] flex items-center justify-center">
         <div className="text-center">
           <span className="material-symbols-outlined text-5xl text-white/15 block mb-3">
             inventory_2
           </span>
-          <p className="text-sm text-white/40">Order not found.</p>
+          <p className="text-sm text-red-400 mb-6">{fetchError || "Order not found."}</p>
+          <button onClick={() => router.push("/customer/custom-orders")} className="px-6 py-2 bg-purple-600 text-white rounded-xl font-bold text-sm">
+            Go Back
+          </button>
         </div>
       </div>
     );
@@ -508,6 +516,50 @@ export default function CustomOrderReview() {
                       <p className="text-[11px] text-white/35 px-1 truncate">
                         {img.filename || `Image ${idx + 1}`}
                       </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Files */}
+          {customOrder.files?.length > 0 && (
+            <div className="rounded-2xl border border-white/8 bg-[#0c0c11] overflow-hidden">
+              <div className="px-6 py-5 border-b border-white/8">
+                <h2 className="text-base font-bold text-white flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-[#eb9728]">
+                    description
+                  </span>
+                  Documents / Specs
+                </h2>
+              </div>
+              <div className="p-5">
+                <div className="space-y-2">
+                  {customOrder.files.map((fileObj, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between p-3 rounded-xl border border-white/10 bg-white/[0.03]"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-purple-400 text-[20px]">
+                          insert_drive_file
+                        </span>
+                        <p className="text-sm font-semibold text-white/80">
+                          {fileObj.filename || `Document ${idx + 1}`}
+                        </p>
+                      </div>
+                      <a
+                        href={fileObj.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="p-2 text-white/40 hover:text-white bg-white/5 hover:bg-white/10 rounded-lg transition-colors flex items-center gap-1 text-[11px] font-bold"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">
+                          download
+                        </span>
+                        Download
+                      </a>
                     </div>
                   ))}
                 </div>

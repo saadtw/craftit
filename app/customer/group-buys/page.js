@@ -1,5 +1,4 @@
 // app/customer/group-buys/page.js
-// app/customer/group-buys/page.js
 "use client";
 
 import GlobalLoader from "@/components/ui/GlobalLoader";

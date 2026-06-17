@@ -209,7 +209,7 @@ export default function NewProductPage() {
       const uploadedFiles = [];
       for (const file of fileArray) {
         const data = await uploadFileDirect(file, "image");
-        uploadedFiles.push(data.file);
+        uploadedFiles.push(data);
       }
       const newImgs = uploadedFiles.map((f, i) => ({
         url: f.url,
@@ -266,7 +266,7 @@ export default function NewProductPage() {
       setForm((prev) => ({
         ...prev,
         model3D: {
-          url: data.file.url,
+          url: data.url,
           filename: file.name,
           fileSize: file.size,
         },

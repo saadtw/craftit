@@ -29,6 +29,7 @@ export default function EditCustomOrder() {
 
   const [model3D, setModel3D] = useState(null);
   const [images, setImages] = useState([]);
+  const [files, setFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -54,6 +55,7 @@ export default function EditCustomOrder() {
         setModel3D(order.model3D);
         setBaseModelUrl(order.model3D?.url || "");
         setImages(order.images || []);
+        setFiles(order.files || []);
       } else {
       }
     } catch (error) {
@@ -122,6 +124,24 @@ export default function EditCustomOrder() {
     }
   };
 
+  const handleFileUpload = async (e) => {
+    const uploadedFiles = Array.from(e.target.files);
+    if (!uploadedFiles.length) return;
+    setUploading(true);
+    try {
+      const newFiles = [];
+      for (const file of uploadedFiles) {
+        const data = await uploadFileDirect(file, "document");
+        newFiles.push(data);
+      }
+      setFiles((prev) => [...prev, ...newFiles]);
+    } catch (error) {
+      toast.error("Upload error: " + error.message);
+    } finally {
+      setUploading(false);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -133,6 +153,7 @@ export default function EditCustomOrder() {
           ...formData,
           model3D,
           images,
+          files,
           budget: formData.budget ? Number(formData.budget) : undefined,
           quantity: Number(formData.quantity),
         }),
@@ -410,6 +431,62 @@ export default function EditCustomOrder() {
                             cleanupFiles([imgToRemove.url], { type: "CustomOrder", id: params.id });
                           }
                           setImages((prev) => prev.filter((_, i) => i !== idx));
+                        }}
+                        className="p-1 text-emerald-400 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[16px]">
+                          close
+                        </span>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Files */}
+            <div>
+              <label className={labelClass}>Documents / Specs</label>
+              <label className="flex flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/15 bg-white/[0.02] px-4 py-6 cursor-pointer hover:border-[#eb9728]/30 hover:bg-white/[0.04] transition-all group">
+                <span className="material-symbols-outlined text-3xl text-white/20 group-hover:text-[#eb9728]/50 transition-colors">
+                  upload_file
+                </span>
+                <p className="text-sm text-white/40 group-hover:text-white/60 transition-colors">
+                  Click to upload files
+                </p>
+                <p className="text-[11px] text-white/20">
+                  Any relevant documents or specifications
+                </p>
+                <input
+                  type="file"
+                  multiple
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+              </label>
+              {files.length > 0 && (
+                <div className="mt-2 space-y-1.5">
+                  {files.map((fileObj, idx) => (
+                    <div
+                      key={idx}
+                      className="flex items-center justify-between gap-2 px-3 py-2.5 rounded-xl border border-emerald-500/20 bg-emerald-500/8"
+                    >
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <span className="material-symbols-outlined text-[15px] text-emerald-400 shrink-0">
+                          check_circle
+                        </span>
+                        <p className="text-[11px] font-semibold text-emerald-400 truncate">
+                          {fileObj.filename || `File ${idx + 1}`}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const fileToRemove = files[idx];
+                          if (fileToRemove && fileToRemove.url) {
+                            cleanupFiles([fileToRemove.url], { type: "CustomOrder", id: params.id });
+                          }
+                          setFiles((prev) => prev.filter((_, i) => i !== idx));
                         }}
                         className="p-1 text-emerald-400 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
                       >

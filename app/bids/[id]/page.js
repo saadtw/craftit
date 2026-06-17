@@ -162,7 +162,12 @@ function ChatPanel({ bidId, session, bidStatus, toast }) {
       });
       const data = await res.json();
       if (data.success) {
-        setMessages((prev) => [...prev, data.message]);
+        setMessages((prev) => {
+          if (prev.some((m) => String(m._id) === String(data.message._id))) {
+            return prev;
+          }
+          return [...prev, data.message];
+        });
         lastTimestampRef.current = data.message.createdAt;
         setInput("");
       } else toast.error(data.error || "Failed to send");
@@ -494,7 +499,63 @@ export default function BidDetailsPage() {
   const canWithdraw =
     isManufacturer && bid.status !== "accepted" && bid.status !== "withdrawn";
   const canAccept = isCustomer && bidOpen && rfqActive;
-  const bidModel3D = bid.rfqId?.customOrderId?.model3D || null;
+  
+  const rfq = bid.rfqId;
+  const isPartRFQ = rfq?.isPartRFQ;
+  const partData = isPartRFQ && rfq?.customOrderId?.parts ? rfq.customOrderId.parts.find(p => p._id === rfq.partId) : null;
+  
+  const partModel3D = isPartRFQ && partData?.model3D?.url ? partData.model3D : null;
+  let mainModel3D = rfq?.customOrderId?.model3D?.url ? rfq.customOrderId.model3D : null;
+
+  if (isPartRFQ && partData && mainModel3D) {
+    mainModel3D = {
+      ...mainModel3D,
+      annotations: (mainModel3D.annotations || []).filter((a) =>
+        (partData.annotationIds || []).includes(a.id)
+      ),
+      measurements: (mainModel3D.measurements || []).filter((m) =>
+        (partData.measurementIds || []).includes(m.id)
+      ),
+    };
+  }
+
+  const partImages = isPartRFQ && partData?.images?.length ? partData.images.map(img => ({ ...img, sourceLabel: "Part's Media" })) : [];
+  const mainImages = (rfq?.customOrderId?.images || []).map(img => ({ ...img, sourceLabel: "Main Order's Media" }));
+  const partFiles = isPartRFQ && partData?.files?.length ? partData.files : [];
+  const mainFiles = rfq?.customOrderId?.files || [];
+
+  const artifactFiles = [
+    partModel3D && {
+      label: partModel3D.filename || "Part's 3D model",
+      url: partModel3D.url,
+      type: "Part 3D Model",
+    },
+    mainModel3D && {
+      label: mainModel3D.filename || "Main Order's 3D model",
+      url: mainModel3D.url,
+      type: "Main 3D Model",
+    },
+    ...partImages.map((img, idx) => ({
+      label: img.filename || img.caption || `Part Image ${idx + 1}`,
+      url: img.url,
+      type: "Part Image",
+    })),
+    ...mainImages.map((img, idx) => ({
+      label: img.filename || img.caption || `Main Order Image ${idx + 1}`,
+      url: img.url,
+      type: "Main Image",
+    })),
+    ...partFiles.map((file, idx) => ({
+      label: file.filename || `Part File ${idx + 1}`,
+      url: file.url,
+      type: "Part Document",
+    })),
+    ...mainFiles.map((file, idx) => ({
+      label: file.filename || `Main File ${idx + 1}`,
+      url: file.url,
+      type: "Main Document",
+    })),
+  ].filter(Boolean);
 
   const PageContent = (
     <main className="max-w-4xl mx-auto px-4 sm:px-6 pt-16 pb-12 space-y-5">
@@ -884,35 +945,39 @@ export default function BidDetailsPage() {
         </div>
       </div>
 
-      {bidModel3D?.url && (
+      {artifactFiles.length > 0 && (
         <div className="rounded-2xl border border-white/8 bg-[#0c0c11] overflow-hidden">
           <div className="px-6 py-4 border-b border-white/8">
             <h2 className="text-base font-bold text-white flex items-center gap-2">
-              <span className="px-1.5 py-0.5 bg-[#eb9728] text-white text-xs rounded font-medium">
-                3D
+              <span className="material-symbols-outlined text-[18px] text-[#eb9728]">
+                folder_open
               </span>
-              Custom Order 3D Model
+              RFQ Associated Files
             </h2>
           </div>
           <div className="p-6">
-            <ModelViewerPreview
-              modelUrl={bidModel3D.url}
-              annotations={bidModel3D.annotations || []}
-              measurements={bidModel3D.measurements || []}
-              height="100%"
-            />
-            <div className="mt-3 flex items-center justify-between gap-3 p-3 bg-white/[0.03] rounded-lg border border-white/8">
-              <p className="text-sm text-white/60 truncate">
-                {bidModel3D.filename || "Attached 3D model"}
-              </p>
-              <a
-                href={bidModel3D.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="px-3 py-1.5 bg-[#eb9728]/10 text-[#eb9728] rounded-lg text-xs font-medium hover:bg-[#eb9728]/20"
-              >
-                Download
-              </a>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {artifactFiles.map((file) => (
+                <a
+                  key={file.url}
+                  href={file.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 hover:border-[#eb9728]/30 transition-colors"
+                >
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-bold text-white/75">
+                      {file.label}
+                    </span>
+                    <span className="text-[10px] font-black uppercase tracking-widest text-white/25">
+                      {file.type}
+                    </span>
+                  </span>
+                  <span className="material-symbols-outlined text-[#eb9728]">
+                    download
+                  </span>
+                </a>
+              ))}
             </div>
           </div>
         </div>

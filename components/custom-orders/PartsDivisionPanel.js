@@ -6,6 +6,8 @@ import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
 import { uploadFileDirect } from "@/lib/uploadDirect";
 import { cleanupFiles } from "@/lib/fileCleanupClient";
+import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 
 const STATUS_BADGES = {
   pending: "bg-white/5 border border-white/10 text-white/40",
@@ -26,6 +28,8 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingPart, setEditingPart] = useState(null);
+  const [editingPartModelId, setEditingPartModelId] = useState(null);
+  const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [confirmRFQPart, setConfirmRFQPart] = useState(null);
   const toast = useToast();
@@ -171,6 +175,39 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
         onPartsUpdated();
       } else {
         toast.error("Error: " + data.error);
+      }
+    } catch (err) {
+      toast.error("Error: " + err.message);
+    }
+  };
+
+  const handlePartModelSave = async (payload) => {
+    const { modelUrl, annotations, measurements, cameraState } = payload || {};
+    const partToEdit = customOrder.parts.find(p => p._id === editingPartModelId);
+    if (!partToEdit || !partToEdit.model3D) return;
+
+    try {
+      const updatedModel3D = {
+        ...partToEdit.model3D,
+        url: modelUrl || partToEdit.model3D.url,
+        annotations: Array.isArray(annotations) ? annotations : [],
+        measurements: Array.isArray(measurements) ? measurements : [],
+        cameraState: cameraState || null,
+      };
+
+      const res = await fetch(`/api/custom-orders/${customOrder._id}/parts/${editingPartModelId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ model3D: updatedModel3D }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        onPartsUpdated();
+        toast.success("Part 3D model updated successfully!");
+        setIsEditorOpen(false);
+        setEditingPartModelId(null);
+      } else {
+        toast.error("Error updating model: " + data.error);
       }
     } catch (err) {
       toast.error("Error: " + err.message);
@@ -438,6 +475,17 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
                     >
                       View RFQ →
                     </Link>
+                  )}
+                  {part.model3D?.url && part.rfqStatus === "pending" && (
+                    <button
+                      onClick={() => {
+                        setEditingPartModelId(part._id);
+                        setIsEditorOpen(true);
+                      }}
+                      className="flex-1 px-3 py-1.5 rounded-lg border border-[#eb9728]/30 bg-[#eb9728]/10 text-[10px] font-bold text-[#eb9728] text-center hover:bg-[#eb9728]/20 transition-colors"
+                    >
+                      Edit 3D Model
+                    </button>
                   )}
                 </div>
               </div>
@@ -726,14 +774,14 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
                       <input
                         id="part-model-upload"
                         type="file"
-                        accept=".glb,.gltf"
+                        accept=".glb,.gltf,.obj,.stl"
                         className="hidden"
                         onChange={async (e) => {
                           const file = e.target.files[0];
                           if (!file) return;
                           setUploadingMedia(true);
                           try {
-                            const uploaded = await uploadFileDirect(file, "model");
+                            const uploaded = await uploadFileDirect(file, "3d-model");
                             setFormData(prev => ({
                               ...prev,
                               model3D: {
@@ -833,6 +881,50 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
           </form>
         )}
       </div>
+
+      {isEditorOpen && editingPartModelId && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+          <div className="w-full max-w-7xl h-[85vh] bg-[#0c0c11] rounded-[24px] border border-white/10 overflow-hidden flex flex-col shadow-2xl">
+            <div className="flex justify-between items-center p-5 border-b border-white/10 bg-white/[0.02]">
+              <h3 className="text-lg font-black text-white flex items-center gap-2">
+                <span className="material-symbols-outlined text-[#eb9728]">
+                  view_in_ar
+                </span>
+                Edit Part 3D Model
+              </h3>
+              <button
+                onClick={() => {
+                  setIsEditorOpen(false);
+                  setEditingPartModelId(null);
+                }}
+                className="text-white/50 hover:text-white transition-colors"
+              >
+                <span className="material-symbols-outlined">close</span>
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-hidden p-6">
+              {(() => {
+                const p = customOrder.parts.find((part) => part._id === editingPartModelId);
+                return p?.model3D ? (
+                  <Editor3DWrapper
+                    modelUrl={p.model3D.url}
+                    initialAnnotations={p.model3D.annotations}
+                    initialMeasurements={p.model3D.measurements}
+                    initialCameraState={p.model3D.cameraState}
+                    onSave={handlePartModelSave}
+                    onCancel={() => {
+                      setIsEditorOpen(false);
+                      setEditingPartModelId(null);
+                    }}
+                    readOnly={false}
+                  />
+                ) : null;
+              })()}
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

@@ -68,7 +68,7 @@ export async function GET(request) {
     }
 
     const userData = user.toObject();
-    userData.hasLocalPassword = true; // Supabase handles all passwords natively now
+    userData.hasLocalPassword = !user.needsPasswordSetup; // Set to false if they still need password setup
     userData.verificationDocuments = verificationDocuments;
 
     return NextResponse.json({

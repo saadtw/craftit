@@ -39,14 +39,20 @@ export default function CustomOrdersListPage() {
   }, [filter]);
 
   const handleDelete = async (orderId) => {
-    if (!(await dialog.confirm("Delete Draft", "Are you sure you want to delete this draft order?"))) return;
-    
+    if (
+      !(await dialog.confirm(
+        "Delete Draft",
+        "Are you sure you want to delete this draft order?",
+      ))
+    )
+      return;
+
     try {
       const res = await fetch(`/api/custom-orders/${orderId}`, {
         method: "DELETE",
       });
       const data = await res.json();
-      
+
       if (data.success) {
         toast.success("Draft order deleted successfully");
         fetchOrders();

@@ -37,7 +37,7 @@ export default function SecuritySettingsPage() {
         const res = await fetch("/api/auth/2fa/settings", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enable: false })
+          body: JSON.stringify({ enabled: false })
         });
         const data = await res.json();
         if (data.success) {
@@ -54,12 +54,12 @@ export default function SecuritySettingsPage() {
         const res = await fetch("/api/auth/2fa/settings", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ enable: true })
+          body: JSON.stringify({ enabled: true })
         });
         const data = await res.json();
         if (data.success) {
-          setShowOTPInput(true);
-          toast.info("An OTP has been sent to your email to confirm 2FA setup");
+          setIs2FAEnabled(true);
+          toast.success("2FA enabled successfully");
         } else {
           toast.error("Error: " + data.error);
         }
@@ -116,28 +116,20 @@ export default function SecuritySettingsPage() {
               Two-factor authentication is currently <span className={is2FAEnabled ? "text-emerald-400" : "text-white/40"}>{is2FAEnabled ? "enabled" : "disabled"}</span>.
             </p>
             
-            {!showOTPInput ? (
+            {!is2FAEnabled ? (
               <button 
                 onClick={handleToggle2FA} 
-                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all ${is2FAEnabled ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-[#eb9728] text-white hover:bg-[#eb9728]/80'}`}
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all bg-[#eb9728] text-white hover:bg-[#eb9728]/80`}
               >
-                {is2FAEnabled ? "Disable 2FA" : "Enable 2FA"}
+                Enable 2FA
               </button>
             ) : (
-              <div className="space-y-4 max-w-sm">
-                <p className="text-xs text-white/50">Enter the OTP sent to your email to confirm activation.</p>
-                <div className="flex gap-2">
-                  <input 
-                    type="text" 
-                    value={otp} 
-                    onChange={e => setOtp(e.target.value)} 
-                    placeholder="Enter OTP" 
-                    className="flex-1 bg-[#050507] border border-white/10 rounded-lg px-4 py-2 text-sm text-white focus:outline-none focus:border-[#eb9728]"
-                  />
-                  <button onClick={handleVerifyOTP} className="px-5 py-2 bg-purple-600 text-white font-bold rounded-lg hover:bg-purple-500 text-sm">Verify</button>
-                </div>
-                <button onClick={() => setShowOTPInput(false)} className="text-xs text-white/40 hover:text-white">Cancel</button>
-              </div>
+              <button 
+                onClick={handleToggle2FA} 
+                className={`px-5 py-2.5 rounded-xl font-bold text-sm transition-all bg-white/10 text-white hover:bg-white/20`}
+              >
+                Disable 2FA
+              </button>
             )}
           </div>
         </div>
