@@ -232,12 +232,7 @@ export default function CustomerNotificationsPage() {
         </section>
 
         {displayedNotifications.length === 0 ? (
-          <section className="rounded-[28px] border border-white/8 bg-[#0c0c11] px-6 py-20 text-center">
-            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-3xl border border-[#eb9728]/20 bg-[#eb9728]/10 text-[#eb9728]">
-              <span className="material-symbols-outlined text-5xl">
-                notifications
-              </span>
-            </div>
+          <div className="text-center py-8">
             <GlobalNoResults text={showOnlyUnread ? "No unread notifications" : "No notifications yet"} />
             {showOnlyUnread ? (
               <button
@@ -251,7 +246,7 @@ export default function CustomerNotificationsPage() {
                 You&apos;ll see order updates, messages, and more here.
               </p>
             )}
-          </section>
+          </div>
         ) : (
           <section className="space-y-6">
             {Object.entries(groupedByDate).map(([day, items]) => (

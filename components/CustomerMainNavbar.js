@@ -111,7 +111,7 @@ export default function CustomerMainNavbar() {
           <Link href="/customer" className="flex items-center gap-3">
             <Logo className="h-9 w-9 text-[#D5662A]" />
             <span className="text-xl font-black tracking-tight text-white">
-              Craftit
+              Craft It
             </span>
           </Link>
         </div>

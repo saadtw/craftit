@@ -228,12 +228,7 @@ export default function ManufacturerNotificationsPage() {
         </div>
 
         {displayedNotifications.length === 0 ? (
-          <div className="bg-white/[0.03] rounded-3xl border-2 border-purple-500/30 text-center py-24 px-8">
-            <div className="h-20 w-20 rounded-3xl bg-white/[0.03] border border-white/5 flex items-center justify-center mx-auto mb-6">
-              <span className="material-symbols-outlined text-5xl text-white/10">
-                {showOnlyUnread ? "notifications" : "notifications_off"}
-              </span>
-            </div>
+          <div className="text-center py-8">
             <GlobalNoResults text={showOnlyUnread ? "No unread notifications" : "No notifications yet"} />
             {showOnlyUnread ? (
               <button

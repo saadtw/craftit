@@ -7,6 +7,7 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { FiArrowLeft, FiPackage, FiTruck, FiCheckCircle, FiClock, FiAlertCircle } from "react-icons/fi";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_STYLES = {
   confirmed: { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20", dot: "bg-yellow-400" },
@@ -212,7 +213,7 @@ export default function AdminOrderDetailPage() {
                   {[
                     ["Order Type", order.orderType?.replace(/_/g, " ")],
                     ["Quantity", order.quantity],
-                    ["Total Amount", order.totalPrice ? `$${order.totalPrice.toLocaleString()}` : "—"],
+                    ["Total Amount", order.totalPrice ? formatPKR(order.totalPrice) : "—"],
                     ["Date Placed", new Date(order.createdAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })],
                     ["Payment", order.paymentStatus],
                     ["Carrier", order.carrier || "—"],

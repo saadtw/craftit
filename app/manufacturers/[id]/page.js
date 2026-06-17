@@ -597,8 +597,7 @@ export default function ManufacturerPublicProfilePage() {
               {manufacturer.budgetRange?.min && (
                 <DarkCard title="Budget Range">
                   <p className="text-sm text-white/55">
-                    ${manufacturer.budgetRange.min.toLocaleString()} — $
-                    {manufacturer.budgetRange.max?.toLocaleString() || "Open"}
+                    {formatPKR(manufacturer.budgetRange.min)} — {manufacturer.budgetRange.max ? formatPKR(manufacturer.budgetRange.max) : "Open"}
                   </p>
                 </DarkCard>
               )}

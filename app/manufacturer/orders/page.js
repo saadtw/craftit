@@ -343,10 +343,7 @@ export default function ManufacturerOrdersPage() {
             ))}
           </div>
         ) : displayOrders.length === 0 ? (
-          <div className="bg-white/[0.03] border-2 border-purple-500/40 rounded-[2.5rem] overflow-hidden backdrop-blur-md">
-            <div className="h-20 w-20 rounded-[2rem] bg-white/[0.03] border border-purple-500/30 flex items-center justify-center mx-auto mb-6">
-              <span className="material-symbols-outlined text-4xl text-white/10">inventory_2</span>
-            </div>
+          <div className="text-center py-16">
             <GlobalNoResults text="No orders found" />
             <p className="text-white/20 text-[10px] font-black uppercase tracking-widest mt-4">
               {activeFilter !== "all"

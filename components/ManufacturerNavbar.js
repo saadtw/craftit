@@ -104,7 +104,7 @@ export default function ManufacturerNavbar() {
             <Logo className="h-9 w-9 text-[#eb9728]" />
             <div className="flex flex-col leading-none">
               <span className="text-xl font-black tracking-tighter text-white">
-                CRAFTIT
+                CRAFT IT
               </span>
               <span className="text-[10px] font-bold text-[#eb9728] uppercase tracking-[0.2em] mt-0.5">
                 Manufacturer Portal

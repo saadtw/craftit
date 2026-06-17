@@ -7,6 +7,7 @@ import Link from "next/link";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import GlobalLoader from "@/components/ui/GlobalLoader";
 import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_BADGES = {
   pending: "bg-white/5 border border-white/10 text-white/40",
@@ -132,7 +133,7 @@ export default function PartsOverviewPage() {
                     </div>
                     <div>
                       <span className="block text-[9px] font-bold uppercase text-white/30 mb-0.5">Budget</span>
-                      <span className="text-sm font-semibold text-emerald-400">{part.budget ? `$${part.budget}` : "—"}</span>
+                      <span className="text-sm font-semibold text-emerald-400">{part.budget ? formatPKR(part.budget) : "—"}</span>
                     </div>
                   </div>
 

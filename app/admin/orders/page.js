@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FiSearch, FiAlertTriangle } from "react-icons/fi";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { formatPKR } from "@/lib/currency";
 
 const STATUS_STYLES = {
   confirmed: { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20", dot: "bg-yellow-400" },
@@ -182,7 +183,7 @@ export default function AdminOrdersPage() {
                           </span>
                         </td>
                         <td className="px-2 py-4 whitespace-nowrap text-center">
-                          <p className="text-white font-black text-xs">${order.totalPrice?.toLocaleString() || "—"}</p>
+                          <p className="text-white font-black text-xs">{order.totalPrice ? formatPKR(order.totalPrice) : "—"}</p>
                         </td>
                         <td className="px-3 py-4 whitespace-nowrap text-center">
                           <p className="text-white/40 text-[10px] font-medium tracking-tighter">
