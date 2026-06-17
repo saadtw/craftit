@@ -5,6 +5,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { resolveRequestSession } from "@/lib/requestAuth";
 import RFQ from "@/models/RFQ";
+import { deleteFromStorage } from "@/lib/storage";
 
 // GET /api/custom-orders/[id] - Get single custom order
 export async function GET(request, context) {
@@ -156,7 +157,23 @@ export async function DELETE(request, context) {
       );
     }
 
+    // 1. Gather all file URLs for cleanup
+    const urlsToClean = [];
+    if (order.images?.length > 0) {
+      urlsToClean.push(...order.images.map(i => i.url || i.file?.url).filter(Boolean));
+    }
+    if (order.model3D?.url) urlsToClean.push(order.model3D.url);
+    else if (order.model3D?.file?.url) urlsToClean.push(order.model3D.file.url);
+    
+    if (order.model3D?.thumbnailUrl) urlsToClean.push(order.model3D.thumbnailUrl);
+
+    // 2. Delete order from database
     await CustomOrder.findByIdAndDelete(id);
+
+    // 3. Delete files from Supabase
+    if (urlsToClean.length > 0) {
+      Promise.allSettled(urlsToClean.map(url => deleteFromStorage(url))).catch(console.error);
+    }
 
     return NextResponse.json({
       success: true,

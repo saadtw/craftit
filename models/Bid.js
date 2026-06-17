@@ -52,6 +52,14 @@ const BidSchema = new mongoose.Schema(
 
     certifications: [String],
 
+    attachments: [
+      {
+        url: String,
+        filename: String,
+        fileType: String,
+      }
+    ],
+
     questions: String,
     alternativeProposals: String,
     paymentTerms: String,

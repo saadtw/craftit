@@ -13,6 +13,7 @@ import CustomerSidebar from "@/components/CustomerSidebar";
 import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 function StatusBadge({ status }) {
   const styles = {
@@ -281,6 +282,7 @@ export default function BidDetailsPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const toast = useToast();
+  const dialog = useDialog();
 
   const [bid, setBid] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -378,7 +380,7 @@ export default function BidDetailsPage() {
   };
 
   const handleWithdraw = async () => {
-    if (!confirm("Withdraw this bid? This cannot be undone.")) return;
+    if (!(await dialog.confirm("Withdraw Bid", "Withdraw this bid? This cannot be undone."))) return;
     setWithdrawing(true);
     try {
       const res = await fetch(`/api/bids/${params.id}/withdraw`, {
@@ -825,6 +827,40 @@ export default function BidDetailsPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              )}
+
+              {bid.attachments?.length > 0 && (
+                <div className="space-y-2 pt-2">
+                  <div className="flex items-center gap-1.5 mb-3">
+                    <span className="material-symbols-outlined text-[13px] text-purple-400">
+                      attachment
+                    </span>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.15em] text-purple-400">
+                      Bid Attachments
+                    </p>
+                  </div>
+                  {bid.attachments.map((file, i) => (
+                    <a
+                      key={i}
+                      href={file.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-between gap-3 rounded-xl border border-white/8 bg-white/[0.03] px-4 py-3 hover:border-purple-500/30 transition-all group"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="material-symbols-outlined text-purple-400 text-[18px]">
+                          description
+                        </span>
+                        <span className="min-w-0 block truncate text-xs font-bold text-white/75 group-hover:text-purple-300">
+                          {file.filename || "Attachment " + (i + 1)}
+                        </span>
+                      </div>
+                      <span className="material-symbols-outlined text-sm text-purple-400">
+                        download
+                      </span>
+                    </a>
+                  ))}
                 </div>
               )}
 

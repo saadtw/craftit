@@ -7,6 +7,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ChatBox from "@/components/chat/ChatBox";
+import { useToast } from "@/components/ui/ToastProvider";
+import { uploadFileDirect } from "@/lib/uploadDirect";
 
 const ISSUE_TYPES = [
   { value: "item_not_received", label: "Item not received" },
@@ -41,7 +43,10 @@ export default function FileDisputePage() {
     issueType: "",
     description: "",
     desiredResolution: "",
+    customerEvidence: [],
   });
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const toast = useToast();
 
   const fetchOrder = useCallback(async () => {
     try {
@@ -114,6 +119,7 @@ export default function FileDisputePage() {
           issueType: form.issueType,
           description: form.description.trim(),
           desiredResolution: form.desiredResolution,
+          customerEvidence: form.customerEvidence,
         }),
       });
 
@@ -346,6 +352,76 @@ export default function FileDisputePage() {
                   <span className="text-sm text-white/75">{r.label}</span>
                 </label>
               ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-3 block text-sm font-bold text-white">
+              Evidence (Optional)
+            </label>
+            <div className="flex flex-col gap-3">
+              {form.customerEvidence.map((url, i) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-white/[0.02] border border-white/10 rounded-xl">
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    <span className="material-symbols-outlined text-[#eb9728]">description</span>
+                    <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white hover:text-[#eb9728] truncate max-w-[200px] sm:max-w-md">
+                      Attachment {i + 1}
+                    </a>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      import("@/lib/fileCleanupClient").then(({ cleanupFiles }) => cleanupFiles([url]));
+                      setForm(prev => ({ ...prev, customerEvidence: prev.customerEvidence.filter((_, idx) => idx !== i) }));
+                    }}
+                    className="text-white/40 hover:text-red-400 transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-[18px]">delete</span>
+                  </button>
+                </div>
+              ))}
+              
+              <button
+                type="button"
+                disabled={uploadingFiles}
+                onClick={() => document.getElementById('dispute-file-upload').click()}
+                className="w-full py-3 border-2 border-dashed border-[#eb9728]/30 bg-[#eb9728]/5 rounded-xl flex items-center justify-center gap-2 hover:bg-[#eb9728]/10 hover:border-[#eb9728]/50 transition-all disabled:opacity-50"
+              >
+                {uploadingFiles ? (
+                  <span className="w-5 h-5 border-2 border-[#eb9728] border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <span className="material-symbols-outlined text-[#eb9728]">upload_file</span>
+                    <span className="text-[12px] font-bold text-white">Upload Evidence</span>
+                  </>
+                )}
+              </button>
+              <input
+                id="dispute-file-upload"
+                type="file"
+                multiple
+                className="hidden"
+                onChange={async (e) => {
+                  const files = Array.from(e.target.files);
+                  if (!files.length) return;
+                  setUploadingFiles(true);
+                  try {
+                    const uploaded = await Promise.all(
+                      files.map(f => uploadFileDirect(f, "document"))
+                    );
+                    const urls = uploaded.map(u => u.file ? u.file.url : u.url);
+                    setForm(prev => ({
+                      ...prev,
+                      customerEvidence: [...prev.customerEvidence, ...urls]
+                    }));
+                  } catch (err) {
+                    toast.error("File upload failed");
+                  } finally {
+                    setUploadingFiles(false);
+                    e.target.value = "";
+                  }
+                }}
+              />
             </div>
           </div>
 

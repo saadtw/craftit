@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
+import { uploadFileDirect } from "@/lib/uploadDirect";
+import { cleanupFiles } from "@/lib/fileCleanupClient";
 
 const STATUS_BADGES = {
   pending: "bg-white/5 border border-white/10 text-white/40",
@@ -45,7 +47,11 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
     specialRequirements: "",
     annotationIds: [],
     measurementIds: [],
+    model3D: null,
+    images: [],
+    files: [],
   });
+  const [uploadingMedia, setUploadingMedia] = useState(false);
 
   const availableAnnotations = customOrder?.model3D?.annotations || [];
   const availableMeasurements = customOrder?.model3D?.measurements || [];
@@ -65,6 +71,9 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
         specialRequirements: part.specialRequirements || "",
         annotationIds: part.annotationIds || [],
         measurementIds: part.measurementIds || [],
+        model3D: part.model3D || null,
+        images: part.images || [],
+        files: part.files || [],
       });
       setEditingPart(part._id);
     } else {
@@ -79,6 +88,9 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
         specialRequirements: "",
         annotationIds: [],
         measurementIds: [],
+        model3D: null,
+        images: [],
+        files: [],
       });
       setEditingPart(null);
     }
@@ -622,6 +634,186 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
                 </div>
               </div>
             )}
+
+            {/* Media Uploads */}
+            <div className="pt-2 border-t border-white/10 space-y-4">
+              <h4 className="text-[11px] font-bold uppercase text-white/50 tracking-widest">Part Media & Files</h4>
+              
+              <div className="grid grid-cols-1 gap-4">
+                {/* Images */}
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-white/40 mb-2">Images</label>
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {formData.images.map((img, i) => (
+                      <div key={i} className="relative w-16 h-16 rounded-lg overflow-hidden border border-white/10 group bg-white/[0.02]">
+                        <img src={img.url} alt={`Part image ${i}`} className="w-full h-full object-cover" />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            cleanupFiles([img.url]);
+                            setFormData(f => ({ ...f, images: f.images.filter((_, idx) => idx !== i) }));
+                          }}
+                          className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                          <span className="material-symbols-outlined text-white text-[16px]">delete</span>
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      disabled={uploadingMedia}
+                      onClick={() => document.getElementById('part-images-upload').click()}
+                      className="w-16 h-16 rounded-lg border-2 border-dashed border-white/20 flex flex-col items-center justify-center text-white/40 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all disabled:opacity-50"
+                    >
+                      <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+                    </button>
+                    <input
+                      id="part-images-upload"
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      className="hidden"
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files);
+                        if (!files.length) return;
+                        setUploadingMedia(true);
+                        try {
+                          const uploaded = await Promise.all(files.map(f => uploadFileDirect(f, "image")));
+                          const newImages = uploaded.map(u => ({ url: u.file ? u.file.url : u.url, caption: "" }));
+                          setFormData(prev => ({ ...prev, images: [...prev.images, ...newImages] }));
+                        } catch (err) {
+                          toast.error("Failed to upload images");
+                        } finally {
+                          setUploadingMedia(false);
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+
+                {/* 3D Model */}
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-white/40 mb-2">3D Model (GLB/GLTF)</label>
+                  {formData.model3D ? (
+                    <div className="flex items-center justify-between p-3 rounded-lg border border-white/10 bg-white/[0.02]">
+                      <div className="flex items-center gap-2">
+                        <span className="material-symbols-outlined text-[#eb9728] text-[18px]">view_in_ar</span>
+                        <span className="text-sm text-white/80 font-medium truncate max-w-[200px]">{formData.model3D.filename || "Model"}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          cleanupFiles([formData.model3D.url]);
+                          setFormData(f => ({ ...f, model3D: null }));
+                        }}
+                        className="text-white/40 hover:text-red-400"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">delete</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        disabled={uploadingMedia}
+                        onClick={() => document.getElementById('part-model-upload').click()}
+                        className="w-full py-3 rounded-lg border-2 border-dashed border-white/20 flex items-center justify-center gap-2 text-white/40 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all disabled:opacity-50"
+                      >
+                        <span className="material-symbols-outlined text-[18px]">view_in_ar</span>
+                        <span className="text-xs font-bold">Upload 3D Model</span>
+                      </button>
+                      <input
+                        id="part-model-upload"
+                        type="file"
+                        accept=".glb,.gltf"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          setUploadingMedia(true);
+                          try {
+                            const uploaded = await uploadFileDirect(file, "model");
+                            setFormData(prev => ({
+                              ...prev,
+                              model3D: {
+                                url: uploaded.file ? uploaded.file.url : uploaded.url,
+                                filename: file.name,
+                                fileSize: file.size,
+                              }
+                            }));
+                          } catch (err) {
+                            toast.error("Failed to upload model");
+                          } finally {
+                            setUploadingMedia(false);
+                            e.target.value = "";
+                          }
+                        }}
+                      />
+                    </>
+                  )}
+                </div>
+
+                {/* Additional Files */}
+                <div>
+                  <label className="block text-[10px] font-bold uppercase text-white/40 mb-2">Documents / Specs</label>
+                  <div className="space-y-2 mb-2">
+                    {formData.files.map((file, i) => (
+                      <div key={i} className="flex items-center justify-between p-2 rounded-lg border border-white/10 bg-white/[0.02]">
+                        <div className="flex items-center gap-2">
+                          <span className="material-symbols-outlined text-purple-400 text-[18px]">description</span>
+                          <span className="text-xs text-white/80 font-medium truncate max-w-[200px]">{file.filename || `File ${i + 1}`}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            cleanupFiles([file.url]);
+                            setFormData(f => ({ ...f, files: f.files.filter((_, idx) => idx !== i) }));
+                          }}
+                          className="text-white/40 hover:text-red-400"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">delete</span>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    disabled={uploadingMedia}
+                    onClick={() => document.getElementById('part-files-upload').click()}
+                    className="w-full py-2.5 rounded-lg border border-white/10 bg-white/[0.02] flex items-center justify-center gap-2 text-white/60 hover:text-white hover:bg-white/5 transition-all disabled:opacity-50"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">upload_file</span>
+                    <span className="text-[11px] font-bold">Add Files</span>
+                  </button>
+                  <input
+                    id="part-files-upload"
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={async (e) => {
+                      const files = Array.from(e.target.files);
+                      if (!files.length) return;
+                      setUploadingMedia(true);
+                      try {
+                        const uploaded = await Promise.all(files.map(f => uploadFileDirect(f, "document")));
+                        const newFiles = uploaded.map((u, i) => ({
+                          url: u.file ? u.file.url : u.url,
+                          filename: files[i].name,
+                          fileSize: files[i].size,
+                        }));
+                        setFormData(prev => ({ ...prev, files: [...prev.files, ...newFiles] }));
+                      } catch (err) {
+                        toast.error("Failed to upload files");
+                      } finally {
+                        setUploadingMedia(false);
+                        e.target.value = "";
+                      }
+                    }}
+                  />
+                </div>
+              </div>
+            </div>
 
             <div className="flex gap-3 pt-2">
               <button

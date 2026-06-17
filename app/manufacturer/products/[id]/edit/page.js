@@ -8,6 +8,7 @@ import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { uploadFileDirect } from "@/lib/uploadDirect";
+import { cleanupFiles } from "@/lib/fileCleanupClient";
 import { CUSTOMIZATION_TYPE_OPTIONS } from "@/lib/customization";
 import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import GlobalLoader from "@/components/ui/GlobalLoader";
@@ -296,12 +297,16 @@ export default function EditProductPage() {
   };
 
   const removeImage = (idx) => {
+    const imgToRemove = form.images[idx];
     setForm((prev) => {
       const imgs = prev.images.filter((_, i) => i !== idx);
       if (imgs.length > 0 && !imgs.some((i) => i.isPrimary))
         imgs[0].isPrimary = true;
       return { ...prev, images: imgs };
     });
+    if (imgToRemove && imgToRemove.url) {
+      cleanupFiles([imgToRemove.url], { type: "Product", id });
+    }
   };
 
   const handleModelUpload = async (file) => {
@@ -324,6 +329,20 @@ export default function EditProductPage() {
       );
     } finally {
       setModelUploading(false);
+    }
+  };
+
+  const handleModelSnapshot = async (blob) => {
+    if (!form.model3D || form.model3D.thumbnailUrl) return;
+    try {
+      const file = new File([blob], `thumb_${form.model3D.filename || "model"}.png`, { type: "image/png" });
+      const data = await uploadFileDirect(file, "image");
+      setForm((prev) => ({
+        ...prev,
+        model3D: { ...prev.model3D, thumbnailUrl: data.url || data.file?.url },
+      }));
+    } catch (err) {
+      console.error("Snapshot failed", err);
     }
   };
 
@@ -1259,6 +1278,7 @@ export default function EditProductPage() {
                               modelUrl={form.model3D.url}
                               annotations={form.model3D.annotations || []}
                               measurements={form.model3D.measurements || []}
+                              onModelLoad={handleModelSnapshot}
                             />
                           </div>
                           <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
@@ -1278,12 +1298,15 @@ export default function EditProductPage() {
                                 Annotate Model
                               </button>
                               <button
-                                onClick={() =>
+                                onClick={() => {
+                                  if (form.model3D?.url) {
+                                    cleanupFiles([form.model3D.url], { type: "Product", id });
+                                  }
                                   setForm((prev) => ({
                                     ...prev,
                                     model3D: null,
-                                  }))
-                                }
+                                  }));
+                                }}
                                 className="px-5 py-2.5 bg-white/5 text-white/40 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-400 transition-all"
                               >
                                 Replace

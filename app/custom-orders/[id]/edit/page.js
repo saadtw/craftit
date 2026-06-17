@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { useToast } from "@/components/ui/ToastProvider";
 import { uploadFileDirect } from "@/lib/uploadDirect";
+import { cleanupFiles } from "@/lib/fileCleanupClient";
 
 export default function EditCustomOrder() {
   const router = useRouter();
@@ -349,7 +350,12 @@ export default function EditCustomOrder() {
                   </div>
                   <button
                     type="button"
-                    onClick={() => setModel3D(null)}
+                    onClick={() => {
+                      if (model3D?.url) {
+                        cleanupFiles([model3D.url], { type: "CustomOrder", id: params.id });
+                      }
+                      setModel3D(null);
+                    }}
                     className="p-1 text-emerald-400 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
                   >
                     <span className="material-symbols-outlined text-[16px]">
@@ -398,9 +404,13 @@ export default function EditCustomOrder() {
                       </div>
                       <button
                         type="button"
-                        onClick={() =>
-                          setImages((prev) => prev.filter((_, i) => i !== idx))
-                        }
+                        onClick={() => {
+                          const imgToRemove = images[idx];
+                          if (imgToRemove && imgToRemove.url) {
+                            cleanupFiles([imgToRemove.url], { type: "CustomOrder", id: params.id });
+                          }
+                          setImages((prev) => prev.filter((_, i) => i !== idx));
+                        }}
                         className="p-1 text-emerald-400 hover:text-red-400 hover:bg-red-400/10 rounded transition-colors"
                       >
                         <span className="material-symbols-outlined text-[16px]">

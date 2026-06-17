@@ -263,14 +263,7 @@ export default function AdminUsersPage() {
 
 /*
 // app/admin/users/page.js
-"use client";
 
-import GlobalNoResults from "@/components/ui/GlobalNoResults";
-import GlobalLoader from "@/components/ui/GlobalLoader";
-import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
 
 export default function AdminUsersPage() {
   const { data: session, status } = useSession();

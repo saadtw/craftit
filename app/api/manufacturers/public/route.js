@@ -23,6 +23,11 @@ export async function GET(request) {
       role: "manufacturer",
       isActive: true,
       verificationStatus: { $in: ["verified", "unverified"] }, // exclude suspended
+      $or: [
+        { rejectionReason: { $exists: false } },
+        { rejectionReason: null },
+        { rejectionReason: "" }
+      ]
     };
 
     if (verifiedOnly) {
@@ -36,10 +41,14 @@ export async function GET(request) {
     if (search) {
       // Escape regex special characters to prevent ReDoS
       const escapedSearch = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-      query.$or = [
-        { businessName: { $regex: escapedSearch, $options: "i" } },
-        { businessDescription: { $regex: escapedSearch, $options: "i" } },
-        { name: { $regex: escapedSearch, $options: "i" } },
+      query.$and = [
+        {
+          $or: [
+            { businessName: { $regex: escapedSearch, $options: "i" } },
+            { businessDescription: { $regex: escapedSearch, $options: "i" } },
+            { name: { $regex: escapedSearch, $options: "i" } },
+          ]
+        }
       ];
     }
 

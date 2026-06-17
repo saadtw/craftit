@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import connectDB from "@/lib/mongodb";
 import CustomOrder from "@/models/CustomOrder";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import { deleteFromStorage } from "@/lib/storage";
 
 export async function PATCH(request, context) {
   const params = await context.params;
@@ -37,7 +38,7 @@ export async function PATCH(request, context) {
     }
 
     // Update fields
-    const allowedFields = ['name', 'description', 'quantity', 'material', 'colorSpec', 'budget', 'deadline', 'specialRequirements', 'annotationIds', 'measurementIds'];
+    const allowedFields = ['name', 'description', 'quantity', 'material', 'colorSpec', 'budget', 'deadline', 'specialRequirements', 'annotationIds', 'measurementIds', 'model3D', 'images', 'files'];
     allowedFields.forEach(field => {
       if (body[field] !== undefined) {
         part[field] = body[field];
@@ -81,6 +82,15 @@ export async function DELETE(request, context) {
 
     if (part.rfqStatus !== 'pending') {
       return NextResponse.json({ error: "Cannot delete part after RFQ is created" }, { status: 400 });
+    }
+
+    const urlsToDelete = [];
+    if (part.model3D?.url) urlsToDelete.push(part.model3D.url);
+    if (part.images?.length) urlsToDelete.push(...part.images.map(img => img.url));
+    if (part.files?.length) urlsToDelete.push(...part.files.map(f => f.url));
+
+    if (urlsToDelete.length > 0) {
+      Promise.allSettled(urlsToDelete.map(url => deleteFromStorage(url))).catch(console.error);
     }
 
     customOrder.parts.pull(partId);

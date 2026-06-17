@@ -64,6 +64,9 @@ export async function POST(request, context) {
       specialRequirements: body.specialRequirements,
       annotationIds: body.annotationIds || [],
       measurementIds: body.measurementIds || [],
+      model3D: body.model3D || null,
+      images: body.images || [],
+      files: body.files || [],
       rfqStatus: 'pending'
     };
 

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/ToastProvider";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 export default function CustomOrdersListPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function CustomOrdersListPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const dialog = useDialog();
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
@@ -37,7 +39,7 @@ export default function CustomOrdersListPage() {
   }, [filter]);
 
   const handleDelete = async (orderId) => {
-    if (!window.confirm("Are you sure you want to delete this draft order?")) return;
+    if (!(await dialog.confirm("Delete Draft", "Are you sure you want to delete this draft order?"))) return;
     
     try {
       const res = await fetch(`/api/custom-orders/${orderId}`, {

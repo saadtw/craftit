@@ -361,13 +361,7 @@ export default function AdminSupportTicketDetailPage() {
 // ---------------------------------------------------------
 
 /*
-"use client";
 
-import GlobalLoader from "@/components/ui/GlobalLoader";
-import { useCallback, useEffect, useState } from "react";
-import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
-import { useSession } from "next-auth/react";
 
 export default function AdminSupportTicketDetailPage() {
   const { data: session, status } = useSession();

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { formatPKR } from "@/lib/currency";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 export default function AdminEscrowPage() {
   const [stats, setStats] = useState(null);
@@ -14,6 +15,7 @@ export default function AdminEscrowPage() {
     adminNote: "",
   });
   const [loading, setLoading] = useState(true);
+  const dialog = useDialog();
 
   async function loadData() {
     setLoading(true);
@@ -48,7 +50,7 @@ export default function AdminEscrowPage() {
     });
     const data = await res.json();
     if (!res.ok) {
-      alert(data.error || "Failed to update release");
+      await dialog.alert("Error", data.error || "Failed to update release");
       return;
     }
     setSelectedRelease(null);

@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/ToastProvider";
 import GlobalLoader from "@/components/ui/GlobalLoader";
 import Link from "next/link";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 export default function SecuritySettingsPage() {
   const toast = useToast();
@@ -13,6 +14,7 @@ export default function SecuritySettingsPage() {
   const [is2FAEnabled, setIs2FAEnabled] = useState(false);
   const [showOTPInput, setShowOTPInput] = useState(false);
   const [otp, setOtp] = useState("");
+  const dialog = useDialog();
 
   useEffect(() => {
     if (status === "authenticated") {
@@ -30,7 +32,7 @@ export default function SecuritySettingsPage() {
 
   const handleToggle2FA = async () => {
     if (is2FAEnabled) {
-      if (!confirm("Are you sure you want to disable Two-Factor Authentication? This will reduce your account security.")) return;
+      if (!(await dialog.confirm("Disable 2FA", "Are you sure you want to disable Two-Factor Authentication? This will reduce your account security."))) return;
       try {
         const res = await fetch("/api/auth/2fa/settings", {
           method: "POST",

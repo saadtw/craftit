@@ -3,6 +3,7 @@
 converter-service/
 craftit-3d-editor/
 scripts/
+extra/
 
 # dependencies
 node_modules/

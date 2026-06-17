@@ -14,6 +14,7 @@ import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import PartsDivisionPanel from "@/components/custom-orders/PartsDivisionPanel";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 const customizationTypeLabelMap = CUSTOMIZATION_TYPE_OPTIONS.reduce(
   (acc, item) => {
@@ -28,6 +29,7 @@ export default function CustomOrderReview() {
   const params = useParams();
   const { data: session, status } = useSession();
   const toast = useToast();
+  const dialog = useDialog();
   const [customOrder, setCustomOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -87,7 +89,7 @@ export default function CustomOrderReview() {
   };
 
   const handleDeleteOrder = async () => {
-    if (!window.confirm("Are you sure you want to delete this draft order?")) return;
+    if (!(await dialog.confirm("Delete Draft", "Are you sure you want to delete this draft order?"))) return;
     try {
       const response = await fetch(`/api/custom-orders/${params.id}`, {
         method: "DELETE",

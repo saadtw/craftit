@@ -20,6 +20,7 @@ import OrdersIcon from "@/assets/orders.png";
 import PaymentsIcon from "@/assets/payments.png";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
@@ -65,6 +66,7 @@ export default function ManufacturerGroupBuysPage() {
   const { data: session, status } = useSession();
   const toast = useToast();
   const router = useRouter();
+  const dialog = useDialog();
 
   const [groupBuys, setGroupBuys] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -149,7 +151,7 @@ export default function ManufacturerGroupBuysPage() {
   };
 
   const handleCancel = async (id) => {
-    const reason = prompt("Reason for cancellation (optional):");
+    const reason = await dialog.prompt("Cancel Campaign", "Reason for cancellation (optional):");
     if (reason === null) return; // user pressed cancel on prompt
     try {
       const res = await fetch(`/api/group-buys/${id}`, {

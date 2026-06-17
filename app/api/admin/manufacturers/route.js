@@ -27,10 +27,23 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get("limit")) || 20;
     const skip = (page - 1) * limit;
 
-    const query = {
+    let query = {
       role: "manufacturer",
-      verificationStatus: status,
     };
+
+    if (status === "rejected") {
+      query.verificationStatus = "unverified";
+      query.rejectionReason = { $exists: true, $ne: null, $ne: "" };
+    } else if (status === "unverified") {
+      query.verificationStatus = "unverified";
+      query.$or = [
+        { rejectionReason: { $exists: false } },
+        { rejectionReason: null },
+        { rejectionReason: "" }
+      ];
+    } else {
+      query.verificationStatus = status;
+    }
 
     const manufacturers = await User.find(query)
       .select("-password")

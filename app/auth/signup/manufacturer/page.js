@@ -16,7 +16,6 @@ import {
   Lock,
 } from "lucide-react";
 import Logo from "@/components/CrafitLogo";
-
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -294,6 +293,7 @@ export default function ManufacturerSignup() {
                         src={identity}
                         alt="Identity Protocol"
                         placeholder="blur"
+                        priority={true}
                         className="object-contain opacity-80"
                       />
                       {/* This is License for freepik image used */}

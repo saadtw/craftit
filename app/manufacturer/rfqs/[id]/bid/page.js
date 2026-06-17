@@ -1,6 +1,8 @@
 // app/manufacturer/rfqs/[id]/bid/page.js
 "use client";
 
+// app/manufacturer/rfqs/[id]/bid/page.js
+
 import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect, use, useCallback } from "react";
 import { useRouter } from "next/navigation";
@@ -9,6 +11,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
+import { uploadFileDirect } from "@/lib/uploadDirect";
 
 export default function PlaceBidPage({ params }) {
   const unwrappedParams = use(params);
@@ -31,7 +34,9 @@ export default function PlaceBidPage({ params }) {
     materialsDescription: "",
     paymentTerms: "",
     warrantyInfo: "",
+    attachments: [],
   });
+  const [uploadingFiles, setUploadingFiles] = useState(false);
 
   const fetchRFQ = useCallback(async () => {
     try {
@@ -67,6 +72,7 @@ export default function PlaceBidPage({ params }) {
         materialsDescription: formData.materialsDescription,
         paymentTerms: formData.paymentTerms,
         warrantyInfo: formData.warrantyInfo,
+        attachments: formData.attachments,
       };
 
       const res = await fetch("/api/bids", {
@@ -206,6 +212,76 @@ export default function PlaceBidPage({ params }) {
                     placeholder="Describe your manufacturing optimization strategies..."
                     className="w-full bg-white/[0.03] border-2 border-purple-500/10 rounded-[2rem] px-6 py-5 text-sm font-medium text-white placeholder:text-white/10 focus:outline-none focus:border-purple-500/40 transition-all resize-none"
                   />
+                </div>
+
+                <div className="space-y-3">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-white/20">Attachments</label>
+                  <div className="flex flex-col gap-4">
+                    {formData.attachments.map((file, i) => (
+                      <div key={i} className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
+                        <div className="flex items-center gap-3">
+                          <span className="material-symbols-outlined text-purple-400">description</span>
+                          <span className="text-sm font-medium text-white">{file.filename}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            import("@/lib/fileCleanupClient").then(({ cleanupFiles }) => cleanupFiles([file.url]));
+                            setFormData(prev => ({ ...prev, attachments: prev.attachments.filter((_, idx) => idx !== i) }));
+                          }}
+                          className="text-white/40 hover:text-red-400 transition-colors"
+                        >
+                          <span className="material-symbols-outlined text-[18px]">delete</span>
+                        </button>
+                      </div>
+                    ))}
+                    
+                    <button
+                      type="button"
+                      disabled={uploadingFiles}
+                      onClick={() => document.getElementById('bid-file-upload').click()}
+                      className="w-full py-4 border-2 border-dashed border-purple-500/20 bg-white/[0.02] rounded-2xl flex flex-col items-center justify-center gap-2 hover:bg-white/[0.05] hover:border-purple-500/40 transition-all disabled:opacity-50"
+                    >
+                      {uploadingFiles ? (
+                        <span className="w-6 h-6 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <>
+                          <span className="material-symbols-outlined text-purple-400">upload_file</span>
+                          <span className="text-[10px] font-black uppercase tracking-widest text-white/40">Upload Files</span>
+                        </>
+                      )}
+                    </button>
+                    <input
+                      id="bid-file-upload"
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={async (e) => {
+                        const files = Array.from(e.target.files);
+                        if (!files.length) return;
+                        setUploadingFiles(true);
+                        try {
+                          const uploaded = await Promise.all(
+                            files.map(f => uploadFileDirect(f, "document"))
+                          );
+                          const newAttachments = uploaded.map((u, i) => ({
+                            url: u.file ? u.file.url : u.url,
+                            filename: files[i].name,
+                            fileType: files[i].type || "document"
+                          }));
+                          setFormData(prev => ({
+                            ...prev,
+                            attachments: [...prev.attachments, ...newAttachments]
+                          }));
+                        } catch (err) {
+                          toast.error("File upload failed");
+                        } finally {
+                          setUploadingFiles(false);
+                          e.target.value = "";
+                        }
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <div className="pt-6">

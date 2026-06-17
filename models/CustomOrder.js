@@ -120,6 +120,24 @@ const CustomOrderSchema = new mongoose.Schema(
         annotationIds: [String],
         measurementIds: [String],
         rfqId: { type: mongoose.Schema.Types.ObjectId, ref: 'RFQ' },
+        model3D: {
+          url: String,
+          filename: String,
+          fileSize: Number,
+        },
+        images: [
+          {
+            url: String,
+            caption: String,
+          },
+        ],
+        files: [
+          {
+            url: String,
+            filename: String,
+            fileSize: Number,
+          }
+        ],
         rfqStatus: {
           type: String,
           enum: ['pending', 'rfq_created', 'bid_accepted', 'order_placed'],

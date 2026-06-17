@@ -9,6 +9,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 const STATUS_STYLES = {
   active: "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20",
@@ -47,6 +48,7 @@ export default function GroupBuyDetailPage() {
   const toast = useToast();
   const router = useRouter();
   const { id } = useParams();
+  const dialog = useDialog();
 
   const [groupBuy, setGroupBuy] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -96,7 +98,7 @@ export default function GroupBuyDetailPage() {
   };
 
   const handleCancel = async () => {
-    const reason = prompt("Reason for cancellation:");
+    const reason = await dialog.prompt("Cancel Campaign", "Reason for cancellation:");
     if (reason === null) return;
     try {
       const res = await fetch(`/api/group-buys/${id}`, {

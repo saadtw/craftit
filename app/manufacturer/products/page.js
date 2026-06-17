@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { formatPKR } from "@/lib/currency";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
@@ -55,6 +56,7 @@ export default function ManufacturerProductsPage() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
+  const dialog = useDialog();
 
   // Filters
   const [activeTab, setActiveTab] = useState("all");
@@ -161,7 +163,7 @@ export default function ManufacturerProductsPage() {
 
   const handleDelete = async (productId, currentStatus) => {
     if (currentStatus === "archived") {
-      if (!confirm("Permanently delete this product? This cannot be undone."))
+      if (!(await dialog.confirm("Delete Product", "Permanently delete this product? This cannot be undone.")))
         return;
       try {
         const res = await fetch(`/api/products/${productId}`, {
@@ -175,7 +177,7 @@ export default function ManufacturerProductsPage() {
         }
       } catch (_) {}
     } else {
-      if (!confirm("Archive this product? It will be hidden from customers."))
+      if (!(await dialog.confirm("Archive Product", "Archive this product? It will be hidden from customers.")))
         return;
       await handleStatusChange(productId, "archived");
     }

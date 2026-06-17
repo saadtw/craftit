@@ -6,6 +6,8 @@ import SessionProvider from "./SessionProvider";
 import ScrollSkin from "@/components/ScrollSkin";
 import { ToastProvider } from "@/components/ui/ToastProvider";
 
+import { DialogProvider } from "@/components/ui/DialogProvider";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -43,10 +45,12 @@ export default function RootLayout({ children }) {
       >
         <SessionProvider>
           <ToastProvider>
-            <Suspense fallback={null}>
-              <ScrollSkin />
-            </Suspense>
-            {children}
+            <DialogProvider>
+              <Suspense fallback={null}>
+                <ScrollSkin />
+              </Suspense>
+              {children}
+            </DialogProvider>
           </ToastProvider>
         </SessionProvider>
       </body>

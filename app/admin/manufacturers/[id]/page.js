@@ -10,6 +10,7 @@ import { FiArrowLeft, FiCheckCircle, FiXCircle, FiClock, FiAlertCircle, FiShield
 import Image from "next/image";
 import documentIcon from "@/assets/document.png";
 import { useToast } from "@/components/ui/ToastProvider";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 const STATUS_STYLES = {
   unverified: { bg: "bg-amber-500/10", text: "text-amber-500", border: "border-amber-500/20", dot: "bg-amber-500" },
@@ -22,6 +23,7 @@ export default function AdminManufacturerDetailPage() {
   const toast = useToast();
   const router = useRouter();
   const params = useParams();
+  const dialog = useDialog();
   const id = params?.id;
 
   const [manufacturer, setManufacturer] = useState(null);
@@ -62,11 +64,11 @@ export default function AdminManufacturerDetailPage() {
   const handleAction = async (action) => {
     let reason = "";
     if (action === "reject") {
-      reason = prompt("Rejection reason (required):");
+      reason = await dialog.prompt("Rejection reason (required):");
       if (!reason) return;
     }
     if (action === "request_info") {
-      reason = prompt("What additional information is needed?");
+      reason = await dialog.prompt("What additional information is needed?");
       if (!reason) return;
     }
 
@@ -80,7 +82,7 @@ export default function AdminManufacturerDetailPage() {
       const data = await res.json();
       if (data.success) {
         await fetchManufacturer();
-        toast.error(data.message);
+        toast.success(data.message);
       } else {
         toast.error("Error: " + data.error);
       }

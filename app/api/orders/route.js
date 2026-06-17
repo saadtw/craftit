@@ -31,6 +31,7 @@ export async function GET(request) {
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 10;
     const skip = (page - 1) * limit;
+    const search = searchParams.get("search");
 
     let query = {};
 
@@ -46,6 +47,29 @@ export async function GET(request) {
 
     if (status) query.status = status;
     if (orderType) query.orderType = orderType;
+
+    if (search) {
+      const q = new RegExp(search, "i");
+      
+      const mongoose = require("mongoose");
+      const User = mongoose.models.User || mongoose.model("User");
+      const Product = mongoose.models.Product || mongoose.model("Product");
+      
+      const matchingUsers = await User.find({
+        $or: [{ name: q }, { businessName: q }]
+      }).select('_id').lean();
+      const userIds = matchingUsers.map(u => u._id);
+      
+      const matchingProducts = await Product.find({ name: q }).select('_id').lean();
+      const productIds = matchingProducts.map(p => p._id);
+      
+      query.$or = [
+        { orderNumber: q },
+        { customerId: { $in: userIds } },
+        { manufacturerId: { $in: userIds } },
+        { productId: { $in: productIds } }
+      ];
+    }
 
     const orders = await Order.find(query)
       .populate("customerId", "name email")

@@ -3,6 +3,7 @@ import connectDB from "@/lib/mongodb";
 import Product from "@/models/Product";
 import { normalizeCustomizationTypes } from "@/lib/customization";
 import { resolveRequestSession } from "@/lib/requestAuth";
+import { deleteFromStorage } from "@/lib/storage";
 
 function resolveCustomizationConfig(payload, existingProduct = null) {
   const customizationOptions =
@@ -217,7 +218,22 @@ export async function DELETE(request, context) {
     }
 
     if (product.status === "archived") {
+      // 1. Gather all file URLs for cleanup
+      const urlsToClean = [];
+      if (product.images?.length > 0) {
+        urlsToClean.push(...product.images.map(i => i.url).filter(Boolean));
+      }
+      if (product.model3D?.url) urlsToClean.push(product.model3D.url);
+      if (product.model3D?.thumbnailUrl) urlsToClean.push(product.model3D.thumbnailUrl);
+
+      // 2. Delete product from database
       await Product.findByIdAndDelete(id);
+      
+      // 3. Delete files from Supabase
+      if (urlsToClean.length > 0) {
+        Promise.allSettled(urlsToClean.map(url => deleteFromStorage(url))).catch(console.error);
+      }
+
       return NextResponse.json({
         success: true,
         message: "Product permanently deleted",

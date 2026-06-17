@@ -28,6 +28,12 @@ const STATUS_STYLES = {
     text: "text-red-500",
     border: "border-red-500/20",
     dot: "bg-red-500"
+  },
+  rejected: {
+    bg: "bg-red-500/10",
+    text: "text-red-500",
+    border: "border-red-500/20",
+    dot: "bg-red-500"
   }
 };
 
@@ -81,6 +87,7 @@ export default function AdminManufacturersPage() {
       });
       const data = await res.json();
       if (data.success) {
+        toast.success(data.message || "Manufacturer updated successfully");
         await fetchManufacturers();
       } else {
         toast.error("Error: " + data.error);
@@ -94,6 +101,7 @@ export default function AdminManufacturersPage() {
     { key: "unverified", label: "Pending" },
     { key: "verified", label: "Verified" },
     { key: "suspended", label: "Suspended" },
+    { key: "rejected", label: "Rejected" },
   ];
 
   if (status === "loading") {
@@ -153,7 +161,9 @@ export default function AdminManufacturersPage() {
           <div className="bg-white/[0.02] border border-white/5 rounded-[32px] overflow-hidden backdrop-blur-xl shadow-2xl">
             <div className="divide-y divide-white/5">
               {manufacturers.map((m) => {
-                const statusStyle = STATUS_STYLES[m.verificationStatus || "unverified"] || STATUS_STYLES.unverified;
+                const isRejected = filter === "rejected" || !!m.rejectionReason;
+                const displayStatus = isRejected ? "rejected" : (m.verificationStatus || "unverified");
+                const statusStyle = STATUS_STYLES[displayStatus] || STATUS_STYLES.unverified;
                 
                 return (
                   <div key={m._id} className="p-6 sm:p-8 hover:bg-white/[0.02] transition-colors group">
@@ -162,7 +172,7 @@ export default function AdminManufacturersPage() {
                         <div className="flex items-center gap-3 mb-2">
                            <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border flex items-center gap-1.5 ${statusStyle.bg} ${statusStyle.border} ${statusStyle.text}`}>
                               <span className={`w-1.5 h-1.5 rounded-full ${statusStyle.dot} animate-pulse`} />
-                              {m.verificationStatus?.toUpperCase()}
+                              {displayStatus.toUpperCase()}
                            </span>
                            <h3 className="text-white font-black text-xl tracking-tight">
                               {m.businessName}
@@ -181,7 +191,7 @@ export default function AdminManufacturersPage() {
                            <div>
                               <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest mb-1">Location</p>
                               <p className="text-slate-300 text-sm font-medium">
-                                {[m.businessAddress?.city, m.businessAddress?.country].filter(Boolean).join(", ") || "—"}
+                                {[m.businessAddress?.city, m.businessAddress?.country].filter(Boolean).join(", ") || "ΓÇö"}
                               </p>
                            </div>
                            <div>

@@ -8,6 +8,7 @@ import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import Link from "next/link";
 import { formatPKR } from "@/lib/currency";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 function useCountdown(endDate) {
   const calc = useCallback(() => {
@@ -178,6 +179,7 @@ export default function GroupBuyDetailPage() {
   const router = useRouter();
   const params = useParams();
   const id = params.id;
+  const dialog = useDialog();
 
   const [groupBuy, setGroupBuy] = useState(null);
   const [hasJoined, setHasJoined] = useState(false);
@@ -276,9 +278,10 @@ export default function GroupBuyDetailPage() {
 
   const handleCancel = async () => {
     if (
-      !confirm(
+      !(await dialog.confirm(
+        "Cancel Participation",
         "Are you sure you want to cancel your participation? Your spot will be released.",
-      )
+      ))
     )
       return;
 

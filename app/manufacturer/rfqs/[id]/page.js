@@ -83,8 +83,8 @@ export default function ManufacturerRFQDetails() {
   const partData = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.find(p => p._id === rfq.partId) : null;
   const siblingRfqs = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.filter(p => p._id !== rfq.partId && p.rfqId) : [];
 
-  let model3D = rfq?.customOrderId?.model3D;
-  if (isPartRFQ && partData && model3D) {
+  let model3D = (isPartRFQ && partData?.model3D?.url) ? partData.model3D : rfq?.customOrderId?.model3D;
+  if (isPartRFQ && partData && !partData.model3D?.url && model3D) {
     model3D = {
       ...model3D,
       annotations: (model3D.annotations || []).filter(a => (partData.annotationIds || []).includes(a.id)),
@@ -92,7 +92,9 @@ export default function ManufacturerRFQDetails() {
     };
   }
 
-  const images = rfq?.customOrderId?.images || [];
+  const images = (isPartRFQ && partData?.images?.length) ? partData.images : rfq?.customOrderId?.images || [];
+  const files = (isPartRFQ && partData?.files?.length) ? partData.files : [];
+  
   const artifactFiles = [
     model3D?.url && {
       label: model3D.filename || "3D model",
@@ -100,9 +102,14 @@ export default function ManufacturerRFQDetails() {
       type: "3D Model",
     },
     ...images.map((img, idx) => ({
-      label: img.filename || `Reference image ${idx + 1}`,
+      label: img.filename || img.caption || `Reference image ${idx + 1}`,
       url: img.url,
       type: "Image",
+    })),
+    ...files.map((file, idx) => ({
+      label: file.filename || `File ${idx + 1}`,
+      url: file.url,
+      type: "Document",
     })),
   ].filter(Boolean);
 

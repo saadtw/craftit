@@ -3,6 +3,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { cleanupFiles } from "@/lib/fileCleanupClient";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
@@ -114,7 +115,7 @@ export default function NewProductPage() {
   const [errors, setErrors] = useState({});
   const [uploadError, setUploadError] = useState(null); // blocking error popup
 
-  // ── Hydration: restore annotation data written by the model-editor page ────
+  // ΓöÇΓöÇ Hydration: restore annotation data written by the model-editor page ΓöÇΓöÇΓöÇΓöÇ
   // Runs once on mount. If the user visited /model-editor and saved their
   // annotations, the editor writes the updated model3D JSON into sessionStorage
   // before navigating back here. We pick it up, merge it into form state, and
@@ -139,7 +140,7 @@ export default function NewProductPage() {
         setForm((prev) => ({ ...prev, model3D: saved }));
       }
     } catch {
-      // Corrupted data — discard silently
+      // Corrupted data ΓÇö discard silently
     } finally {
       sessionStorage.removeItem(DRAFT_MODEL_KEY);
     }
@@ -198,7 +199,7 @@ export default function NewProductPage() {
   // Image upload
   const handleImageUpload = async (files) => {
     if (!files.length) return;
-    // Snapshot into a plain array BEFORE resetting the input — the FileList
+    // Snapshot into a plain array BEFORE resetting the input ΓÇö the FileList
     // from e.target.files is live; resetting input.value clears it immediately.
     const fileArray = Array.from(files);
     setImageUploading(true);
@@ -230,12 +231,30 @@ export default function NewProductPage() {
   };
 
   const removeImage = (idx) => {
+    const imgToRemove = form.images[idx];
     setForm((prev) => {
       const imgs = prev.images.filter((_, i) => i !== idx);
       if (imgs.length > 0 && !imgs.some((i) => i.isPrimary))
         imgs[0].isPrimary = true;
       return { ...prev, images: imgs };
     });
+    if (imgToRemove && imgToRemove.url) {
+      cleanupFiles([imgToRemove.url], { type: "Product", id: "draft" });
+    }
+  };
+
+  const handleModelSnapshot = async (blob) => {
+    if (!form.model3D || form.model3D.thumbnailUrl) return;
+    try {
+      const file = new File([blob], `thumb_${form.model3D.filename || "model"}.png`, { type: "image/png" });
+      const data = await uploadFileDirect(file, "image");
+      setForm((prev) => ({
+        ...prev,
+        model3D: { ...prev.model3D, thumbnailUrl: data.url || data.file?.url },
+      }));
+    } catch (err) {
+      console.error("Snapshot failed", err);
+    }
   };
 
   // 3D model upload
@@ -252,7 +271,7 @@ export default function NewProductPage() {
           fileSize: file.size,
         },
       }));
-      // ✓ Editor no longer auto-mounts here.
+      // Γ£ô Editor no longer auto-mounts here.
       // The user sees ModelViewerPreview and can optionally click
       // "Edit / Annotate" to navigate to the dedicated editor page.
     } catch (err) {
@@ -525,7 +544,7 @@ export default function NewProductPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
           <div className="bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/40 backdrop-blur-md shadow-2xl">
             <div className="p-8 sm:p-10">
-              {/* ── Step 1: Basic Info ── */}
+              {/* ΓöÇΓöÇ Step 1: Basic Info ΓöÇΓöÇ */}
               {step === 1 && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="border-l-4 border-purple-600 pl-6">
@@ -569,7 +588,7 @@ export default function NewProductPage() {
                         onChange={(e) =>
                           setField("description", e.target.value)
                         }
-                        placeholder="Describe your product in detail — materials used, intended use, capabilities..."
+                        placeholder="Describe your product in detail ΓÇö materials used, intended use, capabilities..."
                         rows={5}
                         className={`w-full px-5 py-3.5 bg-white/[0.03] border-2 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10 resize-none transition-all ${
                           errors.description
@@ -628,7 +647,7 @@ export default function NewProductPage() {
                 </div>
               )}
 
-              {/* ── Step 2: Pricing & Inventory ── */}
+              {/* ΓöÇΓöÇ Step 2: Pricing & Inventory ΓöÇΓöÇ */}
               {step === 2 && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="border-l-4 border-purple-600 pl-6">
@@ -842,7 +861,7 @@ export default function NewProductPage() {
                 </div>
               )}
 
-              {/* ── Step 3: Specifications ── */}
+              {/* ΓöÇΓöÇ Step 3: Specifications ΓöÇΓöÇ */}
               {step === 3 && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="border-l-4 border-purple-600 pl-6">
@@ -967,7 +986,7 @@ export default function NewProductPage() {
                                 onClick={() => removeColor(c)}
                                 className="text-white/40 hover:text-white"
                               >
-                                ×
+                                ├ù
                               </button>
                             </span>
                           ))}
@@ -1039,7 +1058,7 @@ export default function NewProductPage() {
                 </div>
               )}
 
-              {/* ── Step 4: Media ── */}
+              {/* ΓöÇΓöÇ Step 4: Media ΓöÇΓöÇ */}
               {step === 4 && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="border-l-4 border-purple-600 pl-6">
@@ -1155,6 +1174,7 @@ export default function NewProductPage() {
                                 modelUrl={form.model3D.url}
                                 annotations={form.model3D.annotations || []}
                                 measurements={form.model3D.measurements || []}
+                                onModelLoad={handleModelSnapshot}
                               />
                             </div>
                             <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl border border-white/10">
@@ -1174,8 +1194,13 @@ export default function NewProductPage() {
                                   Annotate Model
                                 </button>
                                 <button
-                                  onClick={() => setField("model3D", null)}
-                                  className="px-5 py-2.5 bg-white/5 text-white/40 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-white/10 hover:text-white"
+                                  onClick={() => {
+                                    if (form.model3D?.url) {
+                                      cleanupFiles([form.model3D.url], { type: "Product", id: "draft" });
+                                    }
+                                    setField("model3D", null);
+                                  }}
+                                  className="px-5 py-2.5 bg-white/5 text-white/40 rounded-xl text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 hover:text-red-400 transition-all"
                                 >
                                   Replace
                                 </button>
@@ -1234,7 +1259,7 @@ export default function NewProductPage() {
                 </div>
               )}
 
-              {/* ── Step 5: SEO & Tags ── */}
+              {/* ΓöÇΓöÇ Step 5: SEO & Tags ΓöÇΓöÇ */}
               {step === 5 && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="border-l-4 border-purple-600 pl-6">
@@ -1286,7 +1311,7 @@ export default function NewProductPage() {
                                 onClick={() => removeTag(tag)}
                                 className="text-white/40 hover:text-white transition-colors"
                               >
-                                ×
+                                ├ù
                               </button>
                             </span>
                           ))}
@@ -1381,7 +1406,7 @@ export default function NewProductPage() {
                     : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
                 }`}
               >
-                ← Previous
+                ΓåÉ Previous
               </button>
               <div className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">
                 Step {step} <span className="mx-2 text-white/20">/</span>{" "}
@@ -1424,7 +1449,7 @@ export default function NewProductPage() {
         </div>
       </div>
 
-      {/* ── Upload Error Modal ──────────────────────────────────────────────── */}
+      {/* ΓöÇΓöÇ Upload Error Modal ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
       {uploadError && (
         <div
           className="fixed inset-0 z-[200] flex items-center justify-center p-6"

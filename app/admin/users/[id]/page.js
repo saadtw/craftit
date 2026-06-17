@@ -483,14 +483,7 @@ export default function AdminUserDetailPage() {
 // ---------------------------------------------------------
 
 /*
-"use client";
 
-import GlobalLoader from "@/components/ui/GlobalLoader";
-import { useState, useEffect, useCallback } from "react";
-import { useSession } from "next-auth/react";
-import { useRouter, useParams } from "next/navigation";
-import Link from "next/link";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/components/ui/ToastProvider";
 
 export default function AdminUserDetailPage() {

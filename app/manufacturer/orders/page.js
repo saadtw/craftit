@@ -1,5 +1,6 @@
 // app/manufacturer/orders/page.js
 "use client";
+// app/manufacturer/orders/page.js
 
 import GlobalNoResults from "@/components/ui/GlobalNoResults";
 import GlobalLoader from "@/components/ui/GlobalLoader";
@@ -9,6 +10,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 const STATUS_COLORS = {
   confirmed: "bg-amber-500/10 border-amber-500/20 text-amber-400",
@@ -73,10 +75,10 @@ export default function ManufacturerOrdersPage() {
     return () => clearTimeout(t);
   }, [search]);
 
-  // Reset page when filter changes
+  // Reset page when filter or search changes
   useEffect(() => {
     setPage(1);
-  }, [activeFilter]);
+  }, [activeFilter, debouncedSearch]);
 
   // ── Stats: always fetched WITHOUT a status filter so every tab shows
   // its true global count regardless of which filter is active.
@@ -101,6 +103,7 @@ export default function ManufacturerOrdersPage() {
     try {
       const params = new URLSearchParams({ page, limit: 10 });
       if (activeFilter !== "all") params.set("status", activeFilter);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       const res = await fetch(`/api/orders?${params}`);
       const data = await res.json();
       if (data.success) {
@@ -114,7 +117,7 @@ export default function ManufacturerOrdersPage() {
     } finally {
       setLoading(false);
     }
-  }, [status, page, activeFilter]);
+  }, [status, page, activeFilter, debouncedSearch]);
 
   useEffect(() => {
     fetchOrders();
@@ -126,18 +129,8 @@ export default function ManufacturerOrdersPage() {
     fetchStats();
   }, [fetchOrders, fetchStats]);
 
-  // Client-side search + sort (fast — no network)
-  const filteredOrders = orders.filter((o) => {
-    if (!debouncedSearch) return true;
-    const q = debouncedSearch.toLowerCase();
-    return (
-      o.orderNumber?.toLowerCase().includes(q) ||
-      o.customerId?.name?.toLowerCase().includes(q) ||
-      o.productDetails?.name?.toLowerCase().includes(q)
-    );
-  });
-
-  const displayOrders = [...filteredOrders].sort((a, b) => {
+  // Client-side sort (fast — no network)
+  const displayOrders = [...orders].sort((a, b) => {
     if (sortBy === "oldest")
       return new Date(a.createdAt) - new Date(b.createdAt);
     if (sortBy === "value_high")
@@ -402,6 +395,7 @@ export default function ManufacturerOrdersPage() {
 // ── Order Card ────────────────────────────────────────────────────────────────
 
 function OrderCard({ order, onRefresh, toast }) {
+  const dialog = useDialog();
   const [accepting, setAccepting] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const has3DModel = Boolean(
@@ -429,7 +423,7 @@ function OrderCard({ order, onRefresh, toast }) {
   };
 
   const handleQuickReject = async () => {
-    const reason = prompt("Reason for rejection (optional):");
+    const reason = await dialog.prompt("Reject Order", "Reason for rejection (optional):");
     if (reason === null) return;
     setRejecting(true);
     try {

@@ -10,12 +10,14 @@ import Image from "next/image";
 import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
+import { useDialog } from "@/components/ui/DialogProvider";
 
 export default function CustomerRFQDetails() {
   const params = useParams();
   const router = useRouter();
   const { data: session, status } = useSession();
   const toast = useToast();
+  const dialog = useDialog();
   const rfqId = params?.id?.toString();
 
   const [rfq, setRfq] = useState(null);
@@ -75,7 +77,7 @@ export default function CustomerRFQDetails() {
   };
 
   const handleCancelRFQ = async () => {
-    if (!confirm("Are you sure you want to cancel this RFQ?")) return;
+    if (!(await dialog.confirm("Cancel RFQ", "Are you sure you want to cancel this RFQ?"))) return;
     try {
       const response = await fetch(`/api/rfqs/${rfqId}`, {
         method: "PUT",
@@ -157,8 +159,8 @@ export default function CustomerRFQDetails() {
   const partData = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.find(p => p._id === rfq.partId) : null;
   const siblingRfqs = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.filter(p => p._id !== rfq.partId && p.rfqId) : [];
 
-  let model3D = rfq.customOrderId?.model3D;
-  if (isPartRFQ && partData && model3D) {
+  let model3D = (isPartRFQ && partData?.model3D?.url) ? partData.model3D : rfq.customOrderId?.model3D;
+  if (isPartRFQ && partData && !partData.model3D?.url && model3D) {
     model3D = {
       ...model3D,
       annotations: (model3D.annotations || []).filter(a => (partData.annotationIds || []).includes(a.id)),
@@ -166,7 +168,9 @@ export default function CustomerRFQDetails() {
     };
   }
 
-  const images = rfq.customOrderId?.images || [];
+  const images = (isPartRFQ && partData?.images?.length) ? partData.images : rfq.customOrderId?.images || [];
+  const files = (isPartRFQ && partData?.files?.length) ? partData.files : [];
+  
   const artifactFiles = [
     model3D?.url && {
       label: model3D.filename || "3D model",
@@ -174,9 +178,14 @@ export default function CustomerRFQDetails() {
       type: "3D Model",
     },
     ...images.map((img, idx) => ({
-      label: img.filename || `Reference image ${idx + 1}`,
+      label: img.filename || img.caption || `Reference image ${idx + 1}`,
       url: img.url,
       type: "Image",
+    })),
+    ...files.map((file, idx) => ({
+      label: file.filename || `File ${idx + 1}`,
+      url: file.url,
+      type: "Document",
     })),
   ].filter(Boolean);
 
@@ -734,8 +743,8 @@ export default function CustomerRFQDetails() {
 //   };
 
 //   const handleCancelRFQ = async () => {
-//     if (!confirm("Are you sure you want to cancel this RFQ?")) return;
-
+//     if (!(await dialog.confirm("Cancel RFQ", "Are you sure you want to cancel this RFQ?"))) return;
+// 
 //     try {
 //       const response = await fetch(`/api/rfqs/${rfqId}`, {
 //         method: "PUT",

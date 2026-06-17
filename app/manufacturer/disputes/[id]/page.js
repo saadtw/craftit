@@ -7,6 +7,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import ChatBox from "@/components/chat/ChatBox";
+import { useToast } from "@/components/ui/ToastProvider";
+import { uploadFileDirect } from "@/lib/uploadDirect";
 
 const STATUS_COLORS = {
   open: "bg-orange-500/10 text-orange-400 border border-orange-500/20",
@@ -29,8 +31,10 @@ export default function ManufacturerDisputeDetailPage() {
   const [dispute, setDispute] = useState(null);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
-  const [responseForm, setResponseForm] = useState({ comment: "" });
+  const [responseForm, setResponseForm] = useState({ comment: "", evidence: [] });
   const [error, setError] = useState("");
+  const [uploadingFiles, setUploadingFiles] = useState(false);
+  const toast = useToast();
 
   const fetchDispute = useCallback(async () => {
     try {
@@ -76,6 +80,7 @@ export default function ManufacturerDisputeDetailPage() {
         body: JSON.stringify({
           action: "manufacturer_respond",
           comment: responseForm.comment.trim(),
+          evidence: responseForm.evidence,
         }),
       });
       const data = await res.json();
@@ -233,6 +238,19 @@ export default function ManufacturerDisputeDetailPage() {
                     <div className="bg-blue-500/5 rounded-2xl p-5 border border-blue-500/20 text-sm text-white/70 leading-relaxed">
                       {dispute.manufacturerResponse.comment}
                     </div>
+                    {dispute.manufacturerResponse.evidence?.length > 0 && (
+                      <div className="mt-4">
+                        <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-2">Evidence Files</p>
+                        <div className="flex flex-wrap gap-2">
+                          {dispute.manufacturerResponse.evidence.map((url, i) => (
+                            <a key={i} href={url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-xl text-xs text-blue-400 hover:bg-blue-500/10 transition-all">
+                              <span className="material-symbols-outlined text-sm">attachment</span>
+                              File {i + 1}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest">
                         Submitted on {new Date(dispute.manufacturerResponse.respondedAt).toLocaleDateString()}
@@ -263,6 +281,74 @@ export default function ManufacturerDisputeDetailPage() {
                       />
                       <div className="absolute bottom-4 right-4 text-[9px] font-bold text-white/20 uppercase">
                         {responseForm.comment.length} / 20 min
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <p className="text-[10px] font-bold text-white/20 uppercase tracking-widest mb-3">Evidence (Optional)</p>
+                      <div className="flex flex-col gap-3">
+                        {responseForm.evidence.map((url, i) => (
+                          <div key={i} className="flex items-center justify-between p-3 bg-white/[0.02] border border-white/10 rounded-xl">
+                            <div className="flex items-center gap-2 overflow-hidden">
+                              <span className="material-symbols-outlined text-purple-400">description</span>
+                              <a href={url} target="_blank" rel="noopener noreferrer" className="text-sm font-medium text-white hover:text-purple-400 truncate max-w-[200px] sm:max-w-md">
+                                Attachment {i + 1}
+                              </a>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                import("@/lib/fileCleanupClient").then(({ cleanupFiles }) => cleanupFiles([url]));
+                                setResponseForm(prev => ({ ...prev, evidence: prev.evidence.filter((_, idx) => idx !== i) }));
+                              }}
+                              className="text-white/40 hover:text-red-400 transition-colors"
+                            >
+                              <span className="material-symbols-outlined text-[18px]">delete</span>
+                            </button>
+                          </div>
+                        ))}
+                        
+                        <button
+                          type="button"
+                          disabled={uploadingFiles}
+                          onClick={() => document.getElementById('manufacturer-evidence-upload').click()}
+                          className="w-full py-3 border-2 border-dashed border-purple-500/30 bg-purple-500/5 rounded-xl flex items-center justify-center gap-2 hover:bg-purple-500/10 hover:border-purple-500/50 transition-all disabled:opacity-50"
+                        >
+                          {uploadingFiles ? (
+                            <span className="w-5 h-5 border-2 border-purple-500 border-t-transparent rounded-full animate-spin" />
+                          ) : (
+                            <>
+                              <span className="material-symbols-outlined text-purple-400">upload_file</span>
+                              <span className="text-[12px] font-bold text-white">Upload Evidence</span>
+                            </>
+                          )}
+                        </button>
+                        <input
+                          id="manufacturer-evidence-upload"
+                          type="file"
+                          multiple
+                          className="hidden"
+                          onChange={async (e) => {
+                            const files = Array.from(e.target.files);
+                            if (!files.length) return;
+                            setUploadingFiles(true);
+                            try {
+                              const uploaded = await Promise.all(
+                                files.map(f => uploadFileDirect(f, "document"))
+                              );
+                              const urls = uploaded.map(u => u.file ? u.file.url : u.url);
+                              setResponseForm(prev => ({
+                                ...prev,
+                                evidence: [...prev.evidence, ...urls]
+                              }));
+                            } catch (err) {
+                              toast.error("File upload failed");
+                            } finally {
+                              setUploadingFiles(false);
+                              e.target.value = "";
+                            }
+                          }}
+                        />
                       </div>
                     </div>
 

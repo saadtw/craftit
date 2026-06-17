@@ -22,6 +22,7 @@ export default function ModelViewerPreview({
   height = "480px",
   poster,
   fileSizeBytes = 0,
+  onModelLoad,
 }) {
   const [scriptReady, setScriptReady] = useState(false);
   const [scriptError, setScriptError] = useState(false);
@@ -80,6 +81,16 @@ export default function ModelViewerPreview({
     const handleLoad = () => {
       setModelLoading(false);
       setTimeoutWarning(false);
+      if (onModelLoad && mv) {
+        setTimeout(async () => {
+          try {
+            const blob = await mv.toBlob({ idealAspect: true });
+            if (blob) onModelLoad(blob);
+          } catch (e) {
+            console.error("Failed to generate model snapshot", e);
+          }
+        }, 500);
+      }
     };
 
     const handleError = () => {
@@ -103,7 +114,7 @@ export default function ModelViewerPreview({
       mv.removeEventListener("error", handleError);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scriptReady, key, modelLoading, modelError, modelUrl]);
+  }, [scriptReady, key, modelLoading, modelError, modelUrl, onModelLoad]);
 
   // ── Memory Management Cleanup ─────────────────────────────────────────────
   useEffect(() => {
