@@ -308,15 +308,27 @@ export async function PATCH(request, context) {
       );
     }
 
+    // Block quantity changes when a Stripe payment hold is active.
+    // The authorized amount on the PaymentIntent would no longer match
+    // the new total. The customer must cancel and re-join to get a
+    // correctly-sized authorization.
+    if (isStripeEnabled() && participant.paymentIntentId) {
+      return NextResponse.json(
+        {
+          error:
+            "Cannot update quantity while a payment hold is active. Please cancel your participation and re-join with the desired quantity.",
+        },
+        { status: 400 },
+      );
+    }
+
     // Update quantity
     participant.quantity = quantity;
 
     // Recalculate everything
     groupBuy.recalculate();
-    
+
     // Update unitPrice for this participant based on the new global state
-    // (In a real scenario, this might depend on when they locked in, 
-    // but here we sync it with current tier)
     participant.unitPrice = groupBuy.currentDiscountedPrice || groupBuy.basePrice;
     participant.totalPrice = participant.unitPrice * quantity;
 

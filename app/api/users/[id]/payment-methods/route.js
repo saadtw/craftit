@@ -37,7 +37,7 @@ function paymentMethodsForResponse(methods = []) {
   }));
 }
 
-async function getAuthorizedUser(paramsPromise) {
+async function getAuthorizedUser(paramsPromise, request) {
   const params = await paramsPromise;
   const session = await resolveRequestSession(request);
 
@@ -112,7 +112,7 @@ async function ensureStripeCustomer(stripe, user) {
 // GET /api/users/[id]/payment-methods - Get all saved payment methods for the user
 export async function GET(_request, { params }) {
   try {
-    const { user, errorResponse } = await getAuthorizedUser(params);
+    const { user, errorResponse } = await getAuthorizedUser(params, _request);
     if (errorResponse) return errorResponse;
 
     return NextResponse.json({
@@ -131,7 +131,7 @@ export async function GET(_request, { params }) {
 // POST /api/users/[id]/payment-methods - Add a new payment method for the user
 export async function POST(request, { params }) {
   try {
-    const { user, errorResponse } = await getAuthorizedUser(params);
+    const { user, errorResponse } = await getAuthorizedUser(params, request);
     if (errorResponse) return errorResponse;
 
     const body = await request.json();
@@ -287,7 +287,7 @@ export async function POST(request, { params }) {
 // PATCH /api/users/[id]/payment-methods - Set a payment method as default
 export async function PATCH(request, { params }) {
   try {
-    const { user, errorResponse } = await getAuthorizedUser(params);
+    const { user, errorResponse } = await getAuthorizedUser(params, request);
     if (errorResponse) return errorResponse;
 
     const body = await request.json();
@@ -350,7 +350,7 @@ export async function PATCH(request, { params }) {
 // DELETE /api/users/[id]/payment-methods - Remove a payment method from the user
 export async function DELETE(request, { params }) {
   try {
-    const { user, errorResponse } = await getAuthorizedUser(params);
+    const { user, errorResponse } = await getAuthorizedUser(params, request);
     if (errorResponse) return errorResponse;
 
     const { searchParams } = new URL(request.url);

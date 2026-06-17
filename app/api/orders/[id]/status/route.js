@@ -106,20 +106,8 @@ export async function PUT(request, context) {
         }
       }
 
-      // Capture Stripe payment if present
-      if (
-        stripe &&
-        order.paymentIntentId &&
-        order.paymentStatus === "authorized"
-      ) {
-        try {
-          await stripe.paymentIntents.capture(order.paymentIntentId);
-          order.paymentStatus = "captured";
-        } catch (stripeErr) {
-          console.error("Stripe capture failed:", stripeErr.message);
-          // Non-fatal for demo/FYP — log and continue
-        }
-      }
+      // Payment capture is deferred to the in_production transition where
+      // proper escrow records are created. No capture here.
 
       await notify.orderAccepted(
         order.customerId,
@@ -131,6 +119,8 @@ export async function PUT(request, context) {
     // ── In production ──────────────────────────────────────────────────────
     if (status === "in_production") {
       if (shippingMethod) order.shippingMethod = shippingMethod;
+
+      // Capture payment and place in escrow
       if (
         stripe &&
         order.paymentIntentId &&
@@ -160,6 +150,33 @@ export async function PUT(request, context) {
         } catch (stripeErr) {
           console.error("Stripe capture failed:", stripeErr.message);
         }
+      }
+
+      // If payment was already captured (e.g. by webhook race or RFQ immediate capture)
+      // but not yet tracked in escrow, promote to held_in_escrow with ledger entries
+      if (
+        order.paymentIntentId &&
+        order.paymentStatus === "captured"
+      ) {
+        order.paymentStatus = "held_in_escrow";
+        await EscrowTransaction.create([
+          {
+            orderId: order._id,
+            customerId: order.customerId,
+            manufacturerId: order.manufacturerId,
+            amount: order.totalPrice,
+            type: "payment_received",
+            reference: order.paymentIntentId,
+          },
+          {
+            orderId: order._id,
+            customerId: order.customerId,
+            manufacturerId: order.manufacturerId,
+            amount: order.totalPrice,
+            type: "held",
+            reference: order.paymentIntentId,
+          },
+        ]).catch((err) => console.error("Escrow ledger entry failed:", err.message));
       }
       // P1-B: notify customer that production has started
       await notify.orderInProduction(

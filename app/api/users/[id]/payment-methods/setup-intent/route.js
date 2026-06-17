@@ -8,7 +8,7 @@ import { resolveRequestSession } from "@/lib/requestAuth";
 
 const ALLOWED_ROLES = ["customer"];
 
-async function getAuthorizedUser(paramsPromise) {
+async function getAuthorizedUser(paramsPromise, request) {
   const params = await paramsPromise;
   const session = await resolveRequestSession(request);
 
@@ -85,7 +85,7 @@ async function ensureStripeCustomer(stripe, user) {
 // POST /api/users/[id]/payment-methods/setup-intent - create setup intent for Stripe Elements card save
 export async function POST(_request, { params }) {
   try {
-    const { user, errorResponse } = await getAuthorizedUser(params);
+    const { user, errorResponse } = await getAuthorizedUser(params, _request);
     if (errorResponse) return errorResponse;
 
     const stripe = getStripe();

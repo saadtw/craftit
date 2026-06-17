@@ -43,9 +43,15 @@ export async function POST(request) {
   switch (event.type) {
     case "payment_intent.succeeded": {
       const pi = event.data.object;
-      // Update any order that has this paymentIntentId
+      // Only promote to "captured" if the order isn't already in a later
+      // escrow state (avoids race with the API-side capture path).
       await Order.updateMany(
-        { paymentIntentId: pi.id },
+        {
+          paymentIntentId: pi.id,
+          paymentStatus: {
+            $nin: ["captured", "held_in_escrow", "release_requested", "released", "refunded", "partially_refunded"],
+          },
+        },
         { paymentStatus: "captured" },
       );
       break;
@@ -109,12 +115,12 @@ export async function POST(request) {
 
     case "account.updated": {
       const account = event.data.object;
-      const User = (await import("@/models/User")).default;
-      const user = await User.findOne({ stripeConnectAccountId: account.id });
-      if (user) {
-        user.onboardingStatus = account.details_submitted ? "completed" : "pending";
-        await user.save();
-      }
+      // Log Connect account updates for observability. The User model does
+      // not persist a separate onboarding status — the live account status
+      // is always fetched from Stripe when needed via the payouts/connect API.
+      console.log(
+        `Stripe Connect account ${account.id}: details_submitted=${account.details_submitted}, payouts_enabled=${account.payouts_enabled}`,
+      );
       break;
     }
 
