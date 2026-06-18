@@ -101,7 +101,14 @@ async function ensureConnectAccount(stripe, user) {
   }
 
   const account = await stripe.accounts.create({
-    type: "express",
+    controller: {
+      fees: { payer: "application" },
+      losses: { payments: "application" },
+      requirement_collection: "stripe",
+      stripe_dashboard: {
+        type: "express",
+      },
+    },
     country: normalizeCountryCode(user.businessAddress?.country),
     email: user.email,
     business_type: user.businessName ? "company" : "individual",
