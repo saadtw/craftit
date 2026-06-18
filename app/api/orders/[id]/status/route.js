@@ -121,34 +121,83 @@ export async function PUT(request, context) {
       if (shippingMethod) order.shippingMethod = shippingMethod;
 
       // Capture payment and place in escrow
-      if (
-        stripe &&
-        order.paymentIntentId &&
-        order.paymentStatus === "authorized"
-      ) {
-        try {
-          await stripe.paymentIntents.capture(order.paymentIntentId);
-          order.paymentStatus = "held_in_escrow";
-          await EscrowTransaction.create([
-            {
-              orderId: order._id,
-              customerId: order.customerId,
-              manufacturerId: order.manufacturerId,
-              amount: order.totalPrice,
-              type: "payment_received",
-              reference: order.paymentIntentId,
-            },
-            {
-              orderId: order._id,
-              customerId: order.customerId,
-              manufacturerId: order.manufacturerId,
-              amount: order.totalPrice,
-              type: "held",
-              reference: order.paymentIntentId,
-            },
-          ]);
-        } catch (stripeErr) {
-          console.error("Stripe capture failed:", stripeErr.message);
+      if (stripe) {
+        if (order.paymentIntentId && order.paymentStatus === "authorized") {
+          try {
+            await stripe.paymentIntents.capture(order.paymentIntentId);
+            order.paymentStatus = "held_in_escrow";
+            await EscrowTransaction.create([
+              {
+                orderId: order._id,
+                customerId: order.customerId,
+                manufacturerId: order.manufacturerId,
+                amount: order.totalPrice,
+                type: "payment_received",
+                reference: order.paymentIntentId,
+              },
+              {
+                orderId: order._id,
+                customerId: order.customerId,
+                manufacturerId: order.manufacturerId,
+                amount: order.totalPrice,
+                type: "held",
+                reference: order.paymentIntentId,
+              },
+            ]);
+          } catch (stripeErr) {
+            console.error("Stripe capture failed:", stripeErr.message);
+            throw new Error("Failed to capture authorized payment: " + stripeErr.message);
+          }
+        } else if (order.paymentStatus === "pending" && order.paymentMethod === "card") {
+          // Off-session capture for orders placed without upfront holds
+          try {
+            const User = (await import("@/models/User")).default;
+            const customer = await User.findById(order.customerId).lean();
+            const savedCard = customer?.paymentMethods?.find(m => m.provider === "stripe");
+            
+            if (!savedCard || !savedCard.stripePaymentMethodId || !customer.stripeCustomerId) {
+              throw new Error("Customer does not have a valid saved card for automatic payment.");
+            }
+
+            const paymentIntent = await stripe.paymentIntents.create({
+              amount: Math.round(order.totalPrice * 100),
+              currency: "usd",
+              customer: customer.stripeCustomerId,
+              payment_method: savedCard.stripePaymentMethodId,
+              off_session: true,
+              confirm: true,
+              metadata: {
+                orderId: String(order._id),
+                orderNumber: order.orderNumber,
+                type: "product"
+              }
+            });
+
+            order.paymentIntentId = paymentIntent.id;
+            order.paymentStatus = "held_in_escrow";
+            
+            await EscrowTransaction.create([
+              {
+                orderId: order._id,
+                customerId: order.customerId,
+                manufacturerId: order.manufacturerId,
+                amount: order.totalPrice,
+                type: "payment_received",
+                reference: paymentIntent.id,
+              },
+              {
+                orderId: order._id,
+                customerId: order.customerId,
+                manufacturerId: order.manufacturerId,
+                amount: order.totalPrice,
+                type: "held",
+                reference: paymentIntent.id,
+              },
+            ]);
+          } catch (stripeErr) {
+            console.error("Off-session payment failed:", stripeErr.message);
+            throw new Error("Failed to charge customer's saved card: " + stripeErr.message);
+          }
         }
       }
 

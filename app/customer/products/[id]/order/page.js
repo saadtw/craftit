@@ -150,8 +150,10 @@ export default function PlaceProductOrderPage() {
   const qty = parseInt(form.quantity) || 0;
   const unitPrice = product.price || 0;
   const totalPrice = qty * unitPrice;
-  const primaryImage =
-    product.images?.find((i) => i.isPrimary) || product.images?.[0];
+  const primaryImageUrl =
+    product.images?.find((i) => i.isPrimary)?.url ||
+    product.images?.[0]?.url ||
+    product.model3D?.thumbnailUrl;
   const savedAddresses = session?.user?.savedAddresses || [];
 
   return (
@@ -345,12 +347,6 @@ export default function PlaceProductOrderPage() {
                     label: "Credit / Debit Card",
                     icon: "credit_card",
                   },
-                  {
-                    value: "bank_transfer",
-                    label: "Bank Transfer",
-                    icon: "account_balance",
-                  },
-                  { value: "escrow", label: "Escrow", icon: "security" },
                 ].map((opt) => (
                   <button
                     key={opt.value}
@@ -376,9 +372,9 @@ export default function PlaceProductOrderPage() {
           <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start">
             <section className="overflow-hidden rounded-[24px] border border-white/8 bg-[#0c0c11]">
               <div className="relative h-44 bg-white/[0.04]">
-                {primaryImage?.url ? (
+                {primaryImageUrl ? (
                   <Image
-                    src={primaryImage.url}
+                    src={primaryImageUrl}
                     alt={product.name}
                     fill
                     className="object-cover"

@@ -205,6 +205,10 @@ function AddCardForm({ user, methods, onAdded, setError, setSuccess }) {
       setNickname("");
       setSuccess("Payment method saved securely with Stripe.");
 
+      // Clear the card element so it doesn't retain the consumed SetupIntent state
+      card.clear();
+      setClientSecret("");
+
       await initializeSetupIntent();
     } catch (err) {
       setError(err.message);

@@ -58,21 +58,29 @@ export async function POST(request) {
       );
     }
 
+    let userPaymentMethod = null;
     if (isStripeEnabled()) {
       if (!paymentIntentId) {
-        return NextResponse.json(
-          { error: "Payment is required" },
-          { status: 400 }
-        );
-      }
-      try {
-        const stripe = getStripe();
-        const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-        if (paymentIntent.status !== "requires_capture" && paymentIntent.status !== "succeeded") {
-           return NextResponse.json({ error: "Invalid payment status: " + paymentIntent.status }, { status: 400 });
+        // Validate that user has a saved card instead of requiring an upfront payment intent hold
+        const user = await User.findById(session.user.id).lean();
+        const hasCard = user?.paymentMethods?.find(m => m.provider === "stripe");
+        if (!hasCard) {
+          return NextResponse.json(
+            { error: "Payment method required. Please add a card in your settings." },
+            { status: 400 }
+          );
         }
-      } catch (e) {
-        return NextResponse.json({ error: "Invalid payment intent" }, { status: 400 });
+        userPaymentMethod = hasCard;
+      } else {
+        try {
+          const stripe = getStripe();
+          const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+          if (paymentIntent.status !== "requires_capture" && paymentIntent.status !== "succeeded") {
+             return NextResponse.json({ error: "Invalid payment status: " + paymentIntent.status }, { status: 400 });
+          }
+        } catch (e) {
+          return NextResponse.json({ error: "Invalid payment intent" }, { status: 400 });
+        }
       }
     }
 
