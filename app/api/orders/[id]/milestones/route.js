@@ -6,17 +6,7 @@ import Order from "@/models/Order";
 import EscrowTransaction from "@/models/EscrowTransaction";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
-let stripe = null;
-try {
-  if (process.env.STRIPE_SECRET_KEY) {
-    const Stripe = (await import("stripe")).default;
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-05-27.dahlia",
-    });
-  }
-} catch {
-  // Stripe not available
-}
+import getStripe from "@/lib/stripe";
 
 // GET  /api/orders/[id]/milestones - Get order milestones
 export async function GET(request, context) {
@@ -127,6 +117,13 @@ export async function PUT(request, context) {
     }
 
     await connectDB();
+
+    let stripe = null;
+    try {
+      stripe = getStripe();
+    } catch {
+      // Stripe not available
+    }
 
     const body = await request.json();
     const { milestoneId, status, notes, photos, customerStatus } = body;

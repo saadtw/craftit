@@ -7,18 +7,7 @@ import AdminLog from "@/models/AdminLog";
 import { notify } from "@/services/notificationService";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
-// Stripe is optional in dev environments.
-let stripe = null;
-try {
-  if (process.env.STRIPE_SECRET_KEY) {
-    const Stripe = (await import("stripe")).default;
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-05-27.dahlia",
-    });
-  }
-} catch {
-  stripe = null;
-}
+import getStripe from "@/lib/stripe";
 
 const DIRECT_CANCEL_WINDOW_MS = 48 * 60 * 60 * 1000;
 const REQUEST_CANCEL_WINDOW_MS = 7 * 24 * 60 * 60 * 1000;
@@ -46,6 +35,13 @@ async function readBody(request) {
 }
 
 async function processRefund(order, reason) {
+  let stripe = null;
+  try {
+    stripe = getStripe();
+  } catch {
+    // Stripe not available
+  }
+
   if (!order.paymentIntentId) {
     order.refundReason = reason;
     return;

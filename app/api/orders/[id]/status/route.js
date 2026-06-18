@@ -8,18 +8,7 @@ import EscrowTransaction from "@/models/EscrowTransaction";
 import { notify } from "@/services/notificationService";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
-// ── Stripe is optional — if STRIPE_SECRET_KEY is not set, payment steps are skipped
-let stripe = null;
-try {
-  if (process.env.STRIPE_SECRET_KEY) {
-    const Stripe = (await import("stripe")).default;
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2026-05-27.dahlia",
-    });
-  }
-} catch {
-  // Stripe not available — payment steps will be no-ops
-}
+import getStripe from "@/lib/stripe";
 
 // PUT /api/orders/[id]/status - Update order status (manufacturer actions)
 export async function PUT(request, context) {
@@ -32,6 +21,13 @@ export async function PUT(request, context) {
     }
 
     await connectDB();
+
+    let stripe = null;
+    try {
+      stripe = getStripe();
+    } catch {
+      // Stripe not available
+    }
 
     const body = await request.json();
     const {

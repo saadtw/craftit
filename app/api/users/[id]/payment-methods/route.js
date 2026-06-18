@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
+import Order from "@/models/Order";
 import getStripe from "@/lib/stripe";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
@@ -373,6 +374,30 @@ export async function DELETE(request, { params }) {
         { success: false, error: "Payment method not found" },
         { status: 404 },
       );
+    }
+
+    const remainingStripeCards = methods.filter(
+      (m) => String(m._id) !== methodId && m.provider === "stripe"
+    );
+
+    if (existing.provider === "stripe" && remainingStripeCards.length === 0) {
+      // Check if there are any active orders that haven't captured the payment yet
+      const pendingOrdersCount = await Order.countDocuments({
+        customerId: user._id,
+        status: "confirmed",
+        paymentStatus: "pending",
+        paymentMethod: "card"
+      });
+
+      if (pendingOrdersCount > 0) {
+        return NextResponse.json(
+          { 
+            success: false, 
+            error: "You cannot delete your only saved card while you have active orders waiting for manufacturer acceptance." 
+          },
+          { status: 400 }
+        );
+      }
     }
 
     user.paymentMethods = methods.filter(
