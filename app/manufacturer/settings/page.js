@@ -276,9 +276,70 @@ function BusinessProfileTab({ user, onRefresh }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
     setSaved(false);
+
+    const businessName = form.businessName.trim();
+    if (businessName.length < 3 || businessName.length > 100) {
+      setError("Business name must be between 3 and 100 characters.");
+      return;
+    }
+
+    if (form.phone) {
+      const phoneVal = form.phone.trim();
+      if (phoneVal !== "") {
+        const digits = phoneVal.replace(/\D/g, "");
+        if (digits.length !== 11) {
+          setError("Please enter correct 11-digit phone number.");
+          return;
+        }
+      }
+    }
+
+    if (form.minOrderQuantity) {
+      const moq = Number(form.minOrderQuantity);
+      if (!Number.isInteger(moq) || moq < 1) {
+        setError("Minimum order quantity must be a positive integer.");
+        return;
+      }
+    }
+
+    if (form.businessAddress.postalCode) {
+      const postalCodeVal = form.businessAddress.postalCode.trim();
+      if (postalCodeVal !== "") {
+        const digits = postalCodeVal.replace(/\D/g, "");
+        if (digits.length < 4 || digits.length > 10) {
+          setError("Please enter a valid postal code (4 to 10 digits).");
+          return;
+        }
+      }
+    }
+
+    let minBudget = undefined;
+    let maxBudget = undefined;
+
+    if (form.budgetRange.min !== "" && form.budgetRange.min !== undefined && form.budgetRange.min !== null) {
+      minBudget = Number(form.budgetRange.min);
+      if (isNaN(minBudget) || minBudget < 0) {
+        setError("Minimum project threshold must be a non-negative number.");
+        return;
+      }
+    }
+
+    if (form.budgetRange.max !== "" && form.budgetRange.max !== undefined && form.budgetRange.max !== null) {
+      maxBudget = Number(form.budgetRange.max);
+      if (isNaN(maxBudget) || maxBudget < 0) {
+        setError("Maximum project capacity must be a non-negative number.");
+        return;
+      }
+    }
+
+    if (minBudget !== undefined && maxBudget !== undefined && maxBudget < minBudget) {
+      setError("Maximum project capacity cannot be less than the minimum project threshold.");
+      return;
+    }
+
+    setLoading(true);
     try {
       const certList = form.certifications
         .split(",")
@@ -288,7 +349,7 @@ function BusinessProfileTab({ user, onRefresh }) {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          businessName: form.businessName.trim(),
+          businessName,
           businessDescription: form.businessDescription.trim(),
           phone: form.phone.trim(),
           businessLogo: logoUrl,
@@ -300,12 +361,8 @@ function BusinessProfileTab({ user, onRefresh }) {
           manufacturingCapabilities: form.manufacturingCapabilities,
           materialsAvailable: form.materialsAvailable,
           budgetRange: {
-            min: form.budgetRange.min
-              ? Number(form.budgetRange.min)
-              : undefined,
-            max: form.budgetRange.max
-              ? Number(form.budgetRange.max)
-              : undefined,
+            min: minBudget,
+            max: maxBudget,
           },
           certifications: certList,
         }),

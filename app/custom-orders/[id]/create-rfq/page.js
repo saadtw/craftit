@@ -164,6 +164,23 @@ export default function CreateRFQ() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    const duration = Number(formData.duration);
+    if (!Number.isInteger(duration) || duration < 24 || duration > 720) {
+      toast.error("RFQ duration must be an integer between 24 and 720 hours (30 days).");
+      setLoading(false);
+      return;
+    }
+
+    if (formData.minBidThreshold) {
+      const threshold = Number(formData.minBidThreshold);
+      if (isNaN(threshold) || threshold < 0) {
+        toast.error("Minimum bid threshold must be a non-negative number.");
+        setLoading(false);
+        return;
+      }
+    }
+
     try {
       const requiredLinkedTargets = linkedManufacturerId
         ? [String(linkedManufacturerId)]

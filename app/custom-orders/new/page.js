@@ -313,7 +313,43 @@ function NewCustomOrderContent() {
       toast.error(sourceContext.error);
       return;
     }
+
+    const title = formData.title.trim();
+    if (title.length < 3 || title.length > 100) {
+      toast.error("Title must be between 3 and 100 characters.");
+      return;
+    }
+
+    const description = formData.description.trim();
+    if (description.length < 10 || description.length > 2000) {
+      toast.error("Description must be between 10 and 2000 characters.");
+      return;
+    }
+
     const quantity = Number(formData.quantity);
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      toast.error("Quantity must be a positive integer.");
+      return;
+    }
+
+    if (formData.budget) {
+      const budget = Number(formData.budget);
+      if (isNaN(budget) || budget <= 0) {
+        toast.error("Budget must be a positive number.");
+        return;
+      }
+    }
+
+    if (formData.deadline) {
+      const selectedDate = new Date(formData.deadline);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (isNaN(selectedDate.getTime()) || selectedDate <= today) {
+        toast.error("Deadline must be a future date.");
+        return;
+      }
+    }
+
     if (sourceContext.sourceType === "product_customization") {
       if (!formData.requestedCustomizationTypes.length) {
         toast.error("Please select at least one requested customization type.");

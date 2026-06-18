@@ -94,9 +94,9 @@ export async function PATCH(request, { params }) {
 
     if (update.name !== undefined) {
       update.name = String(update.name).trim();
-      if (!update.name) {
+      if (update.name.length < 3 || update.name.length > 100) {
         return NextResponse.json(
-          { success: false, error: "Name cannot be empty" },
+          { success: false, error: "Name must be between 3 and 100 characters" },
           { status: 400 },
         );
       }
@@ -104,9 +104,9 @@ export async function PATCH(request, { params }) {
 
     if (update.businessName !== undefined) {
       update.businessName = String(update.businessName).trim();
-      if (!update.businessName) {
+      if (update.businessName.length < 3 || update.businessName.length > 100) {
         return NextResponse.json(
-          { success: false, error: "Business name cannot be empty" },
+          { success: false, error: "Business name must be between 3 and 100 characters" },
           { status: 400 },
         );
       }
@@ -116,8 +116,57 @@ export async function PATCH(request, { params }) {
       update.businessDescription = String(update.businessDescription).trim();
     }
 
+    if (update.bio !== undefined) {
+      update.bio = String(update.bio).trim();
+      if (update.bio.length > 500) {
+        return NextResponse.json(
+          { success: false, error: "Bio cannot exceed 500 characters" },
+          { status: 400 },
+        );
+      }
+    }
+
     if (update.phone !== undefined) {
       update.phone = String(update.phone).trim();
+      if (update.phone !== "") {
+        const digits = update.phone.replace(/\D/g, "");
+        if (digits.length !== 11) {
+          return NextResponse.json(
+            { success: false, error: "Please enter correct 11-digit phone number" },
+            { status: 400 },
+          );
+        }
+      }
+    }
+
+    if (update.address !== undefined) {
+      if (update.address.postalCode !== undefined) {
+        const pc = String(update.address.postalCode).trim();
+        if (pc !== "") {
+          const digits = pc.replace(/\D/g, "");
+          if (digits.length < 4 || digits.length > 10) {
+            return NextResponse.json(
+              { success: false, error: "Please enter a valid postal code (4 to 10 digits)" },
+              { status: 400 },
+            );
+          }
+        }
+      }
+    }
+
+    if (update.businessAddress !== undefined) {
+      if (update.businessAddress.postalCode !== undefined) {
+        const pc = String(update.businessAddress.postalCode).trim();
+        if (pc !== "") {
+          const digits = pc.replace(/\D/g, "");
+          if (digits.length < 4 || digits.length > 10) {
+            return NextResponse.json(
+              { success: false, error: "Please enter a valid postal code (4 to 10 digits)" },
+              { status: 400 },
+            );
+          }
+        }
+      }
     }
 
     if (update.profilePicture !== undefined) {
@@ -150,16 +199,43 @@ export async function PATCH(request, { params }) {
       ) {
         update.minOrderQuantity = undefined;
       } else {
-        update.minOrderQuantity = Number(update.minOrderQuantity);
+        const moq = Number(update.minOrderQuantity);
+        if (!Number.isInteger(moq) || moq < 1) {
+          return NextResponse.json(
+            { success: false, error: "Minimum order quantity must be a positive integer" },
+            { status: 400 },
+          );
+        }
+        update.minOrderQuantity = moq;
       }
     }
 
     if (update.budgetRange !== undefined) {
-      const min = Number(update.budgetRange?.min);
-      const max = Number(update.budgetRange?.max);
+      const min = update.budgetRange?.min !== undefined && update.budgetRange?.min !== null && update.budgetRange?.min !== "" ? Number(update.budgetRange?.min) : undefined;
+      const max = update.budgetRange?.max !== undefined && update.budgetRange?.max !== null && update.budgetRange?.max !== "" ? Number(update.budgetRange?.max) : undefined;
+
+      if (min !== undefined && (isNaN(min) || min < 0)) {
+        return NextResponse.json(
+          { success: false, error: "Minimum project threshold must be a non-negative number" },
+          { status: 400 },
+        );
+      }
+      if (max !== undefined && (isNaN(max) || max < 0)) {
+        return NextResponse.json(
+          { success: false, error: "Maximum project capacity must be a non-negative number" },
+          { status: 400 },
+        );
+      }
+      if (min !== undefined && max !== undefined && max < min) {
+        return NextResponse.json(
+          { success: false, error: "Maximum project capacity cannot be less than minimum threshold" },
+          { status: 400 },
+        );
+      }
+
       update.budgetRange = {
-        min: Number.isFinite(min) ? min : undefined,
-        max: Number.isFinite(max) ? max : undefined,
+        min,
+        max,
       };
     }
 

@@ -76,12 +76,30 @@ export default function RequesterSupportPage({
   const createTicket = async (e) => {
     e.preventDefault();
     if (creating) return;
+
+    const subject = form.subject.trim();
+    const message = form.message.trim();
+
+    if (subject.length < 3 || subject.length > 160) {
+      alert("Subject must be between 3 and 160 characters.");
+      return;
+    }
+
+    if (message.length < 5 || message.length > 3000) {
+      alert("Message must be between 5 and 3000 characters.");
+      return;
+    }
+
     setCreating(true);
     try {
       const res = await fetch("/api/support-tickets", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          ...form,
+          subject,
+          message,
+        }),
       });
       const data = await res.json();
       if (data.success) {

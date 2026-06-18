@@ -57,11 +57,31 @@ export default function PlaceBidPage({ params }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
+
+    const amount = Number(formData.amount);
+    if (isNaN(amount) || amount <= 0) {
+      toast.error("Bid amount must be a positive number.");
+      setLoading(false);
+      return;
+    }
+    if (rfq?.minBidThreshold && amount < rfq.minBidThreshold) {
+      toast.error(`Bid amount cannot be lower than the minimum bid threshold of ${formatPKR(rfq.minBidThreshold)}.`);
+      setLoading(false);
+      return;
+    }
+
+    const timeline = Number(formData.timeline);
+    if (!Number.isInteger(timeline) || timeline < 1) {
+      toast.error("Delivery timeline must be a positive integer (number of days).");
+      setLoading(false);
+      return;
+    }
+
     try {
       const submitData = {
         rfqId: formData.rfqId,
-        amount: Number(formData.amount),
-        timeline: Number(formData.timeline),
+        amount,
+        timeline,
         costBreakdown: {
           materials: Number(formData.costBreakdown.materials) || 0,
           labor: Number(formData.costBreakdown.labor) || 0,

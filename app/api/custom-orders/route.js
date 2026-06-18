@@ -73,18 +73,57 @@ export async function POST(request) {
     const quantity = Number(body.quantity);
 
     // Validation
-    if (!body.title || !body.description || !quantity) {
+    const title = body.title ? String(body.title).trim() : "";
+    const description = body.description ? String(body.description).trim() : "";
+
+    if (!title || !description || isNaN(quantity)) {
       return NextResponse.json(
         { error: "Title, description and quantity are required" },
         { status: 400 },
       );
     }
 
-    if (!Number.isFinite(quantity) || quantity < 1) {
+    if (title.length < 3 || title.length > 100) {
       return NextResponse.json(
-        { error: "Quantity must be a number greater than 0" },
+        { error: "Title must be between 3 and 100 characters" },
         { status: 400 },
       );
+    }
+
+    if (description.length < 10 || description.length > 2000) {
+      return NextResponse.json(
+        { error: "Description must be between 10 and 2000 characters" },
+        { status: 400 },
+      );
+    }
+
+    if (!Number.isInteger(quantity) || quantity < 1) {
+      return NextResponse.json(
+        { error: "Quantity must be a positive integer" },
+        { status: 400 },
+      );
+    }
+
+    if (body.budget !== undefined && body.budget !== null && body.budget !== "") {
+      const budget = Number(body.budget);
+      if (isNaN(budget) || budget <= 0) {
+        return NextResponse.json(
+          { error: "Budget must be a positive number" },
+          { status: 400 },
+        );
+      }
+    }
+
+    if (body.deadline) {
+      const selectedDate = new Date(body.deadline);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      if (isNaN(selectedDate.getTime()) || selectedDate <= today) {
+        return NextResponse.json(
+          { error: "Deadline must be a future date" },
+          { status: 400 },
+        );
+      }
     }
 
     let sourceType = "general_custom";

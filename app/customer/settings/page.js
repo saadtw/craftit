@@ -130,15 +130,49 @@ function ProfileTab({ user, onRefresh }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setLoading(true);
     setError("");
     setSaved(false);
+
+    const name = form.name.trim();
+    if (name.length < 3 || name.length > 100) {
+      setError("Name must be between 3 and 100 characters.");
+      return;
+    }
+
+    if (form.phone) {
+      const phoneVal = form.phone.trim();
+      if (phoneVal !== "") {
+        const digits = phoneVal.replace(/\D/g, "");
+        if (digits.length !== 11) {
+          setError("Please enter correct 11-digit phone number.");
+          return;
+        }
+      }
+    }
+
+    if (form.bio && form.bio.trim().length > 500) {
+      setError("Bio cannot exceed 500 characters.");
+      return;
+    }
+
+    if (form.address.postalCode) {
+      const postalCodeVal = form.address.postalCode.trim();
+      if (postalCodeVal !== "") {
+        const digits = postalCodeVal.replace(/\D/g, "");
+        if (digits.length < 4 || digits.length > 10) {
+          setError("Please enter a valid postal code (4 to 10 digits).");
+          return;
+        }
+      }
+    }
+
+    setLoading(true);
     try {
       const res = await fetch(`/api/users/${user._id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          name: form.name.trim(),
+          name,
           phone: form.phone.trim(),
           bio: form.bio.trim(),
           address: form.address,

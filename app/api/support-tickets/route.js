@@ -135,9 +135,16 @@ export async function POST(request) {
       ? body.priority
       : "medium";
 
-    if (subject.length < 3 || message.length < 5) {
+    if (subject.length < 3 || subject.length > 160) {
       return NextResponse.json(
-        { error: "Subject and message are required" },
+        { error: "Subject must be between 3 and 160 characters" },
+        { status: 400 },
+      );
+    }
+
+    if (message.length < 5 || message.length > 3000) {
+      return NextResponse.json(
+        { error: "Message must be between 5 and 3000 characters" },
         { status: 400 },
       );
     }

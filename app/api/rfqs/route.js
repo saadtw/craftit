@@ -176,8 +176,25 @@ export async function POST(request) {
       );
     }
 
+    const duration = body.duration ? Number(body.duration) : 168;
+    if (!Number.isInteger(duration) || duration < 24 || duration > 720) {
+      return NextResponse.json(
+        { error: "Duration must be an integer between 24 and 720 hours (30 days)" },
+        { status: 400 },
+      );
+    }
+
+    if (body.minBidThreshold !== undefined && body.minBidThreshold !== null && body.minBidThreshold !== "") {
+      const minBidThreshold = Number(body.minBidThreshold);
+      if (isNaN(minBidThreshold) || minBidThreshold < 0) {
+        return NextResponse.json(
+          { error: "Minimum bid threshold must be a non-negative number" },
+          { status: 400 },
+        );
+      }
+    }
+
     const startDate = new Date();
-    const duration = body.duration || 168;
     const endDate = new Date(startDate.getTime() + duration * 60 * 60 * 1000);
 
     const rawTargets = Array.isArray(body.targetManufacturers)

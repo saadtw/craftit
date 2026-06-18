@@ -4,6 +4,16 @@ import User from "@/models/User";
 
 export const bidService = {
   async placeBid(manufacturerId, bidData) {
+    const amount = Number(bidData.amount);
+    if (isNaN(amount) || amount <= 0) {
+      throw new Error("Bid amount must be a positive number");
+    }
+
+    const timeline = Number(bidData.timeline);
+    if (!Number.isInteger(timeline) || timeline < 1) {
+      throw new Error("Delivery timeline must be a positive integer (number of days)");
+    }
+
     const rfq = await RFQ.findById(bidData.rfqId);
 
     if (!rfq) {
