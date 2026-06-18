@@ -404,15 +404,16 @@ function OrderCard({ order, onRefresh, toast }) {
   const handleQuickAccept = async () => {
     setAccepting(true);
     try {
-      const res = await fetch(`/api/orders/${order._id}/production-ack`, {
-        method: "POST",
+      const res = await fetch(`/api/orders/${order._id}/status`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "accepted" }),
       });
       const data = await res.json();
       if (data.success) onRefresh();
-      else toast.error(data.error || "Failed to start production");
+      else toast.error(data.error || "Failed to accept order");
     } catch {
-      toast.error("Error starting production");
+      toast.error("Error accepting order");
     } finally {
       setAccepting(false);
     }
