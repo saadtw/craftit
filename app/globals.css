@@ -311,44 +311,6 @@ html[data-scroll-skin="landing"] *::-webkit-scrollbar-thumb {
 }
 
 
-html[data-scroll-skin="b2b"] *,
-html[data-scroll-skin="admin"] *,
-html[data-scroll-skin="marketing"] * {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scroll-thumb) var(--scroll-track);
-}
-
-html[data-scroll-skin="b2b"] *::-webkit-scrollbar,
-html[data-scroll-skin="admin"] *::-webkit-scrollbar,
-html[data-scroll-skin="marketing"] *::-webkit-scrollbar {
-  width: var(--scroll-size);
-  height: var(--scroll-size);
-}
-
-html[data-scroll-skin="b2b"] *::-webkit-scrollbar-track,
-html[data-scroll-skin="admin"] *::-webkit-scrollbar-track,
-html[data-scroll-skin="marketing"] *::-webkit-scrollbar-track {
-  background: var(--scroll-track);
-  border-radius: var(--scroll-radius);
-}
-
-html[data-scroll-skin="b2b"] *::-webkit-scrollbar-thumb,
-html[data-scroll-skin="admin"] *::-webkit-scrollbar-thumb,
-html[data-scroll-skin="marketing"] *::-webkit-scrollbar-thumb {
-  background: var(--scroll-thumb);
-  border-radius: var(--scroll-radius);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
-html[data-scroll-skin="b2b"] *::-webkit-scrollbar-thumb:hover,
-html[data-scroll-skin="admin"] *::-webkit-scrollbar-thumb:hover,
-html[data-scroll-skin="marketing"] *::-webkit-scrollbar-thumb:hover {
-  background: var(--scroll-thumb-hover);
-  border: 2px solid transparent;
-  background-clip: padding-box;
-}
-
 /* Hide scrollbar but keep scroll (sidebars, horizontal chips, etc.)
    Skin uses `*::-webkit-scrollbar-*` on thumb/track too — must override every
    part + use !important so WebKit still wins over those universal rules. */

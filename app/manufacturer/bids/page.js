@@ -351,7 +351,7 @@ export default function ManufacturerBidsPage() {
                           {bid?.rfqId?.customOrderId?.deadline && (
                             <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-white/5 border border-white/5 group-hover:border-purple-500/20 transition-all">
                               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-white/30">Deadline</span>
-                              <strong className="text-white font-black text-base">{new Date(bid.rfqId.customOrderId.deadline).toLocaleDateString()}</strong>
+                              <strong className="text-white font-black text-base">{new Date(bid.rfqId.customOrderId.deadline).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}</strong>
                             </div>
                           )}
                           <div className="flex flex-col gap-1.5 p-3 rounded-xl bg-[#eb9728]/10 border border-[#eb9728]/20 group-hover:border-[#eb9728]/40 transition-all shadow-[0_0_20px_rgba(235,151,40,0.05)]">
@@ -364,7 +364,7 @@ export default function ManufacturerBidsPage() {
 
                     <div className="border-t border-white/5 pt-4 flex flex-wrap items-center justify-between gap-4 mt-5">
                       <div className="text-xs text-white/30 font-medium">
-                        Bid Placed: <span className="text-white/60 font-bold">{new Date(bid?.submittedAt || bid?.createdAt).toLocaleDateString()}</span>
+                        Bid Placed: <span className="text-white/60 font-bold">{new Date(bid?.submittedAt || bid?.createdAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}</span>
                         {bid?.status === "under_consideration" && (
                           <><span className="mx-3 text-white/10">|</span><strong className="text-amber-500 uppercase tracking-widest text-[10px] font-black animate-pulse">Counter Offer Received</strong></>
                         )}
