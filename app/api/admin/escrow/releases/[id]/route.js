@@ -45,12 +45,28 @@ export async function PATCH(request, context) {
       }
       try {
         const stripe = getStripe();
-        const transfer = await stripe.transfers.create({
+
+        let sourceTransaction = undefined;
+        if (order.paymentIntentId) {
+            const pi = await stripe.paymentIntents.retrieve(order.paymentIntentId);
+            if (pi && pi.latest_charge) {
+              sourceTransaction = pi.latest_charge;
+            }
+        }
+
+        const transferPayload = {
           amount: Math.round(releaseAmount * 100),
           currency: "usd",
           destination: manufacturer.stripeConnectAccountId,
           transfer_group: order._id.toString(),
-        });
+        };
+
+        if (sourceTransaction) {
+          transferPayload.source_transaction = sourceTransaction;
+        }
+
+        const transfer = await stripe.transfers.create(transferPayload);
+        
         release.payoutMethod = "stripe_connect";
         release.transferId = transfer.id;
       } catch (stripeErr) {

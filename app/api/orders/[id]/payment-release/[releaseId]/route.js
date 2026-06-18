@@ -55,12 +55,28 @@ export async function PATCH(request, context) {
       if (process.env.STRIPE_SECRET_KEY && manufacturer?.stripeConnectAccountId) {
         try {
           const stripe = getStripe();
-          const transfer = await stripe.transfers.create({
+          
+          let sourceTransaction = undefined;
+          if (order.paymentIntentId) {
+             const pi = await stripe.paymentIntents.retrieve(order.paymentIntentId);
+             if (pi && pi.latest_charge) {
+                sourceTransaction = pi.latest_charge;
+             }
+          }
+
+          const transferPayload = {
             amount: Math.round(release.amount * 100),
             currency: "usd",
             destination: manufacturer.stripeConnectAccountId,
             transfer_group: order._id.toString(),
-          });
+          };
+
+          if (sourceTransaction) {
+            transferPayload.source_transaction = sourceTransaction;
+          }
+
+          const transfer = await stripe.transfers.create(transferPayload);
+          
           release.transferId = transfer.id;
           release.payoutMethod = "stripe_connect";
         } catch (stripeErr) {
