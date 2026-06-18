@@ -56,7 +56,7 @@ export async function POST(request) {
     const tempSupabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
-      { auth: { persistSession: false } }
+      { auth: { persistSession: false } },
     );
 
     const { data: supabaseData, error: signInError } =
@@ -118,7 +118,7 @@ export async function POST(request) {
       const { error: otpVerifyError } = await tempSupabase.auth.verifyOtp({
         email,
         token: twoFactorCode,
-        type: "magiclink",
+        type: "email",
       });
 
       if (otpVerifyError) {
