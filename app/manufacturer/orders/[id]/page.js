@@ -21,7 +21,7 @@ import Link from "next/link";
 import GlobalLoader from "@/components/ui/GlobalLoader";
 import ChatBox from "@/components/chat/ChatBox";
 import { CARRIER_NAMES } from "@/lib/carriers";
-import Editor3DWrapper from "@/modules/components/Editor3DWrapper";
+import ModelViewerPreview from "@/modules/components/ModelViewerPreview";
 import { formatPKR } from "@/lib/currency";
 
 const STATUS_COLORS = {
@@ -525,11 +525,10 @@ export default function ManufacturerOrderDetailPage() {
                 </div>
                 
                 <div className="rounded-3xl overflow-hidden border border-white/10 bg-black/40">
-                  <Editor3DWrapper
+                  <ModelViewerPreview
                     modelUrl={orderModel3D.url}
-                    initialAnnotations={orderModel3D.annotations}
-                    initialCameraState={orderModel3D.cameraState}
-                    readOnly={true}
+                    annotations={orderModel3D.annotations}
+                    height="400px"
                   />
                 </div>
                 
@@ -731,11 +730,10 @@ export default function ManufacturerOrderDetailPage() {
                       </div>
                     )}
                     <button
-                      onClick={handleStartProduction}
-                      disabled={actionLoading}
-                      className="w-full py-3.5 bg-purple-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:bg-purple-500 hover:scale-[1.02] transition-all disabled:opacity-50"
+                      onClick={() => setShowAcceptModal(true)}
+                      className="w-full py-3.5 bg-green-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_rgba(22,163,74,0.3)] hover:bg-green-500 hover:scale-[1.02] transition-all"
                     >
-                      {actionLoading ? "Processing..." : "Start Production"}
+                      Accept Order
                     </button>
                     {cancellationWindowOpen && (
                       <button

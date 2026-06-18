@@ -250,7 +250,12 @@ export default function MilestonesManagementPage() {
             </div>
           )}
 
-          {order.milestones?.map((m, i) => (
+          {order.milestones?.map((m, i) => {
+            const allPreviousCompleted = i === 0 || order.milestones.slice(0, i).every(prev => prev.status === "completed");
+            const isAnyInProgress = order.milestones.some(milestone => milestone.status === "in_progress");
+            const canStart = m.status === "pending" && !isAnyInProgress && allPreviousCompleted;
+            
+            return (
             <div
               key={m._id || i}
               className={`bg-white/[0.03] rounded-[2rem] border transition-all duration-300 group overflow-hidden ${
@@ -332,8 +337,9 @@ export default function MilestonesManagementPage() {
                           {m.status === "pending" && (
                             <button
                               onClick={() => updateMilestone(m._id, "in_progress")}
-                              disabled={saving}
-                              className="flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl hover:scale-105 transition-all shadow-[0_0_20px_rgba(147,51,234,0.3)]"
+                              disabled={saving || !canStart}
+                              title={!canStart ? "Complete previous stages first" : ""}
+                              className={`flex items-center gap-2 px-6 py-2.5 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-xl transition-all shadow-[0_0_20px_rgba(147,51,234,0.3)] ${!canStart ? 'opacity-50 cursor-not-allowed grayscale' : 'hover:scale-105'}`}
                             >
                               <span className="material-symbols-outlined text-[16px]">play_arrow</span>
                               Start Stage
@@ -356,7 +362,7 @@ export default function MilestonesManagementPage() {
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
 
         {/* Add Milestone Form */}

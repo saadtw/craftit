@@ -65,7 +65,7 @@ export async function PUT(request, context) {
 
     // Valid transitions — includes "shipped" between in_production and completed
     const validTransitions = {
-      confirmed: ["in_production", "cancelled"],
+      confirmed: ["accepted", "in_production", "cancelled"],
       accepted: ["in_production", "cancelled"],
       in_production: ["shipped", "cancelled"],
       shipped: ["delivered", "completed"],
@@ -106,9 +106,39 @@ export async function PUT(request, context) {
         }
       }
 
-      // Payment capture is deferred to the in_production transition where
-      // proper escrow records are created. No capture here.
+      // Place off-session authorization hold upon acceptance
+      if (stripe && order.paymentStatus === "pending" && order.paymentMethod === "card") {
+        try {
+          const User = (await import("@/models/User")).default;
+          const customer = await User.findById(order.customerId).lean();
+          const savedCard = customer?.paymentMethods?.find(m => m.provider === "stripe");
+          
+          if (!savedCard || !savedCard.stripePaymentMethodId || !customer.stripeCustomerId) {
+            throw new Error("Customer does not have a valid saved card for automatic payment.");
+          }
 
+          const paymentIntent = await stripe.paymentIntents.create({
+            amount: Math.round(order.totalPrice * 100),
+            currency: "usd",
+            customer: customer.stripeCustomerId,
+            payment_method: savedCard.stripePaymentMethodId,
+            off_session: true,
+            confirm: true,
+            capture_method: "manual", // Place an authorization hold
+            metadata: {
+              orderId: String(order._id),
+              orderNumber: order.orderNumber,
+              type: "product"
+            }
+          });
+
+          order.paymentIntentId = paymentIntent.id;
+          order.paymentStatus = "authorized";
+        } catch (stripeErr) {
+          console.error("Off-session payment hold failed:", stripeErr.message);
+          throw new Error("Failed to hold funds on customer's saved card: " + stripeErr.message);
+        }
+      }
       await notify.orderAccepted(
         order.customerId,
         order._id,
