@@ -63,23 +63,37 @@ export async function PATCH(request, context) {
           });
           release.transferId = transfer.id;
           release.payoutMethod = "stripe_connect";
-          order.paymentStatus = "released";
-          await EscrowTransaction.create({
-            orderId: order._id,
-            customerId: order.customerId,
-            manufacturerId: order.manufacturerId,
-            amount: release.amount,
-            type: "released",
-            reference: transfer.id,
-          });
         } catch (stripeErr) {
           console.error("Stripe transfer failed:", stripeErr);
           release.payoutMethod = "manual";
-          order.paymentStatus = "release_requested";
         }
       } else {
         release.payoutMethod = "manual";
-        order.paymentStatus = "release_requested";
+      }
+
+      await EscrowTransaction.create({
+        orderId: order._id,
+        customerId: order.customerId,
+        manufacturerId: order.manufacturerId,
+        amount: release.amount,
+        type: "released",
+        reference: release.transferId || "manual_payout_pending",
+      });
+
+      // Calculate total released including this one
+      const previousReleases = await PaymentReleaseRequest.find({ 
+        orderId: order._id, 
+        status: "approved" 
+      });
+      const totalReleasedBefore = previousReleases.reduce((sum, r) => sum + r.amount, 0);
+      const totalReleasedNow = totalReleasedBefore + release.amount;
+
+      if (totalReleasedNow >= order.totalPrice) {
+        order.paymentStatus = "released";
+      } else {
+        if (order.paymentStatus === "release_requested") {
+           order.paymentStatus = "captured";
+        }
       }
 
       release.status = "approved";

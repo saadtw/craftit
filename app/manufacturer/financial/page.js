@@ -42,17 +42,15 @@ export default function ManufacturerFinancialPage() {
     }
   }, [status, session, router, fetchOrders]);
 
-  const completedOrders = orders.filter((o) => o.status === "completed");
-  const pendingPaymentOrders = orders.filter(
-    (o) =>
-      ["accepted", "in_production", "shipped"].includes(o.status) &&
-      o.paymentStatus === "captured",
+  const releasedOrders = orders.filter((o) => o.paymentStatus === "released");
+  const pendingPaymentOrders = orders.filter((o) =>
+    ["captured", "authorized", "held_in_escrow", "release_requested"].includes(o.paymentStatus)
   );
   const refundedOrders = orders.filter((o) =>
-    ["refunded", "partially_refunded"].includes(o.paymentStatus),
+    ["refunded", "partially_refunded"].includes(o.paymentStatus)
   );
 
-  const totalRevenue = completedOrders.reduce(
+  const totalRevenue = releasedOrders.reduce(
     (s, o) => s + (o.totalPrice || 0),
     0,
   );
@@ -68,8 +66,8 @@ export default function ManufacturerFinancialPage() {
   const filteredOrders =
     filter === "all"
       ? orders
-      : filter === "completed"
-        ? completedOrders
+      : filter === "released"
+        ? releasedOrders
         : filter === "pending"
           ? pendingPaymentOrders
           : filter === "refunded"
@@ -77,8 +75,11 @@ export default function ManufacturerFinancialPage() {
             : orders;
 
   const PAYMENT_COLORS = {
+    released: "bg-purple-500/10 border-purple-500/20 text-purple-400",
     captured: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
+    held_in_escrow: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
     authorized: "bg-[#eb9728]/10 border-[#eb9728]/20 text-[#eb9728]",
+    release_requested: "bg-blue-500/10 border-blue-500/20 text-blue-400",
     pending: "bg-white/5 border-white/10 text-white/40",
     refunded: "bg-red-500/10 border-red-500/20 text-red-400",
     partially_refunded: "bg-orange-500/10 border-orange-500/20 text-orange-400",
@@ -115,7 +116,7 @@ export default function ManufacturerFinancialPage() {
               {formatPKR(totalRevenue)}
             </p>
             <p className="text-xs text-white/20 mt-1.5 font-medium">
-              {completedOrders.length} completed orders
+              {releasedOrders.length} fully paid orders
             </p>
           </div>
         </div>
@@ -173,7 +174,7 @@ export default function ManufacturerFinancialPage() {
           <div className="flex gap-2 flex-wrap">
             {[
               { key: "all", label: "All" },
-              { key: "completed", label: "Released" },
+              { key: "released", label: "Released" },
               { key: "pending", label: "Pending" },
               { key: "refunded", label: "Refunded" },
             ].map((f) => (
