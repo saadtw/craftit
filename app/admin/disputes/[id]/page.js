@@ -13,6 +13,7 @@ import sellerIcon from "@/assets/Seller.png";
 import documentIcon from "@/assets/document.png";
 import ChatBox from "@/components/chat/ChatBox";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 export default function AdminDisputeDetailPage() {
   const { data: session, status } = useSession();
@@ -324,7 +325,7 @@ export default function AdminDisputeDetailPage() {
               {dispute.resolutionAmount > 0 && (
                  <div className="bg-black/20 rounded-2xl p-4 border border-emerald-500/10">
                   <p className="text-emerald-500/50 text-[10px] font-black uppercase tracking-widest mb-1">Refund Amount</p>
-                  <p className="text-emerald-400 text-sm font-bold">${dispute.resolutionAmount}</p>
+                  <p className="text-emerald-400 text-sm font-bold">{formatPKR(dispute.resolutionAmount)}</p>
                 </div>
               )}
             </div>
@@ -424,16 +425,16 @@ export default function AdminDisputeDetailPage() {
               {(resolution === "refund_customer" || resolution === "partial_resolution") && (
                 <div>
                   <label className="text-white/40 text-[10px] font-black uppercase tracking-widest block mb-3">
-                    Refund Amount (USD)
+                    Refund Amount (PKR)
                   </label>
                   <div className="relative">
-                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/30 font-bold">$</span>
+                    <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/30 text-xs font-bold">PKR</span>
                     <input
                       type="number"
                       value={refundAmount}
                       onChange={(e) => setRefundAmount(e.target.value)}
                       placeholder="0.00"
-                      className="w-full bg-black/40 border border-white/10 text-white font-bold rounded-2xl pl-10 pr-5 py-4 text-sm focus:border-purple-500 focus:bg-black/60 focus:outline-none transition-all"
+                      className="w-full bg-black/40 border border-white/10 text-white font-bold rounded-2xl pl-16 pr-5 py-4 text-sm focus:border-purple-500 focus:bg-black/60 focus:outline-none transition-all"
                     />
                   </div>
                 </div>

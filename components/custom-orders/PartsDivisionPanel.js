@@ -304,8 +304,8 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
             <div>
               <p className="text-xs font-bold text-red-400">Budget Warning</p>
               <p className="text-[11px] text-red-400/80">
-                Total parts budget (${totalPartsBudget}) exceeds the
-                order&apos;s overall budget (${customOrder.budget}).
+                Total parts budget ({formatPKR(totalPartsBudget)}) exceeds the
+                order&apos;s overall budget ({formatPKR(customOrder.budget)}).
               </p>
             </div>
           </div>
@@ -583,7 +583,7 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
               </div>
               <div>
                 <label className="block text-[10px] font-bold uppercase text-white/40 mb-1">
-                  Budget ($)
+                  Budget (PKR)
                 </label>
                 <input
                   type="number"

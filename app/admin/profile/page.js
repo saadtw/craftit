@@ -4,7 +4,7 @@ import GlobalLoader from "@/components/ui/GlobalLoader";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
-import { FiLock, FiShield } from "react-icons/fi";
+import { FiLock, FiShield, FiEye, FiEyeOff } from "react-icons/fi";
 
 export default function AdminProfilePage() {
   const { data: session, status } = useSession();
@@ -21,6 +21,9 @@ export default function AdminProfilePage() {
   const [pwLoading, setPwLoading] = useState(false);
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
 
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [twoFactorLoading, setTwoFactorLoading] = useState(true);
@@ -226,7 +229,7 @@ export default function AdminProfilePage() {
                     <div className="flex-1">
                       <p className="text-white text-sm font-bold tracking-wide">Email-based 2FA</p>
                       <p className="text-slate-400 text-xs mt-1.5 leading-relaxed">
-                        A 6-digit code will be sent to {session?.user?.email} during login.
+                        A 8-digit code will be sent to {session?.user?.email} during login.
                       </p>
                     </div>
                   </div>
@@ -268,19 +271,28 @@ export default function AdminProfilePage() {
                     <label className="text-slate-400 text-[9px] font-black uppercase tracking-widest block mb-2">
                       Current Password
                     </label>
-                    <input
-                      type="password"
-                      value={passwordForm.currentPassword}
-                      onChange={(e) =>
-                        setPasswordForm({
-                          ...passwordForm,
-                          currentPassword: e.target.value,
-                        })
-                      }
-                      placeholder="••••••••"
-                      className="w-full bg-white/[0.02] border border-white/10 text-white rounded-xl px-4 py-3 text-sm font-medium tracking-wide placeholder-slate-600 hover:border-purple-400/50 hover:bg-white/[0.04] focus:border-purple-500 focus:bg-white/[0.06] focus:outline-none transition-all"
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        type={showCurrent ? "text" : "password"}
+                        value={passwordForm.currentPassword}
+                        onChange={(e) =>
+                          setPasswordForm({
+                            ...passwordForm,
+                            currentPassword: e.target.value,
+                          })
+                        }
+                        placeholder="••••••••"
+                        className="w-full bg-white/[0.02] border border-white/10 text-white rounded-xl pl-4 pr-12 py-3 text-sm font-medium tracking-wide placeholder-slate-600 hover:border-purple-400/50 hover:bg-white/[0.04] focus:border-purple-500 focus:bg-white/[0.06] focus:outline-none transition-all"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowCurrent(!showCurrent)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 focus:outline-none transition-colors"
+                      >
+                        {showCurrent ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                 )}
 
@@ -289,36 +301,54 @@ export default function AdminProfilePage() {
                     <label className="text-slate-400 text-[9px] font-black uppercase tracking-widest block mb-2">
                       {hasLocalPassword ? "New Password" : "Password"}
                     </label>
-                    <input
-                      type="password"
-                      value={passwordForm.newPassword}
-                      onChange={(e) =>
-                        setPasswordForm({
-                          ...passwordForm,
-                          newPassword: e.target.value,
-                        })
-                      }
-                      placeholder="••••••••"
-                      className="w-full bg-white/[0.02] border border-white/10 text-white rounded-xl px-4 py-3 text-sm font-medium tracking-wide placeholder-slate-600 hover:border-purple-400/50 hover:bg-white/[0.04] focus:border-purple-500 focus:bg-white/[0.06] focus:outline-none transition-all"
-                    />
+                    <div className="relative">
+                      <input
+                        type={showNew ? "text" : "password"}
+                        value={passwordForm.newPassword}
+                        onChange={(e) =>
+                          setPasswordForm({
+                            ...passwordForm,
+                            newPassword: e.target.value,
+                          })
+                        }
+                        placeholder="••••••••"
+                        className="w-full bg-white/[0.02] border border-white/10 text-white rounded-xl pl-4 pr-12 py-3 text-sm font-medium tracking-wide placeholder-slate-600 hover:border-purple-400/50 hover:bg-white/[0.04] focus:border-purple-500 focus:bg-white/[0.06] focus:outline-none transition-all"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowNew(!showNew)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 focus:outline-none transition-colors"
+                      >
+                        {showNew ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                   <div>
                     <label className="text-slate-400 text-[9px] font-black uppercase tracking-widest block mb-2">
                       Confirm {hasLocalPassword ? "New " : ""}Password
                     </label>
-                    <input
-                      type="password"
-                      value={passwordForm.confirmPassword}
-                      onChange={(e) =>
-                        setPasswordForm({
-                          ...passwordForm,
-                          confirmPassword: e.target.value,
-                        })
-                      }
-                      placeholder="••••••••"
-                      className="w-full bg-white/[0.02] border border-white/10 text-white rounded-xl px-4 py-3 text-sm font-medium tracking-wide placeholder-slate-600 hover:border-purple-400/50 hover:bg-white/[0.04] focus:border-purple-500 focus:bg-white/[0.06] focus:outline-none transition-all"
-                      required
-                    />
+                    <div className="relative">
+                      <input
+                        type={showConfirm ? "text" : "password"}
+                        value={passwordForm.confirmPassword}
+                        onChange={(e) =>
+                          setPasswordForm({
+                            ...passwordForm,
+                            confirmPassword: e.target.value,
+                          })
+                        }
+                        placeholder="••••••••"
+                        className="w-full bg-white/[0.02] border border-white/10 text-white rounded-xl pl-4 pr-12 py-3 text-sm font-medium tracking-wide placeholder-slate-600 hover:border-purple-400/50 hover:bg-white/[0.04] focus:border-purple-500 focus:bg-white/[0.06] focus:outline-none transition-all"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowConfirm(!showConfirm)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 focus:outline-none transition-colors"
+                      >
+                        {showConfirm ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+                      </button>
+                    </div>
                   </div>
                 </div>
 

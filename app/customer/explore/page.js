@@ -222,7 +222,7 @@ export default function CustomerExplorePage() {
 
                 <div>
                   <label className="block text-[11px] font-bold text-white/35 uppercase tracking-[0.2em] mb-2">
-                    Min Price ($)
+                    Min Price (PKR)
                   </label>
                   <input
                     type="number"
@@ -236,7 +236,7 @@ export default function CustomerExplorePage() {
 
                 <div>
                   <label className="block text-[11px] font-bold text-white/35 uppercase tracking-[0.2em] mb-2">
-                    Max Price ($)
+                    Max Price (PKR)
                   </label>
                   <input
                     type="number"
@@ -269,7 +269,7 @@ export default function CustomerExplorePage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div className="text-sm text-white/45">
             {loading ? (
-              <GlobalLoader text="Loading..." />
+              "Loading products..."
             ) : (
               `${pagination.total} product${pagination.total !== 1 ? "s" : ""} found`
             )}
@@ -286,21 +286,7 @@ export default function CustomerExplorePage() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div
-                key={i}
-                className="rounded-[24px] border border-white/8 bg-[#0c0c11] overflow-hidden animate-pulse"
-              >
-                <div className="h-52 bg-white/[0.04]" />
-                <div className="p-5 space-y-3">
-                  <div className="h-4 bg-white/[0.06] rounded w-3/4" />
-                  <div className="h-3 bg-white/[0.06] rounded w-1/2" />
-                  <div className="h-4 bg-white/[0.06] rounded w-1/3" />
-                </div>
-              </div>
-            ))}
-          </div>
+          <GlobalLoader text="Loading products..." />
         ) : products.length === 0 ? (
           <div className="rounded-[28px] border border-white/8 bg-[#0c0c11] p-12 text-center">
             <div className="mx-auto h-20 w-20 rounded-3xl border border-[#eb9728]/20 bg-[#eb9728]/10 text-[#eb9728] flex items-center justify-center">

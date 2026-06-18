@@ -164,7 +164,6 @@ function ProfileTab({ user, onRefresh }) {
       {/* Avatar preview */}
       <Section
         title="Profile Picture"
-        desc="Your avatar uses your name initial for now."
       >
         <div className="flex items-center gap-5">
           <div className="w-16 h-16 rounded-full bg-[#eb9728] flex items-center justify-center text-black font-extrabold text-xl shrink-0">
@@ -180,9 +179,7 @@ function ProfileTab({ user, onRefresh }) {
               {form.name || "Your Name"}
             </p>
             <p className="text-xs text-white/35">{user?.email}</p>
-            <p className="text-xs text-white/25 mt-1">
-              Profile photo upload coming soon.
-            </p>
+
           </div>
         </div>
       </Section>
@@ -312,6 +309,9 @@ function SecurityTab({ user }) {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [twoFactorLoading, setTwoFactorLoading] = useState(true);
   const [twoFactorSaving, setTwoFactorSaving] = useState(false);
@@ -432,37 +432,73 @@ function SecurityTab({ user }) {
           {hasLocalPassword && (
             <div>
               <Label>Current Password</Label>
-              <Input
-                type="password"
-                value={form.currentPassword}
-                onChange={(e) => set("currentPassword", e.target.value)}
-                placeholder="Your current password"
-                required
-                autoComplete="current-password"
-              />
+              <div className="relative">
+                <Input
+                  type={showCurrent ? "text" : "password"}
+                  value={form.currentPassword}
+                  onChange={(e) => set("currentPassword", e.target.value)}
+                  placeholder="Your current password"
+                  required
+                  autoComplete="current-password"
+                  className="pr-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrent(!showCurrent)}
+                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 focus:outline-none transition-colors"
+                >
+                  <span className="material-symbols-outlined text-lg">
+                    {showCurrent ? "visibility_off" : "visibility"}
+                  </span>
+                </button>
+              </div>
             </div>
           )}
           <div>
             <Label>{hasLocalPassword ? "New Password" : "Password"}</Label>
-            <Input
-              type="password"
-              value={form.newPassword}
-              onChange={(e) => set("newPassword", e.target.value)}
-              placeholder="At least 8 characters"
-              required
-              autoComplete="new-password"
-            />
+            <div className="relative">
+              <Input
+                type={showNew ? "text" : "password"}
+                value={form.newPassword}
+                onChange={(e) => set("newPassword", e.target.value)}
+                placeholder="At least 8 characters"
+                required
+                autoComplete="new-password"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowNew(!showNew)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 focus:outline-none transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {showNew ? "visibility_off" : "visibility"}
+                </span>
+              </button>
+            </div>
           </div>
           <div>
             <Label>Confirm {hasLocalPassword ? "New " : ""}Password</Label>
-            <Input
-              type="password"
-              value={form.confirmPassword}
-              onChange={(e) => set("confirmPassword", e.target.value)}
-              placeholder="Repeat password"
-              required
-              autoComplete="new-password"
-            />
+            <div className="relative">
+              <Input
+                type={showConfirm ? "text" : "password"}
+                value={form.confirmPassword}
+                onChange={(e) => set("confirmPassword", e.target.value)}
+                placeholder="Repeat password"
+                required
+                autoComplete="new-password"
+                className="pr-10"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm(!showConfirm)}
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 focus:outline-none transition-colors"
+              >
+                <span className="material-symbols-outlined text-lg">
+                  {showConfirm ? "visibility_off" : "visibility"}
+                </span>
+              </button>
+            </div>
           </div>
           <div className="flex justify-end pt-1">
             <SaveButton loading={loading} saved={saved}>
@@ -488,7 +524,7 @@ function SecurityTab({ user }) {
                 Email-based 2FA
               </p>
               <p className="text-xs text-white/35 mt-0.5">
-                A 6-digit code will be sent to {user?.email} during login.
+                A 8-digit code will be sent to {user?.email} during login.
               </p>
             </div>
             <button
@@ -653,25 +689,7 @@ function CustomerSettingsPageContent() {
 
   return (
     <div className="min-h-screen bg-[#050507] text-white">
-      {/* Header */}
-      <header className="sticky top-0 z-10 flex items-center justify-between h-16 px-6 sm:px-8 bg-[#050507]/80 backdrop-blur-sm border-b border-white/8">
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => router.back()}
-            className="inline-flex items-center gap-1.5 text-sm text-white/40 hover:text-[#eb9728] transition-colors"
-          >
-            <span className="material-symbols-outlined text-base">
-              arrow_back
-            </span>
-            Back
-          </button>
-          <span className="text-white/15">|</span>
-          <h1 className="text-sm font-bold text-white/70">Settings</h1>
-        </div>
-        <div className="w-9 h-9 bg-[#eb9728] rounded-full flex items-center justify-center text-black font-bold text-sm shrink-0">
-          {initials}
-        </div>
-      </header>
+
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-6">
         {fetchError && <Alert type="error" message={fetchError} />}

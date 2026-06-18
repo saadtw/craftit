@@ -554,10 +554,10 @@ function BusinessProfileTab({ user, onRefresh }) {
       <Section title="Project Scale & Standards">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-8">
           <div>
-            <Label>Min Project Threshold (USD)</Label>
+            <Label>Min Project Threshold (PKR)</Label>
             <div className="relative">
-              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-sm font-black">
-                $
+              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-xs font-black">
+                PKR
               </span>
               <Input
                 value={form.budgetRange.min}
@@ -565,15 +565,15 @@ function BusinessProfileTab({ user, onRefresh }) {
                 placeholder="500"
                 type="number"
                 min={0}
-                className="pl-10"
+                className="pl-16"
               />
             </div>
           </div>
           <div>
-            <Label>Max Project Capacity (USD)</Label>
+            <Label>Max Project Capacity (PKR)</Label>
             <div className="relative">
-              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-sm font-black">
-                $
+              <span className="absolute left-5 top-1/2 -translate-y-1/2 text-white/20 text-xs font-black">
+                PKR
               </span>
               <Input
                 value={form.budgetRange.max}
@@ -581,7 +581,7 @@ function BusinessProfileTab({ user, onRefresh }) {
                 placeholder="50000"
                 type="number"
                 min={0}
-                className="pl-10"
+                className="pl-16"
               />
             </div>
           </div>
@@ -621,6 +621,9 @@ function SecurityTab({ user }) {
   const [loading, setLoading] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
+  const [showCurrent, setShowCurrent] = useState(false);
+  const [showNew, setShowNew] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
   
   const [twoFactorEnabled, setTwoFactorEnabled] = useState(false);
   const [twoFactorLoading, setTwoFactorLoading] = useState(true);
@@ -735,14 +738,26 @@ function SecurityTab({ user }) {
             {hasLocalPassword && (
               <div>
                 <Label>Verify Identity (Current Password)</Label>
-                <Input
-                  type="password"
-                  value={form.currentPassword}
-                  onChange={(e) => set("currentPassword", e.target.value)}
-                  placeholder="••••••••••••"
-                  required
-                  autoComplete="current-password"
-                />
+                <div className="relative">
+                  <Input
+                    type={showCurrent ? "text" : "password"}
+                    value={form.currentPassword}
+                    onChange={(e) => set("currentPassword", e.target.value)}
+                    placeholder="••••••••••••"
+                    required
+                    autoComplete="current-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowCurrent(!showCurrent)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 focus:outline-none transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      {showCurrent ? "visibility_off" : "visibility"}
+                    </span>
+                  </button>
+                </div>
               </div>
             )}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-4 border-t border-white/5">
@@ -750,25 +765,49 @@ function SecurityTab({ user }) {
                 <Label>
                   {hasLocalPassword ? "New Security Key" : "Security Key"}
                 </Label>
-                <Input
-                  type="password"
-                  value={form.newPassword}
-                  onChange={(e) => set("newPassword", e.target.value)}
-                  placeholder="Min. 8 characters"
-                  required
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <Input
+                    type={showNew ? "text" : "password"}
+                    value={form.newPassword}
+                    onChange={(e) => set("newPassword", e.target.value)}
+                    placeholder="Min. 8 characters"
+                    required
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowNew(!showNew)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 focus:outline-none transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      {showNew ? "visibility_off" : "visibility"}
+                    </span>
+                  </button>
+                </div>
               </div>
               <div>
                 <Label>Re-verify Security Key</Label>
-                <Input
-                  type="password"
-                  value={form.confirmPassword}
-                  onChange={(e) => set("confirmPassword", e.target.value)}
-                  placeholder="Repeat security key"
-                  required
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <Input
+                    type={showConfirm ? "text" : "password"}
+                    value={form.confirmPassword}
+                    onChange={(e) => set("confirmPassword", e.target.value)}
+                    placeholder="Repeat security key"
+                    required
+                    autoComplete="new-password"
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-3.5 top-1/2 -translate-y-1/2 text-white/30 hover:text-white/60 focus:outline-none transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-lg">
+                      {showConfirm ? "visibility_off" : "visibility"}
+                    </span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -787,7 +826,7 @@ function SecurityTab({ user }) {
           <div className="flex items-center justify-between gap-4">
             <div>
               <p className="text-[12px] font-black uppercase tracking-widest text-white/80">Email-based 2FA</p>
-              <p className="text-[10px] text-white/40 mt-1 uppercase tracking-widest">A 6-digit code will be sent to {user?.email}</p>
+              <p className="text-[10px] text-white/40 mt-1 uppercase tracking-widest">A 8-digit code will be sent to {user?.email}</p>
             </div>
             <button
               type="button"

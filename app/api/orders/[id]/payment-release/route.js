@@ -61,7 +61,7 @@ export async function POST(request, context) {
     if (amount > availableAmount) {
       return NextResponse.json(
         {
-          error: `Amount exceeds available balance. Max available: $${availableAmount}`,
+          error: `Amount exceeds available balance. Max available: PKR ${availableAmount}`,
         },
         { status: 400 }
       );

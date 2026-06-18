@@ -987,11 +987,11 @@ export default function ManufacturerOrderDetailPage() {
       {/* Accept Modal */}
       {showAcceptModal && (
         <Modal title="Accept Order" onClose={() => setShowAcceptModal(false)}>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-white/60 mb-4">
             Set an estimated delivery date for{" "}
             <strong>{order.orderNumber}</strong>.
           </p>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-white/70 mb-1">
             Estimated Delivery Date
           </label>
           <input
@@ -1000,7 +1000,7 @@ export default function ManufacturerOrderDetailPage() {
             onChange={(e) =>
               setAcceptForm({ estimatedDeliveryDate: e.target.value })
             }
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:border-orange-400"
+            className="w-full bg-[#050507] border border-white/10 rounded-lg px-3 py-2 text-sm text-white mb-4 focus:outline-none focus:border-purple-500 [color-scheme:dark]"
           />
           <div className="flex gap-3">
             <button
@@ -1016,7 +1016,7 @@ export default function ManufacturerOrderDetailPage() {
             </button>
             <button
               onClick={() => setShowAcceptModal(false)}
-              className="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200"
+              className="flex-1 py-2 bg-white/5 border border-white/10 text-white/60 font-bold rounded-lg hover:bg-white/10 hover:text-white"
             >
               Cancel
             </button>
@@ -1027,11 +1027,11 @@ export default function ManufacturerOrderDetailPage() {
       {/* Reject Modal */}
       {showRejectModal && (
         <Modal title="Reject Order" onClose={() => setShowRejectModal(false)}>
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-white/60 mb-4">
             The customer will be notified. A full refund will be issued
             automatically.
           </p>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-white/70 mb-1">
             Reason (optional)
           </label>
           <textarea
@@ -1039,7 +1039,7 @@ export default function ManufacturerOrderDetailPage() {
             onChange={(e) => setRejectForm({ reason: e.target.value })}
             rows={3}
             placeholder="e.g. Unable to meet required timeline..."
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 focus:outline-none focus:border-red-400"
+            className="w-full bg-[#050507] border border-white/10 rounded-lg px-3 py-2 text-sm text-white mb-4 focus:outline-none focus:border-red-400 resize-none"
           />
           <div className="flex gap-3">
             <button
@@ -1055,7 +1055,7 @@ export default function ManufacturerOrderDetailPage() {
             </button>
             <button
               onClick={() => setShowRejectModal(false)}
-              className="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200"
+              className="flex-1 py-2 bg-white/5 border border-white/10 text-white/60 font-bold rounded-lg hover:bg-white/10 hover:text-white"
             >
               Cancel
             </button>
@@ -1125,13 +1125,13 @@ export default function ManufacturerOrderDetailPage() {
           title="Approve Cancellation Request"
           onClose={() => setShowCancelConfirmModal(false)}
         >
-          <p className="text-sm text-gray-600 mb-2">
+          <p className="text-sm text-white/60 mb-2">
             Approving this request will cancel the order and issue a full
             refund.
           </p>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3 my-4">
-            <p className="text-sm text-yellow-800 font-medium">Important</p>
-            <ul className="text-xs text-yellow-700 mt-2 space-y-1 list-disc list-inside">
+          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3 my-4">
+            <p className="text-sm text-amber-400 font-medium">Important</p>
+            <ul className="text-xs text-white/60 mt-2 space-y-1 list-disc list-inside">
               <li>The customer receives a full refund</li>
               <li>The order will be permanently cancelled</li>
               <li>Payment for this order will not be released</li>
@@ -1147,7 +1147,7 @@ export default function ManufacturerOrderDetailPage() {
             </button>
             <button
               onClick={() => setShowCancelConfirmModal(false)}
-              className="flex-1 py-2 bg-gray-100 text-gray-700 font-bold rounded-lg hover:bg-gray-200"
+              className="flex-1 py-2 bg-white/5 border border-white/10 text-white/60 font-bold rounded-lg hover:bg-white/10 hover:text-white"
             >
               Go Back
             </button>
@@ -1160,10 +1160,10 @@ export default function ManufacturerOrderDetailPage() {
           title="Decline Cancellation Request"
           onClose={() => setShowCancelRejectModal(false)}
         >
-          <p className="text-sm text-gray-600 mb-4">
+          <p className="text-sm text-white/60 mb-4">
             Provide a reason. This will be shared with the customer.
           </p>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-white/70 mb-1">
             Reason *
           </label>
           <textarea
@@ -1171,7 +1171,7 @@ export default function ManufacturerOrderDetailPage() {
             onChange={(e) => setCancelRejectReason(e.target.value)}
             rows={4}
             placeholder="E.g. production already started and materials are consumed"
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4 resize-none focus:outline-none focus:border-orange-400"
+            className="w-full bg-[#050507] border border-white/10 rounded-lg px-3 py-2 text-sm text-white mb-4 resize-none focus:outline-none focus:border-purple-500"
           />
           <div className="flex flex-col gap-3">
             <button

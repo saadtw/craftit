@@ -193,12 +193,7 @@ export default function ManufacturerFinancialPage() {
         </div>
 
         {filteredOrders.length === 0 ? (
-          <div className="text-center py-20 px-6">
-            <div className="h-16 w-16 rounded-2xl bg-white/[0.04] border border-white/8 flex items-center justify-center mx-auto mb-4">
-              <span className="material-symbols-outlined text-4xl text-white/15">
-                payments
-              </span>
-            </div>
+          <div className="text-center py-16">
             <GlobalNoResults text="No transactions found" />
           </div>
         ) : (

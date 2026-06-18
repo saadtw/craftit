@@ -7,6 +7,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import CustomerMainNavbar from "@/components/CustomerMainNavbar";
 import { useToast } from "@/components/ui/ToastProvider";
+import { formatPKR } from "@/lib/currency";
 
 export default function CreateRFQ() {
   const router = useRouter();
@@ -282,7 +283,7 @@ export default function CreateRFQ() {
               {
                 label: "Budget",
                 value: customOrder.budget
-                  ? `$${customOrder.budget}`
+                  ? formatPKR(customOrder.budget)
                   : "Not specified",
                 icon: "payments",
               },
@@ -335,7 +336,7 @@ export default function CreateRFQ() {
               </div>
 
               <div>
-                <label className={labelClass}>Min Bid Threshold ($)</label>
+                <label className={labelClass}>Min Bid Threshold (PKR)</label>
                 <input
                   type="number"
                   value={formData.minBidThreshold}
