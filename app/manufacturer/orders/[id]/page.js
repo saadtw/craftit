@@ -3,17 +3,17 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { 
-  HiOutlineCube, 
-  HiOutlineCurrencyDollar, 
-  HiOutlineHashtag, 
-  HiOutlineClock, 
-  HiOutlineCreditCard, 
+import {
+  HiOutlineCube,
+  HiOutlineCurrencyDollar,
+  HiOutlineHashtag,
+  HiOutlineClock,
+  HiOutlineCreditCard,
   HiOutlineTruck,
   HiOutlineChevronLeft,
   HiOutlineArrowUpRight,
   HiOutlineChatBubbleLeftRight,
-  HiOutlineMap
+  HiOutlineMap,
 } from "react-icons/hi2";
 import { useSession } from "next-auth/react";
 import { useToast } from "@/components/ui/ToastProvider";
@@ -62,10 +62,14 @@ export default function ManufacturerOrderDetailPage() {
   const [showCancelConfirmModal, setShowCancelConfirmModal] = useState(false);
   const [showCancelRejectModal, setShowCancelRejectModal] = useState(false);
   const [showPaymentReleaseModal, setShowPaymentReleaseModal] = useState(false);
-  const [showManufacturerCancelModal, setShowManufacturerCancelModal] = useState(false);
+  const [showManufacturerCancelModal, setShowManufacturerCancelModal] =
+    useState(false);
 
   const [acceptForm, setAcceptForm] = useState({ estimatedDeliveryDate: "" });
-  const [paymentReleaseForm, setPaymentReleaseForm] = useState({ amount: "", reason: "" });
+  const [paymentReleaseForm, setPaymentReleaseForm] = useState({
+    amount: "",
+    reason: "",
+  });
   const [rejectForm, setRejectForm] = useState({ reason: "" });
   const [shipForm, setShipForm] = useState({
     trackingNumber: "",
@@ -88,8 +92,7 @@ export default function ManufacturerOrderDetailPage() {
         setOrder(data.order);
         setPaymentReleases(data.paymentReleases || []);
         setPaymentSchedule(data.paymentSchedule || null);
-      }
-      else toast.error(data.error || "Failed to load order");
+      } else toast.error(data.error || "Failed to load order");
     } catch (err) {
       console.error(err);
     } finally {
@@ -229,7 +232,9 @@ export default function ManufacturerOrderDetailPage() {
 
   const handleRejectCancellation = async () => {
     if (!cancelRejectReason.trim()) {
-      toast.error("Please provide a reason for rejecting the cancellation request.");
+      toast.error(
+        "Please provide a reason for rejecting the cancellation request.",
+      );
       return;
     }
 
@@ -267,7 +272,10 @@ export default function ManufacturerOrderDetailPage() {
       const res = await fetch(`/api/orders/${id}/payment-release`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ amount: Number(paymentReleaseForm.amount), reason: paymentReleaseForm.reason }),
+        body: JSON.stringify({
+          amount: Number(paymentReleaseForm.amount),
+          reason: paymentReleaseForm.reason,
+        }),
       });
       const data = await res.json();
       if (data.success) {
@@ -389,12 +397,13 @@ export default function ManufacturerOrderDetailPage() {
           <div className="h-6 w-px bg-white/10" />
           <h1 className="text-xl font-black tracking-tighter uppercase font-mono">
             <span
-              style={{ 
-                background: 'linear-gradient(to right, #9333ea, #f97316, #fbbf24, #ffffff)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                display: 'inline-block'
+              style={{
+                background:
+                  "linear-gradient(to right, #9333ea, #f97316, #fbbf24, #ffffff)",
+                WebkitBackgroundClip: "text",
+                WebkitTextFillColor: "transparent",
+                backgroundClip: "text",
+                display: "inline-block",
               }}
             >
               {order.orderNumber}
@@ -403,7 +412,9 @@ export default function ManufacturerOrderDetailPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <span className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${STATUS_COLORS[order.status]}`}>
+          <span
+            className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${STATUS_COLORS[order.status]}`}
+          >
             {order.status.replace(/_/g, " ")}
           </span>
         </div>
@@ -416,12 +427,12 @@ export default function ManufacturerOrderDetailPage() {
             {/* Order Summary */}
             <div className="bg-white/[0.03] border-2 border-purple-500/40 rounded-[2.5rem] p-8 backdrop-blur-md relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-64 h-64 blur-[120px] bg-purple-500/5 group-hover:bg-purple-500/10 transition-all duration-700" />
-              
+
               <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/80 mb-6 flex items-center gap-3">
                 <span className="w-8 h-[2px] bg-purple-500/40" />
                 Order Summary
               </h2>
-              
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-10 text-[11px] font-black tracking-widest uppercase relative z-10">
                 <div className="group/item">
                   <div className="flex items-center gap-3 mb-2 text-white/60 group-hover/item:text-purple-400 transition-colors">
@@ -446,14 +457,18 @@ export default function ManufacturerOrderDetailPage() {
                     <HiOutlineHashtag className="w-4 h-4" />
                     <p className="tracking-[0.2em]">Quantity</p>
                   </div>
-                  <p className="text-white text-base pl-7">{order.quantity} units</p>
+                  <p className="text-white text-base pl-7">
+                    {order.quantity} units
+                  </p>
                 </div>
                 <div className="group/item">
                   <div className="flex items-center gap-3 mb-2 text-white/60 group-hover/item:text-purple-400 transition-colors">
                     <HiOutlineClock className="w-4 h-4" />
                     <p className="tracking-[0.2em]">Timeline</p>
                   </div>
-                  <p className="text-white text-base pl-7">{order.timeline ? `${order.timeline} days` : "—"}</p>
+                  <p className="text-white text-base pl-7">
+                    {order.timeline ? `${order.timeline} days` : "—"}
+                  </p>
                 </div>
                 <div className="group/item">
                   <div className="flex items-center gap-3 mb-2 text-white/60 group-hover/item:text-purple-400 transition-colors">
@@ -473,7 +488,9 @@ export default function ManufacturerOrderDetailPage() {
                       <p className="tracking-[0.2em]">Est. Delivery</p>
                     </div>
                     <p className="text-white text-base pl-7">
-                      {new Date(order.estimatedDeliveryDate).toLocaleDateString()}
+                      {new Date(
+                        order.estimatedDeliveryDate,
+                      ).toLocaleDateString()}
                     </p>
                   </div>
                 )}
@@ -519,11 +536,13 @@ export default function ManufacturerOrderDetailPage() {
                     download
                     className="flex items-center gap-2 px-4 py-1.5 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-white/40 hover:bg-white/10 hover:text-white transition-all"
                   >
-                    <span className="material-symbols-outlined text-[16px]">download</span>
+                    <span className="material-symbols-outlined text-[16px]">
+                      download
+                    </span>
                     Download
                   </a>
                 </div>
-                
+
                 <div className="rounded-3xl overflow-hidden border border-white/10 bg-black/40">
                   <ModelViewerPreview
                     modelUrl={orderModel3D.url}
@@ -531,9 +550,11 @@ export default function ManufacturerOrderDetailPage() {
                     height="400px"
                   />
                 </div>
-                
+
                 <div className="mt-4 flex items-center gap-3 p-4 bg-white/[0.02] border border-white/5 rounded-2xl">
-                  <span className="material-symbols-outlined text-white/20">deployed_code</span>
+                  <span className="material-symbols-outlined text-white/20">
+                    deployed_code
+                  </span>
                   <p className="text-[11px] font-black uppercase tracking-widest text-white/40 truncate">
                     {orderModel3D.filename || "order_model_specification.glb"}
                   </p>
@@ -550,20 +571,35 @@ export default function ManufacturerOrderDetailPage() {
                 </h2>
                 <div className="text-sm text-white/60 space-y-2 leading-relaxed">
                   <p className="font-black text-white text-lg tracking-tight mb-2">
-                    {order.deliveryAddress.recipientName || order.deliveryAddress.name}
+                    {order.deliveryAddress.recipientName ||
+                      order.deliveryAddress.name}
                   </p>
                   <div className="flex items-start gap-3">
-                    <span className="material-symbols-outlined text-[18px] text-white/20 mt-1">location_on</span>
+                    <span className="material-symbols-outlined text-[18px] text-white/20 mt-1">
+                      location_on
+                    </span>
                     <div>
                       <p>{order.deliveryAddress.street}</p>
-                      <p>{order.deliveryAddress.city}, {order.deliveryAddress.state} {order.deliveryAddress.postalCode}</p>
-                      <p className="font-black text-[10px] uppercase tracking-widest text-white/30 mt-1">{order.deliveryAddress.country}</p>
+                      <p>
+                        {order.deliveryAddress.city},{" "}
+                        {order.deliveryAddress.state}{" "}
+                        {order.deliveryAddress.postalCode}
+                      </p>
+                      <p className="font-black text-[10px] uppercase tracking-widest text-white/30 mt-1">
+                        {order.deliveryAddress.country}
+                      </p>
                     </div>
                   </div>
-                  {(order.deliveryAddress.recipientPhone || order.deliveryAddress.phone) && (
+                  {(order.deliveryAddress.recipientPhone ||
+                    order.deliveryAddress.phone) && (
                     <div className="flex items-center gap-3 pt-2 text-white/40">
-                      <span className="material-symbols-outlined text-[18px]">phone</span>
-                      <p className="font-mono">{order.deliveryAddress.recipientPhone || order.deliveryAddress.phone}</p>
+                      <span className="material-symbols-outlined text-[18px]">
+                        phone
+                      </span>
+                      <p className="font-mono">
+                        {order.deliveryAddress.recipientPhone ||
+                          order.deliveryAddress.phone}
+                      </p>
                     </div>
                   )}
                 </div>
@@ -577,14 +613,15 @@ export default function ManufacturerOrderDetailPage() {
                   <span className="w-8 h-[2px] bg-purple-500/30" />
                   Production Roadmap
                 </h2>
-                {["accepted", "in_production"].includes(order.status) && !hasPendingCancellationRequest && (
-                  <Link
-                    href={`/manufacturer/orders/${id}/milestones`}
-                    className="px-4 py-1.5 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_15px_rgba(147,51,234,0.3)] hover:scale-105 transition-all"
-                  >
-                    MANAGE ROADMAP
-                  </Link>
-                )}
+                {["accepted", "in_production"].includes(order.status) &&
+                  !hasPendingCancellationRequest && (
+                    <Link
+                      href={`/manufacturer/orders/${id}/milestones`}
+                      className="px-4 py-1.5 bg-purple-600 text-white text-[10px] font-black uppercase tracking-widest rounded-full shadow-[0_0_15px_rgba(147,51,234,0.3)] hover:scale-105 transition-all"
+                    >
+                      MANAGE ROADMAP
+                    </Link>
+                  )}
               </div>
 
               {totalMilestones > 0 && (
@@ -594,7 +631,10 @@ export default function ManufacturerOrderDetailPage() {
                       <span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse" />
                       ROADMAP PROGRESS
                     </span>
-                    <span>{completedMilestones}/{totalMilestones} COMPLETED · {progressPercent}%</span>
+                    <span>
+                      {completedMilestones}/{totalMilestones} COMPLETED ·{" "}
+                      {progressPercent}%
+                    </span>
                   </div>
                   <div className="w-full bg-white/5 border border-white/5 rounded-full h-1.5 overflow-hidden">
                     <div
@@ -607,8 +647,12 @@ export default function ManufacturerOrderDetailPage() {
 
               {order.milestones?.length === 0 ? (
                 <div className="text-center py-12 bg-white/[0.02] border border-white/5 border-dashed rounded-[2rem]">
-                  <span className="material-symbols-outlined text-4xl text-white/5 mb-3">route</span>
-                  <p className="text-[10px] font-black uppercase tracking-widest text-white/20">No roadmap defined yet.</p>
+                  <span className="material-symbols-outlined text-4xl text-white/5 mb-3">
+                    route
+                  </span>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-white/20">
+                    No roadmap defined yet.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
@@ -619,15 +663,17 @@ export default function ManufacturerOrderDetailPage() {
                     >
                       <div
                         className={`w-10 h-10 rounded-xl flex items-center justify-center text-sm font-black shrink-0 transition-all ${
-                          m.status === "completed" 
-                            ? "bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]" 
-                            : m.status === "in_progress" 
-                              ? "bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]" 
+                          m.status === "completed"
+                            ? "bg-emerald-500 text-white shadow-[0_0_15px_rgba(16,185,129,0.3)]"
+                            : m.status === "in_progress"
+                              ? "bg-blue-500 text-white shadow-[0_0_15px_rgba(59,130,246,0.3)]"
                               : "bg-white/5 text-white/20 border border-purple-500/20"
                         }`}
                       >
                         {m.status === "completed" ? (
-                          <span className="material-symbols-outlined text-[20px]">check</span>
+                          <span className="material-symbols-outlined text-[20px]">
+                            check
+                          </span>
                         ) : (
                           <span>{i + 1}</span>
                         )}
@@ -644,29 +690,61 @@ export default function ManufacturerOrderDetailPage() {
                       </div>
                       <div className="flex items-center gap-3">
                         <div className="flex flex-col items-end gap-1">
-                          <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${MILESTONE_STATUS_COLORS[m.status]}`}>
+                          <span
+                            className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest border ${MILESTONE_STATUS_COLORS[m.status]}`}
+                          >
                             {m.status.replace("_", " ")}
                           </span>
                           {m.status === "completed" && m.customerStatus && (
-                            <span className={`text-[8px] font-black uppercase tracking-wider ${
-                              m.customerStatus === "confirmed" ? "text-emerald-400" :
-                              m.customerStatus === "disputed" ? "text-red-400" : "text-blue-400"
-                            }`}>
+                            <span
+                              className={`text-[8px] font-black uppercase tracking-wider ${
+                                m.customerStatus === "confirmed"
+                                  ? "text-emerald-400"
+                                  : m.customerStatus === "disputed"
+                                    ? "text-red-400"
+                                    : "text-blue-400"
+                              }`}
+                            >
                               {m.customerStatus.replace("_", " ")}
                             </span>
                           )}
                         </div>
-                        {["accepted", "in_production"].includes(order.status) && !hasPendingCancellationRequest && m.status !== "completed" && (
-                          <select
-                            defaultValue=""
-                            onChange={(e) => { if (e.target.value) updateMilestone(m._id, e.target.value); }}
-                            className="bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-white/60 rounded-lg px-2 py-1 focus:outline-none focus:border-purple-500/50 transition-all"
-                          >
-                            <option value="" disabled className="bg-[#0a0a0c]">ACTION</option>
-                            {m.status === "pending" && <option value="in_progress" className="bg-[#0a0a0c]">START</option>}
-                            {m.status === "in_progress" && <option value="completed" className="bg-[#0a0a0c]">COMPLETE</option>}
-                          </select>
-                        )}
+                        {["accepted", "in_production"].includes(order.status) &&
+                          !hasPendingCancellationRequest &&
+                          m.status !== "completed" && (
+                            <select
+                              defaultValue=""
+                              onChange={(e) => {
+                                if (e.target.value)
+                                  updateMilestone(m._id, e.target.value);
+                              }}
+                              className="bg-white/5 border border-white/10 text-[9px] font-black uppercase tracking-widest text-white/60 rounded-lg px-2 py-1 focus:outline-none focus:border-purple-500/50 transition-all"
+                            >
+                              <option
+                                value=""
+                                disabled
+                                className="bg-[#0a0a0c]"
+                              >
+                                ACTION
+                              </option>
+                              {m.status === "pending" && (
+                                <option
+                                  value="in_progress"
+                                  className="bg-[#0a0a0c]"
+                                >
+                                  START
+                                </option>
+                              )}
+                              {m.status === "in_progress" && (
+                                <option
+                                  value="completed"
+                                  className="bg-[#0a0a0c]"
+                                >
+                                  COMPLETE
+                                </option>
+                              )}
+                            </select>
+                          )}
                       </div>
                     </div>
                   ))}
@@ -678,21 +756,25 @@ export default function ManufacturerOrderDetailPage() {
             {order.bidId && (
               <div className="bg-white/[0.03] border-2 border-purple-500/40 rounded-[2.5rem] p-8 backdrop-blur-md relative overflow-hidden group">
                 <div className="absolute top-0 right-0 w-32 h-32 blur-[80px] bg-amber-500/5 group-hover:bg-amber-500/10 transition-all duration-700" />
-                
+
                 <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/80 mb-8 flex items-center gap-3">
                   <span className="w-8 h-[2px] bg-amber-500/40" />
                   Your Bid Details
                 </h2>
-                
+
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 text-[11px] font-black tracking-widest uppercase relative z-10">
                   <div className="group/item">
-                    <p className="text-white/40 mb-2 tracking-[0.2em]">Bid Amount</p>
+                    <p className="text-white/40 mb-2 tracking-[0.2em]">
+                      Bid Amount
+                    </p>
                     <p className="text-3xl font-black text-white tracking-tighter">
                       {formatPKR(order.bidId?.amount)}
                     </p>
                   </div>
                   <div className="group/item">
-                    <p className="text-white/40 mb-2 tracking-[0.2em]">Proposed Timeline</p>
+                    <p className="text-white/40 mb-2 tracking-[0.2em]">
+                      Proposed Timeline
+                    </p>
                     <p className="text-white text-base">
                       {order.bidId?.timeline} days
                     </p>
@@ -701,7 +783,9 @@ export default function ManufacturerOrderDetailPage() {
 
                 {order.bidId?.materialsDescription && (
                   <div className="mt-8 pt-8 border-t border-white/5 relative z-10">
-                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20 mb-3">Materials Specification</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/20 mb-3">
+                      Materials Specification
+                    </p>
                     <p className="text-white/60 text-sm leading-relaxed normal-case font-medium">
                       {order.bidId.materialsDescription}
                     </p>
@@ -719,13 +803,14 @@ export default function ManufacturerOrderDetailPage() {
                 <span className="w-8 h-[2px] bg-purple-500/30" />
                 Management Actions
               </h2>
-              
+
               <div className="space-y-4">
                 {order.status === "confirmed" && (
                   <div className="grid grid-cols-1 gap-3">
                     {cancellationWindowExpiresAt && (
                       <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-4 text-xs font-bold text-amber-300">
-                        Cancellation window {cancellationWindowOpen ? "closes" : "closed"}{" "}
+                        Cancellation window{" "}
+                        {cancellationWindowOpen ? "closes" : "closed"}{" "}
                         {cancellationWindowExpiresAt.toLocaleString()}.
                       </div>
                     )}
@@ -747,7 +832,8 @@ export default function ManufacturerOrderDetailPage() {
                 )}
                 {order.status === "cancellation_requested" && (
                   <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4 text-xs text-red-300">
-                    Cancellation was requested. The customer can choose an alternative bid from the RFQ.
+                    Cancellation was requested. The customer can choose an
+                    alternative bid from the RFQ.
                   </div>
                 )}
                 {order.status === "accepted" && (
@@ -756,14 +842,17 @@ export default function ManufacturerOrderDetailPage() {
                       <div className="bg-red-500/10 border-2 border-red-500/30 rounded-3xl p-6 mb-4 animate-pulse-subtle">
                         <div className="flex items-start gap-4 mb-6">
                           <div className="w-10 h-10 bg-red-500 rounded-2xl flex items-center justify-center text-white shrink-0 shadow-[0_0_15px_rgba(239,68,68,0.3)]">
-                            <span className="material-symbols-outlined">warning</span>
+                            <span className="material-symbols-outlined">
+                              warning
+                            </span>
                           </div>
                           <div>
                             <p className="text-sm font-black text-red-400 uppercase tracking-widest">
                               Cancellation Requested
                             </p>
                             <p className="text-xs text-white/40 mt-1 leading-relaxed">
-                              The customer has requested to cancel this order. Please review and respond.
+                              The customer has requested to cancel this order.
+                              Please review and respond.
                             </p>
                             {order.cancellationReason && (
                               <div className="mt-4 p-3 bg-black/20 rounded-xl border border-white/5 italic text-xs text-white/60">
@@ -789,13 +878,44 @@ export default function ManufacturerOrderDetailPage() {
                       </div>
                     )}
 
+                    {order.paymentStatus === "authorized" && (
+                      <div className="bg-[#eb9728]/10 border border-[#eb9728]/30 rounded-2xl p-5 mb-4">
+                        <div className="flex items-start gap-4">
+                          <div className="w-10 h-10 bg-[#eb9728] rounded-xl flex items-center justify-center text-white shrink-0 shadow-[0_0_15px_rgba(235,151,40,0.3)]">
+                            <span className="material-symbols-outlined">
+                              lock
+                            </span>
+                          </div>
+                          <div>
+                            <p className="text-[10px] font-black text-[#eb9728] uppercase tracking-widest mt-1">
+                              Payment Held Securely
+                            </p>
+                            <p className="text-xs text-white/60 mt-1.5 leading-relaxed font-medium">
+                              The customer&apos;s funds have been authorized and
+                              are held by Stripe. Click{" "}
+                              <strong>Start Production</strong> or begin a
+                              milestone to capture the payment into escrow.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     {!hasPendingCancellationRequest && (
                       <div className="grid grid-cols-1 gap-3">
+                        <button
+                          onClick={() => updateStatus("in_production")}
+                          className="w-full py-3.5 bg-blue-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:bg-blue-500 hover:scale-[1.02] transition-all"
+                        >
+                          Start Production
+                        </button>
                         <Link
                           href={`/manufacturer/orders/${id}/milestones`}
                           className="flex items-center justify-center gap-2 w-full py-3.5 bg-purple-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:scale-[1.02] transition-all"
                         >
-                          <span className="material-symbols-outlined text-[18px]">route</span>
+                          <span className="material-symbols-outlined text-[18px]">
+                            route
+                          </span>
                           Update Milestones
                         </Link>
                         <button
@@ -816,7 +936,9 @@ export default function ManufacturerOrderDetailPage() {
                           href={`/manufacturer/orders/${id}/milestones`}
                           className="flex items-center justify-center gap-2 w-full py-3.5 bg-purple-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:scale-[1.02] transition-all"
                         >
-                          <span className="material-symbols-outlined text-[18px]">checklist</span>
+                          <span className="material-symbols-outlined text-[18px]">
+                            checklist
+                          </span>
                           Milestone Status
                         </Link>
                         <button
@@ -839,7 +961,13 @@ export default function ManufacturerOrderDetailPage() {
                     </button>
                   </div>
                 )}
-                {["accepted", "in_production", "shipped", "delivered", "completed"].includes(order.status) && (
+                {[
+                  "accepted",
+                  "in_production",
+                  "shipped",
+                  "delivered",
+                  "completed",
+                ].includes(order.status) && (
                   <button
                     onClick={() => setShowPaymentReleaseModal(true)}
                     className="w-full py-3.5 mt-3 bg-[#eb9728]/10 text-[#eb9728] text-[11px] font-black uppercase tracking-widest rounded-2xl border border-[#eb9728]/30 shadow-[0_0_20px_rgba(235,151,40,0.1)] hover:bg-[#eb9728]/20 transition-all"
@@ -847,10 +975,16 @@ export default function ManufacturerOrderDetailPage() {
                     Request Payment Release
                   </button>
                 )}
-                {["completed", "cancelled", "disputed"].includes(order.status) && (
+                {["completed", "cancelled", "disputed"].includes(
+                  order.status,
+                ) && (
                   <div className="text-center py-8 bg-white/[0.02] border border-white/5 rounded-[2rem]">
-                    <span className="material-symbols-outlined text-white/5 text-4xl mb-2">lock</span>
-                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">Archived Record</p>
+                    <span className="material-symbols-outlined text-white/5 text-4xl mb-2">
+                      lock
+                    </span>
+                    <p className="text-[10px] font-black uppercase tracking-widest text-white/20">
+                      Archived Record
+                    </p>
                   </div>
                 )}
               </div>
@@ -880,16 +1014,16 @@ export default function ManufacturerOrderDetailPage() {
             {/* Order Timeline */}
             <div className="bg-white/[0.03] border-2 border-purple-500/40 rounded-[2.5rem] p-8 backdrop-blur-md relative overflow-hidden group">
               <div className="absolute top-0 right-0 w-32 h-32 blur-[80px] bg-blue-500/5 group-hover:bg-blue-500/10 transition-all duration-700" />
-              
+
               <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/80 mb-10 flex items-center gap-3">
                 <span className="w-8 h-[2px] bg-blue-500/40" />
                 Activity Timeline
               </h2>
-              
+
               <div className="space-y-10 relative before:absolute before:left-[15px] before:top-2 before:bottom-2 before:w-[2px] before:bg-white/5">
-                <TimelineItem 
-                  label="Order Placed" 
-                  date={order.createdAt} 
+                <TimelineItem
+                  label="Order Placed"
+                  date={order.createdAt}
                   icon="shopping_bag"
                 />
                 {order.manufacturerAcceptedAt && (
@@ -900,16 +1034,16 @@ export default function ManufacturerOrderDetailPage() {
                   />
                 )}
                 {order.trackingNumber && order.status === "shipped" && (
-                  <TimelineItem 
-                    label="Shipped" 
-                    date={order.updatedAt} 
+                  <TimelineItem
+                    label="Shipped"
+                    date={order.updatedAt}
                     icon="local_shipping"
                   />
                 )}
                 {order.completedAt && (
-                  <TimelineItem 
-                    label="Completed" 
-                    date={order.completedAt} 
+                  <TimelineItem
+                    label="Completed"
+                    date={order.completedAt}
                     icon="verified"
                   />
                 )}
@@ -928,7 +1062,10 @@ export default function ManufacturerOrderDetailPage() {
 
         {/* Chat */}
         {order.status !== "cancelled" && (
-          <div className="mt-8 bg-white/[0.03] border border-white/5 rounded-[2.5rem] overflow-hidden backdrop-blur-md" id="chat">
+          <div
+            className="mt-8 bg-white/[0.03] border border-white/5 rounded-[2.5rem] overflow-hidden backdrop-blur-md"
+            id="chat"
+          >
             <div className="px-8 py-5 border-b border-white/5 bg-white/[0.02] flex items-center justify-between">
               <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 flex items-center gap-3">
                 <span className="w-8 h-[2px] bg-purple-500/30" />
@@ -936,7 +1073,9 @@ export default function ManufacturerOrderDetailPage() {
               </h2>
               <div className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-white/30">Live Messenger</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-white/30">
+                  Live Messenger
+                </span>
               </div>
             </div>
             <div className="h-[600px] p-2 bg-[#0a0a0c]/40">
@@ -962,18 +1101,29 @@ export default function ManufacturerOrderDetailPage() {
               Payment Release Requests
             </h2>
             <div className="space-y-4">
-              {paymentReleases.map(pr => (
-                <div key={pr._id} className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+              {paymentReleases.map((pr) => (
+                <div
+                  key={pr._id}
+                  className="p-4 rounded-2xl bg-white/[0.02] border border-white/5 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
+                >
                   <div>
-                    <p className="text-sm font-bold text-white mb-1">{formatPKR(pr.amount)}</p>
+                    <p className="text-sm font-bold text-white mb-1">
+                      {formatPKR(pr.amount)}
+                    </p>
                     <p className="text-xs text-white/60 mb-2">{pr.reason}</p>
-                    <span className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-full border ${pr.status === 'approved' || pr.status === 'auto_approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30' : pr.status === 'rejected' ? 'bg-red-500/10 text-red-400 border-red-500/30' : 'bg-[#eb9728]/10 text-[#eb9728] border-[#eb9728]/30'}`}>
+                    <span
+                      className={`px-2 py-0.5 text-[9px] font-black uppercase tracking-widest rounded-full border ${pr.status === "approved" || pr.status === "auto_approved" ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30" : pr.status === "rejected" ? "bg-red-500/10 text-red-400 border-red-500/30" : "bg-[#eb9728]/10 text-[#eb9728] border-[#eb9728]/30"}`}
+                    >
                       {pr.status.replace("_", " ")}
                     </span>
                   </div>
                   <div className="text-[9px] font-black uppercase tracking-widest text-white/40 text-right">
                     <p>{new Date(pr.createdAt).toLocaleDateString()}</p>
-                    {pr.status === "pending" && <p className="mt-1 text-[#eb9728]">Expires: {new Date(pr.expiresAt).toLocaleDateString()}</p>}
+                    {pr.status === "pending" && (
+                      <p className="mt-1 text-[#eb9728]">
+                        Expires: {new Date(pr.expiresAt).toLocaleDateString()}
+                      </p>
+                    )}
                   </div>
                 </div>
               ))}
@@ -1066,54 +1216,137 @@ export default function ManufacturerOrderDetailPage() {
         <Modal title="Mark as Shipped" onClose={() => setShowShipModal(false)}>
           <div className="space-y-6">
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Carrier *</label>
-              <CustomDropdown value={shipForm.shippingMethod} onChange={(val) => setShipForm(p => ({ ...p, shippingMethod: val }))} options={[{ value: "", label: "Select carrier..." }, ...CARRIER_NAMES.map(c => ({ value: c, label: c }))]} placeholder="Select carrier..." />
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">
+                Carrier *
+              </label>
+              <CustomDropdown
+                value={shipForm.shippingMethod}
+                onChange={(val) =>
+                  setShipForm((p) => ({ ...p, shippingMethod: val }))
+                }
+                options={[
+                  { value: "", label: "Select carrier..." },
+                  ...CARRIER_NAMES.map((c) => ({ value: c, label: c })),
+                ]}
+                placeholder="Select carrier..."
+              />
             </div>
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Tracking Number *</label>
-              <input type="text" value={shipForm.trackingNumber} onChange={(e) => setShipForm((p) => ({ ...p, trackingNumber: e.target.value }))} placeholder="e.g. 1Z999AA10123456784" className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10" />
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">
+                Tracking Number *
+              </label>
+              <input
+                type="text"
+                value={shipForm.trackingNumber}
+                onChange={(e) =>
+                  setShipForm((p) => ({ ...p, trackingNumber: e.target.value }))
+                }
+                placeholder="e.g. 1Z999AA10123456784"
+                className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10"
+              />
             </div>
           </div>
           <div className="flex gap-3 mt-8">
-            <button onClick={markAsShipped} disabled={actionLoading} className="flex-1 py-4 bg-indigo-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-500 disabled:opacity-50 transition-all">
+            <button
+              onClick={markAsShipped}
+              disabled={actionLoading}
+              className="flex-1 py-4 bg-indigo-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-indigo-500 disabled:opacity-50 transition-all"
+            >
               {actionLoading ? "Processing..." : "Ship Order"}
             </button>
-            <button onClick={() => setShowShipModal(false)} className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all">Cancel</button>
+            <button
+              onClick={() => setShowShipModal(false)}
+              className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all"
+            >
+              Cancel
+            </button>
           </div>
         </Modal>
       )}
 
       {/* Complete Modal */}
       {showCompleteModal && (
-        <Modal title="Mark as Completed" onClose={() => setShowCompleteModal(false)}>
-          <p className="text-[12px] text-white/60 mb-8 leading-relaxed">Confirm that order <strong>{order.orderNumber}</strong> has been delivered. Payment will be released to your account.</p>
+        <Modal
+          title="Mark as Completed"
+          onClose={() => setShowCompleteModal(false)}
+        >
+          <p className="text-[12px] text-white/60 mb-8 leading-relaxed">
+            Confirm that order <strong>{order.orderNumber}</strong> has been
+            delivered. Payment will be released to your account.
+          </p>
           <div className="flex gap-3">
-            <button onClick={() => updateStatus("completed")} disabled={actionLoading} className="flex-1 py-4 bg-emerald-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-500 disabled:opacity-50 transition-all">
+            <button
+              onClick={() => updateStatus("completed")}
+              disabled={actionLoading}
+              className="flex-1 py-4 bg-emerald-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-emerald-500 disabled:opacity-50 transition-all"
+            >
               {actionLoading ? "Processing..." : "Complete Order"}
             </button>
-            <button onClick={() => setShowCompleteModal(false)} className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all">Cancel</button>
+            <button
+              onClick={() => setShowCompleteModal(false)}
+              className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all"
+            >
+              Cancel
+            </button>
           </div>
         </Modal>
       )}
 
       {/* Tracking update modal */}
       {showTrackingModal && (
-        <Modal title="Update Tracking" onClose={() => setShowTrackingModal(false)}>
+        <Modal
+          title="Update Tracking"
+          onClose={() => setShowTrackingModal(false)}
+        >
           <div className="space-y-6">
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Carrier</label>
-              <CustomDropdown value={trackingForm.shippingMethod} onChange={(val) => setTrackingForm(p => ({ ...p, shippingMethod: val }))} options={[{ value: "", label: "Select carrier..." }, ...CARRIER_NAMES.map(c => ({ value: c, label: c }))]} placeholder="Select carrier..." />
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">
+                Carrier
+              </label>
+              <CustomDropdown
+                value={trackingForm.shippingMethod}
+                onChange={(val) =>
+                  setTrackingForm((p) => ({ ...p, shippingMethod: val }))
+                }
+                options={[
+                  { value: "", label: "Select carrier..." },
+                  ...CARRIER_NAMES.map((c) => ({ value: c, label: c })),
+                ]}
+                placeholder="Select carrier..."
+              />
             </div>
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Tracking Number</label>
-              <input type="text" value={trackingForm.trackingNumber} onChange={(e) => setTrackingForm((p) => ({ ...p, trackingNumber: e.target.value }))} placeholder="Enter number..." className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white" />
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">
+                Tracking Number
+              </label>
+              <input
+                type="text"
+                value={trackingForm.trackingNumber}
+                onChange={(e) =>
+                  setTrackingForm((p) => ({
+                    ...p,
+                    trackingNumber: e.target.value,
+                  }))
+                }
+                placeholder="Enter number..."
+                className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white"
+              />
             </div>
           </div>
           <div className="flex gap-3 mt-8">
-            <button onClick={saveTrackingInfo} disabled={actionLoading} className="flex-1 py-4 bg-purple-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-purple-500 disabled:opacity-50 transition-all">
+            <button
+              onClick={saveTrackingInfo}
+              disabled={actionLoading}
+              className="flex-1 py-4 bg-purple-600 text-white text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-purple-500 disabled:opacity-50 transition-all"
+            >
               {actionLoading ? "Saving..." : "Update Info"}
             </button>
-            <button onClick={() => setShowTrackingModal(false)} className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all">Cancel</button>
+            <button
+              onClick={() => setShowTrackingModal(false)}
+              className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all"
+            >
+              Cancel
+            </button>
           </div>
         </Modal>
       )}
@@ -1234,22 +1467,62 @@ export default function ManufacturerOrderDetailPage() {
 
       {/* Payment Release Modal */}
       {showPaymentReleaseModal && (
-        <Modal title="Request Payment Release" onClose={() => setShowPaymentReleaseModal(false)}>
+        <Modal
+          title="Request Payment Release"
+          onClose={() => setShowPaymentReleaseModal(false)}
+        >
           <div className="space-y-6">
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Amount (PKR) *</label>
-              <input type="number" min="1" max={order.totalPrice} value={paymentReleaseForm.amount} onChange={(e) => setPaymentReleaseForm((p) => ({ ...p, amount: e.target.value }))} placeholder="e.g. 500" className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10" />
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">
+                Amount (PKR) *
+              </label>
+              <input
+                type="number"
+                min="1"
+                max={order.totalPrice}
+                value={paymentReleaseForm.amount}
+                onChange={(e) =>
+                  setPaymentReleaseForm((p) => ({
+                    ...p,
+                    amount: e.target.value,
+                  }))
+                }
+                placeholder="e.g. 500"
+                className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10"
+              />
             </div>
             <div>
-              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">Reason / Milestone *</label>
-              <textarea value={paymentReleaseForm.reason} onChange={(e) => setPaymentReleaseForm((p) => ({ ...p, reason: e.target.value }))} rows={3} placeholder="e.g. Completed initial prototyping phase" className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10 resize-none" />
+              <label className="block text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-2.5">
+                Reason / Milestone *
+              </label>
+              <textarea
+                value={paymentReleaseForm.reason}
+                onChange={(e) =>
+                  setPaymentReleaseForm((p) => ({
+                    ...p,
+                    reason: e.target.value,
+                  }))
+                }
+                rows={3}
+                placeholder="e.g. Completed initial prototyping phase"
+                className="w-full px-5 py-3.5 bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl focus:outline-none focus:border-purple-500/50 text-white placeholder:text-white/10 resize-none"
+              />
             </div>
           </div>
           <div className="flex gap-3 mt-8">
-            <button onClick={handleRequestPaymentRelease} disabled={actionLoading} className="flex-1 py-4 bg-[#eb9728] text-black text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#eb9728]/90 disabled:opacity-50 transition-all">
+            <button
+              onClick={handleRequestPaymentRelease}
+              disabled={actionLoading}
+              className="flex-1 py-4 bg-[#eb9728] text-black text-[11px] font-black uppercase tracking-widest rounded-2xl hover:bg-[#eb9728]/90 disabled:opacity-50 transition-all"
+            >
               {actionLoading ? "Processing..." : "Request Funds"}
             </button>
-            <button onClick={() => setShowPaymentReleaseModal(false)} className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all">Cancel</button>
+            <button
+              onClick={() => setShowPaymentReleaseModal(false)}
+              className="flex-1 py-4 bg-white/5 text-white/40 text-[11px] font-black uppercase tracking-widest rounded-2xl border border-white/5 hover:bg-white/10 hover:text-white transition-all"
+            >
+              Cancel
+            </button>
           </div>
         </Modal>
       )}
@@ -1260,11 +1533,12 @@ export default function ManufacturerOrderDetailPage() {
 function CustomDropdown({ value, options, onChange, placeholder }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
-  const selectedOption = options.find(opt => opt.value === value);
+  const selectedOption = options.find((opt) => opt.value === value);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) setIsOpen(false);
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target))
+        setIsOpen(false);
     };
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
@@ -1278,8 +1552,18 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
         className="flex items-center justify-between w-full px-5 py-3.5 text-[10px] font-black uppercase tracking-widest bg-white/[0.03] border-2 border-purple-500/20 rounded-2xl hover:bg-white/[0.08] transition-all text-white group"
       >
         <span className="truncate">{selectedOption?.label || placeholder}</span>
-        <svg className={`w-4 h-4 text-white/20 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        <svg
+          className={`w-4 h-4 text-white/20 transition-transform duration-300 ${isOpen ? "rotate-180" : ""}`}
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M19 9l-7 7-7-7"
+          />
         </svg>
       </button>
 
@@ -1295,7 +1579,9 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
                   setIsOpen(false);
                 }}
                 className={`w-full px-5 py-2.5 text-left text-[10px] font-black uppercase tracking-widest transition-all ${
-                  value === opt.value ? "bg-purple-600 text-white" : "text-white/60 hover:bg-white/5 hover:text-white"
+                  value === opt.value
+                    ? "bg-purple-600 text-white"
+                    : "text-white/60 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 {opt.label}
@@ -1311,7 +1597,10 @@ function CustomDropdown({ value, options, onChange, placeholder }) {
 function Modal({ title, onClose, children }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="fixed inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+      <div
+        className="fixed inset-0 bg-black/80 backdrop-blur-md"
+        onClick={onClose}
+      />
       <div className="bg-[#0a0a0c] border-2 border-white/10 rounded-[2.5rem] shadow-2xl w-full max-w-md relative z-50 overflow-hidden animate-in zoom-in-95 duration-200">
         <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-purple-600 via-orange-500 to-gold-400" />
         <div className="p-8">
@@ -1324,12 +1613,12 @@ function Modal({ title, onClose, children }) {
               onClick={onClose}
               className="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center text-white/20 hover:text-white hover:bg-white/10 transition-all"
             >
-              <span className="material-symbols-outlined text-[18px]">close</span>
+              <span className="material-symbols-outlined text-[18px]">
+                close
+              </span>
             </button>
           </div>
-          <div className="text-white">
-            {children}
-          </div>
+          <div className="text-white">{children}</div>
         </div>
       </div>
     </div>
@@ -1344,8 +1633,8 @@ function TimelineItem({ label, date, icon, error = false }) {
         {/* Outer Glow Ring */}
         <div
           className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500 ${
-            error 
-              ? "bg-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.3)] border border-red-500/40" 
+            error
+              ? "bg-red-500/20 shadow-[0_0_20px_rgba(239,68,68,0.3)] border border-red-500/40"
               : "bg-emerald-500/20 shadow-[0_0_20px_rgba(16,185,129,0.3)] border border-emerald-500/40"
           } group-hover/item:scale-110`}
         >
@@ -1364,19 +1653,23 @@ function TimelineItem({ label, date, icon, error = false }) {
 
       {/* Content */}
       <div className="pt-1">
-        <p className={`text-[10px] font-black uppercase tracking-[0.1em] ${error ? "text-red-400" : "text-white"} group-hover/item:translate-x-1 transition-transform duration-300`}>
+        <p
+          className={`text-[10px] font-black uppercase tracking-[0.1em] ${error ? "text-red-400" : "text-white"} group-hover/item:translate-x-1 transition-transform duration-300`}
+        >
           {label}
         </p>
         <div className="flex items-center gap-2 mt-1.5 opacity-60 group-hover:opacity-100 transition-opacity">
-          <span className="material-symbols-outlined text-[10px] text-blue-400">schedule</span>
+          <span className="material-symbols-outlined text-[10px] text-blue-400">
+            schedule
+          </span>
           <p className="text-[9px] font-black text-white/40 uppercase tracking-widest font-mono">
-            {new Date(date).toLocaleString('en-GB', { 
-              day: '2-digit', 
-              month: '2-digit', 
-              year: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              second: '2-digit'
+            {new Date(date).toLocaleString("en-GB", {
+              day: "2-digit",
+              month: "2-digit",
+              year: "numeric",
+              hour: "2-digit",
+              minute: "2-digit",
+              second: "2-digit",
             })}
           </p>
         </div>

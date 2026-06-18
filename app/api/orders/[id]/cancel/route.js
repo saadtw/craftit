@@ -13,7 +13,7 @@ try {
   if (process.env.STRIPE_SECRET_KEY) {
     const Stripe = (await import("stripe")).default;
     stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: "2024-06-20",
+      apiVersion: "2026-05-27.dahlia",
     });
   }
 } catch {

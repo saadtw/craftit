@@ -3,7 +3,20 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
+import EscrowTransaction from "@/models/EscrowTransaction";
 import { resolveRequestSession } from "@/lib/requestAuth";
+
+let stripe = null;
+try {
+  if (process.env.STRIPE_SECRET_KEY) {
+    const Stripe = (await import("stripe")).default;
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+      apiVersion: "2026-05-27.dahlia",
+    });
+  }
+} catch {
+  // Stripe not available
+}
 
 // GET  /api/orders/[id]/milestones - Get order milestones
 export async function GET(request, context) {
@@ -168,6 +181,32 @@ export async function PUT(request, context) {
       // Auto-advance order to in_production once any milestone becomes in_progress
       if (status === "in_progress" && order.status === "accepted") {
         order.status = "in_production";
+        if (stripe && order.paymentIntentId && order.paymentStatus === "authorized") {
+          try {
+            await stripe.paymentIntents.capture(order.paymentIntentId);
+            order.paymentStatus = "held_in_escrow";
+            await EscrowTransaction.create([
+              {
+                orderId: order._id,
+                customerId: order.customerId,
+                manufacturerId: order.manufacturerId,
+                amount: order.totalPrice,
+                type: "payment_received",
+                reference: order.paymentIntentId,
+              },
+              {
+                orderId: order._id,
+                customerId: order.customerId,
+                manufacturerId: order.manufacturerId,
+                amount: order.totalPrice,
+                type: "held",
+                reference: order.paymentIntentId,
+              },
+            ]);
+          } catch (stripeErr) {
+            console.error("Failed to capture payment during auto-advance:", stripeErr.message);
+          }
+        }
       }
     } else if (isCustomer) {
       if (customerStatus) {
