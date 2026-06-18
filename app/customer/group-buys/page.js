@@ -9,6 +9,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { fetchWithCache } from "@/lib/clientCache";
 import { formatPKR } from "@/lib/currency";
+import { CATEGORIES } from "@/lib/constants";
 
 function useCountdown(endDate) {
   const calc = useCallback(() => {
@@ -186,17 +187,7 @@ export default function CustomerGroupBuysPage() {
   const [category, setCategory] = useState("");
   const [pagination, setPagination] = useState({ page: 1, pages: 1, total: 0 });
 
-  const categories = [
-    "All",
-    "Electronics",
-    "Mechanical Parts",
-    "Plastics",
-    "Metal Fabrication",
-    "Woodwork",
-    "Textiles",
-    "3D Printed",
-    "Other",
-  ];
+  const categories = ["All", ...CATEGORIES];
 
   const fetchGroupBuys = useCallback(
     async (page = 1) => {

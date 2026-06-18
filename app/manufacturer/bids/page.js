@@ -10,6 +10,7 @@ import Link from "next/link";
 import Image from "next/image";
 import messageIcon from "@/assets/message.png";
 import { formatPKR } from "@/lib/currency";
+import { BID_STATUSES } from "@/lib/constants";
 import {
   Select,
   SelectContent,
@@ -24,10 +25,8 @@ export default function ManufacturerBidsPage() {
   const [bids, setBids] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
-    pending: false,
-    accepted: false,
-    rejected: false,
-    withdrawn: false,
+    ...BID_STATUSES.reduce((acc, status) => ({ ...acc, [status.value]: false }), {}),
+    search: "",
     dateFrom: "",
     dateTo: "",
   });
@@ -70,15 +69,21 @@ export default function ManufacturerBidsPage() {
 
         // Apply status filters
         let filteredBids = data.bids;
-        const activeStatuses = [];
-        if (filters.pending)
-          activeStatuses.push("pending", "under_consideration");
-        if (filters.accepted) activeStatuses.push("accepted");
-        if (filters.rejected) activeStatuses.push("rejected");
-        if (filters.withdrawn) activeStatuses.push("withdrawn");
+        const activeStatuses = BID_STATUSES.map((s) => s.value).filter((s) => filters[s]);
+        
         if (activeStatuses.length > 0) {
           filteredBids = filteredBids.filter((bid) =>
             activeStatuses.includes(bid.status),
+          );
+        }
+
+        // Apply search filter
+        if (filters.search) {
+          const q = filters.search.toLowerCase();
+          filteredBids = filteredBids.filter(
+            (bid) =>
+              (bid.rfqId?.customOrderId?.title || "").toLowerCase().includes(q) ||
+              (bid.rfqId?.rfqNumber || "").toLowerCase().includes(q)
           );
         }
 
@@ -190,24 +195,39 @@ export default function ManufacturerBidsPage() {
               <div className="space-y-5">
                 <div>
                   <label className="block text-[11px] font-black uppercase tracking-widest text-white/40 mb-3">
+                    Search
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Search title or ID..."
+                    value={localFilters.search}
+                    onChange={(e) => {
+                      setLocalFilters({ ...localFilters, search: e.target.value });
+                    }}
+                    className="w-full bg-white/5 border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:border-[#eb9728] focus:ring-[#eb9728] placeholder:text-white/20"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-black uppercase tracking-widest text-white/40 mb-3">
                     Status
                   </label>
                   <div className="space-y-3">
-                    {["pending", "accepted", "rejected", "withdrawn"].map((s) => (
-                      <label key={s} className="flex items-center gap-3 cursor-pointer group">
+                    {BID_STATUSES.map((s) => (
+                      <label key={s.value} className="flex items-center gap-3 cursor-pointer group">
                         <input
                           type="checkbox"
-                          checked={localFilters[s]}
+                          checked={localFilters[s.value]}
                           onChange={(e) => {
                             setLocalFilters({
                               ...localFilters,
-                              [s]: e.target.checked,
+                              [s.value]: e.target.checked,
                             });
                           }}
                           className="w-4 h-4 rounded bg-white/5 border-white/10 text-[#eb9728] focus:ring-[#eb9728]"
                         />
-                        <span className="text-sm text-white/60 group-hover:text-purple-400 transition-colors capitalize">
-                          {s === "pending" ? "Pending / Consideration" : s}
+                        <span className="text-sm text-white/60 group-hover:text-purple-400 transition-colors">
+                          {s.label}
                         </span>
                       </label>
                     ))}

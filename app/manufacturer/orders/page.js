@@ -11,26 +11,24 @@ import Link from "next/link";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
 import { useDialog } from "@/components/ui/DialogProvider";
+import { ORDER_STATUSES } from "@/lib/constants";
 
 const STATUS_COLORS = {
   confirmed: "bg-amber-500/10 border-amber-500/20 text-amber-400",
   cancellation_requested: "bg-red-500/10 border-red-500/20 text-red-400",
   accepted: "bg-blue-500/10 border-blue-500/20 text-blue-400",
   in_production: "bg-purple-500/10 border-purple-500/20 text-purple-400",
+  shipped: "bg-cyan-500/10 border-cyan-500/20 text-cyan-400",
+  delivered: "bg-teal-500/10 border-teal-500/20 text-teal-400",
   completed: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
   cancelled: "bg-red-500/10 border-red-500/20 text-red-400",
   disputed: "bg-orange-500/10 border-orange-500/20 text-orange-400",
 };
 
-const STATUS_LABELS = {
-  confirmed: "Confirmed",
-  cancellation_requested: "Cancellation Requested",
-  accepted: "Accepted",
-  in_production: "Production",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  disputed: "Disputed",
-};
+const STATUS_LABELS = ORDER_STATUSES.reduce((acc, curr) => {
+  acc[curr.value] = curr.label;
+  return acc;
+}, {});
 
 const TYPE_LABELS = {
   rfq: "RFQ",
@@ -40,11 +38,10 @@ const TYPE_LABELS = {
 
 const FILTER_TABS = [
   { key: "all", label: "All Orders" },
-  { key: "confirmed", label: "Confirmed" },
-  { key: "accepted", label: "Accepted" },
-  { key: "in_production", label: "In Production" },
-  { key: "completed", label: "Completed" },
-  { key: "cancelled", label: "Cancelled" },
+  ...ORDER_STATUSES.map(status => ({
+    key: status.value,
+    label: status.label,
+  }))
 ];
 
 export default function ManufacturerOrdersPage() {
@@ -232,12 +229,14 @@ export default function ManufacturerOrdersPage() {
 
       <div className="max-w-[1400px] mx-auto px-6 py-8 space-y-8">
         {/* Stats row - Thick Gradient Squares */}
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 py-2">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-3 py-2">
           {[
             { label: "TOTAL", value: stats.total || 0, color: "text-white" },
             { label: "CONFIRMED", value: stats.confirmed || 0, color: "text-amber-400" },
             { label: "ACCEPTED", value: stats.accepted || 0, color: "text-blue-400" },
             { label: "PRODUCTION", value: stats.in_production || 0, color: "text-purple-400" },
+            { label: "SHIPPED", value: stats.shipped || 0, color: "text-cyan-400" },
+            { label: "DELIVERED", value: stats.delivered || 0, color: "text-teal-400" },
             { label: "COMPLETED", value: stats.completed || 0, color: "text-emerald-400" },
             { label: "CANCELLED", value: stats.cancelled || 0, color: "text-red-400" },
           ].map((s) => (
@@ -292,7 +291,7 @@ export default function ManufacturerOrdersPage() {
             </div>
           </div>
 
-          <div className="flex gap-1 p-1 bg-white/[0.02] border border-white/20 rounded-2xl w-full">
+          <div className="flex gap-1 p-1 bg-white/[0.02] border border-white/20 rounded-2xl w-full flex-wrap overflow-hidden">
             {FILTER_TABS.map((tab) => {
               const count = tab.key === "all" ? stats.total : stats[tab.key];
               const isActive = activeFilter === tab.key;
@@ -300,7 +299,7 @@ export default function ManufacturerOrdersPage() {
                 <button
                   key={tab.key}
                   onClick={() => setActiveFilter(tab.key)}
-                  className={`flex-1 px-5 py-2 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl transition-all duration-300 ${
+                  className={`flex-auto px-4 py-2 text-[10px] font-black uppercase tracking-[0.15em] rounded-xl transition-all duration-300 ${
                     isActive
                       ? "bg-purple-600 text-white shadow-[0_0_15px_rgba(147,51,234,0.3)]"
                       : "text-white/60 hover:text-white hover:bg-white/5"

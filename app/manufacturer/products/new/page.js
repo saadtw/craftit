@@ -246,7 +246,11 @@ export default function NewProductPage() {
   const handleModelSnapshot = async (blob) => {
     if (!form.model3D || form.model3D.thumbnailUrl) return;
     try {
-      const file = new File([blob], `thumb_${form.model3D.filename || "model"}.png`, { type: "image/png" });
+      const file = new File(
+        [blob],
+        `thumb_${form.model3D.filename || "model"}.png`,
+        { type: "image/png" },
+      );
       const data = await uploadFileDirect(file, "image");
       setForm((prev) => ({
         ...prev,
@@ -647,7 +651,7 @@ export default function NewProductPage() {
                 </div>
               )}
 
-              {/* ΓöÇΓöÇ Step 2: Pricing & Inventory ΓöÇΓöÇ */}
+              {/* Step 2: Pricing & Inventory */}
               {step === 2 && (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   <div className="border-l-4 border-purple-600 pl-6">
@@ -1196,7 +1200,10 @@ export default function NewProductPage() {
                                 <button
                                   onClick={() => {
                                     if (form.model3D?.url) {
-                                      cleanupFiles([form.model3D.url], { type: "Product", id: "draft" });
+                                      cleanupFiles([form.model3D.url], {
+                                        type: "Product",
+                                        id: "draft",
+                                      });
                                     }
                                     setField("model3D", null);
                                   }}
@@ -1406,7 +1413,7 @@ export default function NewProductPage() {
                     : "bg-white/5 border border-white/10 text-white hover:bg-white/10"
                 }`}
               >
-                ΓåÉ Previous
+                Previous
               </button>
               <div className="text-[10px] font-black uppercase tracking-[0.3em] text-white/60">
                 Step {step} <span className="mx-2 text-white/20">/</span>{" "}
@@ -1449,7 +1456,7 @@ export default function NewProductPage() {
         </div>
       </div>
 
-      {/* ΓöÇΓöÇ Upload Error Modal ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ */}
+      {/* Upload Error Modal */}
       {uploadError && (
         <div
           className="fixed inset-0 z-[200] flex items-center justify-center p-6"

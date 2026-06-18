@@ -768,8 +768,17 @@ export default function PartsDivisionPanel({ customOrder, onPartsUpdated }) {
                         onClick={() => document.getElementById('part-model-upload').click()}
                         className="w-full py-3 rounded-lg border-2 border-dashed border-white/20 flex items-center justify-center gap-2 text-white/40 hover:text-white hover:border-white/50 hover:bg-white/5 transition-all disabled:opacity-50"
                       >
-                        <span className="material-symbols-outlined text-[18px]">view_in_ar</span>
-                        <span className="text-xs font-bold">Upload 3D Model</span>
+                        {uploadingMedia ? (
+                          <>
+                            <div className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin shrink-0" />
+                            <span className="text-xs font-bold">Loading...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span className="material-symbols-outlined text-[18px]">view_in_ar</span>
+                            <span className="text-xs font-bold">Upload 3D Model</span>
+                          </>
+                        )}
                       </button>
                       <input
                         id="part-model-upload"

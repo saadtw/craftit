@@ -5,6 +5,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { RFQ_STATUSES } from "@/lib/constants";
 
 export default function CustomerRFQsListPage() {
   const router = useRouter();
@@ -12,11 +13,22 @@ export default function CustomerRFQsListPage() {
   const [rfqs, setRfqs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const fetchRFQs = useCallback(async () => {
     setLoading(true);
     try {
-      const url = filter === "all" ? "/api/rfqs" : `/api/rfqs?status=${filter}`;
+      const params = new URLSearchParams();
+      if (filter !== "all") params.set("status", filter);
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      
+      const url = `/api/rfqs?${params.toString()}`;
       const response = await fetch(url);
       const data = await response.json();
 
@@ -28,7 +40,7 @@ export default function CustomerRFQsListPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, debouncedSearch]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -57,8 +69,8 @@ export default function CustomerRFQsListPage() {
       label: "Active",
       class: "bg-emerald-500/10 border-emerald-500/20 text-emerald-400",
     },
-    pending: {
-      label: "Pending",
+    bid_accepted: {
+      label: "Bid Accepted",
       class: "bg-[#eb9728]/10 border-[#eb9728]/20 text-[#eb9728]",
     },
     closed: {
@@ -87,60 +99,62 @@ export default function CustomerRFQsListPage() {
     return `${days}d ${hours}h remaining`;
   };
 
-  const FILTERS = ["all", "active", "pending", "closed", "cancelled"];
-
   return (
     <div className="min-h-screen bg-[#050507] text-white">
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-8 space-y-6">
-        {/* Header */}
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-[#eb9728] mb-1">
-              Requests for Quote
-            </p>
-            <h1 className="text-3xl font-black tracking-tight text-white">
-              My RFQs
-            </h1>
-            <p className="text-sm text-white/35 mt-1">
-              Manage your quotes and view manufacturer bids
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Link href="/customer/dashboard">
-              <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl border border-white/10 bg-white/[0.04] text-sm font-semibold text-white/60 hover:bg-white/[0.07] hover:text-white transition-all">
-                <span className="material-symbols-outlined text-[16px]">
-                  arrow_back
-                </span>
-                Dashboard
-              </button>
-            </Link>
-            <Link href="/custom-orders/new">
-              <button className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#eb9728] text-sm font-bold text-black hover:bg-[#d4871f] transition-all">
-                <span className="material-symbols-outlined text-[16px]">
-                  add
-                </span>
-                Create Custom Order
-              </button>
-            </Link>
-          </div>
-        </div>
+      <main className="mx-auto max-w-7xl px-4 py-7 sm:px-6 space-y-7">
+        <section className="relative overflow-hidden rounded-[28px] border border-white/10 bg-[#0c0c11] p-6 sm:p-7">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(168,85,247,0.13),transparent_32%),radial-gradient(circle_at_left,rgba(235,151,40,0.12),transparent_28%)] pointer-events-none" />
 
-        {/* Filter Tabs */}
-        <div className="flex gap-1 p-1 rounded-xl bg-white/[0.04] border border-white/8 w-fit">
-          {FILTERS.map((f) => (
-            <button
-              key={f}
-              onClick={() => setFilter(f)}
-              className={`px-4 py-1.5 rounded-lg text-[11px] font-bold capitalize transition-all ${
-                filter === f
-                  ? "bg-[#eb9728] text-black"
-                  : "text-white/40 hover:text-white/70"
-              }`}
-            >
-              {f}
-            </button>
-          ))}
-        </div>
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-bold uppercase tracking-[0.28em] text-[#eb9728]">
+                Customer RFQs
+              </p>
+              <h1 className="mt-2 text-3xl font-black tracking-tight">
+                Your RFQs
+              </h1>
+              <p className="mt-2 text-sm text-white/50">
+                Manage your requests for quotations and view manufacturer bids.
+              </p>
+            </div>
+          </div>
+        </section>
+
+        {/* Filter Tabs & Search */}
+        <section className="rounded-[24px] border border-white/8 bg-[#0c0c11] overflow-hidden">
+          <div className="border-b border-white/8 px-4">
+            <div className="flex gap-1 overflow-x-auto">
+              {[{ value: "all", label: "All" }, ...RFQ_STATUSES].map((f) => (
+                <button
+                  key={f.value}
+                  onClick={() => setFilter(f.value)}
+                  className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-4 text-sm font-bold transition-colors ${
+                    filter === f.value
+                      ? "border-[#eb9728] text-[#eb9728]"
+                      : "border-transparent text-white/55 hover:text-white"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-3 p-4 sm:flex-row">
+            <div className="flex flex-1 items-center gap-2 rounded-2xl border border-white/10 bg-white/[0.03] px-4">
+              <span className="material-symbols-outlined text-lg text-white/35">
+                search
+              </span>
+              <input
+                type="text"
+                placeholder="Search RFQs..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="flex-1 bg-transparent py-3 text-sm text-white placeholder:text-white/30 focus:outline-none"
+              />
+            </div>
+          </div>
+        </section>
 
         {/* RFQ List */}
         {rfqs.length === 0 ? (

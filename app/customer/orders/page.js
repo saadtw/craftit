@@ -9,26 +9,24 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
+import { ORDER_STATUSES } from "@/lib/constants";
 
 const STATUS_COLORS = {
   confirmed: "bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20",
   cancellation_requested: "bg-red-500/10 text-red-300 border border-red-500/20",
   accepted: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
   in_production: "bg-purple-500/10 text-purple-300 border border-purple-500/20",
+  shipped: "bg-cyan-500/10 text-cyan-300 border border-cyan-500/20",
+  delivered: "bg-teal-500/10 text-teal-300 border border-teal-500/20",
   completed: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
   cancelled: "bg-red-500/10 text-red-300 border border-red-500/20",
   disputed: "bg-orange-500/10 text-orange-300 border border-orange-500/20",
 };
 
-const STATUS_LABELS = {
-  confirmed: "Confirmed",
-  cancellation_requested: "Cancellation Requested",
-  accepted: "Accepted",
-  in_production: "In Production",
-  completed: "Completed",
-  cancelled: "Cancelled",
-  disputed: "Disputed",
-};
+const STATUS_LABELS = ORDER_STATUSES.reduce((acc, curr) => {
+  acc[curr.value] = curr.label;
+  return acc;
+}, {});
 
 const TYPE_LABELS = {
   rfq: "RFQ",
@@ -102,19 +100,11 @@ export default function CustomerOrdersPage() {
 
   const filterTabs = [
     { key: "all", label: "All", count: stats.total },
-    {
-      key: "confirmed",
-      label: "Confirmed",
-      count: stats.confirmed,
-    },
-    { key: "accepted", label: "Accepted", count: stats.accepted },
-    {
-      key: "in_production",
-      label: "In Production",
-      count: stats.in_production,
-    },
-    { key: "completed", label: "Completed", count: stats.completed },
-    { key: "cancelled", label: "Cancelled", count: stats.cancelled },
+    ...ORDER_STATUSES.map(status => ({
+      key: status.value,
+      label: status.label,
+      count: stats[status.value],
+    })),
   ];
 
   return (
@@ -182,17 +172,6 @@ export default function CustomerOrdersPage() {
                   }`}
                 >
                   {tab.label}
-                  {tab.count !== undefined && (
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-black ${
-                        activeFilter === tab.key
-                          ? "bg-[#eb9728]/10 text-[#eb9728]"
-                          : "bg-white/[0.05] text-white/45"
-                      }`}
-                    >
-                      {tab.count}
-                    </span>
-                  )}
                 </button>
               ))}
             </div>

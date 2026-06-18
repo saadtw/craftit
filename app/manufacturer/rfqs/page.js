@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { formatPKR } from "@/lib/currency";
+import { RFQ_STATUSES } from "@/lib/constants";
 
 const STATUS_STYLES = {
   active: "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400",
@@ -23,19 +24,28 @@ export default function ManufacturerRFQsPage() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     status: "active",
+    search: "",
     budgetMin: "",
     budgetMax: "",
     deadline: "",
   });
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [sortBy, setSortBy] = useState("newest");
   const [refreshKey, setRefreshKey] = useState(0);
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(filters.search), 400);
+    return () => clearTimeout(t);
+  }, [filters.search]);
 
   useEffect(() => {
     if (status !== "authenticated" || session?.user?.role !== "manufacturer")
       return;
     let cancelled = false;
     const params = new URLSearchParams();
-    params.append("status", filters.status || "active");
+    if (filters.status && filters.status !== "all") params.append("status", filters.status);
+    if (debouncedSearch) params.append("search", debouncedSearch);
+    
     let endpoint = `/api/rfqs?${params}`;
     if (sortBy === "recommended") {
       endpoint = "/api/rfqs/recommended";
@@ -46,18 +56,25 @@ export default function ManufacturerRFQsPage() {
       .then((data) => {
         if (cancelled) return;
         if (data.success && data.rfqs) {
-          // recommended endpoint returns { rfqs: [{ rfq, matchScore, matchReasons }] }
+          let results = [];
           if (sortBy === "recommended") {
-            setRfqs(
-              data.rfqs.map((item) => ({
-                ...item.rfq,
-                matchReasons: item.matchReasons,
-                matchScore: item.matchScore,
-              })),
-            );
+            results = data.rfqs.map((item) => ({
+              ...item.rfq,
+              matchReasons: item.matchReasons,
+              matchScore: item.matchScore,
+            }));
+            
+            // Local search filter for recommended RFQs
+            if (debouncedSearch) {
+              const q = debouncedSearch.toLowerCase();
+              results = results.filter(r => 
+                (r.title || r.customOrderId?.title || "").toLowerCase().includes(q)
+              );
+            }
           } else {
-            setRfqs(data.rfqs);
+            results = data.rfqs;
           }
+          setRfqs(results);
         }
       })
       .catch((err) => console.error("Error:", err))
@@ -67,7 +84,7 @@ export default function ManufacturerRFQsPage() {
     return () => {
       cancelled = true;
     };
-  }, [status, session, filters, sortBy, refreshKey]);
+  }, [status, session, filters.status, debouncedSearch, sortBy, refreshKey]);
 
   const getTimeRemaining = (endDate) => {
     const now = new Date();
@@ -133,6 +150,21 @@ export default function ManufacturerRFQsPage() {
               <div className="space-y-8">
                 <div className="space-y-3">
                   <label className="block text-[10px] font-black uppercase tracking-widest text-white/20">
+                    Search Keyword
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Search RFQs..."
+                    value={filters.search}
+                    onChange={(e) => {
+                      setFilters({ ...filters, search: e.target.value });
+                    }}
+                    className="w-full bg-white/[0.03] border-2 border-purple-500/10 rounded-2xl px-5 py-3.5 text-[11px] font-black tracking-widest text-white focus:outline-none focus:border-purple-500/40 transition-all placeholder:text-white/20"
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <label className="block text-[10px] font-black uppercase tracking-widest text-white/20">
                     Operational Status
                   </label>
                   <div className="relative group">
@@ -144,18 +176,14 @@ export default function ManufacturerRFQsPage() {
                       }}
                       className="w-full appearance-none bg-white/[0.03] border-2 border-purple-500/10 rounded-2xl px-5 py-3.5 text-[11px] font-black uppercase tracking-widest text-white focus:outline-none focus:border-purple-500/40 transition-all cursor-pointer"
                     >
-                      <option value="active" className="bg-[#0B011D]">
-                        Active Portal
+                      <option value="all" className="bg-[#0B011D]">
+                        All Statuses
                       </option>
-                      <option value="closed" className="bg-[#0B011D]">
-                        Closed Loop
-                      </option>
-                      <option value="bid_accepted" className="bg-[#0B011D]">
-                        Accepted
-                      </option>
-                      <option value="cancelled" className="bg-[#0B011D]">
-                        Cancelled
-                      </option>
+                      {RFQ_STATUSES.map((s) => (
+                        <option key={s.value} value={s.value} className="bg-[#0B011D]">
+                          {s.label}
+                        </option>
+                      ))}
                     </select>
                     <div className="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/20">
                       <svg
@@ -223,6 +251,7 @@ export default function ManufacturerRFQsPage() {
                       setLoading(true);
                       setFilters({
                         status: "active",
+                        search: "",
                         budgetMin: "",
                         budgetMax: "",
                         deadline: "",

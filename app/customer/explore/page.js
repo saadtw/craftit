@@ -10,6 +10,7 @@ import Image from "next/image";
 import { fetchWithCache } from "@/lib/clientCache";
 import { formatPKR } from "@/lib/currency";
 import { useWishlist } from "@/lib/hooks/useWishlist";
+import { CATEGORIES } from "@/lib/constants";
 
 const SORT_OPTIONS = [
   { value: "newest", label: "Newest" },
@@ -20,18 +21,7 @@ const SORT_OPTIONS = [
   { value: "price_desc", label: "Price: High → Low" },
 ];
 
-const CATEGORIES = [
-  "Electronics",
-  "Metals",
-  "Plastics",
-  "Textiles",
-  "Wood",
-  "Composites",
-  "Ceramics",
-  "Rubber",
-  "Glass",
-  "Other",
-];
+
 
 export default function CustomerExplorePage() {
   const { data: session, status } = useSession();

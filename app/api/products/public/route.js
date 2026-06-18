@@ -20,8 +20,13 @@ export async function GET(request) {
     const search = searchParams.get("search") || "";
     const category = searchParams.get("category") || "";
     const material = searchParams.get("material") || "";
-    const minPrice = parseFloat(searchParams.get("minPrice")) || 0;
-    const maxPrice = parseFloat(searchParams.get("maxPrice")) || Infinity;
+    const parsePrice = (val, defaultVal) => {
+      if (!val) return defaultVal;
+      const num = parseFloat(val);
+      return isNaN(num) ? defaultVal : num;
+    };
+    const minPrice = parsePrice(searchParams.get("minPrice"), 0);
+    const maxPrice = parsePrice(searchParams.get("maxPrice"), Infinity);
     const minMoq = parseInt(searchParams.get("minMoq")) || 0;
     const maxMoq = parseInt(searchParams.get("maxMoq")) || Infinity;
     const manufacturerId = searchParams.get("manufacturerId") || "";

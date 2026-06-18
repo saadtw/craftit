@@ -8,9 +8,10 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { FiShield, FiAlertCircle } from "react-icons/fi";
+import { FiShield, FiAlertCircle, FiSearch } from "react-icons/fi";
 import buyerIcon from "@/assets/Buyer.png";
 import sellerIcon from "@/assets/Seller.png";
+import { DISPUTE_STATUSES } from "@/lib/constants";
 
 const STATUS_STYLES = {
   open: {
@@ -32,14 +33,22 @@ export default function AdminDisputesPage() {
   const router = useRouter();
   const [disputes, setDisputes] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState("open");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const [pagination, setPagination] = useState({ page: 1, total: 0, pages: 1 });
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const fetchDisputes = useCallback(
     async (page = 1) => {
       setLoading(true);
       const params = new URLSearchParams({ page, limit: 20 });
       if (statusFilter !== "all") params.set("status", statusFilter);
+      if (debouncedSearch) params.set("search", debouncedSearch);
       try {
         const res = await fetch(`/api/admin/disputes?${params}`);
         const data = await res.json();
@@ -53,7 +62,7 @@ export default function AdminDisputesPage() {
         setLoading(false);
       }
     },
-    [statusFilter],
+    [statusFilter, debouncedSearch],
   );
 
   useEffect(() => {
@@ -92,26 +101,36 @@ export default function AdminDisputesPage() {
           </p>
         </div>
 
-        {/* Filter Tabs */}
-        <div className="flex flex-wrap gap-2 mb-8 bg-white/[0.02] border border-white/5 rounded-2xl p-2 w-fit backdrop-blur-md">
-          {[
-            { key: "open", label: "Open" },
-            { key: "under_review", label: "Under Review" },
-            { key: "resolved", label: "Resolved" },
-            { key: "all", label: "All" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setStatusFilter(tab.key)}
-              className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
-                statusFilter === tab.key
-                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]"
-                  : "bg-transparent text-slate-400 hover:bg-white/[0.04] hover:text-white"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+        {/* Filter Tabs and Search */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+          <div className="flex flex-wrap gap-2 bg-white/[0.02] border border-white/5 rounded-2xl p-2 w-fit backdrop-blur-md">
+            {[
+              { key: "all", label: "All" },
+              ...DISPUTE_STATUSES.map(s => ({ key: s.value, label: s.label })),
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setStatusFilter(tab.key)}
+                className={`px-5 py-2 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${
+                  statusFilter === tab.key
+                    ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-[0_0_15px_rgba(168,85,247,0.3)]"
+                    : "bg-transparent text-slate-400 hover:bg-white/[0.04] hover:text-white"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative group min-w-[250px]">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-purple-500 transition-colors w-4 h-4" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by dispute # or issue type..."
+              className="w-full bg-white/[0.02] border border-white/10 text-white rounded-full pl-11 pr-4 py-3 focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all placeholder:text-white/20 text-xs font-bold tracking-wider"
+            />
+          </div>
         </div>
 
         {/* Main Content Area */}

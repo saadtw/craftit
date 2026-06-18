@@ -33,17 +33,19 @@ export async function GET(request) {
     const skip = (page - 1) * limit;
     const search = searchParams.get("search");
 
-    let query = {};
+    let baseQuery = {};
 
     if (session.user.role === "customer") {
-      query.customerId = session.user.id;
+      baseQuery.customerId = session.user.id;
     } else if (session.user.role === "manufacturer") {
-      query.manufacturerId = session.user.id;
+      baseQuery.manufacturerId = session.user.id;
     } else if (session.user.role === "admin") {
       // admin sees all — no extra filter
     } else {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+
+    let query = { ...baseQuery };
 
     if (status) query.status = status;
     if (orderType) query.orderType = orderType;
@@ -100,7 +102,7 @@ export async function GET(request) {
     const total = await Order.countDocuments(query);
 
     // Compute summary stats for the caller
-    const allOrders = await Order.find(query).lean();
+    const allOrders = await Order.find(baseQuery).lean();
     const stats = {
       total: allOrders.length,
       confirmed: allOrders.filter((o) => o.status === "confirmed").length,

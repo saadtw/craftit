@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
+import { ORDER_STATUSES } from "@/lib/constants";
 
 export default function CustomerMessagesPage() {
   const router = useRouter();
@@ -100,15 +101,15 @@ export default function CustomerMessagesPage() {
   }, []);
 
   const STATUS_COLORS = {
-    pending: "bg-gray-500/10 text-gray-300 border border-gray-500/20",
+    confirmed: "bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20",
+    cancellation_requested: "bg-red-500/10 text-red-300 border border-red-500/20",
     accepted: "bg-blue-500/10 text-blue-300 border border-blue-500/20",
-    in_production:
-      "bg-purple-500/10 text-purple-300 border border-purple-500/20",
-    shipped: "bg-indigo-500/10 text-indigo-300 border border-indigo-500/20",
-    completed:
-      "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
+    in_production: "bg-purple-500/10 text-purple-300 border border-purple-500/20",
+    shipped: "bg-cyan-500/10 text-cyan-300 border border-cyan-500/20",
+    delivered: "bg-teal-500/10 text-teal-300 border border-teal-500/20",
+    completed: "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20",
     cancelled: "bg-red-500/10 text-red-300 border border-red-500/20",
-    disputed: "bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20",
+    disputed: "bg-orange-500/10 text-orange-300 border border-orange-500/20",
   };
 
   const hasActiveFilters =
@@ -193,12 +194,11 @@ export default function CustomerMessagesPage() {
               className="rounded-xl border border-white/10 bg-[#101017] px-3 py-3 text-sm text-white/80 focus:border-[#eb9728] focus:outline-none"
             >
               <option value="all">All statuses</option>
-              <option value="accepted">Accepted</option>
-              <option value="in_production">In production</option>
-              <option value="shipped">Shipped</option>
-              <option value="completed">Completed</option>
-              <option value="disputed">Disputed</option>
-              <option value="cancelled">Cancelled</option>
+              {ORDER_STATUSES.map((status) => (
+                <option key={status.value} value={status.value}>
+                  {status.label}
+                </option>
+              ))}
             </select>
 
             <select

@@ -21,14 +21,11 @@ import PaymentsIcon from "@/assets/payments.png";
 import { useToast } from "@/components/ui/ToastProvider";
 import { formatPKR } from "@/lib/currency";
 import { useDialog } from "@/components/ui/DialogProvider";
+import { GROUP_BUY_STATUSES } from "@/lib/constants";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
-  { key: "active", label: "Active" },
-  { key: "scheduled", label: "Scheduled" },
-  { key: "paused", label: "Paused" },
-  { key: "completed", label: "Completed" },
-  { key: "cancelled", label: "Cancelled" },
+  ...GROUP_BUY_STATUSES.map(s => ({ key: s.value, label: s.label }))
 ];
 
 const STATUS_STYLES = {

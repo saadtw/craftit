@@ -25,11 +25,19 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+    const search = searchParams.get("search");
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 10;
     const skip = (page - 1) * limit;
 
     let query = {};
+
+    if (search) {
+      const matchedOrders = await CustomOrder.find({ title: { $regex: search, $options: "i" } })
+        .select("_id")
+        .lean();
+      query.customOrderId = { $in: matchedOrders.map((o) => o._id) };
+    }
 
     if (session.user.role === "manufacturer") {
       // Unverified manufacturers cannot see RFQs

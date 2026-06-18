@@ -10,13 +10,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatPKR } from "@/lib/currency";
 import { useDialog } from "@/components/ui/DialogProvider";
+import { PRODUCT_STATUSES, CATEGORIES } from "@/lib/constants";
 
 const STATUS_TABS = [
   { key: "all", label: "All" },
-  { key: "active", label: "Active" },
-  { key: "draft", label: "Drafts" },
-  { key: "out_of_stock", label: "Out of Stock" },
-  { key: "archived", label: "Archived" },
+  ...PRODUCT_STATUSES.map(s => ({ key: s.value, label: s.label }))
 ];
 
 const SORT_OPTIONS = [
@@ -26,19 +24,6 @@ const SORT_OPTIONS = [
   { value: "price_desc", label: "Price: High to Low" },
   { value: "popular", label: "Most Viewed" },
   { value: "orders", label: "Most Ordered" },
-];
-
-const CATEGORIES = [
-  "Electronics",
-  "Metals",
-  "Plastics",
-  "Textiles",
-  "Wood",
-  "Composites",
-  "Ceramics",
-  "Rubber",
-  "Glass",
-  "Other",
 ];
 
 const STATUS_STYLES = {

@@ -266,6 +266,7 @@ export default function GroupBuyDetailPage() {
         setShowJoinModal(false);
         setIsEditing(false);
         fetchGroupBuy();
+        router.refresh();
       } else {
         setError(data.error || "Failed to process request.");
       }
@@ -298,6 +299,7 @@ export default function GroupBuyDetailPage() {
       if (res.ok && data.success) {
         setSuccess("Your participation has been cancelled.");
         fetchGroupBuy();
+        router.refresh();
       } else {
         setError(data.error || "Failed to cancel participation.");
       }

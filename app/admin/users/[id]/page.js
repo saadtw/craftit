@@ -6,6 +6,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
+
 import Image from "next/image";
 import { 
   FiUser, FiMail, FiPhone, FiCalendar, FiMapPin, FiActivity, 
@@ -13,17 +14,18 @@ import {
   FiShoppingBag, FiStar, FiLock, FiUnlock, FiLayers, FiCpu
 } from "react-icons/fi";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useToast } from "@/components/ui/ToastProvider";
 
 export default function AdminUserDetailPage() {
   const { data: session, status } = useSession();
-  const toast = useToast();
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
+  const toast = useToast();
 
   const [user, setUser] = useState(null);
-  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [orders, setOrders] = useState([]);
   const [actionLoading, setActionLoading] = useState(false);
 
   // Suspend modal state

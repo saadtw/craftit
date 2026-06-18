@@ -8,6 +8,7 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { useToast } from "@/components/ui/ToastProvider";
 import { useDialog } from "@/components/ui/DialogProvider";
+import { CUSTOM_ORDER_STATUSES } from "@/lib/constants";
 
 export default function CustomOrdersListPage() {
   const router = useRouter();
@@ -16,15 +17,23 @@ export default function CustomOrdersListPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("all");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
   const dialog = useDialog();
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const fetchOrders = useCallback(async () => {
     setLoading(true);
     try {
-      const url =
-        filter === "all"
-          ? "/api/custom-orders"
-          : `/api/custom-orders?status=${filter}`;
+      const params = new URLSearchParams();
+      if (filter !== "all") params.set("status", filter);
+      if (debouncedSearch) params.set("search", debouncedSearch);
+
+      const url = `/api/custom-orders?${params.toString()}`;
       const response = await fetch(url);
       const data = await response.json();
 
@@ -36,7 +45,7 @@ export default function CustomOrdersListPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, debouncedSearch]);
 
   const handleDelete = async (orderId) => {
     if (
@@ -90,12 +99,12 @@ export default function CustomOrdersListPage() {
     switch (status) {
       case "draft":
         return "bg-white/8 text-white/75 border border-white/10";
-      case "pending":
+      case "submitted":
         return "bg-[#eb9728]/10 text-[#eb9728] border border-[#eb9728]/20";
-      case "accepted":
+      case "rfq_created":
+        return "bg-blue-500/10 text-blue-300 border border-blue-500/20";
+      case "order_placed":
         return "bg-emerald-500/10 text-emerald-300 border border-emerald-500/20";
-      case "rejected":
-        return "bg-red-500/10 text-red-300 border border-red-500/20";
       default:
         return "bg-white/8 text-white/75 border border-white/10";
     }
@@ -135,23 +144,43 @@ export default function CustomOrdersListPage() {
           </div>
         </section>
 
-        <section className="rounded-[24px] border border-white/8 bg-[#0c0c11]/75 p-4 sm:p-5">
-          <div className="flex flex-wrap gap-2">
-            {["all", "draft", "pending", "accepted", "rejected"].map(
-              (statusFilter) => (
-                <button
-                  key={statusFilter}
-                  onClick={() => setFilter(statusFilter)}
-                  className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all ${
-                    filter === statusFilter
-                      ? "bg-[#eb9728] text-white shadow-[0_8px_20px_rgba(235,151,40,0.24)]"
-                      : "bg-white/[0.03] border border-white/10 text-white/60 hover:bg-white/[0.06] hover:text-white"
-                  }`}
-                >
-                  {statusFilter}
-                </button>
-              ),
-            )}
+        <section className="rounded-[24px] border border-white/8 bg-[#0c0c11]/75 p-4 sm:p-5 flex flex-col md:flex-row gap-4 justify-between items-center">
+          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+            <button
+              onClick={() => setFilter("all")}
+              className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all ${
+                filter === "all"
+                  ? "bg-[#eb9728] text-white shadow-[0_8px_20px_rgba(235,151,40,0.24)]"
+                  : "bg-white/[0.03] border border-white/10 text-white/60 hover:bg-white/[0.06] hover:text-white"
+              }`}
+            >
+              All
+            </button>
+            {CUSTOM_ORDER_STATUSES.map((s) => (
+              <button
+                key={s.value}
+                onClick={() => setFilter(s.value)}
+                className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-wide transition-all ${
+                  filter === s.value
+                    ? "bg-[#eb9728] text-white shadow-[0_8px_20px_rgba(235,151,40,0.24)]"
+                    : "bg-white/[0.03] border border-white/10 text-white/60 hover:bg-white/[0.06] hover:text-white"
+                }`}
+              >
+                {s.label}
+              </button>
+            ))}
+          </div>
+          <div className="relative w-full md:w-64">
+            <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-white/35">
+              search
+            </span>
+            <input
+              type="text"
+              placeholder="Search orders..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full rounded-2xl border border-white/10 bg-white/[0.03] py-2.5 pl-12 pr-4 text-sm text-white placeholder:text-white/30 focus:border-[#eb9728] focus:outline-none"
+            />
           </div>
         </section>
 
@@ -201,7 +230,7 @@ export default function CustomOrdersListPage() {
                           order.status,
                         )}`}
                       >
-                        {order.status}
+                        {CUSTOM_ORDER_STATUSES.find((s) => s.value === order.status)?.label || order.status}
                       </span>
                     </div>
 

@@ -330,15 +330,17 @@ export default function AdminManufacturerDetailPage() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-white/10 pt-8">
+              <div className={`grid grid-cols-1 sm:grid-cols-${manufacturer.rejectionReason ? '2' : '3'} gap-4 border-t border-white/10 pt-8`}>
                 <button onClick={() => handleAction("approve")} disabled={actionLoading}
                   className="py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-[11px] uppercase tracking-wider hover:opacity-90 disabled:opacity-50 transition-all shadow-[0_0_20px_rgba(16,185,129,0.2)] flex items-center justify-center gap-2">
                   <FiCheckCircle className="w-4 h-4" /> Approve
                 </button>
-                <button onClick={() => handleAction("reject")} disabled={actionLoading}
-                  className="py-4 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 font-black text-[11px] uppercase tracking-wider hover:bg-red-500 hover:text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2">
-                  <FiXCircle className="w-4 h-4" /> Reject
-                </button>
+                {!manufacturer.rejectionReason && (
+                  <button onClick={() => handleAction("reject")} disabled={actionLoading}
+                    className="py-4 rounded-2xl bg-red-500/10 text-red-500 border border-red-500/20 font-black text-[11px] uppercase tracking-wider hover:bg-red-500 hover:text-white disabled:opacity-50 transition-all flex items-center justify-center gap-2">
+                    <FiXCircle className="w-4 h-4" /> Reject
+                  </button>
+                )}
                 <button onClick={() => handleAction("request_info")} disabled={actionLoading}
                   className="py-4 rounded-2xl bg-white/[0.02] text-white border border-white/10 font-black text-[11px] uppercase tracking-wider hover:bg-white/[0.05] disabled:opacity-50 transition-all flex items-center justify-center gap-2">
                   <FiClock className="w-4 h-4" /> Request Info

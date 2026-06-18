@@ -7,8 +7,10 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { FiCheckCircle, FiXCircle, FiClock, FiShield } from "react-icons/fi";
+import { FiCheckCircle, FiXCircle, FiClock, FiShield, FiSearch } from "react-icons/fi";
 import { useToast } from "@/components/ui/ToastProvider";
+import { useDialog } from "@/components/ui/DialogProvider";
+import { USER_VERIFICATION_STATUSES } from "@/lib/constants";
 
 const STATUS_STYLES = {
   unverified: {
@@ -40,15 +42,26 @@ const STATUS_STYLES = {
 export default function AdminManufacturersPage() {
   const { data: session, status } = useSession();
   const toast = useToast();
+  const dialog = useDialog();
   const router = useRouter();
   const [manufacturers, setManufacturers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState("unverified");
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedSearch(search), 400);
+    return () => clearTimeout(t);
+  }, [search]);
 
   const fetchManufacturers = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/manufacturers?status=${filter}`);
+      const params = new URLSearchParams({ status: filter });
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      
+      const res = await fetch(`/api/admin/manufacturers?${params}`);
       const data = await res.json();
       if (data.success) setManufacturers(data.manufacturers);
     } catch (err) {
@@ -56,7 +69,7 @@ export default function AdminManufacturersPage() {
     } finally {
       setLoading(false);
     }
-  }, [filter]);
+  }, [filter, debouncedSearch]);
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -82,6 +95,8 @@ export default function AdminManufacturersPage() {
           reason:
             action === "reject"
               ? reason || "Does not meet requirements"
+              : action === "request_info"
+              ? reason
               : undefined,
         }),
       });
@@ -99,8 +114,7 @@ export default function AdminManufacturersPage() {
 
   const tabs = [
     { key: "unverified", label: "Pending" },
-    { key: "verified", label: "Verified" },
-    { key: "suspended", label: "Suspended" },
+    ...USER_VERIFICATION_STATUSES.filter(s => s.value !== "unverified").map(s => ({ key: s.value, label: s.label })),
     { key: "rejected", label: "Rejected" },
   ];
 
@@ -130,24 +144,35 @@ export default function AdminManufacturersPage() {
           </div>
         </div>
 
-        {/* Filters */}
-        <div className="flex flex-wrap gap-2 sm:gap-4 border-b border-white/5 pb-6">
-          {tabs.map((tab) => (
-            <button
-              key={tab.key}
-              onClick={() => setFilter(tab.key)}
-              className={`relative px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${
-                filter === tab.key
-                  ? "text-white shadow-[0_0_20px_rgba(168,85,247,0.3)]"
-                  : "text-slate-500 hover:text-white bg-white/[0.02] hover:bg-white/[0.05] border border-white/5"
-              }`}
-            >
-              {filter === tab.key && (
-                <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 -z-10" />
-              )}
-              {tab.label}
-            </button>
-          ))}
+        {/* Filters and Search */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 border-b border-white/5 pb-6">
+          <div className="flex flex-wrap gap-2 sm:gap-4">
+            {tabs.map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setFilter(tab.key)}
+                className={`relative px-5 py-2.5 rounded-full text-[11px] font-black uppercase tracking-widest transition-all ${
+                  filter === tab.key
+                    ? "text-white shadow-[0_0_20px_rgba(168,85,247,0.3)]"
+                    : "text-slate-500 hover:text-white bg-white/[0.02] hover:bg-white/[0.05] border border-white/5"
+                }`}
+              >
+                {filter === tab.key && (
+                  <div className="absolute inset-0 rounded-full bg-gradient-to-r from-purple-600 to-indigo-600 -z-10" />
+                )}
+                {tab.label}
+              </button>
+            ))}
+          </div>
+          <div className="relative group min-w-[250px]">
+            <FiSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-white/20 group-focus-within:text-purple-500 transition-colors w-4 h-4" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search manufacturers..."
+              className="w-full bg-white/[0.02] border border-white/10 text-white rounded-full pl-11 pr-4 py-3 focus:border-purple-500/50 focus:outline-none focus:ring-2 focus:ring-purple-500/20 transition-all placeholder:text-white/20 text-xs font-bold tracking-wider"
+            />
+          </div>
         </div>
 
         {/* Content */}
@@ -242,18 +267,20 @@ export default function AdminManufacturersPage() {
                              >
                                <FiCheckCircle className="w-4 h-4 shrink-0" /> Approve
                              </button>
+                             {!m.rejectionReason && (
+                               <button
+                                 onClick={async () => {
+                                   const reason = await dialog.prompt("Rejection reason (optional):");
+                                   if (reason !== null && reason !== undefined) handleVerify(String(m._id), "reject", reason);
+                                 }}
+                                 className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
+                               >
+                                 <FiXCircle className="w-4 h-4 shrink-0" /> Reject
+                               </button>
+                             )}
                              <button
-                               onClick={() => {
-                                 const reason = prompt("Rejection reason (optional):");
-                                 if (reason !== null) handleVerify(String(m._id), "reject", reason);
-                               }}
-                               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-500 hover:bg-red-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"
-                             >
-                               <FiXCircle className="w-4 h-4 shrink-0" /> Reject
-                             </button>
-                             <button
-                               onClick={() => {
-                                 const info = prompt("What additional information is needed?");
+                               onClick={async () => {
+                                 const info = await dialog.prompt("What additional information is needed?");
                                  if (info) handleVerify(String(m._id), "request_info", info);
                                }}
                                className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-500 hover:bg-amber-500 hover:text-white text-[10px] font-black uppercase tracking-widest transition-all"

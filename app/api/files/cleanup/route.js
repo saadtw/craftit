@@ -25,7 +25,7 @@ export async function POST(req) {
 
     // 2. Optionally clean up from MongoDB if an origin is provided
     // Expected origin format: { type: "Product" | "CustomOrder", id: "mongoObjectId" }
-    if (origin && origin.type && origin.id) {
+    if (origin && origin.type && origin.id && origin.id !== "draft") {
       await connectDB();
 
       if (origin.type === "Product") {

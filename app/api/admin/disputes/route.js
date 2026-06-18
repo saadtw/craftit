@@ -17,12 +17,18 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+    const search = searchParams.get("search");
     const page = parseInt(searchParams.get("page") || "1");
     const limit = parseInt(searchParams.get("limit") || "20");
     const skip = (page - 1) * limit;
 
     const query = {};
-    if (status) query.status = status;
+    if (status && status !== "all") query.status = status;
+    
+    if (search) {
+      const q = new RegExp(search, "i");
+      query.$or = [{ disputeNumber: q }, { issueType: q }];
+    }
 
     const [disputes, total] = await Promise.all([
       Dispute.find(query)

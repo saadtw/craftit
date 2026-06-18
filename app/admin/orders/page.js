@@ -10,6 +10,7 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { FiSearch, FiAlertTriangle } from "react-icons/fi";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ORDER_STATUSES } from "@/lib/constants";
 
 const STATUS_STYLES = {
   confirmed: { bg: "bg-yellow-500/10", text: "text-yellow-400", border: "border-yellow-500/20", dot: "bg-yellow-400" },
@@ -114,14 +115,11 @@ export default function AdminOrdersPage() {
               </SelectTrigger>
               <SelectContent className="bg-[#020617]/95 backdrop-blur-xl border border-white/10 text-white rounded-xl shadow-2xl p-1">
                 <SelectItem value="all" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">All Statuses</SelectItem>
-                <SelectItem value="confirmed" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Confirmed</SelectItem>
-                <SelectItem value="cancellation_requested" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Cancellation Requested</SelectItem>
-                <SelectItem value="accepted" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Accepted</SelectItem>
-                <SelectItem value="in_production" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">In Production</SelectItem>
-                <SelectItem value="shipped" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Shipped</SelectItem>
-                <SelectItem value="completed" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Completed</SelectItem>
-                <SelectItem value="cancelled" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Cancelled</SelectItem>
-                <SelectItem value="disputed" className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">Disputed</SelectItem>
+                {ORDER_STATUSES.map(s => (
+                  <SelectItem key={s.value} value={s.value} className="focus:bg-purple-600 focus:text-white cursor-pointer rounded-lg text-sm transition-colors">
+                    {s.label}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>

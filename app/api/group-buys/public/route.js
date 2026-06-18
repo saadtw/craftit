@@ -27,11 +27,11 @@ export async function GET(request) {
     const now = new Date();
     await GroupBuy.updateMany(
       { status: "scheduled", startDate: { $lte: now } },
-      { $set: { status: "active" } },
+      { $set: { status: "active" } }
     );
     await GroupBuy.updateMany(
       { status: { $in: ["active", "paused"] }, endDate: { $lte: now } },
-      { $set: { status: "payment_processing" } },
+      { $set: { status: "payment_processing" } }
     );
 
     let query = {
@@ -42,7 +42,7 @@ export async function GET(request) {
     // When joined=true, restrict to group buys where this customer is a participant
     if (joined && session?.user?.id) {
       query["participants.customerId"] = new mongoose.Types.ObjectId(
-        session.user.id,
+        session.user.id
       );
     }
 
@@ -55,49 +55,135 @@ export async function GET(request) {
         sortObj = { currentParticipantCount: -1 };
         break;
       case "discount":
-        sortObj = { "tiers.0.discountPercent": -1 };
+        sortObj = { maxDiscount: -1 };
         break;
       case "newest":
       default:
         sortObj = { createdAt: -1 };
     }
 
-    let groupBuys = await GroupBuy.find(query)
-      .populate({
-        path: "productId",
-        select: "name images category price model3D",
-      })
-      .populate({
-        path: "manufacturerId",
-        select: "businessName name businessLogo",
-      })
-      .sort(sortObj)
-      .skip(skip)
-      .limit(limit)
-      .lean();
+    const pipeline = [];
 
-    // Filter by category after populate
+    // Match GroupBuy status
+    pipeline.push({ $match: query });
+
+    // Lookup Product
+    pipeline.push({
+      $lookup: {
+        from: "products",
+        localField: "productId",
+        foreignField: "_id",
+        as: "productData"
+      }
+    });
+
+    // Unwind Product
+    pipeline.push({
+      $unwind: {
+        path: "$productData",
+        preserveNullAndEmptyArrays: false // Only group buys with valid products
+      }
+    });
+
+    // Filter by Category
     if (category) {
-      groupBuys = groupBuys.filter((g) => g.productId?.category === category);
+      pipeline.push({
+        $match: {
+          "productData.category": category
+        }
+      });
     }
 
-    // Filter by search term
+    // Filter by Search (Title or Product Name)
     if (search) {
-      const q = search.toLowerCase();
-      groupBuys = groupBuys.filter(
-        (g) =>
-          g.title?.toLowerCase().includes(q) ||
-          g.productId?.name?.toLowerCase().includes(q),
-      );
+      const escapedSearch = search.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+      const searchRegex = new RegExp(escapedSearch, "i");
+      pipeline.push({
+        $match: {
+          $or: [
+            { title: searchRegex },
+            { "productData.name": searchRegex }
+          ]
+        }
+      });
     }
 
-    // Anonymize participant data for public view
-    groupBuys = groupBuys.map((g) => ({
-      ...g,
-      participants: undefined, // strip entirely — use counts only
-    }));
+    // Lookup Manufacturer
+    pipeline.push({
+      $lookup: {
+        from: "users",
+        localField: "manufacturerId",
+        foreignField: "_id",
+        as: "manufacturerData"
+      }
+    });
 
-    const total = await GroupBuy.countDocuments(query);
+    pipeline.push({
+      $unwind: {
+        path: "$manufacturerData",
+        preserveNullAndEmptyArrays: true
+      }
+    });
+
+    // Add max discount for sorting
+    pipeline.push({
+      $addFields: {
+        maxDiscount: {
+          $arrayElemAt: ["$tiers.discountPercent", 0]
+        }
+      }
+    });
+
+    // Sort
+    pipeline.push({ $sort: sortObj });
+
+    // Facet for pagination and counting
+    pipeline.push({
+      $facet: {
+        metadata: [{ $count: "total" }],
+        data: [
+          { $skip: skip },
+          { $limit: limit },
+          {
+            $project: {
+              title: 1,
+              description: 1,
+              basePrice: 1,
+              tiers: 1,
+              minParticipants: 1,
+              minimumViableQuantity: 1,
+              maxParticipants: 1,
+              startDate: 1,
+              endDate: 1,
+              termsAndConditions: 1,
+              joinHoldPercent: 1,
+              status: 1,
+              currentQuantity: 1,
+              currentParticipantCount: 1,
+              currentTierIndex: 1,
+              currentDiscountedPrice: 1,
+              createdAt: 1,
+              updatedAt: 1,
+              "productId._id": "$productData._id",
+              "productId.name": "$productData.name",
+              "productId.images": "$productData.images",
+              "productId.category": "$productData.category",
+              "productId.price": "$productData.price",
+              "productId.model3D": "$productData.model3D",
+              "manufacturerId._id": "$manufacturerData._id",
+              "manufacturerId.businessName": "$manufacturerData.businessName",
+              "manufacturerId.name": "$manufacturerData.name",
+              "manufacturerId.businessLogo": "$manufacturerData.businessLogo"
+            }
+          }
+        ]
+      }
+    });
+
+    const [aggregationResult] = await GroupBuy.aggregate(pipeline);
+
+    const total = aggregationResult.metadata[0]?.total || 0;
+    const groupBuys = aggregationResult.data;
 
     return NextResponse.json({
       success: true,

@@ -23,6 +23,7 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status") || "unverified";
+    const search = searchParams.get("search");
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 20;
     const skip = (page - 1) * limit;
@@ -43,6 +44,19 @@ export async function GET(request) {
       ];
     } else {
       query.verificationStatus = status;
+    }
+
+    if (search) {
+      const q = new RegExp(search, "i");
+      const searchCondition = {
+        $or: [{ name: q }, { email: q }, { businessName: q }],
+      };
+      if (query.$or) {
+        query.$and = [{ $or: query.$or }, searchCondition];
+        delete query.$or;
+      } else {
+        query.$or = searchCondition.$or;
+      }
     }
 
     const manufacturers = await User.find(query)

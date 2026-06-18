@@ -124,6 +124,7 @@ export async function PUT(request, context) {
     }
 
     if (action === "request_info") {
+      manufacturer.rejectionReason = undefined;
       // Status stays unverified but a deadline is set for resubmission
       if (verificationDoc) {
         verificationDoc.verificationStatus = "resubmission_required";

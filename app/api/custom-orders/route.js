@@ -22,6 +22,7 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url);
     const status = searchParams.get("status");
+    const search = searchParams.get("search");
     const page = parseInt(searchParams.get("page")) || 1;
     const limit = parseInt(searchParams.get("limit")) || 10;
     const skip = (page - 1) * limit;
@@ -29,6 +30,9 @@ export async function GET(request) {
     let query = { customerId: session.user.id };
     if (status) {
       query.status = status;
+    }
+    if (search) {
+      query.title = { $regex: search, $options: "i" };
     }
 
     const orders = await CustomOrder.find(query)
