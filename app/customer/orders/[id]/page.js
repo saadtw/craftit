@@ -660,6 +660,73 @@ function CustomerOrderDetailPageContent() {
                 </div>
               </section>
             )}
+
+            {paymentReleases.length > 0 && (
+              <section className="rounded-[24px] border border-white/8 bg-[#0c0c11] p-5 sm:p-6">
+                <h2 className="mb-4 text-lg font-black text-white flex items-center gap-2">
+                  <span className="px-1.5 py-0.5 bg-[#eb9728] text-white text-xs rounded font-medium">
+                    Funds
+                  </span>
+                  Payment Release Requests
+                </h2>
+                <div className="space-y-4">
+                  {paymentReleases.map((pr) => (
+                    <div
+                      key={pr._id}
+                      className="rounded-2xl border border-white/8 bg-white/[0.02] p-4 flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between"
+                    >
+                      <div>
+                        <p className="text-lg font-black text-white mb-1">
+                          {formatPKR(pr.amount)}
+                        </p>
+                        <p className="text-sm text-white/60 mb-2">{pr.reason}</p>
+                        <span
+                          className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-widest rounded-full border ${
+                            pr.status === "approved" || pr.status === "auto_approved"
+                              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+                              : pr.status === "rejected"
+                                ? "bg-red-500/10 text-red-400 border-red-500/30"
+                                : "bg-[#eb9728]/10 text-[#eb9728] border-[#eb9728]/30"
+                          }`}
+                        >
+                          {pr.status.replace("_", " ")}
+                        </span>
+                      </div>
+                      
+                      <div className="flex flex-col items-end gap-3 w-full sm:w-auto">
+                        <div className="text-[10px] font-black uppercase tracking-widest text-white/40 text-right">
+                          <p>{new Date(pr.createdAt).toLocaleDateString()}</p>
+                          {pr.status === "pending" && (
+                            <p className="mt-1 text-[#eb9728]">
+                              Expires: {new Date(pr.expiresAt).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                        
+                        {pr.status === "pending" && (
+                          <div className="flex gap-2 w-full sm:w-auto">
+                            <button
+                              onClick={() => handleResolvePaymentRelease(pr._id, "approve")}
+                              disabled={actionLoading}
+                              className="flex-1 sm:flex-none rounded-xl bg-emerald-500/20 px-4 py-2 text-xs font-bold text-emerald-300 hover:bg-emerald-500/30 disabled:opacity-50 transition-colors"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleResolvePaymentRelease(pr._id, "reject")}
+                              disabled={actionLoading}
+                              className="flex-1 sm:flex-none rounded-xl bg-red-500/20 px-4 py-2 text-xs font-bold text-red-300 hover:bg-red-500/30 disabled:opacity-50 transition-colors"
+                            >
+                              Reject
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            )}
           </div>
 
           <aside className="space-y-5">

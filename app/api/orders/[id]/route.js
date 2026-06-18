@@ -14,6 +14,8 @@ import PaymentSchedule from "@/models/PaymentSchedule";
 import Review from "@/models/Review";
 import { resolveRequestSession } from "@/lib/requestAuth";
 
+export const dynamic = 'force-dynamic';
+
 // GET /api/orders/[id] - Get single order detail
 export async function GET(request, context) {
   const { id } = await context.params;

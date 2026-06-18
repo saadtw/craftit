@@ -355,12 +355,14 @@ export default function ManufacturerOrderDetailPage() {
   const completedMilestones =
     order.milestones?.filter((m) => m.status === "completed").length || 0;
   const totalMilestones = order.milestones?.length || 0;
-  const progressPercent =
+const progressPercent =
     totalMilestones > 0
       ? Math.round((completedMilestones / totalMilestones) * 100)
       : 0;
   const hasPendingCancellationRequest =
-    order.cancellationStatus === "requested";
+    order?.cancellationStatus === "requested";
+
+  const hasRejectedRelease = paymentReleases?.some((pr) => pr.status === "rejected");
   const cancellationWindowExpiresAt = order.cancellationWindowExpiresAt
     ? new Date(order.cancellationWindowExpiresAt)
     : null;
@@ -978,17 +980,49 @@ export default function ManufacturerOrderDetailPage() {
                 {["completed", "cancelled", "disputed"].includes(
                   order.status,
                 ) && (
-                  <div className="text-center py-8 bg-white/[0.02] border border-white/5 rounded-[2rem]">
-                    <span className="material-symbols-outlined text-white/5 text-4xl mb-2">
+                  <div className="text-center py-8 bg-white/[0.02] border border-white/5 rounded-[2rem] space-y-3">
+                    <span className="material-symbols-outlined text-white/5 text-4xl mb-2 block">
                       lock
                     </span>
                     <p className="text-[10px] font-black uppercase tracking-widest text-white/20">
                       Archived Record
                     </p>
+                    {order.status === "disputed" && (
+                      <Link
+                        href={`/manufacturer/orders/${id}/dispute`}
+                        className="inline-block px-4 py-2 mt-2 bg-purple-600/20 text-purple-400 text-[10px] font-black uppercase tracking-widest rounded-xl hover:bg-purple-600/30 transition-all border border-purple-500/20"
+                      >
+                        View Dispute
+                      </Link>
+                    )}
                   </div>
                 )}
               </div>
             </div>
+
+            {hasRejectedRelease && order.status !== "disputed" && (
+              <div className="mt-6 bg-red-500/10 border-2 border-red-500/30 rounded-[2.5rem] p-8 backdrop-blur-md">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 bg-red-500/20 rounded-2xl flex items-center justify-center text-red-400 shrink-0 border border-red-500/30">
+                    <span className="material-symbols-outlined">warning</span>
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-sm font-black uppercase tracking-[0.2em] text-red-400 mb-2">
+                      Payment Release Rejected
+                    </h2>
+                    <p className="text-xs text-white/60 leading-relaxed mb-4">
+                      The customer has rejected your payment release request. If you cannot reach an agreement, you can open a formal dispute for the admin team to review.
+                    </p>
+                    <Link
+                      href={`/manufacturer/orders/${id}/dispute`}
+                      className="inline-block px-6 py-3 bg-red-600 text-white text-[11px] font-black uppercase tracking-widest rounded-xl hover:bg-red-500 transition-all"
+                    >
+                      File a Dispute
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Customer Info */}
             <div className="bg-white/[0.03] border-2 border-purple-500/40 rounded-[2.5rem] p-8 backdrop-blur-md">
