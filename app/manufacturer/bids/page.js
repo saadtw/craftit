@@ -401,16 +401,6 @@ export default function ManufacturerBidsPage() {
         </div>
       </main>
 
-      <footer className="mt-16 border-t border-white/5 bg-black/20 backdrop-blur-sm py-8">
-        <div className="container mx-auto px-4 text-center">
-          <div className="flex justify-center gap-8 mb-6">
-            <a href="#" className="text-white/40 hover:text-[#eb9728] text-xs font-bold uppercase tracking-widest transition-colors">Help</a>
-            <a href="#" className="text-white/40 hover:text-[#eb9728] text-xs font-bold uppercase tracking-widest transition-colors">Terms & Conditions</a>
-            <a href="#" className="text-white/40 hover:text-[#eb9728] text-xs font-bold uppercase tracking-widest transition-colors">Contact Support</a>
-          </div>
-          <p className="text-[10px] font-bold text-white/20 uppercase tracking-[0.4em]">© {new Date().getFullYear()} CRAFTIT GLOBAL · ALL RIGHTS RESERVED</p>
-        </div>
-      </footer>
     </div>
   );
 }

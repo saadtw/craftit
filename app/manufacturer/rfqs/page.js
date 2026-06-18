@@ -2,7 +2,7 @@
 "use client";
 
 import GlobalLoader from "@/components/ui/GlobalLoader";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -25,13 +25,8 @@ export default function ManufacturerRFQsPage() {
   const [filters, setFilters] = useState({
     status: "active",
     search: "",
-    budgetMin: "",
-    budgetMax: "",
-    deadline: "",
   });
   const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
-  const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedSearch(filters.search), 400);
@@ -43,38 +38,15 @@ export default function ManufacturerRFQsPage() {
       return;
     let cancelled = false;
     const params = new URLSearchParams();
-    if (filters.status && filters.status !== "all") params.append("status", filters.status);
+    if (filters.status) params.append("status", filters.status);
     if (debouncedSearch) params.append("search", debouncedSearch);
-    
-    let endpoint = `/api/rfqs?${params}`;
-    if (sortBy === "recommended") {
-      endpoint = "/api/rfqs/recommended";
-    }
 
-    fetch(endpoint)
+    fetch(`/api/rfqs?${params}`)
       .then((r) => r.json())
       .then((data) => {
         if (cancelled) return;
         if (data.success && data.rfqs) {
-          let results = [];
-          if (sortBy === "recommended") {
-            results = data.rfqs.map((item) => ({
-              ...item.rfq,
-              matchReasons: item.matchReasons,
-              matchScore: item.matchScore,
-            }));
-            
-            // Local search filter for recommended RFQs
-            if (debouncedSearch) {
-              const q = debouncedSearch.toLowerCase();
-              results = results.filter(r => 
-                (r.title || r.customOrderId?.title || "").toLowerCase().includes(q)
-              );
-            }
-          } else {
-            results = data.rfqs;
-          }
-          setRfqs(results);
+          setRfqs(data.rfqs);
         }
       })
       .catch((err) => console.error("Error:", err))
@@ -84,7 +56,7 @@ export default function ManufacturerRFQsPage() {
     return () => {
       cancelled = true;
     };
-  }, [status, session, filters.status, debouncedSearch, sortBy, refreshKey]);
+  }, [status, session, filters.status, debouncedSearch]);
 
   const getTimeRemaining = (endDate) => {
     const now = new Date();
@@ -117,26 +89,7 @@ export default function ManufacturerRFQsPage() {
             </h1>
           </div>
 
-          <div className="flex gap-2 bg-white/5 p-1.5 rounded-2xl border border-white/5">
-            {["recommended", "newest", "ending_soon", "highest_budget"].map(
-              (sort) => (
-                <button
-                  key={sort}
-                  onClick={() => {
-                    setLoading(true);
-                    setSortBy(sort);
-                  }}
-                  className={`px-5 py-2 text-[9px] font-black uppercase tracking-widest rounded-xl transition-all ${
-                    sortBy === sort
-                      ? "bg-purple-600 text-white shadow-lg"
-                      : "text-white/40 hover:text-white"
-                  }`}
-                >
-                  {sort.replace("_", " ")}
-                </button>
-              ),
-            )}
-          </div>
+
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
@@ -203,59 +156,15 @@ export default function ManufacturerRFQsPage() {
                   </div>
                 </div>
 
-                <div className="space-y-3">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-white/20">
-                    Budget Threshold
-                  </label>
-                  <div className="px-1">
-                    <input
-                      type="range"
-                      min="0"
-                      max="10000"
-                      className="w-full h-1 bg-white/10 rounded-full appearance-none cursor-pointer accent-purple-500"
-                    />
-                    <div className="flex justify-between mt-3 text-[9px] font-black uppercase tracking-widest text-white/10">
-                      <span>PKR 0</span>
-                      <span>PKR 10k+</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  <label className="block text-[10px] font-black uppercase tracking-widest text-white/20">
-                    Temporal Limit
-                  </label>
-                  <input
-                    type="date"
-                    value={filters.deadline}
-                    onChange={(e) => {
-                      setLoading(true);
-                      setFilters({ ...filters, deadline: e.target.value });
-                    }}
-                    className="w-full bg-white/[0.03] border-2 border-purple-500/10 rounded-2xl px-5 py-3.5 text-[11px] font-black uppercase tracking-widest text-white focus:outline-none focus:border-purple-500/40 transition-all [color-scheme:dark]"
-                  />
-                </div>
 
                 <div className="pt-4 space-y-3">
                   <button
                     onClick={() => {
                       setLoading(true);
-                      setRefreshKey((k) => k + 1);
-                    }}
-                    className="w-full py-4 bg-white text-[#050507] text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white/90 transition-all shadow-xl"
-                  >
-                    Sync Matrix
-                  </button>
-                  <button
-                    onClick={() => {
-                      setLoading(true);
                       setFilters({
-                        status: "active",
-                        search: "",
-                        budgetMin: "",
-                        budgetMax: "",
-                        deadline: "",
-                      });
+                      status: "active",
+                      search: "",
+                    });
                     }}
                     className="w-full py-4 bg-white/5 border border-white/10 text-[10px] font-black uppercase tracking-[0.2em] rounded-2xl hover:bg-white/10 transition-all"
                   >
@@ -348,95 +257,9 @@ export default function ManufacturerRFQsPage() {
               </section>
             )}
 
-            {/* ── Featured Inquiries ── */}
-            <section>
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 mb-6 flex items-center gap-3">
-                <span className="w-8 h-[2px] bg-purple-500/30" />
-                Featured Inquiries
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {rfqs.slice(0, 2).map((rfq) => {
-                  const isPartRFQ = rfq.isPartRFQ;
-                  const partData = isPartRFQ && rfq.customOrderId?.parts ? rfq.customOrderId.parts.find(p => p._id === rfq.partId) : null;
-                  const title = rfq.title || rfq.customOrderId?.title || "Project Inquiry";
-                  const description = isPartRFQ && partData ? partData.description : rfq.customOrderId?.description;
-                  const quantity = isPartRFQ && partData ? partData.quantity : rfq.customOrderId?.quantity;
-                  const budget = isPartRFQ && partData ? partData.budget : rfq.customOrderId?.budget;
-
-                  return (
-                  <div
-                    key={rfq._id}
-                    className="group bg-white/[0.03] rounded-[2.5rem] border-2 border-purple-500/20 p-8 hover:border-purple-500/40 transition-all duration-500 shadow-xl"
-                  >
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="flex items-center gap-2">
-                        {rfq.customOrderId?.model3D?.url && (
-                          <span className="px-3 py-1 bg-purple-500 text-white text-[8px] font-black uppercase tracking-widest rounded-lg shadow-[0_0_15px_rgba(168,85,247,0.4)]">
-                            3D
-                          </span>
-                        )}
-                        <span
-                          className={`px-3 py-1 text-[8px] font-black uppercase tracking-widest rounded-lg border ${STATUS_STYLES[rfq.status] || STATUS_STYLES.active}`}
-                        >
-                          {rfq.status}
-                        </span>
-                      </div>
-                      <p className="text-[9px] font-black uppercase tracking-widest text-white/20 group-hover:text-white/40 transition-colors">
-                        #{rfq.rfqNumber}
-                      </p>
-                    </div>
-
-                    <h3 className="text-xl font-black tracking-tight text-white mb-3 group-hover:text-purple-400 transition-colors line-clamp-1">
-                      {title}
-                    </h3>
-                    <p className="text-sm text-white/40 font-medium line-clamp-2 mb-8 leading-relaxed">
-                      {description}
-                    </p>
-
-                    <div className="grid grid-cols-2 gap-6 mb-8 pt-6 border-t border-white/5">
-                      <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-1">
-                          Volume
-                        </p>
-                        <p className="text-sm font-black text-white/80">
-                          {quantity || "0"} Units
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[9px] font-black uppercase tracking-widest text-white/20 mb-1">
-                          Budget
-                        </p>
-                        <p className="text-sm font-black text-emerald-400">
-                          {formatPKR(budget)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex gap-3">
-                      <Link
-                        href={`/manufacturer/rfqs/${rfq._id}`}
-                        className="flex-1 py-3 bg-white/5 border border-white/10 rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-white/10 text-center transition-all"
-                      >
-                        Details
-                      </Link>
-                      <Link
-                        href={`/manufacturer/rfqs/${rfq._id}/bid`}
-                        className="flex-[2] py-3 bg-purple-600 text-white rounded-xl text-[9px] font-black uppercase tracking-widest hover:bg-purple-500 shadow-lg text-center transition-all"
-                      >
-                        Submit Bid
-                      </Link>
-                    </div>
-                  </div>
-                )})}
-              </div>
-            </section>
 
             {/* Global Inquiry Stream */}
             <section className="space-y-8">
-              <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-white/20 flex items-center gap-3">
-                <span className="w-8 h-[2px] bg-white/10" />
-                Inquiry Database
-              </h2>
 
               {loading ? (
                 <div className="py-20 flex flex-col items-center justify-center gap-5 bg-white/[0.02] rounded-[3rem] border-2 border-dashed border-white/5">
@@ -495,21 +318,6 @@ export default function ManufacturerRFQsPage() {
                             {title}
                           </h3>
                         </div>
-                        <button className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/20 hover:text-purple-400 hover:bg-white/10 transition-all">
-                          <svg
-                            className="w-5 h-5"
-                            fill="none"
-                            stroke="currentColor"
-                            viewBox="0 0 24 24"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
-                            />
-                          </svg>
-                        </button>
                       </div>
 
                       <p className="text-sm text-white/40 font-medium line-clamp-2 mb-4 leading-relaxed max-w-2xl">
@@ -577,25 +385,6 @@ export default function ManufacturerRFQsPage() {
           </div>
         </div>
       </main>
-
-      <footer className="mt-20 border-t border-white/5 bg-white/[0.02] py-12 backdrop-blur-xl">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col items-center">
-          <div className="flex gap-8 mb-8">
-            {["Protocol", "Privacy", "Support", "Status"].map((link) => (
-              <a
-                key={link}
-                href="#"
-                className="text-[9px] font-black uppercase tracking-[0.2em] text-white/20 hover:text-purple-400 transition-colors"
-              >
-                {link}
-              </a>
-            ))}
-          </div>
-          <p className="text-[9px] font-black uppercase tracking-widest text-white/10">
-            © 2024 Craftit Advanced Manufacturing Core
-          </p>
-        </div>
-      </footer>
     </div>
   );
 }

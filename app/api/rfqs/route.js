@@ -55,10 +55,17 @@ export async function GET(request) {
         { targetManufacturers: session.user.id },
       ];
 
-      query.status = status || "active";
-      if (query.status === "active") {
+      if (status && status !== "all") {
+        query.status = status;
+        if (status === "active") {
+          query.endDate = { $gte: new Date() };
+        }
+      } else if (!status) {
+        // No status param = default to active only
+        query.status = "active";
         query.endDate = { $gte: new Date() };
       }
+      // if status === "all", no filter applied → return everything
     }
 
     if (session.user.role === "customer") {
